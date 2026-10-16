@@ -2,10 +2,39 @@
 > mindcraft@0.1.0 pree2e
 > node tools/build-ui.js
 
-interface React empacotada: renderer\bundle\react-ui.js (281 KB)
+interface React empacotada: renderer\bundle\react-ui.js (305 KB)
 
 > mindcraft@0.1.0 e2e
-> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic
+> electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic
+
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+
+MindCraft e2e
+
+  ok   inicia com mapa de exemplo e sem erros
+  ok   Tab cria filho e edição inline confirma com Enter
+  ok   duplo clique edita; Escape cancela
+  ok   Enter cria irmão; Delete remove; undo/redo restauram
+  ok   arrastar tópico sobre outro o move; destino dentro do próprio ramo é recusado
+  ok   recolher (Espaço) oculta filhos e mostra contador
+  ok   marcadores, progresso e relação (R + clique), rótulo e remoção por Delete
+  ok   notas digitadas vão para o tópico certo ao trocar a seleção com o painel em foco
+  ok   muda de tema em todos os temas sem erro
+  ok   zoom pela roda do mouse e ajustar à tela
+  ok   salvar como (caminho com espaços e acentos) e reabrir preservam tudo
+  ok   salvar adiciona .mom quando falta e Salvar reutiliza o caminho
+  ok   falha ao salvar em local inválido não derruba nem marca como salvo
+  ok   confirmDiscard: Descartar prossegue, Cancelar bloqueia, Salvar grava
+  ok   exporta os 6 formatos com conteúdo válido (docx com imagem embutida)
+  ok   importa Markdown e OPML (sem sobrescrever o original) e rejeita arquivo corrompido
+  ok   modo apresentação: avança, volta e sai com Esc
+  ok   busca encontra tópicos e notas e navega com Enter
+  ok   mapa grande (600 tópicos): layout rápido, sem sobreposição, PDF/SVG gerados
+  ok   painéis: Estrutura seleciona/recolhe, cartões de tema, chips de marcador e progresso, zoom, recolher painel
+  ok   nenhum erro de console durante toda a sessão
+
+21/21 passaram
 
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
@@ -59,8 +88,36 @@ MindCraft e2e — estudo, lote e segurança de dados
   ok   arquivos recentes: gravados em userData, listados no menu e ausentes são ignorados
   ok   estudo e prova sobrevivem a salvar → abrir pela interface; painel mostra os mesmos números
   ok   nenhum erro de console durante toda a sessão
+  ok   o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)
 
-18/18 passaram
+19/19 passaram
+
+
+
+MindCraft e2e — estudo, lote e segurança de dados
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   modelo de concurso cria 5 disciplinas × 4 etapas e pede confirmação só se houver alterações
+  ok   importar edital: contagem ao vivo, validação, novo mapa e adicionar abaixo do tópico
+  ok   painel do tópico: estudei hoje agenda +1 dia, é idempotente, "errei" reinicia o ciclo, desfaz em 1 passo
+  ok   minutos e questões: entradas inválidas são recusadas sem alterar nada
+  ok   cronômetro: registra minutos no tópico de origem, descarta < 30 s e permite mover
+  ok   vários tópicos selecionados: estudar vale para todos e desfaz num único passo
+  ok   selo de revisão pendente no mapa (individual e somado em ramo recolhido) e virada do dia
+  ok   painel de estudos: números conferem com o cálculo manual, revisão rápida, navegação e atalhos desligados
+  ok   relatório de estudos (.md e .docx) sai do painel com os mesmos números
+  ok   seleção múltipla: Ctrl+clique, retângulo (Shift), Selecionar tudo pelo menu, excluir em lote com 1 desfazer
+  ok   arrastar um grupo move todos; formatação, marcador e progresso valem para todos os selecionados
+  ok   copiar/recortar/colar tópicos pelo MENU: preserva conteúdo, descarta histórico de estudo, ids novos
+  ok   colar texto de fora vira ramos (edital/lista); vazio e grande demais são recusados
+  ok   dentro de um campo de texto, Copiar/Colar/Selecionar tudo agem no texto e não nos tópicos
+  ok   autosave: grava rascunho atômico, apaga ao salvar; recuperação restaura, descarta ou isola arquivo corrompido
+  ok   arquivos recentes: gravados em userData, listados no menu e ausentes são ignorados
+  ok   estudo e prova sobrevivem a salvar → abrir pela interface; painel mostra os mesmos números
+  ok   nenhum erro de console durante toda a sessão
+  ok   o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)
+
+19/19 passaram
 
 
 
@@ -80,8 +137,33 @@ MindCraft e2e — rede de conhecimento (links, grafo, vault, Obsidian)
   ok   segurança: título/nota com HTML não vira marcação no grafo nem no painel de conexões
   ok   vault grande (40 mapas × 25 tópicos com links cruzados): carrega, resolve e desenha em tempo razoável
   ok   nenhum erro de console durante toda a sessão
+  ok   o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)
+  ok   painéis Conexões e Estrutura desenhados pela interface esperada, com o mesmo conteúdo
 
-13/13 passaram
+15/15 passaram
+
+
+
+MindCraft e2e — rede de conhecimento (links, grafo, vault, Obsidian)
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   links nas notas viram conexões: links de saída, retrolinks e link sem destino (fantasma)
+  ok   clicar numa conexão navega até o tópico; maiúsculas e acentos são ignorados na resolução
+  ok   menções sem link: detecta o título citado em texto livre e transforma em [[link]] com um clique (desfazível)
+  ok   autocompletar [[ nas notas: filtra, navega com setas, insere com Enter, Esc fecha e não reabre sem [[
+  ok   grafo (este mapa): nós, ligações, fantasma, seleção, busca, vizinhança, hierarquia, sem ligações, arrastar
+  ok   o grafo oculto não cobre o mapa (regressão: display:flex vencia o atributo hidden)
+  ok   Esc fecha o grafo; abrir o painel de estudos fecha o grafo; atalhos do mapa ficam desligados
+  ok   vault: escolher a pasta liga os mapas por [[Mapa#Tópico]]; o mapa aberto entra com edições NÃO salvas
+  ok   vault: duplo clique em tópico de outro mapa abre o arquivo (com confirmação se houver alterações)
+  ok   exportar para o Obsidian: um .md por mapa com [[Mapa#Tópico]], sem sobrescrever notas pessoais; abrir no Obsidian (sem lançar)
+  ok   segurança: título/nota com HTML não vira marcação no grafo nem no painel de conexões
+  ok   vault grande (40 mapas × 25 tópicos com links cruzados): carrega, resolve e desenha em tempo razoável
+  ok   nenhum erro de console durante toda a sessão
+  ok   o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)
+  ok   painéis Conexões e Estrutura desenhados pela interface esperada, com o mesmo conteúdo
+
+15/15 passaram
 
 
 

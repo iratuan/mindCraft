@@ -46,9 +46,9 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 
 ## Interface React (etapa 3 — migração por fatias)
 A interface está migrando para **React 18**, uma tela por vez, sem reescrever tudo de uma vez. O código-fonte fica em `renderer/react/*.jsx` e é empacotado (esbuild) em `renderer/bundle/react-ui.js` — nada é baixado em tempo de execução. `npm start`, `npm run e2e`, `npm run qa` e `npm run dist` geram o pacote sozinhos (`npm run build:ui` gera à mão; a pasta `bundle/` não vai para o Git).
-- **Já em React:** Biblioteca de mapas, Versões, Importar CSV de edital e Planilha de planejamento.
+- **Já em React:** Biblioteca de mapas, Versões, Importar CSV de edital, Planilha de planejamento, **Painel de estudos** (cartões, agenda, pontos fracos, revisões) e os painéis **Conexões** e **Estrutura**.
 - **Segurança da migração:** cada tela portada mantém os MESMOS ids/classes da versão clássica (que continua no código como reserva). Os testes rodam nas duas interfaces (`--classic`) e conferem qual está em uso. Para voltar à clássica sem recompilar: `reactUi: false` em `config.json`.
-- **Falta migrar:** painel de estudos, painel lateral (abas), editor de mapa (SVG) e grafo.
+- **Fica como está, de propósito (por ora):** o editor do mapa e o grafo (motores SVG imperativos, compartilhados com a exportação PDF/Word/PNG/SVG — reescrevê-los em React traria risco sem ganho; a ideia é hospedá-los dentro de componentes React) e os painéis de formulário Estilo, Estudo e Notas (HTML estático ligado a atalhos e ao cronômetro; migrar junto com a casca do aplicativo, quando a versão clássica das telas já migradas puder ser removida).
 
 ## Biblioteca de mapas no aplicativo (etapa 2)
 Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma casa**: um arquivo `.mom` **ou** a biblioteca.

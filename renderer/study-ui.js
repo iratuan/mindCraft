@@ -174,7 +174,7 @@ function otherMapsSection(today) {
   return sec;
 }
 
-function renderDash() {
+function renderDashClassic() {
   const box = $('#dash'); box.textContent = '';
   const today = nowStr(), s = S.summary(map, { today });
 

@@ -111,6 +111,16 @@ function buildOutline() {
   if (sig === outlineSig) return;
   outlineSig = sig;
   const box = $('#outline');
+  if (typeof useReactUi === 'function' && useReactUi()) {                  // interface React: monta o modelo de linhas e deixa o React pintar
+    const rows = [];
+    const addRow = (n, depth, branch) => {
+      rows.push({ id: n.id, depth, branch, sel: n.id === selectedId, hit: !!(hits && hits.has(n.id)), title: n.title, progress: n.progress, hasChildren: n.children.length > 0, collapsed: n.collapsed });
+      if (!n.collapsed) n.children.forEach((c, i) => addRow(c, depth + 1, depth === 0 ? L.theme.branches[i % L.theme.branches.length] : branch));
+    };
+    addRow(map.root, 0, L.theme.branches[0]);
+    window.MCReact.renderOutline(rows);
+  } else {
+  if (window.MCReact) window.MCReact.unmountOutline();
   box.textContent = '';
   const frag = document.createDocumentFragment();
   const add = (n, depth, branch) => {
@@ -132,6 +142,7 @@ function buildOutline() {
   };
   add(map.root, 0, L.theme.branches[0]);
   box.append(frag);
+  }
   // rola SÓ a lista da Estrutura (scrollIntoView rolaria também a coluna de painéis inteira)
   const s = box.querySelector('.sel'), sc = box.parentElement;
   if (s && sc) {
@@ -374,6 +385,8 @@ function centerOn(id, k) {
   render();
 }
 function presentStep(d) {
+  if (!present) return;                       // saiu da apresentação antes do 1º passo agendado (150 ms)
+  if (!present) return;                       // saiu da apresentação antes do 1º passo agendado (150 ms)
   const i = Math.min(present.order.length - 1, Math.max(0, present.i + d));
   present.i = i;
   const hud = $('#hud'); hud.hidden = false; hud.textContent = `${i + 1} / ${present.order.length}  ·  ← → navega · Esc sai`;

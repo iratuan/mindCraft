@@ -83,7 +83,13 @@ module.exports = async function start(title) {
         window.__titles = () => { const r = []; map.walk((n, l) => r.push(l + ':' + n.title)); return r; };
         true`);
       ctx.titles = () => ctx.js('__titles()');
-      resolve(ctx);
+      // --classic: roda a mesma bateria na interface clássica (referência); ctx.ui(sel) diz qual interface desenhou o elemento
+      ctx.CLASSIC = process.argv.includes('--classic');
+      ctx.ui = (sel) => ctx.js(`document.querySelector(${JSON.stringify(sel)}).dataset.ui || 'classic'`);
+      (async () => {
+        if (ctx.CLASSIC) { await waitFor(() => ctx.js('!!userDataDir')); await ctx.js('saveCfg({ reactUi: false }); true'); }
+        resolve(ctx);
+      })();
     });
   });
   ctx.ready = ready;

@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 15:26 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 15:41 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -68,3 +68,10 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - Telas em React: Biblioteca, Versões, Importar CSV, Planilha de planejamento. **A mesma bateria de testes roda na interface clássica e na React** (e2e-library e e2e-assistant, com asserção de qual interface está ativa); o QA completo (75/75, entrada real) roda com a React.
 - Achados: o teste de "copiar instruções" lia a mensagem antes da cópia terminar (condição de corrida; agora espera); copiar para a área de transferência passou a mostrar erro claro se o sistema recusar.
 - **Não testado**: Linux/macOS; CI nunca executado (workflow atualizado para Node 24 e build do pacote React).
+
+## Etapa 3 (continuação) — painel de estudos e painéis laterais em React
+- Em React agora: Painel de estudos (#dash), Conexões (#linksBody) e Estrutura (#outline). Mesmas classes/ids; a lógica de dados continua no código existente (modelo de linhas/links) e o React cuida só da apresentação.
+- Suítes rodadas nas DUAS interfaces (React e `--classic`): e2e do editor 21+21, estudo 19+19, rede 15+15, assistente 12+12, biblioteca 15+15; notas 11; QA com entrada real 75/75 (usa React). Cada suíte confere qual interface desenhou (`data-ui`).
+- **Erro real encontrado pelos testes e corrigido**: sair da apresentação em menos de 150 ms gerava um erro (`presentStep` rodava com a apresentação já encerrada).
+- Fica de fora de propósito: editor SVG, grafo e painéis Estilo/Estudo/Notas (ver README).
+- **Não testado**: Linux/macOS; CI (nunca executado).

@@ -74,7 +74,7 @@ let linksTimer = null;
 function syncLinks() {
   if (typeof map === 'undefined') return;
   clearTimeout(linksTimer);
-  linksTimer = setTimeout(renderLinks, 160);
+  linksTimer = setTimeout(() => renderLinks(), 160);
 }
 /** Junta arestas para o MESMO tópico (um [[link]] + uma seta desenhada = uma conexão só). Mantém o rótulo da seta. */
 function mergeEdges(edges, pick) {
@@ -96,7 +96,7 @@ function lkRow(g, n, { meta, ghostBtn, onClick, type, label } = {}) {
   if (onClick) r.onclick = onClick;
   return r;
 }
-function renderLinks() {
+function renderLinksClassic() {
   const box = $('#linksBody'); if (!box) return;
   box.textContent = '';
   const sel = primary();

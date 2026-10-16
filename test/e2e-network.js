@@ -223,5 +223,18 @@ const { writeMom, readMom } = require('../core/mom');
 
   await t('nenhum erro de console durante toda a sessão', async () => { eq(c.errors, [], 'erros de console'); });
   void readMom;
+  await t('o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)', async () => {
+    await js(`dirty = false; closeDash(); act.dash()`); await wait(200); eq(await c.ui('#dash'), c.CLASSIC ? 'classic' : 'react'); await js('closeDash()');
+  });
+
+  await t('painéis Conexões e Estrutura desenhados pela interface esperada, com o mesmo conteúdo', async () => {
+    await js(`dirty = false; newMap(); ['Alfa', 'Beta'].forEach((x) => map.addChild(map.root.id, x)); map.root.title = 'Raiz ' + Date.now(); render(); __md(__id('Alfa')); map.update(__id('Alfa'), { notes: 'ver [[Beta]] e [[Gama]]' }); renderLinks()`); await wait(300);
+    eq(await c.ui('#linksBody'), c.CLASSIC ? 'classic' : 'react'); eq(await c.ui('#outline'), c.CLASSIC ? 'classic' : 'react');
+    eq(await js(`[...document.querySelectorAll('#linksBody .lk')].map((r) => [...r.querySelectorAll('.t, .m')].map((x) => x.textContent).join(' | '))`), ['Beta', 'Gama | não existe']);
+    eq(await js(`[...document.querySelectorAll('#linksBody h4')].map((h) => h.textContent)`), ['Links deste tópico (2)', 'Citado em (0)']);
+    eq(await js(`[...document.querySelectorAll('#outline .ol-row')].map((r) => r.querySelector('.ol-t').textContent + (r.classList.contains('sel') ? '*' : ''))`).then((x) => x.slice(4)), ['Alfa*', 'Beta']);
+    eq(await js(`document.querySelector('#linksBody .go[data-create]').dataset.create`), 'Gama');
+  });
+
   await c.finish();
 })().catch((e) => { console.error('Falha no harness:', e); require('electron').app.exit(2); });

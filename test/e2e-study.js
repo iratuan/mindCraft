@@ -396,5 +396,9 @@ const DATASET = `(() => {
 
   await t('nenhum erro de console durante toda a sessão', async () => { eq(c.errors, [], 'erros de console'); });
 
+  await t('o painel de estudos foi desenhado pela interface esperada (React ou clássica, conforme --classic)', async () => {
+    await js(`dirty = false; closeDash(); act.dash()`); await wait(200); eq(await c.ui('#dash'), c.CLASSIC ? 'classic' : 'react'); await js('closeDash()');
+  });
+
   await c.finish();
 })().catch((e) => { console.error('Falha no harness:', e); require('electron').app.exit(2); });

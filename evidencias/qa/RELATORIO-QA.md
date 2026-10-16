@@ -1,10 +1,10 @@
 # Relatório de QA por funcionalidade
 
-Gerado por `npm run qa` em 16/10/2026, 15:26:16 — entrada real (mouse/teclado via Chromium), app executando de verdade.
+Gerado por `npm run qa` em 16/10/2026, 15:40:35 — entrada real (mouse/teclado via Chromium), app executando de verdade.
 
 **75 de 75 funcionalidades OK**.
 
-**Medições:** Mapa de 1001 tópicos: render 16 ms, render+ajuste 52 ms
+**Medições:** Mapa de 1001 tópicos: render 14 ms, render+ajuste 48 ms
 
 | # | Grupo | Funcionalidade | Como foi exercitada | Resultado | Captura |
 |---|---|---|---|---|---|
@@ -80,7 +80,7 @@ Gerado por `npm run qa` em 16/10/2026, 15:26:16 — entrada real (mouse/teclado 
 | 70 | Dados | Autosave e recuperação de sessão | Alteração → rascunho em disco → "queda" → Restaurar | ✅ OK — rascunho de 10132 bytes | [70_autosave-e-recuperacao-de-sessao](70_autosave-e-recuperacao-de-sessao.png) |
 | 71 | Dados | Arquivo corrompido não derruba o app nem o mapa atual | Abrir .mom inválido | ✅ OK — Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found | [71_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-](71_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png) |
 | 72 | Extremos | Título enorme, HTML, emoji e caracteres especiais | Textos hostis e longos no mapa | ✅ OK | [72_titulo-enorme-html-emoji-e-caracteres-especiais](72_titulo-enorme-html-emoji-e-caracteres-especiais.png) |
-| 73 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 16 ms · nível 1: 26 visíveis | [73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
+| 73 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 14 ms · nível 1: 26 visíveis | [73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
 | 74 | Extremos | Janela pequena (1000×640): a interface continua utilizável | Redimensiona a janela | ✅ OK | [74_pequena_janela-pequena-1000-640-a-interface-continua-uti](74_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)<br>[74_painel_janela-pequena-1000-640-a-interface-continua-uti](74_painel_janela-pequena-1000-640-a-interface-continua-uti.png) |
 | 75 | Extremos | Estados vazios: painel, conexões e grafo sem dados | Mapa novo sem estudos nem links | ✅ OK | [75_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](75_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)<br>[75_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](75_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png) |
 
@@ -474,7 +474,7 @@ Gerado por `npm run qa` em 16/10/2026, 15:26:16 — entrada real (mouse/teclado 
 ![72_titulo-enorme-html-emoji-e-caracteres-especiais.png](72_titulo-enorme-html-emoji-e-caracteres-especiais.png)
 
 ### 73 · Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
-✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 16 ms · nível 1: 26 visíveis_
+✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 14 ms · nível 1: 26 visíveis_
 
 ![73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
 ![73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
