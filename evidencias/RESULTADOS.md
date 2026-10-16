@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 15:41 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 16:10 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -75,3 +75,8 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Erro real encontrado pelos testes e corrigido**: sair da apresentação em menos de 150 ms gerava um erro (`presentStep` rodava com a apresentação já encerrada).
 - Fica de fora de propósito: editor SVG, grafo e painéis Estilo/Estudo/Notas (ver README).
 - **Não testado**: Linux/macOS; CI (nunca executado).
+
+## Rodada "excelente auxiliar de estudos" — leitor de PDF, revisão do dia, agenda .ics, atalhos
+- **Resultados**: unitários 122/122 (+10: referências de PDF no .mom/biblioteca/Obsidian, .ics); e2e do leitor 11/11 (PDF real gerado com pdfkit: texto selecionável, tópico/nota com página e destaque, 1 desfazer, fontes no painel Notas, relink, salvar/reabrir, PDF inválido/sem texto/ausente, 60 páginas com desenho só das páginas próximas, divisor arrastável); revisão/.ics/atalhos 7/7; demais suítes inalteradas (nas duas interfaces); **QA com entrada real 77/77** (duplo clique real numa palavra do PDF → ＋ Tópico; capturas `qa/70_*`, `qa/71_*`), 0 erros de console.
+- **Erros reais achados pelos testes e corrigidos**: a "Revisão do dia" lia `map.find()` como se devolvesse o nó (devolve {node,parent}) e mostrava "sem anotações"; barra de seleção do PDF some ao rolar (comportamento correto) — os testes agora esperam a rolagem assentar.
+- **Não testado**: PDFs muito grandes (centenas de MB) e PDFs digitalizados com OCR; leitura em Linux/macOS; PDF de outra codificação de fontes exótica; abrir o .ics num calendário real (só o formato foi validado).

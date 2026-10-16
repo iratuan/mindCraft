@@ -40,3 +40,12 @@ O que já foi corrigido por causa do QA está em `evidencias/RESULTADOS.md`; aqu
 **Mantido de propósito (não descartado):** marcadores, cores/formas por tópico, 5 temas, apresentação e exportações PNG/SVG/OPML — são do mapa mental em si, não atrapalham o fluxo de estudo, e removê-los arriscaria mapas existentes. Candidatos a esconder em um futuro "modo estudo" se a tela ficar carregada: marcadores 🚩/💡, relações × links `[[ ]]` (funções parecidas — hoje as relações servem para setas visuais e os links para a rede).
 **Descartado:** repetição espaçada adaptativa (SM-2/FSRS) e peso por disciplina no cálculo — sem dados reais de uso, o ganho não compensa o risco de agendar mal; os intervalos fixos 1-7-15-30-60-120 são previsíveis.
 **Próximos passos úteis:** testar um CSV gerado por uma IA real com um edital seu e anotar o que ela erra (ajusto as instruções); assinar o instalador; testar macOS/Linux via CI.
+
+## Próximas melhorias sugeridas (depois do leitor de PDF)
+1. **Questões por banca/ano/assunto** e **caderno de erros** (motivo do erro) — mostra onde você mais erra.
+2. **Simulados cronometrados** com nota por disciplina e evolução.
+3. **Metas semanais** (horas e questões) com aviso no painel.
+4. **Notificação diária** com o número de revisões vencidas.
+5. **Destaques com cores** no PDF e lista de todos os trechos de um PDF; copiar o PDF para dentro do pacote .mcpack (opcional).
+6. **Remover as versões clássicas** das telas migradas e migrar a casca (React) depois de um período de uso.
+7. **Assinar o instalador** e criar atualização automática.

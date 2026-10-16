@@ -24,3 +24,15 @@ export function useRefresh() {
   const [, set] = useState(0);
   return useCallback(() => set((n) => n + 1), []);
 }
+
+/** Re-renderiza quando o mapa muda (o app clássico dispara 'mc:render' a cada render()); com pequeno atraso para juntar rajadas. */
+export function useMcRender() {
+  const [n, set] = useState(0);
+  useEffect(() => {
+    let t = 0;
+    const f = () => { clearTimeout(t); t = setTimeout(() => set((x) => x + 1), 30); };
+    document.addEventListener('mc:render', f);
+    return () => { document.removeEventListener('mc:render', f); clearTimeout(t); };
+  }, []);
+  return n;
+}

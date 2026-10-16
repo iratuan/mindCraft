@@ -101,6 +101,7 @@ function syncChrome(sel) {
   buildOutline();
   if (typeof syncStudy === 'function') syncStudy(sel); // study-ui.js (carregado depois)
   if (typeof syncLinks === 'function') syncLinks();    // graph-ui.js
+  document.dispatchEvent(new Event('mc:render'));     // painéis React (leitor de PDF, fontes) se atualizam
 }
 
 let outlineSig = '';

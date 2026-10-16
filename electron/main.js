@@ -86,9 +86,14 @@ function buildMenu() {
       { label: 'Apresentar', accelerator: 'F5', click: send('present') },
       { label: 'Painel de estudos', accelerator: 'CmdOrCtrl+E', click: send('dash') },
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
+      { label: 'Revisão do dia', accelerator: 'CmdOrCtrl+Shift+R', click: send('review') },
+      { label: 'Leitor de PDF (dividir a tela)', accelerator: 'CmdOrCtrl+Shift+P', click: send('pdf') },
       { type: 'separator' },
       { role: 'togglefullscreen', label: 'Tela cheia' },
       { role: 'toggleDevTools', label: 'Ferramentas de desenvolvedor' },
+    ] },
+    { label: 'Ajuda', submenu: [
+      { label: 'Atalhos do teclado', accelerator: 'F1', click: send('help') },
     ] },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -125,7 +130,7 @@ const FILTERS = {
   mom: [{ name: 'Mapa mental (.mom)', extensions: ['mom'] }],
   pdf: [{ name: 'PDF', extensions: ['pdf'] }], docx: [{ name: 'Word', extensions: ['docx'] }],
   png: [{ name: 'PNG', extensions: ['png'] }], svg: [{ name: 'SVG', extensions: ['svg'] }],
-  csv: [{ name: 'CSV (edital)', extensions: ['csv', 'txt'] }],
+  csv: [{ name: 'CSV (edital)', extensions: ['csv', 'txt'] }], ics: [{ name: 'Agenda (iCalendar)', extensions: ['ics'] }],
   mcpack: [{ name: 'Pacote MindCraft (.mcpack)', extensions: ['mcpack'] }], db: [{ name: 'Banco SQLite (.db)', extensions: ['db'] }],
   md: [{ name: 'Markdown', extensions: ['md'] }], opml: [{ name: 'OPML', extensions: ['opml'] }],
 };
@@ -160,6 +165,10 @@ ipcMain.handle('clip:read', async () => String((await clipboard.readText()) ?? '
 ipcMain.handle('clip:write', async (_e, text) => { await clipboard.writeText(String(text)); });
 ipcMain.handle('dialog:open-csv', async () => {
   const r = await dialog.showOpenDialog(win, { title: 'CSV do edital', properties: ['openFile'], filters: FILTERS.csv });
+  return r.canceled ? null : r.filePaths[0];
+});
+ipcMain.handle('dialog:open-pdf', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Abrir PDF', properties: ['openFile'], filters: FILTERS.pdf });
   return r.canceled ? null : r.filePaths[0];
 });
 ipcMain.handle('dialog:open-pack', async () => {

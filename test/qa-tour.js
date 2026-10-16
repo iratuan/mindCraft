@@ -544,6 +544,29 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await c.waitFor(() => js("!!document.querySelector('#verNow')")); await clickSel('#verNow'); await c.waitFor(() => js("document.querySelectorAll('#verList .lib-row').length >= 1")); await shot('versoes'); await clickSel('#verBack');
     await c.waitFor(() => js("!!document.querySelector('#libTabTrash')")); await clickSel('#libTabTrash'); await wait(150); await shot('lixeira-vazia'); await clickSel('#libClose');
   });
+  await feature('Estudos', 'Leitor de PDF dividido: selecionar um trecho cria tópico com página e destaque', 'Tela dividida; duplo clique real numa palavra do PDF; botão ＋ Tópico; Ctrl+clique no destaque', async ({ shot }) => {
+    const PDFDocument = require('pdfkit'); const pdf = path.join(TMP, 'Lei de Licitações.pdf');
+    await new Promise((res) => { const d = new PDFDocument({ size: 'A4', margin: 70 }); const o = fs.createWriteStream(pdf); d.pipe(o); o.on('finish', res);
+      d.fontSize(20).text('Lei 14.133 — Licitações'); d.moveDown(); d.fontSize(15).text('Licitação é o procedimento administrativo que antecede os contratos públicos.'); d.moveDown(); d.text('Moralidade e publicidade orientam toda a contratação.'); d.addPage(); d.fontSize(15).text('Dispensa de licitação ocorre nos casos previstos em lei.'); d.end(); });
+    await js("dirty = false; ipcRenderer.emit('menu', {}, 'pdf'); true"); await c.waitFor(() => js("!!document.querySelector('#pdfOpen')")); await shot('leitor-vazio');
+    await js(`window.__dlg.pdf = ${JSON.stringify(pdf)}; true`); await clickSel('#pdfOpen'); await c.waitFor(() => js("document.querySelectorAll('.pdf-page .textLayer span').length > 3"), 15000);
+    let last = ''; await c.waitFor(async () => { const cur = await js("(() => { const p = document.querySelector('.pdf-page'), sc = document.querySelector('#pdfScroll'); return p.getBoundingClientRect().width + '|' + sc.scrollTop + '|' + document.querySelectorAll('.pdf-page .textLayer span').length; })()"); const same = cur === last; last = cur; return same; }, 10000, 500);   // layout assentou (largura ajustada, rolagem parada)
+    const w = await js(`(() => { const s = [...document.querySelectorAll('.pdf-page[data-page="1"] .textLayer span')].find((x) => x.textContent.startsWith('Licitação é')); const r = s.getBoundingClientRect(); return { x: r.left + 14, y: r.top + r.height / 2 }; })()`);
+    await dbl(w.x, w.y); await c.waitFor(() => js("!!document.querySelector('#pdfMkTopic')"), 6000); await shot('trecho-selecionado');
+    await clickSel('#pdfMkTopic'); await c.waitFor(() => js("!!__id('Licitação')"), 6000);
+    eq(await js("map.find(__id('Licitação')).node.refs[0].page"), 1); eq(await js("map.meta.pdfs[0].name"), 'Lei de Licitações'); await wait(500); await shot('topico-criado');
+    ok(await js("document.querySelectorAll('.pdf-hl').length >= 1"), 'destaque desenhado'); ok(await js("!!document.querySelector('#pdfChips .chip2')"), 'chip do tópico nesta página');
+    await clickSel('#ptabs [data-tab="notes"]'); await c.waitFor(() => js("!!document.querySelector('#refsList')")); await shot('fontes-nas-notas');
+    await clickSel('#pdfClose'); await c.waitFor(() => js("document.querySelector('#pdfpane').hidden"));
+  });
+  await feature('Estudos', 'Revisão do dia (recordação ativa) e tela de atalhos (F1)', 'Cliques reais: Mostrar anotações → Lembrei / Errei; atalho de teclado Espaço', async ({ shot }) => {
+    await js("dirty = false; ipcRenderer.emit('menu', {}, 'review'); true"); await c.waitFor(() => js("!!document.querySelector('#rvTitle')")); await shot('pergunta');
+    const t1 = await txt('#rvTitle'); await clickSel('#rvShow'); await c.waitFor(() => js("!!document.querySelector('#rvDetail')")); await shot('resposta');
+    await clickSel('#rvOk'); await c.waitFor(async () => (await txt('#rvCount')).startsWith('2 /')); ok((await js(`(() => { let r; map.walk((n) => { if (n.title === ${JSON.stringify(t1)}) r = n; }); return r.study.next > '${TODAY}'; })()`)), 'Lembrei agendou a próxima revisão');
+    focusWin(); await key(' '); await c.waitFor(() => js("!!document.querySelector('#rvDetail')")); await clickSel('#rvBad'); await c.waitFor(async () => (await txt('#rvCount')).startsWith('3 /'));
+    await clickSel('#rvSkip'); await c.waitFor(() => js("!!document.querySelector('#rvDone')")); await shot('concluida'); await clickSel('#rvClose');
+    await js("ipcRenderer.emit('menu', {}, 'help'); true"); await c.waitFor(() => js("!!document.querySelector('#keysBox')")); await shot('atalhos'); await clickSel('#keysClose');
+  });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');
     await c.waitFor(() => fs.existsSync(draft)); const size = fs.statSync(draft).size; await js('draftExists = false; newMap()'); ok(fs.existsSync(draft), 'rascunho sobrevive');

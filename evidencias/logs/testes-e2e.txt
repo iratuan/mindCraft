@@ -2,10 +2,10 @@
 > mindcraft@0.1.0 pree2e
 > node tools/build-ui.js
 
-interface React empacotada: renderer\bundle\react-ui.js (305 KB)
+interface React empacotada: renderer\bundle\react-ui.js (860 KB)
 
 > mindcraft@0.1.0 e2e
-> electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic
+> electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic && electron test/e2e-pdf.js && electron test/e2e-review.js
 
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
@@ -269,4 +269,38 @@ MindCraft e2e — biblioteca SQLite (interface clássica)
   ok   nenhum erro de console durante toda a sessão
 
 15/15 passaram
+
+
+
+MindCraft e2e — leitor de PDF dividido
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   abrir o leitor divide a tela (mapa e PDF lado a lado); fechar restaura; nada suja o mapa
+  ok   abrir um PDF: páginas, texto selecionável, contagem, navegação, zoom e busca; abrir não suja o mapa
+  ok   selecionar trecho → "＋ Tópico": cria filho do selecionado, com notas "> trecho — PDF, p. N", fonte, destaque, registro do PDF e UM desfazer
+  ok   "＋ Nota": acrescenta o trecho (citação em Markdown) às notas do tópico selecionado, sem criar tópico, e guarda a fonte
+  ok   painel Notas lista as fontes; clicar leva o leitor à página; remover é desfazível; Ctrl+clique no destaque vai ao tópico
+  ok   salvar e reabrir o .mom preserva PDFs e fontes; o leitor reabre o PDF vinculado na página certa
+  ok   PDF movido/sumido: aviso claro e "Localizar o PDF…" reaponta o registro (1 desfazer), sem perder as fontes
+  ok   arquivos ruins não derrubam o app: texto que não é PDF, PDF sem texto (só imagem/figura) e arquivo sumido
+  ok   PDF grande (60 páginas): só desenha as páginas perto da tela; busca atravessa todas; ir para a página 50 funciona
+  ok   sem o leitor aberto o app é o de sempre; fechar o leitor libera tudo; arrastar o divisor muda a largura e é lembrada
+  ok   nenhum erro de console durante toda a sessão
+
+11/11 passaram
+
+
+
+MindCraft e2e — revisão do dia, agenda .ics e atalhos
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   Revisão do dia pelo painel: mostra só o tópico (pergunta); anotações aparecem ao pedir, renderizadas e seguras
+  ok   Lembrei avança o ciclo e agenda a próxima revisão; Errei volta ao início (amanhã); Pular não altera nada; cada resposta = 1 desfazer
+  ok   sem revisões pendentes: mensagem amigável; Y/N só valem depois de revelar; Esc sai
+  ok   revisão mostra as fontes (PDF) do tópico e o botão "Ir ao mapa" seleciona o tópico
+  ok   agenda .ics pelo painel: arquivo válido com revisões e prova; cancelar o diálogo não grava nada
+  ok   F1 abre os atalhos (agrupados), Esc fecha; o mapa não é alterado
+  ok   nenhum erro de console durante toda a sessão
+
+7/7 passaram
 

@@ -78,6 +78,11 @@ function exportObsidian(maps, outDir) {
       if (meta.length) out.push(`_${meta.join(' · ')}_`, '');
       if (parseLinks(node.title).length) out.push(`Ligações do título: ${resolveText(node.title, m.key)}`, '');
       if (node.notes) out.push(resolveText(node.notes, m.key).trim(), '');
+      if (node.refs && node.refs.length) {
+        const pdfs = m.map.meta.pdfs || [];
+        for (const rf of node.refs) { const p = pdfs.find((x) => x.id === rf.pdf); out.push(`- Fonte: ${p ? p.name.replace(/[\r\n]+/g, ' ') : 'PDF'}, p. ${rf.page}${rf.quote ? ' — “' + rf.quote.replace(/\s+/g, ' ').slice(0, 160) + '”' : ''}`); }
+        out.push('');
+      }
       const rel = g.outgoing(id).filter((e) => e.type === 'relation');
       for (const e of rel) out.push(`- Relacionado: ${wiki(e.to)}${e.label ? ` (${e.label.replace(/[\r\n]+/g, ' ')})` : ''}`);
       if (rel.length) out.push('');

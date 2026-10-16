@@ -1,6 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 const study = require('./study');
+const pdfrefs = require('./pdfrefs');
 
 const newId = () => crypto.randomBytes(16).toString('hex');
 
@@ -271,6 +272,42 @@ class MindMap {
     if (exam !== null && (!exam || !study.isDateStr(exam.date))) throw new Error('Data da prova inválida.');
     this._snapshot();
     if (exam === null) delete this.meta.exam; else this.meta.exam = { name: String(exam.name || '').slice(0, 120), date: exam.date };
+    return true;
+  }
+
+  // --- PDFs vinculados e referências de trechos (core/pdfrefs.js) ---
+  /** Registra um PDF no mapa (mesmo caminho = mesmo registro). */
+  addPdf({ name, path: p }) {
+    if (!p || typeof p !== 'string') throw new Error('Caminho do PDF inválido.');
+    const cur = (this.meta.pdfs || []).find((x) => x.path.toLowerCase() === p.toLowerCase());
+    if (cur) return cur;
+    this._snapshot();
+    const pdf = { id: newId().slice(0, 16), name: String(name || '').slice(0, 200) || pdfrefs.baseName(p), path: p.slice(0, 1000) };
+    (this.meta.pdfs = this.meta.pdfs || []).push(pdf);
+    return pdf;
+  }
+  /** Aponta um PDF registrado para outro arquivo (outro computador, arquivo movido). */
+  relinkPdf(id, p) {
+    const pdf = (this.meta.pdfs || []).find((x) => x.id === id);
+    if (!pdf || !p || typeof p !== 'string') return false;
+    this._snapshot(); pdf.path = p.slice(0, 1000);
+    return true;
+  }
+  /** Anexa uma referência (PDF, página, trecho e retângulos) a um tópico. */
+  addRef(nodeId, ref) {
+    const r = this.find(nodeId); if (!r) return false;
+    const clean = pdfrefs.sanitizeRefs([ref])[0];
+    if (!clean) throw new Error('Referência de PDF inválida.');
+    if (!(this.meta.pdfs || []).some((x) => x.id === clean.pdf)) throw new Error('O PDF da referência não está registrado no mapa.');
+    this._snapshot();
+    (r.node.refs = r.node.refs || []).push(clean);
+    return true;
+  }
+  removeRef(nodeId, index) {
+    const r = this.find(nodeId);
+    if (!r || !Array.isArray(r.node.refs) || !r.node.refs[index]) return false;
+    this._snapshot(); r.node.refs.splice(index, 1);
+    if (!r.node.refs.length) delete r.node.refs;
     return true;
   }
 

@@ -788,76 +788,104 @@
     },
     {
       "n": 70,
+      "group": "Estudos",
+      "title": "Leitor de PDF dividido: selecionar um trecho cria tópico com página e destaque",
+      "how": "Tela dividida; duplo clique real numa palavra do PDF; botão ＋ Tópico; Ctrl+clique no destaque",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "70_leitor-vazio_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png",
+        "70_trecho-selecionado_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png",
+        "70_topico-criado_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png",
+        "70_fontes-nas-notas_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png"
+      ]
+    },
+    {
+      "n": 71,
+      "group": "Estudos",
+      "title": "Revisão do dia (recordação ativa) e tela de atalhos (F1)",
+      "how": "Cliques reais: Mostrar anotações → Lembrei / Errei; atalho de teclado Espaço",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "71_pergunta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png",
+        "71_resposta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png",
+        "71_concluida_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png",
+        "71_atalhos_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png"
+      ]
+    },
+    {
+      "n": 72,
       "group": "Dados",
       "title": "Autosave e recuperação de sessão",
       "how": "Alteração → rascunho em disco → \"queda\" → Restaurar",
       "status": "OK",
       "note": "rascunho de 10132 bytes",
       "files": [
-        "70_autosave-e-recuperacao-de-sessao.png"
+        "72_autosave-e-recuperacao-de-sessao.png"
       ]
     },
     {
-      "n": 71,
+      "n": 73,
       "group": "Dados",
       "title": "Arquivo corrompido não derruba o app nem o mapa atual",
       "how": "Abrir .mom inválido",
       "status": "OK",
       "note": "Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found",
       "files": [
-        "71_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
+        "73_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
       ]
     },
     {
-      "n": 72,
+      "n": 74,
       "group": "Extremos",
       "title": "Título enorme, HTML, emoji e caracteres especiais",
       "how": "Textos hostis e longos no mapa",
       "status": "OK",
       "note": "",
       "files": [
-        "72_titulo-enorme-html-emoji-e-caracteres-especiais.png"
+        "74_titulo-enorme-html-emoji-e-caracteres-especiais.png"
       ]
     },
     {
-      "n": 73,
+      "n": 75,
       "group": "Extremos",
       "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
       "how": "Gera 1 000 tópicos e mede layout/desenho",
       "status": "OK",
-      "note": "1001 tópicos · render 14 ms · nível 1: 26 visíveis",
+      "note": "1001 tópicos · render 22 ms · nível 1: 26 visíveis",
       "files": [
-        "73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
-        "73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+        "75_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
+        "75_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
       ]
     },
     {
-      "n": 74,
+      "n": 76,
       "group": "Extremos",
       "title": "Janela pequena (1000×640): a interface continua utilizável",
       "how": "Redimensiona a janela",
       "status": "OK",
       "note": "",
       "files": [
-        "74_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
-        "74_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
+        "76_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
+        "76_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
       ]
     },
     {
-      "n": 75,
+      "n": 77,
       "group": "Extremos",
       "title": "Estados vazios: painel, conexões e grafo sem dados",
       "how": "Mapa novo sem estudos nem links",
       "status": "OK",
       "note": "",
       "files": [
-        "75_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
-        "75_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
+        "77_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
+        "77_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
       ]
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 14 ms, render+ajuste 48 ms"
+    "Mapa de 1001 tópicos: render 22 ms, render+ajuste 76 ms"
   ],
   "errosDeConsole": []
 }

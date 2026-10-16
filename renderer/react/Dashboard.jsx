@@ -197,6 +197,8 @@ export function Dashboard() {
       </div>
 
       <div className="dash-actions">
+        <button className="btn primary" id="btnReview" onClick={() => h.actions.openReview()}>Revisão do dia</button>
+        <button className="btn" id="btnIcs" onClick={() => h.actions.exportIcs()}>Agenda (.ics)</button>
         <button className="btn" id="btnReportMd" onClick={() => h.actions.exportReport('md')}>Relatório (.md)</button>
         <button className="btn" id="btnReportDocx" onClick={() => h.actions.exportReport('docx')}>Relatório (.docx)</button>
         <button className="btn" id="btnEdital" onClick={() => h.actions.openImportModal()}>Importar edital…</button>

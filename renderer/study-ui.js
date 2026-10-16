@@ -267,6 +267,8 @@ function renderDashClassic() {
   const act2 = el('div', 'dash-actions');
   const b = (id, label, fn, cls) => { const x = el('button', 'btn' + (cls ? ' ' + cls : ''), label); x.id = id; x.onclick = fn; return x; };
   act2.append(
+    b('btnReview', 'Revisão do dia', () => act.review(), 'primary'),
+    b('btnIcs', 'Agenda (.ics)', () => exportIcs()),
     b('btnReportMd', 'Relatório (.md)', () => exportReport('md')),
     b('btnReportDocx', 'Relatório (.docx)', () => exportReport('docx')),
     b('btnEdital', 'Importar edital…', () => openImportModal()),
@@ -277,6 +279,19 @@ function renderDashClassic() {
     b('btnDashClose', 'Fechar', () => closeDash(), 'primary'));
 
   box.append(head, cards, grid, act2);
+}
+
+/** Agenda de revisões e data da prova em .ics (Google Agenda, Outlook…). Só grava o arquivo escolhido. */
+async function exportIcs() {
+  const p = await ipcRenderer.invoke('dialog:save', 'ics', `Agenda de estudos - ${map.root.title}.ics`);
+  if (!p) return null;
+  try {
+    const r = require(path.join(core, 'ics')).toIcs(map, { today: nowStr() });
+    fs.writeFileSync(p, r.ics, 'utf8');
+    const text = `Agenda salva: ${r.reviewDays} dia(s) com revisões${r.exam ? ' + a prova' : ''}. Importe o arquivo no seu calendário.`;
+    setStatus(text); const m = $('#dashMsg'); if (m) { m.textContent = text; m.className = 'msg ok'; }
+    return p;
+  } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao exportar a agenda: ' + e.message); return null; }
 }
 
 async function exportReport(kind) {

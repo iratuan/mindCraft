@@ -55,3 +55,30 @@ export function Outline({ rows }) {
     </>
   );
 }
+
+/** Fontes (trechos de PDF) do tópico selecionado, no painel Notas. */
+import { useMcRender } from './hooks.js';
+export function RefsBox() {
+  const h = H(); useMcRender();
+  const sel = h.primary();
+  const refs = sel && sel.node.refs ? sel.node.refs : [];
+  if (!refs.length) return null;
+  const pdfs = h.map().meta.pdfs || [];
+  return (
+    <div className="refs" id="refsList">
+      <div className="field-label">{`Fontes (${refs.length})`}</div>
+      {refs.map((r, i) => {
+        const p = pdfs.find((x) => x.id === r.pdf);
+        return (
+          <div className="ref-row" key={i} data-ref={i}>
+            <button className="ref-open" title="Abrir o PDF nesta página" onClick={() => h.pdfOpenRef(r)}>
+              <b>{`📖 ${p ? p.name : 'PDF não vinculado'}, p. ${r.page}`}</b>
+              {r.quote ? <span>{`“${r.quote.length > 140 ? r.quote.slice(0, 139) + '…' : r.quote}”`}</span> : null}
+            </button>
+            <button className="ref-del" title="Remover esta fonte" onClick={() => h.removeRef(sel.node.id, i)}>✕</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

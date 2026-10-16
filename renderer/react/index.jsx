@@ -7,7 +7,10 @@ import { VersionsModal } from './VersionsModal.jsx';
 import { CsvModal } from './CsvModal.jsx';
 import { PlanModal } from './PlanModal.jsx';
 import { Dashboard } from './Dashboard.jsx';
-import { Connections, Outline } from './Panels.jsx';
+import { Connections, Outline, RefsBox } from './Panels.jsx';
+import { PdfPane } from './PdfPane.jsx';
+import { ReviewMode } from './ReviewMode.jsx';
+import { ShortcutsModal } from './ShortcutsModal.jsx';
 
 let cur = null;
 function unmount() { if (cur) { try { cur.root.unmount(); } catch { /* o nó já foi removido por outro código */ } cur = null; } }
@@ -49,13 +52,42 @@ function unmountPanel(id) {
   delete panels[id]; const box = document.getElementById(id); if (box) { box.textContent = ''; delete box.dataset.ui; }
 }
 
+// Leitor de PDF dividido: uma raiz em #pdfpane enquanto estiver aberto (fechar descarta o documento e libera memória).
+let pdfRoot = null;
+const resizeSoon = () => setTimeout(() => window.dispatchEvent(new Event('resize')), 0);   // o mapa se ajusta à nova largura
+function openPdf(opts = {}) {
+  const pane = document.getElementById('pdfpane'), split = document.getElementById('pdfsplit');
+  if (pdfRoot) { document.dispatchEvent(new CustomEvent('mc:pdf-open', { detail: opts })); return; }
+  pane.hidden = false; split.hidden = false; pane.textContent = '';
+  const w = window.MC.loadCfg().pdfWidth; if (w) pane.style.width = w + 'px';
+  pdfRoot = createRoot(pane);
+  flushSync(() => pdfRoot.render(<PdfPane initial={opts} onClose={closePdf} />));
+  document.body.classList.add('pdf-open'); resizeSoon();
+}
+function closePdf() {
+  if (!pdfRoot) return;
+  try { pdfRoot.unmount(); } catch { /* nó já removido */ }
+  pdfRoot = null;
+  const pane = document.getElementById('pdfpane'); pane.textContent = ''; pane.hidden = true; document.getElementById('pdfsplit').hidden = true;
+  document.body.classList.remove('pdf-open'); resizeSoon();
+}
+const refsRoot = { r: null };
+function renderRefs() {
+  const box = document.getElementById('refsBox'); if (!box) return;
+  if (!refsRoot.r) { box.textContent = ''; refsRoot.r = createRoot(box); }
+  flushSync(() => refsRoot.r.render(<RefsBox />));
+}
+document.addEventListener('mc:render', () => { if (document.getElementById('refsBox')) renderRefs(); });
+
 window.MCReact = {
   version: 1,
   openLibrary: (tab = 'maps') => mount(LibraryModal, { initialTab: tab }),
   openVersions: (id, opts = {}) => mount(VersionsModal, { mapId: id, back: opts.back !== false }),
   openCsv: () => mount(CsvModal, {}),
+  openReview: () => mount(ReviewMode, {}),
+  openShortcuts: () => mount(ShortcutsModal, {}),
   openPlan: () => mount(PlanModal, {}),
-  renderDash, unmountDash,
+  renderDash, unmountDash, openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot, renderRefs,
   renderLinks: (model) => renderPanel('linksBody', <Connections model={model} />), unmountLinks: () => unmountPanel('linksBody'),
   renderOutline: (rows) => renderPanel('outline', <Outline rows={rows} />), unmountOutline: () => unmountPanel('outline'),
   unmount,

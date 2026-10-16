@@ -5,6 +5,7 @@ const { MindMap, createNode, newId } = require('./model');
 const { normalizeStudy, isDateStr } = require('./study');
 const { sanitizeStyle, THEMES } = require('./themes');
 const { MARKERS } = require('./markers');
+const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
 
 // Limites contra arquivos corrompidos ou maliciosos (o .mom é um ZIP vindo de fora).
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
@@ -57,6 +58,7 @@ function readMom(source) {
         style: sanitizeStyle(m.style),
         collapsed: m.collapsed === true,
         ...(m.study ? { study: normalizeStudy(m.study) } : {}),
+        ...(Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {}),
       }),
       parentId: typeof parentId === 'string' ? mapId(parentId) : null, index: Number.isFinite(index) ? index : 0, raw: { ...raw },
     });
@@ -92,6 +94,7 @@ function readMom(source) {
   const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
   map.meta._momDoc = doc; // preservado para round-trip
   if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
+  if (Array.isArray(doc.mcPdfs) && sanitizePdfs(doc.mcPdfs).length) map.meta.pdfs = sanitizePdfs(doc.mcPdfs);
   if (Array.isArray(doc.mcRelations)) {
     map.meta.relations = doc.mcRelations
       .filter((r) => r && typeof r.from === 'string' && typeof r.to === 'string' && seen.has(mapId(r.from)) && seen.has(mapId(r.to)) && mapId(r.from) !== mapId(r.to))
@@ -108,7 +111,7 @@ function writeMom(map, target) {
   const visit = (node, parentId, previousId, index) => {
     const raw = node._mom || {};
     const hasStyle = node.style && Object.keys(node.style).length;
-    const hasMc = (node.markers || []).length || node.progress != null || node.study || hasStyle || node.collapsed;
+    const hasMc = (node.markers || []).length || node.progress != null || node.study || hasStyle || node.collapsed || (node.refs && node.refs.length);
     list.push({
       version: 40, ...raw, id: node.id, originalId: node.id,
       ...(parentId ? { parentId } : {}), ...(previousId ? { previousId } : {}),
@@ -120,6 +123,7 @@ function writeMom(map, target) {
         markers: node.markers || [], progress: node.progress,
         ...(hasStyle ? { style: node.style } : {}), ...(node.collapsed ? { collapsed: true } : {}),
         ...(node.study ? { study: node.study } : {}),
+        ...(node.refs && node.refs.length ? { refs: node.refs } : {}),
       } } : {}),
     });
     let prev = null;
@@ -139,6 +143,7 @@ function writeMom(map, target) {
   doc.mcRelations = map.meta.relations || [];
   doc.mcTheme = map.meta.theme || 'ocean';
   if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
+  if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
   doc.mapInfo.name = map.meta.name || map.root.title;
   doc.mapInfo.rootId = map.root.id;
   doc.mapInfo.modificationDate = now;

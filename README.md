@@ -44,6 +44,18 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - **Grafo (Ctrl+G):** este mapa ou **vault** (pasta com vários `.mom`), cores por mapa, hierarquia opcional, só vizinhança, busca, arrastar nós, rótulos sem sobreposição.
 - **Exportar para o Obsidian:** um `.md` por mapa com `[[Mapa#Tópico]]` resolvidos; **nunca sobrescreve** uma nota que não seja do MindCraft. "Abrir no Obsidian" usa o protocolo `obsidian://` (ou o executável instalado no Windows).
 
+## Leitor de PDF ao lado do mapa
+**Ctrl+Shift+P** (ou o botão do PDF na barra lateral esquerda) divide a tela: PDF à esquerda, mapa à direita; arraste o divisor para ajustar a largura (a medida é lembrada). **Abrir PDF…** escolhe o arquivo; o leitor tem páginas, zoom (ajustar à largura), busca no texto, e lembra a página onde você parou (por arquivo).
+- **Selecione um trecho** do PDF e use **＋ Tópico** (cria um tópico filho do selecionado, com o trecho em notas e a fonte "PDF, p. N") ou **＋ Nota** (acrescenta o trecho, como citação, às notas do tópico selecionado). Cada ação é **um único desfazer** e destaca o trecho no PDF.
+- **Fontes** de cada tópico aparecem no painel **Notas** (📖 PDF, p. N): clicar abre o PDF na página. **Ctrl+clique** num destaque vai ao tópico; o leitor mostra os tópicos da página atual.
+- O mapa guarda só o **caminho** do PDF (o arquivo não é copiado). Se o arquivo mudar de lugar (ou em outro computador), o leitor avisa e **Localizar o PDF…** reaponta; as fontes e destaques são preservados. As fontes entram também na exportação para o Obsidian ("Fonte: PDF, p. N — trecho"). PDF protegido por senha e PDF sem texto (só imagem) abrem com aviso claro (sem texto não há o que selecionar).
+- Só ler não altera o mapa; o PDF só é registrado no mapa quando você captura o primeiro trecho.
+
+## Revisão do dia, agenda (.ics) e atalhos
+- **Revisão do dia** (Ctrl+Shift+R ou botão no Painel de estudos): recordação ativa — aparece só o tópico; você tenta lembrar, pede **Mostrar anotações** (Espaço) e responde **Lembrei** (Y) ou **Errei** (N); **Pular** (S). Cada resposta usa o mesmo ciclo 1‑7‑15‑30‑60‑120 e é um desfazer.
+- **Agenda (.ics)** (Painel de estudos): um evento de dia inteiro por dia com revisões (as atrasadas caem em hoje) e a data da prova com alerta; importe no Google Agenda/Outlook. Reexportar mantém os mesmos identificadores (não duplica).
+- **F1** abre a lista de atalhos do teclado.
+
 ## Interface React (etapa 3 — migração por fatias)
 A interface está migrando para **React 18**, uma tela por vez, sem reescrever tudo de uma vez. O código-fonte fica em `renderer/react/*.jsx` e é empacotado (esbuild) em `renderer/bundle/react-ui.js` — nada é baixado em tempo de execução. `npm start`, `npm run e2e`, `npm run qa` e `npm run dist` geram o pacote sozinhos (`npm run build:ui` gera à mão; a pasta `bundle/` não vai para o Git).
 - **Já em React:** Biblioteca de mapas, Versões, Importar CSV de edital, Planilha de planejamento, **Painel de estudos** (cartões, agenda, pontos fracos, revisões) e os painéis **Conexões** e **Estrutura**.
@@ -87,3 +99,7 @@ Linha de comando (`bin/mindcraft-library.js`):
 - Instalador sem assinatura de código (SmartScreen/Gatekeeper mostrarão aviso).
 - Diálogos nativos (abrir/salvar/escolher pasta/confirmar) são simulados nos testes; atalhos do menu nativo são testados pelo clique no item do menu, não pela tecla.
 - O cronômetro não sobrevive a um fechamento do app (os minutos só são gravados ao parar).
+
+
+## Licenças de terceiros
+O leitor de PDF usa o PDF.js (Mozilla, Apache‑2.0), empacotado no aplicativo; a interface usa React (MIT).

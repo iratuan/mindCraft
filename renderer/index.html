@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>MindCraft</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="bundle/pdf.css">
 </head>
 <body>
 <div id="app">
@@ -56,10 +57,13 @@
       <span class="hsep"></span>
       <button data-act="graph" class="tool" title="Rede de conhecimento (Ctrl+G)" aria-label="Rede de conhecimento"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="19" cy="15" r="1.6"/><path d="M8 8l8-1.5M7.2 9 11 16M13.6 16.7l4.4-1M17.4 8l1.2 5.4"/></svg></button>
       <button data-act="fit" class="tool" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button data-act="pdf" class="tool" title="Leitor de PDF ao lado do mapa (Ctrl+Shift+P)" aria-label="Leitor de PDF"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></svg></button>
       <button data-act="present" class="tool" title="Apresentar (F5)" aria-label="Apresentar"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg></button>
     </nav>
 
     <!-- Área de trabalho -->
+    <section id="pdfpane" hidden aria-label="Leitor de PDF"></section>
+    <div id="pdfsplit" hidden title="Arraste para ajustar a largura do leitor"></div>
     <main id="stage" tabindex="-1">
       <svg id="svg"><g id="view"></g></svg>
       <textarea id="editor" hidden></textarea>
@@ -128,7 +132,8 @@
             <button data-fmt="quote" title="Citação">❝</button><button data-fmt="code" title="Código">&lt;/&gt;</button><button data-fmt="link" title="Ligar a outro tópico [[ ]] (Ctrl+K)">[[ ]]</button><button data-fmt="url" title="Link da internet">🔗</button>
           </div>
           <div id="notesView" class="md" hidden></div>
-          <div class="notes-wrap"><textarea id="notes" placeholder="Notas do tópico selecionado. Digite [[ para ligar a outro tópico ou mapa…"></textarea><div id="linkSuggest" hidden role="listbox"></div></div>
+          <div class="notes-wrap"><textarea id="notes" placeholder="Notas do tópico selecionado. Digite [[ para ligar a outro tópico ou mapa…"></textarea><div id="linkSuggest" hidden role="listbox"></div>
+          <div id="refsBox"></div></div>
         </div>
       </section>
 

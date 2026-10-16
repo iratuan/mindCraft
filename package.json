@@ -12,7 +12,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "e2e": "electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic",
+    "e2e": "electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic && electron test/e2e-pdf.js && electron test/e2e-review.js",
     "evidence": "electron test/evidence.js",
     "dist": "electron-builder --publish never",
     "qa": "electron test/qa-tour.js",
@@ -73,6 +73,7 @@
     "electron": "^44.8.0",
     "electron-builder": "^26.15.3",
     "esbuild": "0.25.10",
+    "pdfjs-dist": "4.10.38",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   }
