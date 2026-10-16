@@ -5,3 +5,4 @@ node_modules/
 qa-run.log
 *.bak
 .DS_Store
+renderer/bundle/

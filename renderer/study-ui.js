@@ -366,7 +366,7 @@ act.edital = openImportModal;
 
 // ---------- importar CSV de edital (gerado por uma IA) ----------
 /** Janela: instruções para a IA → escolher o .csv → PRÉVIA (contagens, erros, avisos) → criar o mapa-esqueleto. */
-function openCsvModal() {
+function openCsvModalClassic() {
   closeDash();
   const m = $('#modal'); m.textContent = ''; m.hidden = false;
   const bx = el('div', 'modal-box'); bx.id = 'csvBox';
@@ -391,7 +391,7 @@ function openCsvModal() {
   const count = (n) => n.children.reduce((a, c) => a + 1 + count(c), 0);
   cancel.onclick = closeModal;
   m.onkeydown = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeModal(); } };
-  bPrompt.onclick = async () => { await ipcRenderer.invoke('clip:write', aiPrompt()); say('Instruções copiadas. Cole numa IA e anexe/cole o edital.', 'ok'); };
+  bPrompt.onclick = async () => { try { await ipcRenderer.invoke('clip:write', aiPrompt()); say('Instruções copiadas. Cole numa IA e anexe/cole o edital.', 'ok'); } catch (e) { say('Não consegui copiar para a área de transferência (' + e.message + '). Use "Salvar CSV de exemplo…" e leia o modelo.', 'err'); } };
   bTpl.onclick = async () => {
     const p = await ipcRenderer.invoke('dialog:save', 'csv', 'modelo-edital.csv'); if (!p) return;
     try { fs.writeFileSync(p, csvTemplate(), 'utf8'); say('Modelo salvo em ' + p, 'ok'); } catch (e) { say('Não consegui salvar: ' + e.message, 'err'); }
@@ -413,27 +413,31 @@ function openCsvModal() {
   };
   ok.onclick = async () => {
     if (!loaded || !loaded.map) return;
-    const cm = loaded.map, name = title.value.trim() || cm.root.title, mode = m.querySelector('input[name=csvMode]:checked').value;
-    let total = 0; cm.walk(() => total++); total -= 1;
-    if (mode === 'new') {
-      if (!(await confirmDiscard())) return;
-      closeModal(); cm.root.title = name; cm.meta.name = name; if (cm.meta.exam && !cm.meta.exam.name) cm.meta.exam.name = name;
-      adopt(cm);
-      if (total > 150) { const lv = map.autoLevels(120); render(); fit(); setStatus(`${total} tópicos importados do CSV; mapa grande: abri até o nível ${lv} (use "Níveis" para expandir).`); }
-      else setStatus(`${total} tópicos importados do CSV. Agora complete os tópicos, as notas e os links.`);
-    } else {
-      const parent = selectedId || map.root.id; let added = [];
-      closeModal();
-      change(() => map.batch(() => { added = cm.root.children.map((t) => map.addSubtree(parent, t)); return true; }));
-      selIds = new Set(added.map((x) => x.id)); selectedId = added[0].id; render(); reveal(added[0].id);
-      setStatus(`${total} tópicos adicionados do CSV (a data da prova só é aplicada ao criar um mapa novo).`);
-    }
+    await applyCsvImport(loaded.map, { name: title.value.trim() || loaded.map.root.title, mode: m.querySelector('input[name=csvMode]:checked').value, close: closeModal });
   };
 }
-act.csv = openCsvModal;
+/** "Criar o mapa" da importação de CSV (compartilhado pelas interfaces clássica e React). `close` fecha a janela. */
+async function applyCsvImport(cm, { name, mode, close }) {
+  let total = 0; cm.walk(() => total++); total -= 1;
+  if (mode === 'new') {
+    if (!(await confirmDiscard())) return false;
+    close(); cm.root.title = name; cm.meta.name = name; if (cm.meta.exam && !cm.meta.exam.name) cm.meta.exam.name = name;
+    adopt(cm);
+    if (total > 150) { const lv = map.autoLevels(120); render(); fit(); setStatus(`${total} tópicos importados do CSV; mapa grande: abri até o nível ${lv} (use "Níveis" para expandir).`); }
+    else setStatus(`${total} tópicos importados do CSV. Agora complete os tópicos, as notas e os links.`);
+  } else {
+    const parent = selectedId || map.root.id; let added = [];
+    close();
+    change(() => map.batch(() => { added = cm.root.children.map((t) => map.addSubtree(parent, t)); return true; }));
+    selIds = new Set(added.map((x) => x.id)); selectedId = added[0].id; render(); reveal(added[0].id);
+    setStatus(`${total} tópicos adicionados do CSV (a data da prova só é aplicada ao criar um mapa novo).`);
+  }
+  return true;
+}
+act.csv = () => openCsvModal();
 
 // ---------- planilha de planejamento (exporta, você edita no Excel, importa de volta) ----------
-function openPlanModal() {
+function openPlanModalClassic() {
   closeDash();
   const m = $('#modal'); m.textContent = ''; m.hidden = false;
   const bx = el('div', 'modal-box'); bx.id = 'planBox';
@@ -470,14 +474,16 @@ function openPlanModal() {
     list('csv-disc', diff.changes.map((c) => `${c.label} — ${c.field}: ${c.from || '—'} → ${c.to || '—'}`));
     list('csv-err', diff.errors.map((e) => (e.line ? `Linha ${e.line}: ` : '') + e.msg)); list('csv-warn', diff.warnings);
   };
-  ok.onclick = () => {
-    if (!diff || !diff.ops.length) return;
-    const d = diff; closeModal(); let n = 0;
-    try { change(() => { n = planner.applyPlan(map, d); return true; }); } catch (e) { ipcRenderer.invoke('dialog:error', 'Não consegui aplicar a planilha (nada foi alterado): ' + e.message); return; }
-    render(); setStatus(`Planilha aplicada: ${n} mudança(s). Ctrl+Z desfaz tudo de uma vez.`);
-  };
+  ok.onclick = () => { if (diff && diff.ops.length) applyPlanDiff(diff, closeModal); };
 }
-act.plan = openPlanModal;
+/** "Aplicar mudanças" da planilha (compartilhado pelas interfaces clássica e React). Tudo ou nada; 1 desfazer. */
+function applyPlanDiff(d, close) {
+  close(); let n = 0;
+  try { change(() => { n = planner.applyPlan(map, d); return true; }); } catch (e) { ipcRenderer.invoke('dialog:error', 'Não consegui aplicar a planilha (nada foi alterado): ' + e.message); return false; }
+  render(); setStatus(`Planilha aplicada: ${n} mudança(s). Ctrl+Z desfaz tudo de uma vez.`);
+  return true;
+}
+act.plan = () => openPlanModal();
 
 // atalho: Esc fecha o painel de estudos
 window.addEventListener('keydown', (e) => { if (dashOpen && e.key === 'Escape' && !present) { e.stopPropagation(); closeDash(); } }, true);

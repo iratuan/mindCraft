@@ -10,8 +10,11 @@ const { csvTemplate, fromCsv } = require('../core/csv');
 const { TODAY, d, concurso } = require('./fixtures');
 
 (async () => {
-  const c = await start('MindCraft e2e — biblioteca SQLite');
+  const CLASSIC = process.argv.includes('--classic');            // mesma bateria na interface clássica (referência) e na React
+  const c = await start('MindCraft e2e — biblioteca SQLite (' + (CLASSIC ? 'interface clássica' : 'interface React') + ')');
   const { js, wait, eq, ok, t, TMP, USERDATA } = c;
+  await js(`saveCfg({ reactUi: ${CLASSIC ? 'false' : 'true'} }); true`);
+  eq(await js('typeof window.MCReact'), 'object', 'pacote React carregado');
   const txt = (s) => js(`document.querySelector(${JSON.stringify(s)}).textContent`);
   const click = (s) => js(`document.querySelector(${JSON.stringify(s)}).click()`);
   const dbFile = path.join(USERDATA, 'biblioteca.db');
@@ -60,7 +63,8 @@ const { TODAY, d, concurso } = require('./fixtures');
   });
 
   await t('janela da biblioteca: lista os mapas com contagens, abre pelo botão, e o aberto fica marcado', async () => {
-    await openModal(); const r = await rows(); eq(r.length, 2); ok(r.some((x) => x.startsWith('Concurso TRF (v2)') && x.includes('(aberto)')), r.join('|')); ok(r.some((x) => x.startsWith('Direito Penal')));
+    await openModal(); eq(await js("document.querySelector('#libBox').dataset.ui || 'classic'"), CLASSIC ? 'classic' : 'react', 'versão da interface em uso');
+    const r = await rows(); eq(r.length, 2); ok(r.some((x) => x.startsWith('Concurso TRF (v2)') && x.includes('(aberto)')), r.join('|')); ok(r.some((x) => x.startsWith('Direito Penal')));
     ok((await txt('#libList')).includes('tópicos'));
     await clickRow('Direito Penal', 'open'); await c.waitFor(() => js(`map.root.title === 'Direito Penal'`)); eq(await js('document.querySelector("#modal").hidden'), true);
     eq(await js('dirty'), false); eq(await js('map.root.children.length'), 2);
@@ -77,7 +81,7 @@ const { TODAY, d, concurso } = require('./fixtures');
   await t('versões: criar agora, abrir como mapa NOVO (o atual intacto); salvar por cima gera versão automática', async () => {
     await js(`window.__dlg.discard = 1; dirty = false`); const id = await js('map.meta.libId');
     await js(`openVersionsModal(${JSON.stringify(id)})`); await c.waitFor(() => js(`!!document.querySelector('#verList')`));
-    const n0 = await js(`document.querySelectorAll('#verList .lib-row').length`); ok(n0 >= 1, 'a gravação por cima do mapa importado já gerou uma versão automática');
+    const n0 = await js(`document.querySelectorAll('#verList .lib-row').length`); ok(n0 >= 1, 'a gravação por cima do mapa importado já gerou uma versão automática'); eq(await js("document.querySelector('#verBox').dataset.ui || 'classic'"), CLASSIC ? 'classic' : 'react');
     await click('#verNow'); await c.waitFor(() => js(`document.querySelectorAll('#verList .lib-row').length === ${n0 + 1}`)); eq(await txt('#verMsg'), 'Versão criada.');
     await js(`map.root.title = 'Concurso TRF (v3)'; dirty = true; render()`); ok(await js('save(false)'));
     await js(`document.querySelector('[data-act="restore-snap"]').click()`); await c.waitFor(() => js(`map.root.title === 'Concurso TRF (v2)' && map.meta.libId !== ${JSON.stringify(id)}`));

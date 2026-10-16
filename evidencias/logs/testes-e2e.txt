@@ -1,6 +1,11 @@
 
+> mindcraft@0.1.0 pree2e
+> node tools/build-ui.js
+
+interface React empacotada: renderer\bundle\react-ui.js (281 KB)
+
 > mindcraft@0.1.0 e2e
-> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js && electron test/e2e-library.js
+> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic
 
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
@@ -80,7 +85,27 @@ MindCraft e2e — rede de conhecimento (links, grafo, vault, Obsidian)
 
 
 
-MindCraft e2e — assistente de estudo (CSV, agenda, backups…)
+MindCraft e2e — assistente de estudo (CSV, agenda, backups…) — interface React
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   CSV: modelo salvo, instruções copiadas, prévia correta e mapa-esqueleto criado (com prova, pesos, hierarquia e links)
+  ok   CSV: arquivos ruins mostram o motivo, não criam nada e não derrubam o app
+  ok   CSV: adicionar abaixo do tópico selecionado; mapa grande abre recolhido até o nível 2
+  ok   agenda de 28 dias: contagens, dia de hoje com atrasadas, detalhe ao clicar e navegação até o tópico
+  ok   pontos fracos e acerto semanal: ranking pela UI, registro de questões por dia e relatório
+  ok   Alt+setas reordenam e mudam de nível (1 desfazer cada); limites e multisseleção explicam em vez de falhar
+  ok   backup automático ao salvar por cima; restaurar versão abre como mapa NOVO sem tocar o original
+  ok   reabrir o último mapa e o painel ao iniciar (configurável); sem arquivo recente não faz nada
+  ok   cronômetro rodando ao fechar: o tempo é registrado no tópico e salvo antes de fechar; o aviso sabe do cronômetro
+  ok   registro de erros: erros inesperados vão para logs/erros.log; falha esperada ao abrir arquivo também, sem console.error
+  ok   planilha de planejamento: exporta, edita fora do app, mostra a prévia e aplica tudo de uma vez (1 desfazer); reimportar não duplica
+  ok   nenhum erro de console durante toda a sessão (além do erro inventado de propósito)
+
+12/12 passaram
+
+
+
+MindCraft e2e — assistente de estudo (CSV, agenda, backups…) — interface clássica
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
   ok   CSV: modelo salvo, instruções copiadas, prévia correta e mapa-esqueleto criado (com prova, pesos, hierarquia e links)
@@ -119,7 +144,30 @@ MindCraft e2e — notas em Markdown e relações
 
 
 
-MindCraft e2e — biblioteca SQLite
+MindCraft e2e — biblioteca SQLite (interface React)
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   o banco só é criado quando usado; mapas novos continuam indo para arquivo por padrão (nada muda para quem não usa)
+  ok   opção "mapas novos na biblioteca": Ctrl+S não pergunta onde salvar, grava no banco, relê para conferir e marca como "na biblioteca"
+  ok   editar e salvar de novo atualiza a MESMA entrada (sem duplicar); Salvar como… exporta uma cópia .mom e o mapa continua na biblioteca
+  ok   mover um arquivo .mom para a biblioteca: o ARQUIVO ORIGINAL NÃO É ALTERADO; salvar depois grava só no banco
+  ok   janela da biblioteca: lista os mapas com contagens, abre pelo botão, e o aberto fica marcado
+  ok   abrir outro mapa com alterações não salvas pergunta antes (cancelar mantém tudo)
+  ok   versões: criar agora, abrir como mapa NOVO (o atual intacto); salvar por cima gera versão automática
+  ok   lixeira: excluir manda para a lixeira (restaurável); o mapa aberto não pode ser excluído; excluir de vez pede confirmação
+  ok   importar pasta de .mom: relata erros, não altera originais, reexecutar não duplica; importar .mom avulso
+  ok   pacote portátil: exportar e importar em OUTRA biblioteca (simulada) sem perda; conflito vira cópia; pacote adulterado é recusado
+  ok   busca em todos os mapas pela biblioteca abre o mapa e vai ao tópico
+  ok   rascunho de sessão preserva o vínculo com a biblioteca; "reabrir o último" abre pelo banco; mapa que sumiu cai no arquivo recente
+  ok   rede de conhecimento entre mapas da biblioteca: [[Mapa#Tópico]] resolve, aparece em Conexões, abre o outro mapa e o painel mostra revisões de outros mapas
+  ok   biblioteca danificada: o app avisa, não cai, continua salvando em arquivo; nenhum dado do banco é apagado
+  ok   nenhum erro de console durante toda a sessão
+
+15/15 passaram
+
+
+
+MindCraft e2e — biblioteca SQLite (interface clássica)
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
   ok   o banco só é criado quando usado; mapas novos continuam indo para arquivo por padrão (nada muda para quem não usa)

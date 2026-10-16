@@ -76,7 +76,7 @@ async function openFromLibrary(id, { confirm = true, silent = false } = {}) {
 }
 
 // ---------- janela da biblioteca ----------
-function openLibraryModal(tab = 'maps') {
+function openLibraryModalClassic(tab = 'maps') {
   closeDash();
   const m = $('#modal'); m.textContent = ''; m.hidden = false;
   const bx = el('div', 'modal-box'); bx.id = 'libBox'; m.append(bx);
@@ -182,7 +182,7 @@ function openLibraryModal(tab = 'maps') {
   render_();
 }
 
-function openVersionsModal(id, { back = true } = {}) {
+function openVersionsModalClassic(id, { back = true } = {}) {
   const lib = getLibrary(); if (!lib) return;
   const m = $('#modal'); m.textContent = ''; m.hidden = false;
   const bx = el('div', 'modal-box'); bx.id = 'verBox'; m.append(bx);
@@ -237,6 +237,25 @@ function libraryNetworkMaps() {
   return out;
 }
 const libraryHasMaps = () => { if (!libraryExists()) return false; const lib = getLibrary(); return !!lib && lib.listMaps().length > 0; };
+
+// ---------- ponte com a interface React (renderer/react → renderer/bundle/react-ui.js) ----------
+// Despachantes: usam a versão React quando o pacote foi carregado; a clássica continua disponível (reactUi:false na configuração)
+// como reserva e como referência de equivalência nos testes.
+const useReactUi = () => !!window.MCReact && loadCfg().reactUi !== false;
+function openLibraryModal(tab = 'maps') { if (useReactUi()) { closeDash(); return window.MCReact.openLibrary(tab); } return openLibraryModalClassic(tab); }
+function openVersionsModal(id, opts = {}) { if (useReactUi()) return window.MCReact.openVersions(id, opts); return openVersionsModalClassic(id, opts); }
+function openCsvModal() { if (useReactUi()) { closeDash(); return window.MCReact.openCsv(); } return openCsvModalClassic(); }
+function openPlanModal() { if (useReactUi()) { closeDash(); return window.MCReact.openPlan(); } return openPlanModalClassic(); }
+window.MC = {
+  fs: { readFileSync: (p) => fs.readFileSync(p), writeFileSync: (p, d) => fs.writeFileSync(p, d, 'utf8') }, path: { basename: (p, e) => path.basename(p, e), extname: (p) => path.extname(p) },
+  csv: { fromCsv, csvTemplate, aiPrompt }, planner, primary: () => primary(), applyCsvImport, applyPlanDiff,
+  modalEl: () => $('#modal'), closeModal: () => closeModal(),
+  lib: getLibrary, libError: () => _libErr, libPath, nowStr: () => nowStr(), fmtDate: (d) => fmtDate(d), when,
+  ipc: (ch, ...a) => ipcRenderer.invoke(ch, ...a), basename: (p) => path.basename(p),
+  map: () => map, currentLibId: () => (map && map.meta.libId) || null, inLibrary, isDirty: () => dirty,
+  openFromLibrary, moveToLibrary, saveToLibrary, confirmDiscard: () => confirmDiscard(), goTo: (id) => goTo(id), setStatus: (t) => setStatus(t),
+  openLibrary: (tab) => openLibraryModal(tab), openVersions: (id, o) => openVersionsModal(id, o),
+};
 
 act.lib = () => openLibraryModal();
 act.libAdd = async () => { await moveToLibrary(); };

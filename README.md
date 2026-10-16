@@ -44,6 +44,12 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - **Grafo (Ctrl+G):** este mapa ou **vault** (pasta com vários `.mom`), cores por mapa, hierarquia opcional, só vizinhança, busca, arrastar nós, rótulos sem sobreposição.
 - **Exportar para o Obsidian:** um `.md` por mapa com `[[Mapa#Tópico]]` resolvidos; **nunca sobrescreve** uma nota que não seja do MindCraft. "Abrir no Obsidian" usa o protocolo `obsidian://` (ou o executável instalado no Windows).
 
+## Interface React (etapa 3 — migração por fatias)
+A interface está migrando para **React 18**, uma tela por vez, sem reescrever tudo de uma vez. O código-fonte fica em `renderer/react/*.jsx` e é empacotado (esbuild) em `renderer/bundle/react-ui.js` — nada é baixado em tempo de execução. `npm start`, `npm run e2e`, `npm run qa` e `npm run dist` geram o pacote sozinhos (`npm run build:ui` gera à mão; a pasta `bundle/` não vai para o Git).
+- **Já em React:** Biblioteca de mapas, Versões, Importar CSV de edital e Planilha de planejamento.
+- **Segurança da migração:** cada tela portada mantém os MESMOS ids/classes da versão clássica (que continua no código como reserva). Os testes rodam nas duas interfaces (`--classic`) e conferem qual está em uso. Para voltar à clássica sem recompilar: `reactUi: false` em `config.json`.
+- **Falta migrar:** painel de estudos, painel lateral (abas), editor de mapa (SVG) e grafo.
+
 ## Biblioteca de mapas no aplicativo (etapa 2)
 Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma casa**: um arquivo `.mom` **ou** a biblioteca.
 - **Guardar este mapa na biblioteca** copia o mapa (o arquivo `.mom` de origem não é alterado). Depois, **Ctrl+S salva no banco** (gravação verificada: o app relê e compara; se falhar, nada muda e o mapa continua aberto). **Salvar como…** num mapa da biblioteca exporta uma cópia `.mom`.

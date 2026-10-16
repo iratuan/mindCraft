@@ -11,8 +11,11 @@ const { TODAY, d, concurso } = require('./fixtures');
 const S = require('../core/study');
 
 (async () => {
-  const c = await start('MindCraft e2e — assistente de estudo (CSV, agenda, backups…)');
+  const CLASSIC = process.argv.includes('--classic');            // mesma bateria na interface clássica (referência) e na React
+  const c = await start('MindCraft e2e — assistente de estudo (CSV, agenda, backups…) — ' + (CLASSIC ? 'interface clássica' : 'interface React'));
   const { js, wait, eq, ok, t, TMP, USERDATA } = c;
+  await js(`saveCfg({ reactUi: ${CLASSIC ? 'false' : 'true'} }); true`);
+  const ui = (sel) => js(`document.querySelector(${JSON.stringify(sel)}).dataset.ui || 'classic'`);
   const trace = (k) => { if (process.env.E2E_TRACE) console.log('      · passo', k); };
   const txt = (s) => js(`document.querySelector(${JSON.stringify(s)}).textContent`);
   const click = (s) => js(`document.querySelector(${JSON.stringify(s)}).click()`);
@@ -32,7 +35,8 @@ const S = require('../core/study');
     trace(1);await js(`dirty = false; ipcRenderer.emit('menu', {}, 'csv')`); await c.waitFor(() => js(`!!document.querySelector('#csvPick')`));
     const tpl = path.join(TMP, 'modelo.csv'); await js(`window.__dlg.save = ${JSON.stringify(tpl)}`); await click('#csvTemplate'); await c.waitFor(() => fs.existsSync(tpl));
     trace(2);eq(fs.readFileSync(tpl, 'utf8'), csvTemplate(), 'o modelo salvo é o oficial');
-    trace(3);const clipOk = await c.clipboardOk(); await click('#csvPrompt'); ok((await txt('#csvMsg')).includes('Instruções copiadas'), 'mensagem de confirmação');
+    trace(3);const clipOk = await c.clipboardOk(); await click('#csvPrompt'); await c.waitFor(async () => /Instruções copiadas|Não consegui copiar/.test(await txt('#csvMsg'))); if (clipOk) ok((await txt('#csvMsg')).includes('Instruções copiadas'), 'mensagem de confirmação: ' + await txt('#csvMsg'));
+    eq(await ui('#csvBox'), CLASSIC ? 'classic' : 'react', 'versão da interface em uso');
     if (clipOk) await c.waitFor(async () => (await c.readClip()).replace(/\r\n/g, '\n') === aiPrompt());   // o Windows converte \n em \r\n; sem clipboard no SO, só a mensagem é verificada
     trace(4);await click('#csvCancel'); ok(await js(`document.querySelector('#modal').hidden`));
     trace(5);await csvFlow(tpl);
@@ -173,7 +177,7 @@ const S = require('../core/study');
     await open(mfile); const title = await js('map.root.title');
     await js(`dirty = false; ipcRenderer.emit('menu', {}, 'plan')`); await c.waitFor(() => js("!!document.querySelector('#planExport')"));
     const out = path.join(TMP, 'plano ç.csv'); await js(`window.__dlg.save = ${JSON.stringify(out)}`); await click('#planExport'); await c.waitFor(() => fs.existsSync(out));
-    ok((await txt('#planMsg')).includes('Planilha salva'), await txt('#planMsg'));
+    eq(await ui('#planBox'), CLASSIC ? 'classic' : 'react', 'versão da interface em uso'); ok((await txt('#planMsg')).includes('Planilha salva'), await txt('#planMsg'));
     const { rows } = parseCsv(fs.readFileSync(out, 'utf8')); const h = rows[0]; const r = rows.find((x) => x[h.indexOf('topico')] === 'Licitações');
     ok(r, 'linha de Licitações na planilha'); r[h.indexOf('peso')] = '5'; r[h.indexOf('progresso')] = '70'; r[h.indexOf('tempo_total_min')] = String(Number(r[h.indexOf('tempo_total_min')] || 0) + 45);
     const rr = rows.find((x) => x[h.indexOf('topico')] === 'Legalidade'); rr[h.indexOf('notas')] = 'revisar com a súmula';

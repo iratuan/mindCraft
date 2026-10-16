@@ -10,11 +10,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with: { node-version: 24, cache: npm }
       - run: npm ci
       - run: npm test
       - name: e2e (Linux precisa de display virtual)
         run: ${{ runner.os == 'Linux' && 'xvfb-run -a npm run e2e' || 'npm run e2e' }}
+      - run: npm run build:ui
       - run: npx electron-builder --publish never
         env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
       - uses: actions/upload-artifact@v4

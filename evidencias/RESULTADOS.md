@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 15:16 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 15:26 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -8,9 +8,9 @@ Executados de verdade em 16/10/2026, 15:16 (Windows 11, Electron 44, Node 24). L
 | Ponta a ponta — editor, arquivos, exportação | `electron test/e2e.js` | 21/21 passaram |
 | Ponta a ponta — estudo, lote, autosave, clipboard | `electron test/e2e-study.js` | 18/18 passaram |
 | Ponta a ponta — rede de conhecimento, vault, Obsidian | `electron test/e2e-network.js` | 13/13 passaram |
-| Ponta a ponta — assistente de estudo (CSV da IA, agenda, pontos fracos, Alt+setas, backups, reabrir, cronômetro, log de erros) | `electron test/e2e-assistant.js` | 12/12 passaram |
+| Ponta a ponta — assistente de estudo (CSV da IA, agenda, pontos fracos, Alt+setas, backups, reabrir, cronômetro, log de erros) | `electron test/e2e-assistant.js` (React) e `--classic` | 12/12 + 12/12 passaram |
 | Ponta a ponta — notas em Markdown e relações como conexões | `electron test/e2e-notes.js` | 11/11 passaram |
-| Ponta a ponta — biblioteca SQLite integrada ao app | `electron test/e2e-library.js` | 15/15 passaram |
+| Ponta a ponta — biblioteca SQLite integrada ao app | `electron test/e2e-library.js` (React) e `--classic` | 15/15 + 15/15 passaram |
 | **QA por funcionalidade, com entrada REAL** (mouse/teclado via Chromium) | `npm run qa` | **75 de 75 funcionalidades OK**, 0 erros de console, ~105 capturas em `qa/` |
 
 - `qa/RELATORIO-QA.md`: tabela com a funcionalidade, como foi exercitada, o resultado e a(s) captura(s) de cada uma (Mapa 22 · Lote 4 · Arquivos 5 · Estudos 12 · Rede 13 · Dados 2 · Extremos 4).
@@ -63,3 +63,8 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - Unitários: +1 (verificação na gravação, banco danificado, exclusão definitiva). QA com cliques reais e Ctrl+S real: `qa/69_*`.
 - Achados dos testes: comparação de mapas precisava ignorar datas que o .mom renova; o rascunho exige simular reinício com `draftExists=false`.
 - **Não testado**: biblioteca com milhares de mapas; uso simultâneo do banco pelo app e pela linha de comando; macOS/Linux; migração dos seus .mom reais (rode `bin/mindcraft-library.js migrar` ou use "Importar pasta de .mom…" na janela).
+
+## Etapa 3 — interface React (primeiras fatias)
+- Telas em React: Biblioteca, Versões, Importar CSV, Planilha de planejamento. **A mesma bateria de testes roda na interface clássica e na React** (e2e-library e e2e-assistant, com asserção de qual interface está ativa); o QA completo (75/75, entrada real) roda com a React.
+- Achados: o teste de "copiar instruções" lia a mensagem antes da cópia terminar (condição de corrida; agora espera); copiar para a área de transferência passou a mostrar erro claro se o sistema recusar.
+- **Não testado**: Linux/macOS; CI nunca executado (workflow atualizado para Node 24 e build do pacote React).
