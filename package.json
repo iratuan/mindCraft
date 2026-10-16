@@ -6,7 +6,8 @@
   "description": "Editor de mapas mentais multiplataforma, compatível com arquivos .mom",
   "main": "electron/main.js",
   "bin": {
-    "mindcraft": "bin/mindcraft.js"
+    "mindcraft": "bin/mindcraft.js",
+    "mindcraft-library": "bin/mindcraft-library.js"
   },
   "scripts": {
     "start": "electron .",

@@ -44,6 +44,14 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - **Grafo (Ctrl+G):** este mapa ou **vault** (pasta com vários `.mom`), cores por mapa, hierarquia opcional, só vizinhança, busca, arrastar nós, rótulos sem sobreposição.
 - **Exportar para o Obsidian:** um `.md` por mapa com `[[Mapa#Tópico]]` resolvidos; **nunca sobrescreve** uma nota que não seja do MindCraft. "Abrir no Obsidian" usa o protocolo `obsidian://` (ou o executável instalado no Windows).
 
+## Biblioteca SQLite (etapa 1 da migração React + SQLite)
+`core/library.js` guarda todos os mapas num banco SQLite (módulo nativo `node:sqlite`, sem compilar nada): tópicos, estudo, relações, tema e prova, com **versões** (até 30 por mapa), **lixeira** e consultas entre mapas (revisões vencidas, tempo e questões por dia, busca). O aplicativo atual ainda usa arquivos `.mom`; a biblioteca é a base da próxima etapa (interface em React).
+Linha de comando (`bin/mindcraft-library.js`):
+- `migrar <pasta> <biblioteca.db>` — importa todos os `.mom` (os originais nunca são alterados; cada mapa é relido do banco e comparado antes de valer; reexecutar não duplica).
+- `listar <biblioteca.db>` · `backup <biblioteca.db> <copia.db>`.
+- `exportar <biblioteca.db> <saida.mcpack>` — **pacote portátil** (um arquivo, com SHA-256 de cada mapa) para levar a outro computador.
+- `importar <biblioteca.db> <pacote.mcpack> [--substituir | --ignorar]` — valida tudo antes de gravar; mapa igual é ignorado; mapa diferente com o mesmo id vira **cópia** (nunca sobrescreve em silêncio).
+
 ## Interface
 - Painel lateral em **abas** (Estilo · Estudo · Notas · Conexões · Estrutura), um por vez; tema escuro/claro; barra de **Níveis** (recolher/expandir o mapa por profundidade — editais grandes abrem recolhidos).
 

@@ -166,3 +166,17 @@ test('desempenho: mapa de 5 000 tópicos grava e relê em poucos segundos, sem p
   const lib = openLibrary(':memory:'); const t0 = Date.now(); const id = lib.saveMap(m); const back = lib.loadMap(id); const dt = Date.now() - t0;
   assert.equal(canonical(back), canonical(m)); assert.ok(dt < 4000, `levou ${dt} ms`); assert.equal(lib.db.prepare('SELECT COUNT(*) c FROM topics').get().c, 1 + 50 + 4950);
 });
+
+test('CLI: migrar → listar → exportar → importar em outra biblioteca → backup (processos reais)', () => {
+  const { spawnSync } = require('child_process'); const dir = tmp(); const bin = path.join(__dirname, '..', 'bin', 'mindcraft-library.js');
+  writeMom(rich(), path.join(dir, 'a.mom')); fs.writeFileSync(path.join(dir, 'ruim.mom'), 'x');
+  const run = (...a) => spawnSync(process.execPath, [bin, ...a], { encoding: 'utf8' });
+  let r = run('migrar', dir, path.join(dir, 'lib1.db')); assert.equal(r.status, 2, r.stderr); assert.match(r.stdout, /1 importado\(s\).*1 com erro/s); assert.match(r.stdout, /Originais não foram alterados/);
+  r = run('listar', path.join(dir, 'lib1.db')); assert.match(r.stdout, /Concurso TRF 2026.*18 tópicos/);
+  r = run('exportar', path.join(dir, 'lib1.db'), path.join(dir, 'p.mcpack')); assert.equal(r.status, 0, r.stderr); assert.ok(fs.statSync(path.join(dir, 'p.mcpack')).size > 100);
+  r = run('importar', path.join(dir, 'lib2.db'), path.join(dir, 'p.mcpack')); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /1 novo/);
+  r = run('importar', path.join(dir, 'lib2.db'), path.join(dir, 'p.mcpack')); assert.match(r.stdout, /1 ignorado/);
+  r = run('backup', path.join(dir, 'lib2.db'), path.join(dir, 'b.db')); assert.equal(r.status, 0, r.stderr); assert.ok(fs.existsSync(path.join(dir, 'b.db')));
+  assert.equal(run('importar', path.join(dir, 'lib3.db'), path.join(dir, 'a.mom')).status, 1, 'arquivo que não é pacote: erro claro');
+  assert.equal(run('xyz').status, 1);
+});
