@@ -531,6 +531,19 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   await js('closeGraph()');
 
   console.log('\n— DADOS E ROBUSTEZ —\n');
+  await feature('Dados', 'Biblioteca de mapas (SQLite): guardar, salvar, abrir, versões e lixeira', 'Janela da biblioteca; cliques reais nos botões; Ctrl+S real salva no banco', async ({ shot }) => {
+    const { openLibrary } = require('../core/library'); const dbf = path.join(USERDATA, 'biblioteca.db');
+    await js("closeLibrary(); dirty = false; true"); await js("window.__dlg.discard = 1; true");
+    await js("openLibraryModal(); true"); await c.waitFor(() => js("!!document.querySelector('#libAddCur')")); await shot('vazia');
+    await clickSel('#libAddCur'); await c.waitFor(() => js("!!map.meta.libId")); const id = await js('map.meta.libId');
+    await c.waitFor(async () => (await js("document.querySelectorAll('#libList .lib-row').length")) === 1); await shot('mapa-guardado');
+    await clickSel('#libClose'); eq(await js('dirty'), false);
+    const leaf = await js('(() => { let t; map.walk((n) => { if (!n.children.length && !t) t = n.title; }); return t; })()'); await clickNode(leaf); await key('F2'); await key('A', ['control']); await type('Editado e salvo no banco'); await key('Enter'); ok(await js('dirty'), 'editou');
+    await key('S', ['control']); await c.waitFor(async () => !(await js('dirty'))); const lib = openLibrary(dbf); const m = lib.loadMap(id); let found = false; m.walk((n) => { if (n.title === 'Editado e salvo no banco') found = true; }); lib.close(); ok(found, 'Ctrl+S real gravou no banco');
+    await js("openLibraryModal(); true"); await c.waitFor(() => js("!!document.querySelector('#libList [data-act=versions]')")); await clickSel('#libList [data-act="versions"]');
+    await c.waitFor(() => js("!!document.querySelector('#verNow')")); await clickSel('#verNow'); await c.waitFor(() => js("document.querySelectorAll('#verList .lib-row').length >= 1")); await shot('versoes'); await clickSel('#verBack');
+    await c.waitFor(() => js("!!document.querySelector('#libTabTrash')")); await clickSel('#libTabTrash'); await wait(150); await shot('lixeira-vazia'); await clickSel('#libClose');
+  });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');
     await c.waitFor(() => fs.existsSync(draft)); const size = fs.statSync(draft).size; await js('draftExists = false; newMap()'); ok(fs.existsSync(draft), 'rascunho sobrevive');

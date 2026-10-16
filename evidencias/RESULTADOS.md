@@ -1,16 +1,17 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 14:48 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 15:16 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
-| Unitários + CLI (núcleo em Node puro) | `npm test` | 95 testes, 95 passaram, 0 falhas |
+| Unitários + CLI (núcleo em Node puro) | `npm test` | 112 testes, 112 passaram, 0 falhas |
 | Ponta a ponta — editor, arquivos, exportação | `electron test/e2e.js` | 21/21 passaram |
 | Ponta a ponta — estudo, lote, autosave, clipboard | `electron test/e2e-study.js` | 18/18 passaram |
 | Ponta a ponta — rede de conhecimento, vault, Obsidian | `electron test/e2e-network.js` | 13/13 passaram |
 | Ponta a ponta — assistente de estudo (CSV da IA, agenda, pontos fracos, Alt+setas, backups, reabrir, cronômetro, log de erros) | `electron test/e2e-assistant.js` | 12/12 passaram |
 | Ponta a ponta — notas em Markdown e relações como conexões | `electron test/e2e-notes.js` | 11/11 passaram |
-| **QA por funcionalidade, com entrada REAL** (mouse/teclado via Chromium) | `npm run qa` | **74 de 74 funcionalidades OK**, 0 erros de console, ~100 capturas em `qa/` |
+| Ponta a ponta — biblioteca SQLite integrada ao app | `electron test/e2e-library.js` | 15/15 passaram |
+| **QA por funcionalidade, com entrada REAL** (mouse/teclado via Chromium) | `npm run qa` | **75 de 75 funcionalidades OK**, 0 erros de console, ~105 capturas em `qa/` |
 
 - `qa/RELATORIO-QA.md`: tabela com a funcionalidade, como foi exercitada, o resultado e a(s) captura(s) de cada uma (Mapa 22 · Lote 4 · Arquivos 5 · Estudos 12 · Rede 13 · Dados 2 · Extremos 4).
 - `telas/`: 23 telas de apresentação do produto (dados de um concurso fictício) · `exemplos/`: PDF, Word, relatório e vault do Obsidian gerados de verdade.
@@ -56,3 +57,9 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Correção de erro de descrição**: eu havia dito que a relação desenhada ainda não aparecia em Conexões; já aparecia (marcada como "seta"). Agora mostra o rótulo e junta com o `[[link]]` do mesmo par.
 - Achado do QA: o caso antigo "Notas do tópico" digitava sem a aba Notas aberta (passava por acaso); agora abre a aba por clique real.
 - **Não testado**: editor WYSIWYG (não implementado de propósito: reescreveria o texto das notas); abrir links http no navegador de verdade (testado só o pedido ao sistema, que em teste não abre nada); Word/PDF com tabelas Markdown são convertidos em texto com barras.
+
+## Biblioteca SQLite integrada ao aplicativo (etapa 2)
+- 15 testes ponta a ponta: banco só criado quando usado; padrão continua arquivo; salvar sem diálogo + releitura; regravar sem duplicar; **mover arquivo para a biblioteca sem alterar o original (hash e data conferidos)**; janela; confirmação de descarte; versões; lixeira (mapa aberto protegido, exclusão definitiva com confirmação); importar pasta/arquivo; pacote portátil (idêntico em outra biblioteca, adulterado recusado); backup; busca; rascunho com vínculo; reabrir último e fallback; rede entre mapas da biblioteca; **banco danificado não derruba o app nem é apagado**.
+- Unitários: +1 (verificação na gravação, banco danificado, exclusão definitiva). QA com cliques reais e Ctrl+S real: `qa/69_*`.
+- Achados dos testes: comparação de mapas precisava ignorar datas que o .mom renova; o rascunho exige simular reinício com `draftExists=false`.
+- **Não testado**: biblioteca com milhares de mapas; uso simultâneo do banco pelo app e pela linha de comando; macOS/Linux; migração dos seus .mom reais (rode `bin/mindcraft-library.js migrar` ou use "Importar pasta de .mom…" na janela).

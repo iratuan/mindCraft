@@ -12,7 +12,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "e2e": "electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js",
+    "e2e": "electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js && electron test/e2e-library.js",
     "evidence": "electron test/evidence.js",
     "dist": "electron-builder --publish never",
     "qa": "electron test/qa-tour.js"

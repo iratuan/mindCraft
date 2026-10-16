@@ -161,6 +161,15 @@ test('backup do banco inteiro (VACUUM INTO) abre como biblioteca válida; biblio
   assert.throws(() => openLibrary(f), /mais nova/);
 });
 
+test('verify: gravação verificada passa; banco danificado é recusado na abertura; purgeMap só exclui o que está na lixeira', () => {
+  const dir = tmp(), f = path.join(dir, 'x.db'); const lib = openLibrary(f, { check: true }); const m = rich(); const id = lib.saveMap(m, { verify: true });
+  assert.equal(lib.purgeMap(id), false, 'mapa ativo não é excluído'); lib.trashMap(id); assert.equal(lib.purgeMap(id), true); assert.equal(lib.listMaps({ trashed: true }).length, 0);
+  lib.saveMap(m, { verify: true }); lib.close();
+  const bytes = fs.readFileSync(f); fs.writeFileSync(f, Buffer.concat([bytes.subarray(0, 4096), Buffer.alloc(4096, 7), bytes.subarray(8192)]));
+  assert.throws(() => openLibrary(f, { check: true }), /danificado|malformed|not a database|corrupt/i);
+  fs.writeFileSync(f, 'isto não é um banco sqlite, é só texto.'.repeat(200)); assert.throws(() => openLibrary(f, { check: true }), /./);
+});
+
 test('desempenho: mapa de 5 000 tópicos grava e relê em poucos segundos, sem perda', () => {
   const m = new MindMap(createNode('Grande')); for (let i = 0; i < 50; i++) { const d = m.addChild(m.root.id, 'D' + i); for (let j = 0; j < 99; j++) { const t = m.addChild(d.id, `T${i}.${j}`); if (j % 7 === 0) m.mutateStudy(t.id, (s) => S.addTime(s, TODAY, 5)); } }
   const lib = openLibrary(':memory:'); const t0 = Date.now(); const id = lib.saveMap(m); const back = lib.loadMap(id); const dt = Date.now() - t0;

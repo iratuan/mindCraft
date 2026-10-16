@@ -56,7 +56,7 @@ module.exports = async function start(title) {
       ctx.menu = (id) => Menu.getApplicationMenu().getMenuItemById(id).click(undefined, win, win.webContents);
       ctx.shot = async (file) => { await wait(350); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, (await win.webContents.capturePage()).toPNG()); };
       // dublês dos diálogos nativos; exportação, caminhos e "recentes" passam para o processo principal de verdade
-      await ctx.js(`window.__dlg = { save: null, open: null, csv: null, openAt: null, folder: null, discard: 1, confirm: 0, errors: [], confirms: [] };
+      await ctx.js(`window.__dlg = { save: null, open: null, csv: null, pack: null, openAt: null, folder: null, discard: 1, confirm: 0, errors: [], confirms: [] };
         const realInvoke = ipcRenderer.invoke.bind(ipcRenderer);
         ipcRenderer.invoke = async (ch, ...args) => {
           if (ch === 'render-export' || ch === 'app:path' || ch === 'recent:add' || ch === 'clip:read' || ch === 'clip:write' || ch === 'obsidian:open' || ch === 'open-external') return realInvoke(ch, ...args);
@@ -65,6 +65,7 @@ module.exports = async function start(title) {
           if (ch === 'dialog:folder') return window.__dlg.folder;
           if (ch === 'dialog:open-at') return window.__dlg.openAt;
           if (ch === 'dialog:open-csv') return window.__dlg.csv;
+          if (ch === 'dialog:open-pack') return window.__dlg.pack;
           if (ch === 'dialog:confirm-discard') return window.__dlg.discard;
           if (ch === 'dialog:confirm') { window.__dlg.confirms.push(args[0]); return window.__dlg.confirm; }
           if (ch === 'dialog:error') { window.__dlg.errors.push(String(args[0])); return; }

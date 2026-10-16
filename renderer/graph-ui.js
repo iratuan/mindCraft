@@ -11,21 +11,23 @@ const { norm } = require(path.join(core, 'links'));
 const gesc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ---------- coleta dos mapas ----------
-const curKey = () => (filePath ? path.resolve(filePath) : '(mapa atual)');
-const curName = () => (filePath ? path.basename(filePath, path.extname(filePath)) : map.root.title || 'Mapa atual');
+const curKey = () => (map.meta.libId ? libMapKey(map.meta.libId) : filePath ? path.resolve(filePath) : '(mapa atual)');
+const curName = () => (map.meta.libId ? map.root.title || 'Mapa atual' : filePath ? path.basename(filePath, path.extname(filePath)) : map.root.title || 'Mapa atual');
 /** O mapa aberto entra SEMPRE pela memória (com edições não salvas); os demais vêm do disco. */
 function gatherMaps(scope) {
   const me = { key: curKey(), name: curName(), map, file: filePath || null };
   const base = { maps: [me], errors: [], truncated: false };
   if (scope !== 'vault') return base;
   const dir = vaultDirEff();
-  if (!dir) return { ...base, noDir: true };
-  const v = loadVault(dir);
+  const libMaps = libraryNetworkMaps();                    // mapas da biblioteca (SQLite) entram na rede junto com os arquivos da pasta
+  if (!dir && !libMaps.length) return { ...base, noDir: true };
+  const v = dir ? loadVault(dir) : { maps: [], errors: [], truncated: false };
   const mine = filePath ? path.resolve(filePath).toLowerCase() : null;
-  const others = v.maps.filter((m) => path.resolve(m.file).toLowerCase() !== mine).map((m) => ({ key: path.resolve(m.file), name: m.name, map: m.map, file: m.file }));
-  return { maps: [me, ...others], errors: v.errors, truncated: v.truncated, dir };
+  const migrated = new Set(libMaps.map((m) => m.source && path.resolve(m.source).toLowerCase()).filter(Boolean));   // arquivo já migrado: vale a cópia da biblioteca
+  const others = v.maps.filter((m) => path.resolve(m.file).toLowerCase() !== mine && !migrated.has(path.resolve(m.file).toLowerCase())).map((m) => ({ key: path.resolve(m.file), name: m.name, map: m.map, file: m.file }));
+  return { maps: [me, ...others, ...libMaps], errors: v.errors, truncated: v.truncated, dir: dir || null };
 }
-const activeScope = () => (loadCfg().scope === 'vault' && vaultDirEff() ? 'vault' : 'map');
+const activeScope = () => (loadCfg().scope === 'vault' && (vaultDirEff() || libraryExists()) ? 'vault' : 'map');
 
 /** Revisões pendentes nos OUTROS mapas da pasta do vault (somente leitura). */
 function vaultDue(today) {
@@ -44,6 +46,13 @@ function vaultDue(today) {
 async function openTopic(n) {
   if (!n || n.kind !== 'topic') return;
   if (n.mapKey === curKey()) { closeGraph(); closeDash(); goTo(n.topicId); return true; }
+  const lid = libIdOfKey(n.mapKey);
+  if (lid) {                                               // mapa da biblioteca
+    closeGraph(); closeDash();
+    if (!(await openFromLibrary(lid))) return false;
+    if (map.find(n.topicId)) goTo(n.topicId); else setStatus('O tópico não foi encontrado no mapa aberto.');
+    return true;
+  }
   if (!fs.existsSync(n.mapKey)) { setStatus('O arquivo do mapa não existe mais: ' + n.mapKey); return false; }
   closeGraph(); closeDash();
   if (!(await confirmDiscard())) return false;
@@ -259,7 +268,7 @@ function djb(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5)
 
 /** Calcula o conjunto visível, o layout (em cache) e desenha. relayout=false mantém as posições (busca/seleção). */
 function renderGraph(relayout) {
-  const scope = $('#gScope').value === 'vault' && vaultDirEff() ? 'vault' : 'map';
+  const scope = $('#gScope').value === 'vault' && (vaultDirEff() || libraryExists()) ? 'vault' : 'map';
   const info = gatherMaps(scope);
   const g = buildGraph(info.maps, { hierarchy: gOpt.hier });
   let nodes = g.nodes, edges = g.edges;

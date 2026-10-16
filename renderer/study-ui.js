@@ -160,7 +160,7 @@ function weakSection(s) {
 /** Revisões pendentes nos outros mapas da pasta do vault (lê os arquivos; não altera nada). */
 function otherMapsSection(today) {
   const none = () => el('div');
-  if (typeof vaultDue !== 'function' || typeof vaultDirEff !== 'function' || !vaultDirEff()) return none();
+  if (typeof vaultDue !== 'function' || typeof vaultDirEff !== 'function' || (!vaultDirEff() && !libraryExists())) return none();
   let v; try { v = vaultDue(today); } catch (e) { report('Revisões de outros mapas: ' + e.message); return none(); }
   if (!v.scanned) return none();
   const total = v.maps.reduce((t, m) => t + m.count, 0);
@@ -201,7 +201,7 @@ function renderDash() {
   ex.append(cd, nm, dt, sv, clr, dmsg);
   const opts = el('div', 'dash-opts'), cfg = loadCfg();
   const chk = (id, label, on, key) => { const l = el('label', 'opt'); const i = el('input'); i.type = 'checkbox'; i.id = id; i.checked = on; i.onchange = () => saveCfg({ [key]: i.checked }); l.append(i, document.createTextNode(label)); return l; };
-  opts.append(chk('optReopen', 'Reabrir o último mapa ao iniciar', cfg.reopenLast !== false, 'reopenLast'), chk('optDashStart', 'Abrir este painel ao iniciar', !!cfg.dashOnStart, 'dashOnStart'));
+  opts.append(chk('optReopen', 'Reabrir o último mapa ao iniciar', cfg.reopenLast !== false, 'reopenLast'), chk('optDashStart', 'Abrir este painel ao iniciar', !!cfg.dashOnStart, 'dashOnStart'), chk('optNewInLib', 'Salvar mapas novos na biblioteca', !!cfg.newInLibrary, 'newInLibrary'));
   ttl.append(opts);
   head.append(ttl, ex);
 
@@ -272,6 +272,7 @@ function renderDash() {
     b('btnEdital', 'Importar edital…', () => openImportModal()),
     b('btnCsv', 'Importar CSV (IA)…', () => openCsvModal()),
     b('btnPlan', 'Planilha de planejamento…', () => openPlanModal()),
+    b('btnLib', 'Biblioteca de mapas…', () => openLibraryModal()),
     b('btnTemplate', 'Novo mapa de concurso (modelo)', () => newStudyTemplate()),
     b('btnDashClose', 'Fechar', () => closeDash(), 'primary'));
 

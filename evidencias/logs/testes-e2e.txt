@@ -1,6 +1,6 @@
 
 > mindcraft@0.1.0 e2e
-> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js
+> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js && electron test/e2e-library.js
 
 
 (electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
@@ -116,4 +116,27 @@ MindCraft e2e — notas em Markdown e relações
   ok   nenhum erro de console durante toda a sessão
 
 11/11 passaram
+
+
+
+MindCraft e2e — biblioteca SQLite
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   o banco só é criado quando usado; mapas novos continuam indo para arquivo por padrão (nada muda para quem não usa)
+  ok   opção "mapas novos na biblioteca": Ctrl+S não pergunta onde salvar, grava no banco, relê para conferir e marca como "na biblioteca"
+  ok   editar e salvar de novo atualiza a MESMA entrada (sem duplicar); Salvar como… exporta uma cópia .mom e o mapa continua na biblioteca
+  ok   mover um arquivo .mom para a biblioteca: o ARQUIVO ORIGINAL NÃO É ALTERADO; salvar depois grava só no banco
+  ok   janela da biblioteca: lista os mapas com contagens, abre pelo botão, e o aberto fica marcado
+  ok   abrir outro mapa com alterações não salvas pergunta antes (cancelar mantém tudo)
+  ok   versões: criar agora, abrir como mapa NOVO (o atual intacto); salvar por cima gera versão automática
+  ok   lixeira: excluir manda para a lixeira (restaurável); o mapa aberto não pode ser excluído; excluir de vez pede confirmação
+  ok   importar pasta de .mom: relata erros, não altera originais, reexecutar não duplica; importar .mom avulso
+  ok   pacote portátil: exportar e importar em OUTRA biblioteca (simulada) sem perda; conflito vira cópia; pacote adulterado é recusado
+  ok   busca em todos os mapas pela biblioteca abre o mapa e vai ao tópico
+  ok   rascunho de sessão preserva o vínculo com a biblioteca; "reabrir o último" abre pelo banco; mapa que sumiu cai no arquivo recente
+  ok   rede de conhecimento entre mapas da biblioteca: [[Mapa#Tópico]] resolve, aparece em Conexões, abre o outro mapa e o painel mostra revisões de outros mapas
+  ok   biblioteca danificada: o app avisa, não cai, continua salvando em arquivo; nenhum dado do banco é apagado
+  ok   nenhum erro de console durante toda a sessão
+
+15/15 passaram
 

@@ -72,12 +72,13 @@ function canonical(map) {
 const KNOWN = new Set(['id', 'title', 'notes', 'collapsed', 'style', 'markers', 'progress', 'children', 'study', '_mom']);
 
 class Library {
-  constructor(file, { now = () => new Date().toISOString() } = {}) {
+  constructor(file, { now = () => new Date().toISOString(), check = false } = {}) {
     this.file = file; this.now = now; this._depth = 0;
     if (file !== ':memory:') fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
     this.db = new DatabaseSync(file);
     this.db.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
     if (file !== ':memory:') this.db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;');
+    if (check) { const r = this.db.prepare('PRAGMA quick_check').all().map((x) => x.quick_check); if (r.length !== 1 || r[0] !== 'ok') { this.db.close(); throw new Error('O arquivo da biblioteca parece danificado (' + r.slice(0, 2).join('; ') + '). Restaure uma cópia de segurança.'); } }
     this._migrate();
   }
 
@@ -118,7 +119,7 @@ class Library {
 
   // ---------- mapas ----------
   /** Grava (cria ou substitui) um mapa numa transação. Devolve o id do mapa na biblioteca. */
-  saveMap(map, { id = map.meta.libId, source = null, hash = null, snapshot = 'auto', expectRev = null } = {}) {
+  saveMap(map, { id = map.meta.libId, source = null, hash = null, snapshot = 'auto', expectRev = null, verify = false } = {}) {
     return this.tx(() => {
       const now = this.now();
       id = id || newId();
@@ -136,6 +137,7 @@ class Library {
           .run(...row.map(nz), nz(source), nz(hash), now, now, id);
       }
       this._writeTree(id, map);
+      if (verify && canonical(this.loadMap(id, { includeTrashed: true })) !== canonical(map)) throw new Error('A verificação após gravar falhou (o mapa lido do banco difere do que estava na tela). Nada foi gravado.');
       map.meta.libId = id;
       return id;
     });
@@ -196,6 +198,8 @@ class Library {
   /** Lixeira: o mapa some da lista mas pode voltar (nada é apagado de verdade até esvaziar a lixeira). */
   trashMap(id) { return this.db.prepare('UPDATE maps SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(this.now(), id).changes === 1; }
   restoreMap(id) { return this.db.prepare('UPDATE maps SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL').run(id).changes === 1; }
+  /** Exclusão definitiva de UM mapa que já está na lixeira (cascata apaga tópicos, estudo, relações e versões). */
+  purgeMap(id) { return this.db.prepare('DELETE FROM maps WHERE id = ? AND deleted_at IS NOT NULL').run(id).changes === 1; }
   /** Remove definitivamente os mapas que estão na lixeira há mais de `days` dias (0 = todos). */
   emptyTrash(days = 30, now = Date.parse(this.now())) {
     const limit = new Date(now - days * 86400000).toISOString();

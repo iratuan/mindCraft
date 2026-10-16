@@ -44,6 +44,14 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - **Grafo (Ctrl+G):** este mapa ou **vault** (pasta com vários `.mom`), cores por mapa, hierarquia opcional, só vizinhança, busca, arrastar nós, rótulos sem sobreposição.
 - **Exportar para o Obsidian:** um `.md` por mapa com `[[Mapa#Tópico]]` resolvidos; **nunca sobrescreve** uma nota que não seja do MindCraft. "Abrir no Obsidian" usa o protocolo `obsidian://` (ou o executável instalado no Windows).
 
+## Biblioteca de mapas no aplicativo (etapa 2)
+Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma casa**: um arquivo `.mom` **ou** a biblioteca.
+- **Guardar este mapa na biblioteca** copia o mapa (o arquivo `.mom` de origem não é alterado). Depois, **Ctrl+S salva no banco** (gravação verificada: o app relê e compara; se falhar, nada muda e o mapa continua aberto). **Salvar como…** num mapa da biblioteca exporta uma cópia `.mom`.
+- A janela lista os mapas (tópicos, revisões vencidas, prova), **abre**, mostra **versões** (abre uma versão como mapa novo; nunca sobrescreve), manda para a **lixeira** (restaurável; o mapa aberto não pode ser excluído), **exporta .mom**, **busca em todos os mapas**, importa **.mom / pasta de .mom / pacote .mcpack**, exporta **pacote** e faz **backup do banco**.
+- Opção no Painel de estudos: **Salvar mapas novos na biblioteca** (desligada por padrão: sem ela nada muda no seu fluxo atual com arquivos).
+- **Rede de conhecimento**: os mapas da biblioteca entram na rede (`[[Mapa#Tópico]]`, Conexões, grafo, Obsidian) e no "Em outros mapas" do painel de estudos. Um arquivo já migrado vale pela cópia da biblioteca.
+- O reabrir-o-último, o rascunho de sessão (autosave) e o aviso ao fechar funcionam também para mapas da biblioteca. Se o banco estiver danificado, o app avisa e continua funcionando com arquivos; o arquivo ruim nunca é apagado.
+
 ## Biblioteca SQLite (etapa 1 da migração React + SQLite)
 `core/library.js` guarda todos os mapas num banco SQLite (módulo nativo `node:sqlite`, sem compilar nada): tópicos, estudo, relações, tema e prova, com **versões** (até 30 por mapa), **lixeira** e consultas entre mapas (revisões vencidas, tempo e questões por dia, busca). O aplicativo atual ainda usa arquivos `.mom`; a biblioteca é a base da próxima etapa (interface em React).
 Linha de comando (`bin/mindcraft-library.js`):

@@ -775,75 +775,89 @@
     {
       "n": 69,
       "group": "Dados",
+      "title": "Biblioteca de mapas (SQLite): guardar, salvar, abrir, versões e lixeira",
+      "how": "Janela da biblioteca; cliques reais nos botões; Ctrl+S real salva no banco",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "69_vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png",
+        "69_mapa-guardado_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png",
+        "69_versoes_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png",
+        "69_lixeira-vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png"
+      ]
+    },
+    {
+      "n": 70,
+      "group": "Dados",
       "title": "Autosave e recuperação de sessão",
       "how": "Alteração → rascunho em disco → \"queda\" → Restaurar",
       "status": "OK",
       "note": "rascunho de 10132 bytes",
       "files": [
-        "69_autosave-e-recuperacao-de-sessao.png"
+        "70_autosave-e-recuperacao-de-sessao.png"
       ]
     },
     {
-      "n": 70,
+      "n": 71,
       "group": "Dados",
       "title": "Arquivo corrompido não derruba o app nem o mapa atual",
       "how": "Abrir .mom inválido",
       "status": "OK",
       "note": "Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found",
       "files": [
-        "70_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
+        "71_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
       ]
     },
     {
-      "n": 71,
+      "n": 72,
       "group": "Extremos",
       "title": "Título enorme, HTML, emoji e caracteres especiais",
       "how": "Textos hostis e longos no mapa",
       "status": "OK",
       "note": "",
       "files": [
-        "71_titulo-enorme-html-emoji-e-caracteres-especiais.png"
-      ]
-    },
-    {
-      "n": 72,
-      "group": "Extremos",
-      "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
-      "how": "Gera 1 000 tópicos e mede layout/desenho",
-      "status": "OK",
-      "note": "1001 tópicos · render 35 ms · nível 1: 26 visíveis",
-      "files": [
-        "72_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
-        "72_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+        "72_titulo-enorme-html-emoji-e-caracteres-especiais.png"
       ]
     },
     {
       "n": 73,
+      "group": "Extremos",
+      "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
+      "how": "Gera 1 000 tópicos e mede layout/desenho",
+      "status": "OK",
+      "note": "1001 tópicos · render 20 ms · nível 1: 26 visíveis",
+      "files": [
+        "73_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
+        "73_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+      ]
+    },
+    {
+      "n": 74,
       "group": "Extremos",
       "title": "Janela pequena (1000×640): a interface continua utilizável",
       "how": "Redimensiona a janela",
       "status": "OK",
       "note": "",
       "files": [
-        "73_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
-        "73_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
+        "74_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
+        "74_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
       ]
     },
     {
-      "n": 74,
+      "n": 75,
       "group": "Extremos",
       "title": "Estados vazios: painel, conexões e grafo sem dados",
       "how": "Mapa novo sem estudos nem links",
       "status": "OK",
       "note": "",
       "files": [
-        "74_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
-        "74_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
+        "75_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
+        "75_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
       ]
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 35 ms, render+ajuste 107 ms"
+    "Mapa de 1001 tópicos: render 20 ms, render+ajuste 55 ms"
   ],
   "errosDeConsole": []
 }

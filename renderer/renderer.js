@@ -75,7 +75,7 @@ function render() {
   $('#progress').value = sel && sel.node.progress != null ? String(sel.node.progress) : '';
   document.title = `${dirty ? '• ' : ''}${map.root.title} — MindCraft`;
   let count = 0; map.walk(() => count++);
-  setStatus(`${count} tópicos · ${filePath || 'sem arquivo'}`);
+  setStatus(`${count} tópicos · ${map.meta.libId ? 'na biblioteca' : filePath || 'sem arquivo'}`);
   ipcRenderer.send('dirty', { dirty, timing: typeof timer !== 'undefined' && !!timer });
   syncChrome(sel);
   autosaveTick();
@@ -224,7 +224,7 @@ async function openPath(p, { silent = false } = {}) {
     // md/opml são importações: o "Salvar" pede um .mom novo em vez de sobrescrever o original
     filePath = ext === 'mom' ? p : null; dirty = ext !== 'mom'; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
     render(); fit();
-    if (ext === 'mom') ipcRenderer.invoke('recent:add', p).catch(() => {});
+    if (ext === 'mom') { ipcRenderer.invoke('recent:add', p).catch(() => {}); saveCfg({ lastKind: 'file' }); }
     return true;
   } catch (e) {
     logOnly('Não foi possível abrir ' + p + ': ' + e.message);   // falha esperada (arquivo ruim): só no registro, sem console.error
@@ -235,6 +235,8 @@ async function openPath(p, { silent = false } = {}) {
 /** Retorna true se salvou, false se cancelou ou falhou. */
 async function save(as) {
   commitNotes();
+  if (inLibrary()) return as ? exportCopyMom() : saveToLibrary();            // casa = biblioteca (SQLite); "Salvar como" exporta uma cópia .mom
+  if (!filePath && !as && loadCfg().newInLibrary && getLibrary()) return saveToLibrary();   // opção: mapas novos já nascem na biblioteca
   let target = filePath;
   if (!target || as) {
     target = await ipcRenderer.invoke('dialog:save', 'mom', (map.root.title || 'mapa') + '.mom');
@@ -248,6 +250,7 @@ async function save(as) {
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
   filePath = target; dirty = false; render();
   ipcRenderer.invoke('recent:add', target).catch(() => {});
+  saveCfg({ lastKind: 'file' });
   return true;
 }
 const rasterize = (size = 2) => new Promise((resolve, reject) => {
@@ -729,6 +732,7 @@ function lastRecent() {
 
 /** Versões anteriores (backups automáticos) do arquivo aberto: o escolhido abre como mapa NOVO (o original não é tocado). */
 async function restoreVersion() {
+  if (inLibrary()) return openVersionsModal(map.meta.libId, { back: false });
   if (!filePath) return setStatus('Salve o mapa primeiro: as versões anteriores são guardadas por arquivo.');
   const dir = backupDirFor(path.join(userDataDir, 'backups'), filePath);
   if (!listBackups(dir).length) return setStatus('Ainda não há versões anteriores deste arquivo (o backup é feito ao salvar por cima de um arquivo existente).');
@@ -795,7 +799,10 @@ async function init() {
   if (dirty) return;                                    // um rascunho foi restaurado: não mexe
   await new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));   // espera os demais scripts
   const cfg = loadCfg();
-  if (cfg.reopenLast !== false) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }   // app de estudo diário: volta de onde parou
+  if (cfg.reopenLast !== false) {
+    if (cfg.lastKind === 'lib' && cfg.lastLib && libraryExists()) { if (!(await openFromLibrary(cfg.lastLib, { confirm: false, silent: true }))) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); } }
+    else { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
+  }   // app de estudo diário: volta de onde parou
   if (cfg.dashOnStart && typeof act.dash === 'function') act.dash();
 }
 newMap();

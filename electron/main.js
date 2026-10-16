@@ -59,6 +59,8 @@ function buildMenu() {
       })() },
       { label: 'Salvar', accelerator: 'CmdOrCtrl+S', click: send('save') },
       { label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
+      { label: 'Biblioteca de mapas…', accelerator: 'CmdOrCtrl+Shift+B', click: send('lib') },
+      { label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
       { type: 'separator' },
       { label: 'Novo mapa de concurso (modelo)', click: send('template') },
       { label: 'Importar edital (colar texto)…', click: send('edital') },
@@ -124,6 +126,7 @@ const FILTERS = {
   pdf: [{ name: 'PDF', extensions: ['pdf'] }], docx: [{ name: 'Word', extensions: ['docx'] }],
   png: [{ name: 'PNG', extensions: ['png'] }], svg: [{ name: 'SVG', extensions: ['svg'] }],
   csv: [{ name: 'CSV (edital)', extensions: ['csv', 'txt'] }],
+  mcpack: [{ name: 'Pacote MindCraft (.mcpack)', extensions: ['mcpack'] }], db: [{ name: 'Banco SQLite (.db)', extensions: ['db'] }],
   md: [{ name: 'Markdown', extensions: ['md'] }], opml: [{ name: 'OPML', extensions: ['opml'] }],
 };
 ipcMain.handle('dialog:open', async () => {
@@ -157,6 +160,10 @@ ipcMain.handle('clip:read', async () => String((await clipboard.readText()) ?? '
 ipcMain.handle('clip:write', async (_e, text) => { await clipboard.writeText(String(text)); });
 ipcMain.handle('dialog:open-csv', async () => {
   const r = await dialog.showOpenDialog(win, { title: 'CSV do edital', properties: ['openFile'], filters: FILTERS.csv });
+  return r.canceled ? null : r.filePaths[0];
+});
+ipcMain.handle('dialog:open-pack', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Pacote MindCraft', properties: ['openFile'], filters: FILTERS.mcpack });
   return r.canceled ? null : r.filePaths[0];
 });
 ipcMain.handle('dialog:open-at', async (_e, dir) => {
