@@ -47,7 +47,8 @@ export function ReviewMode({ onClose }) {
   }
   const refs = node && node.refs ? node.refs : [];
   const pdfs = h.map().meta.pdfs || [];
-  const hasDetail = !!(node && ((node.notes || '').trim() || refs.length));
+  const errs = node && node.study && node.study.errs ? node.study.errs : [];
+  const hasDetail = !!(node && ((node.notes || '').trim() || refs.length || errs.length));
   return (
     <div className="modal-box" id="rvBox" data-ui="react">
       <h2>Revisão do dia <span className="muted" id="rvCount">{`${i + 1} / ${queue.length}`}</span></h2>
@@ -60,6 +61,7 @@ export function ReviewMode({ onClose }) {
           <div className="rv-detail" id="rvDetail">
             {!hasDetail && <div className="muted">Este tópico não tem anotações.</div>}
             {node && (node.notes || '').trim() && <div className="md" dangerouslySetInnerHTML={{ __html: h.mdToHtml(node.notes) }} />}
+            {errs.length > 0 && <div className="rv-errs" id="rvErrs"><b>{`Seus erros neste tópico (${errs.length})`}</b>{errs.slice(-5).reverse().map((e, k) => <div key={k}>{`• ${h.S.ERR_REASONS[e.why]}${e.note ? ' — ' + e.note : ''}`}</div>)}</div>}
             {refs.map((r, k) => { const p = pdfs.find((x) => x.id === r.pdf); return <button className="ref-open" key={k} onClick={() => h.pdfOpenRef(r)}><b>{`📖 ${p ? p.name : 'PDF'}, p. ${r.page}`}</b></button>; })}
           </div>
         )}

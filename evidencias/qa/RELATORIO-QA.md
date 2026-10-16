@@ -1,10 +1,10 @@
 # Relatório de QA por funcionalidade
 
-Gerado por `npm run qa` em 16/10/2026, 16:09:47 — entrada real (mouse/teclado via Chromium), app executando de verdade.
+Gerado por `npm run qa` em 16/10/2026, 18:45:36 — entrada real (mouse/teclado via Chromium), app executando de verdade.
 
-**77 de 77 funcionalidades OK**.
+**78 de 78 funcionalidades OK**.
 
-**Medições:** Mapa de 1001 tópicos: render 22 ms, render+ajuste 76 ms
+**Medições:** Mapa de 1001 tópicos: render 15 ms, render+ajuste 50 ms
 
 | # | Grupo | Funcionalidade | Como foi exercitada | Resultado | Captura |
 |---|---|---|---|---|---|
@@ -79,12 +79,13 @@ Gerado por `npm run qa` em 16/10/2026, 16:09:47 — entrada real (mouse/teclado 
 | 69 | Dados | Biblioteca de mapas (SQLite): guardar, salvar, abrir, versões e lixeira | Janela da biblioteca; cliques reais nos botões; Ctrl+S real salva no banco | ✅ OK | [69_vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-](69_vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png)<br>[69_mapa-guardado_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-](69_mapa-guardado_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png)<br>[69_versoes_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-](69_versoes_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png)<br>[69_lixeira-vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-](69_lixeira-vazia_biblioteca-de-mapas-sqlite-guardar-salvar-abrir-.png) |
 | 70 | Estudos | Leitor de PDF dividido: selecionar um trecho cria tópico com página e destaque | Tela dividida; duplo clique real numa palavra do PDF; botão ＋ Tópico; Ctrl+clique no destaque | ✅ OK | [70_leitor-vazio_leitor-de-pdf-dividido-selecionar-um-trecho-cria](70_leitor-vazio_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png)<br>[70_trecho-selecionado_leitor-de-pdf-dividido-selecionar-um-trecho-cria](70_trecho-selecionado_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png)<br>[70_topico-criado_leitor-de-pdf-dividido-selecionar-um-trecho-cria](70_topico-criado_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png)<br>[70_fontes-nas-notas_leitor-de-pdf-dividido-selecionar-um-trecho-cria](70_fontes-nas-notas_leitor-de-pdf-dividido-selecionar-um-trecho-cria.png) |
 | 71 | Estudos | Revisão do dia (recordação ativa) e tela de atalhos (F1) | Cliques reais: Mostrar anotações → Lembrei / Errei; atalho de teclado Espaço | ✅ OK | [71_pergunta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho](71_pergunta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png)<br>[71_resposta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho](71_resposta_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png)<br>[71_concluida_revisao-do-dia-recordacao-ativa-e-tela-de-atalho](71_concluida_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png)<br>[71_atalhos_revisao-do-dia-recordacao-ativa-e-tela-de-atalho](71_atalhos_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png) |
-| 72 | Dados | Autosave e recuperação de sessão | Alteração → rascunho em disco → "queda" → Restaurar | ✅ OK — rascunho de 10132 bytes | [72_autosave-e-recuperacao-de-sessao](72_autosave-e-recuperacao-de-sessao.png) |
-| 73 | Dados | Arquivo corrompido não derruba o app nem o mapa atual | Abrir .mom inválido | ✅ OK — Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found | [73_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-](73_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png) |
-| 74 | Extremos | Título enorme, HTML, emoji e caracteres especiais | Textos hostis e longos no mapa | ✅ OK | [74_titulo-enorme-html-emoji-e-caracteres-especiais](74_titulo-enorme-html-emoji-e-caracteres-especiais.png) |
-| 75 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 22 ms · nível 1: 26 visíveis | [75_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](75_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[75_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](75_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
-| 76 | Extremos | Janela pequena (1000×640): a interface continua utilizável | Redimensiona a janela | ✅ OK | [76_pequena_janela-pequena-1000-640-a-interface-continua-uti](76_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)<br>[76_painel_janela-pequena-1000-640-a-interface-continua-uti](76_painel_janela-pequena-1000-640-a-interface-continua-uti.png) |
-| 77 | Extremos | Estados vazios: painel, conexões e grafo sem dados | Mapa novo sem estudos nem links | ✅ OK | [77_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](77_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)<br>[77_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](77_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png) |
+| 72 | Estudos | Caderno de erros e metas semanais (painel Estudo e Painel de estudos) | Cliques e digitação reais; motivo por seletor; botão ＋ Erro; metas digitadas | ✅ OK | [72_painel-estudo_caderno-de-erros-e-metas-semanais-painel-estudo-](72_painel-estudo_caderno-de-erros-e-metas-semanais-painel-estudo-.png)<br>[72_painel-erros-e-metas_caderno-de-erros-e-metas-semanais-painel-estudo-](72_painel-erros-e-metas_caderno-de-erros-e-metas-semanais-painel-estudo-.png)<br>[72_metas-salvas_caderno-de-erros-e-metas-semanais-painel-estudo-](72_metas-salvas_caderno-de-erros-e-metas-semanais-painel-estudo-.png) |
+| 73 | Dados | Autosave e recuperação de sessão | Alteração → rascunho em disco → "queda" → Restaurar | ✅ OK — rascunho de 10155 bytes | [73_autosave-e-recuperacao-de-sessao](73_autosave-e-recuperacao-de-sessao.png) |
+| 74 | Dados | Arquivo corrompido não derruba o app nem o mapa atual | Abrir .mom inválido | ✅ OK — Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found | [74_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-](74_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png) |
+| 75 | Extremos | Título enorme, HTML, emoji e caracteres especiais | Textos hostis e longos no mapa | ✅ OK | [75_titulo-enorme-html-emoji-e-caracteres-especiais](75_titulo-enorme-html-emoji-e-caracteres-especiais.png) |
+| 76 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 15 ms · nível 1: 26 visíveis | [76_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](76_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[76_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](76_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
+| 77 | Extremos | Janela pequena (1000×640): a interface continua utilizável | Redimensiona a janela | ✅ OK | [77_pequena_janela-pequena-1000-640-a-interface-continua-uti](77_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)<br>[77_painel_janela-pequena-1000-640-a-interface-continua-uti](77_painel_janela-pequena-1000-640-a-interface-continua-uti.png) |
+| 78 | Extremos | Estados vazios: painel, conexões e grafo sem dados | Mapa novo sem estudos nem links | ✅ OK | [78_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](78_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)<br>[78_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](78_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png) |
 
 ## Capturas
 
@@ -476,35 +477,42 @@ Gerado por `npm run qa` em 16/10/2026, 16:09:47 — entrada real (mouse/teclado 
 ![71_concluida_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png](71_concluida_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png)
 ![71_atalhos_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png](71_atalhos_revisao-do-dia-recordacao-ativa-e-tela-de-atalho.png)
 
-### 72 · Dados › Autosave e recuperação de sessão
-✅ Alteração → rascunho em disco → "queda" → Restaurar — _rascunho de 10132 bytes_
+### 72 · Estudos › Caderno de erros e metas semanais (painel Estudo e Painel de estudos)
+✅ Cliques e digitação reais; motivo por seletor; botão ＋ Erro; metas digitadas
 
-![72_autosave-e-recuperacao-de-sessao.png](72_autosave-e-recuperacao-de-sessao.png)
+![72_painel-estudo_caderno-de-erros-e-metas-semanais-painel-estudo-.png](72_painel-estudo_caderno-de-erros-e-metas-semanais-painel-estudo-.png)
+![72_painel-erros-e-metas_caderno-de-erros-e-metas-semanais-painel-estudo-.png](72_painel-erros-e-metas_caderno-de-erros-e-metas-semanais-painel-estudo-.png)
+![72_metas-salvas_caderno-de-erros-e-metas-semanais-painel-estudo-.png](72_metas-salvas_caderno-de-erros-e-metas-semanais-painel-estudo-.png)
 
-### 73 · Dados › Arquivo corrompido não derruba o app nem o mapa atual
+### 73 · Dados › Autosave e recuperação de sessão
+✅ Alteração → rascunho em disco → "queda" → Restaurar — _rascunho de 10155 bytes_
+
+![73_autosave-e-recuperacao-de-sessao.png](73_autosave-e-recuperacao-de-sessao.png)
+
+### 74 · Dados › Arquivo corrompido não derruba o app nem o mapa atual
 ✅ Abrir .mom inválido — _Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found_
 
-![73_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png](73_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png)
+![74_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png](74_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png)
 
-### 74 · Extremos › Título enorme, HTML, emoji e caracteres especiais
+### 75 · Extremos › Título enorme, HTML, emoji e caracteres especiais
 ✅ Textos hostis e longos no mapa
 
-![74_titulo-enorme-html-emoji-e-caracteres-especiais.png](74_titulo-enorme-html-emoji-e-caracteres-especiais.png)
+![75_titulo-enorme-html-emoji-e-caracteres-especiais.png](75_titulo-enorme-html-emoji-e-caracteres-especiais.png)
 
-### 75 · Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
-✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 22 ms · nível 1: 26 visíveis_
+### 76 · Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
+✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 15 ms · nível 1: 26 visíveis_
 
-![75_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](75_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
-![75_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](75_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
+![76_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](76_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
+![76_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](76_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
 
-### 76 · Extremos › Janela pequena (1000×640): a interface continua utilizável
+### 77 · Extremos › Janela pequena (1000×640): a interface continua utilizável
 ✅ Redimensiona a janela
 
-![76_pequena_janela-pequena-1000-640-a-interface-continua-uti.png](76_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)
-![76_painel_janela-pequena-1000-640-a-interface-continua-uti.png](76_painel_janela-pequena-1000-640-a-interface-continua-uti.png)
+![77_pequena_janela-pequena-1000-640-a-interface-continua-uti.png](77_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)
+![77_painel_janela-pequena-1000-640-a-interface-continua-uti.png](77_painel_janela-pequena-1000-640-a-interface-continua-uti.png)
 
-### 77 · Extremos › Estados vazios: painel, conexões e grafo sem dados
+### 78 · Extremos › Estados vazios: painel, conexões e grafo sem dados
 ✅ Mapa novo sem estudos nem links
 
-![77_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png](77_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)
-![77_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png](77_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)
+![78_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png](78_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)
+![78_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png](78_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)

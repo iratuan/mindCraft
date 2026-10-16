@@ -395,3 +395,13 @@ body.pdf-dragging { cursor: col-resize; user-select: none; }
 .keys-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; max-height: 60vh; overflow: auto; } .keys-group h3 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); }
 .keys-row { display: flex; gap: 10px; align-items: baseline; padding: 2px 0; } .keys-row kbd { flex: none; min-width: 112px; font: 11.5px Consolas, monospace; padding: 2px 6px; border-radius: 4px; background: var(--bg-field); border: 1px solid var(--line); color: var(--text-strong); }
 @media (max-width: 760px) { .keys-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Caderno de erros e metas ---------- */
+.errlist { display: flex; flex-direction: column; gap: 3px; } .err-row { display: flex; gap: 6px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--line-soft); font-size: 11.5px; }
+.err-row .grow { flex: 1; min-width: 0; } .err-row b { color: var(--text-strong); } .err-del { width: 20px; height: 20px; border: 0; border-radius: 10px; background: transparent; color: var(--text-dim); cursor: pointer; } .err-del:hover { background: #c0392b; color: #fff; }
+#errNote { flex: 1; min-width: 0; }
+.goal-bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; } .goal-row { display: flex; align-items: center; gap: 10px; } .goal-row > span:first-child { width: 64px; } .goal-row b { width: 40px; text-align: right; }
+.goal-form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; } .goal-form label { display: flex; gap: 6px; align-items: center; color: var(--text-dim); }
+.err-bars { display: flex; flex-direction: column; gap: 5px; margin: 6px 0 10px; } .err-bar { display: flex; align-items: center; gap: 10px; } .err-bar > span { width: 150px; } .err-bar b { width: 28px; text-align: right; }
+.bar.ok i { background: #3fb950; }
+.rv-errs { margin: 6px 0 10px; padding: 8px 10px; border-left: 3px solid #ff8a90; background: rgba(255,138,144,.08); border-radius: 4px; font-size: 12.5px; } .rv-errs b { color: var(--text-strong); display: block; margin-bottom: 3px; }

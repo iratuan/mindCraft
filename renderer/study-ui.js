@@ -73,11 +73,33 @@ function syncStudy(sel) {
     const today = nowStr();
     $('#studyTime').textContent = `Hoje: ${fmtMin(st.log[today] || 0)} · Total: ${fmtMin(S.totalMinutes(st))}`;
     $('#studyQ').textContent = st.q.done ? `Total: ${st.q.correct}/${st.q.done} (${pctTxt((st.q.correct / st.q.done) * 100)})` : 'Nenhuma questão registrada.';
+    renderErrList(sel);
     $('#timerBtn').textContent = timer && timer.id === sel.node.id ? '■ Parar' : timer ? '▶ Mover cronômetro para cá' : '▶ Iniciar';
   }
   if (dashOpen) renderDash();
 }
 
+/** Lista de erros do tópico selecionado (mais recentes primeiro) com botão de apagar. */
+function renderErrList(sel) {
+  const box = $('#errList'); if (!box) return;
+  box.textContent = '';
+  const errs = (S.normalizeStudy(sel.node.study).errs || []).map((e, i) => ({ ...e, i })).reverse();
+  if (!errs.length) { box.append(el('div', 'muted', 'Nenhum erro registrado neste tópico.')); return; }
+  box.append(el('div', 'muted', `${errs.length} erro(s) registrado(s):`));
+  for (const e of errs.slice(0, 12)) {
+    const row = el('div', 'err-row'); row.dataset.err = String(e.i);
+    const t = el('div', 'grow'); t.append(el('b', '', S.ERR_REASONS[e.why]), el('span', 'muted', ` · ${fmtDate(e.d)}${e.note ? ' — ' + e.note : ''}`));
+    const del = el('button', 'err-del', '✕'); del.title = 'Apagar este erro'; del.dataset.act = 'err-del'; del.onclick = () => runStudy((id) => map.mutateStudy(id, (s) => S.removeError(s, e.i)), 'Erro apagado.', [sel.node.id]);
+    row.append(t, del); box.append(row);
+  }
+  if (errs.length > 12) box.append(el('div', 'muted', `… e mais ${errs.length - 12} (mais antigos)`));
+}
+$('#errAdd').addEventListener('click', () => {
+  const why = $('#errWhy').value, note = $('#errNote').value, count = $('#errCount').checked;
+  if (!why) { msg('Escolha o motivo do erro.', 'err'); return; }
+  const today = nowStr();
+  if (runStudy((id) => map.mutateStudy(id, (s) => { const r = S.addError(s, { why, note, today }); return count ? S.addQuestions(r, 1, 0, today) : r; }), 'Erro registrado no caderno.', selectedId ? [selectedId] : [])) { $('#errNote').value = ''; $('#errWhy').value = ''; }
+});
 $('#studyDone').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: true })), 'Sessão registrada. Próxima revisão agendada.'); $('#studyDone').blur(); });
 $('#studyFail').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: false })), 'Registrado: rever amanhã.'); $('#studyFail').blur(); });
 $('#studyWeight').addEventListener('change', (e) => runStudy((id) => map.mutateStudy(id, (s) => S.setWeight(s, +e.target.value)), 'Peso atualizado.'));

@@ -1,5 +1,5 @@
 'use strict';
-const { summary, todayStr, parseDate, WEAK_MIN: S_WEAK_MIN, WEAK_ACCURACY: S_WEAK_ACC } = require('./study');
+const { summary, todayStr, parseDate, ERR_REASONS, WEAK_MIN: S_WEAK_MIN, WEAK_ACCURACY: S_WEAK_ACC } = require('./study');
 
 const fmtMin = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`);
 const fmtPct = (v) => (v == null ? '—' : `${Math.round(v * 10) / 10}%`.replace('.', ','));
@@ -35,6 +35,12 @@ function toStudyMarkdown(map, opts = {}) {
   o.push('', `## Revisões pendentes (${s.due.length})`, '');
   if (!s.due.length) o.push('Nenhuma revisão pendente. ✔');
   for (const r of s.due) o.push(`- ${r.path.join(' › ')}${r.path.length ? ' › ' : ''}${r.title} — prevista para ${fmtDate(r.next)}${r.overdue > 0 ? ` (**${r.overdue} dia${r.overdue === 1 ? '' : 's'} de atraso**)` : ' (hoje)'}`);
+  o.push('', `## Caderno de erros (${s.errors.total})`, '');
+  if (!s.errors.total) o.push('Nenhum erro registrado.');
+  else {
+    o.push(Object.entries(s.errors.byWhy).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${ERR_REASONS[k]}: ${n}`).join(' · '), '');
+    for (const e of s.errors.recent) o.push(`- ${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.note ? ': ' + e.note : ''}`);
+  }
   o.push('', `## Pontos fracos (≥ ${S_WEAK_MIN} questões e acerto < ${Math.round(S_WEAK_ACC * 100)}%)`, '');
   if (!s.weak.length) o.push('Nenhum ponto fraco identificado.');
   for (const w of s.weak) o.push(`- ${[...w.path, w.title].join(' › ')} — ${w.correct}/${w.done} (${acc(w.accuracy)})`);
@@ -69,6 +75,9 @@ async function toStudyDOCX(map, opts = {}) {
   kids.push(new Paragraph({ text: `Revisões pendentes (${s.due.length})`, heading: HeadingLevel.HEADING_1 }));
   if (!s.due.length) kids.push(P('Nenhuma revisão pendente.'));
   for (const r of s.due) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...r.path, r.title].join(' › ')} — prevista para ${fmtDate(r.next)}${r.overdue > 0 ? ` (${r.overdue} dia${r.overdue === 1 ? '' : 's'} de atraso)` : ' (hoje)'}` })] }));
+  kids.push(new Paragraph({ text: `Caderno de erros (${s.errors.total})`, heading: HeadingLevel.HEADING_1 }));
+  if (!s.errors.total) kids.push(P('Nenhum erro registrado.'));
+  for (const e of s.errors.recent) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.note ? ': ' + e.note : ''}` })] }));
   kids.push(new Paragraph({ text: 'Pontos fracos', heading: HeadingLevel.HEADING_1 }));
   if (!s.weak.length) kids.push(P('Nenhum ponto fraco identificado.'));
   for (const w of s.weak) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...w.path, w.title].join(' › ')} — ${w.correct}/${w.done} (${acc(w.accuracy)})` })] }));

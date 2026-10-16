@@ -2,7 +2,7 @@
 const fs = require('fs');
 const AdmZip = require('adm-zip');
 const { MindMap, createNode, newId } = require('./model');
-const { normalizeStudy, isDateStr } = require('./study');
+const { normalizeStudy, isDateStr, sanitizeGoals } = require('./study');
 const { sanitizeStyle, THEMES } = require('./themes');
 const { MARKERS } = require('./markers');
 const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
@@ -42,6 +42,10 @@ function readMom(source) {
     return nid;
   };
 
+  // Arquivos gravados pelo MindCraft têm texto PURO nos títulos/notas: nada de limpar "tags" (senão "Tag <br> em HTML" seria alterado a cada abertura).
+  // Só os arquivos do Mindomo (sem esta marca) trazem formatação em HTML, que é removida.
+  const fromMindCraft = doc.mcWriter === 'mindcraft';
+  const clean = fromMindCraft ? (s) => String(s ?? '') : stripTags;
   const byId = new Map();
   for (const n of nodes) {
     if (!n || typeof n !== 'object' || n.deleted || typeof n.id !== 'string') continue;
@@ -50,8 +54,8 @@ function readMom(source) {
     const nid = mapId(id);
     const m = mc && typeof mc === 'object' ? mc : {};
     byId.set(nid, {
-      node: createNode(stripTags(title), {
-        id: nid, notes: stripTags(n.notes?.text ?? (typeof n.notes === 'string' ? n.notes : '')),
+      node: createNode(clean(title), {
+        id: nid, notes: clean(n.notes?.text ?? (typeof n.notes === 'string' ? n.notes : '')),
         // extensões do MindCraft (campos próprios em "mc"), todas validadas
         markers: Array.isArray(m.markers) ? m.markers.filter((x) => typeof x === 'string' && MARKERS[x]) : [],
         progress: Number.isFinite(m.progress) ? Math.min(100, Math.max(0, m.progress)) : null,
@@ -94,6 +98,7 @@ function readMom(source) {
   const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
   map.meta._momDoc = doc; // preservado para round-trip
   if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
+  if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
   if (Array.isArray(doc.mcPdfs) && sanitizePdfs(doc.mcPdfs).length) map.meta.pdfs = sanitizePdfs(doc.mcPdfs);
   if (Array.isArray(doc.mcRelations)) {
     map.meta.relations = doc.mcRelations
@@ -140,10 +145,12 @@ function writeMom(map, target) {
     },
     mapUsers: { 4: { userId: 4, userName: 'Guest', firstName: 'Guest', lastName: '' } },
   };
+  doc.mcWriter = 'mindcraft';                    // texto puro nos títulos/notas (ver readMom)
   doc.mcRelations = map.meta.relations || [];
   doc.mcTheme = map.meta.theme || 'ocean';
   if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
+  if (map.meta.goals) doc.mcGoals = map.meta.goals; else delete doc.mcGoals;
   doc.mapInfo.name = map.meta.name || map.root.title;
   doc.mapInfo.rootId = map.root.id;
   doc.mapInfo.modificationDate = now;

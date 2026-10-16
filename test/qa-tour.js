@@ -567,6 +567,17 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await clickSel('#rvSkip'); await c.waitFor(() => js("!!document.querySelector('#rvDone')")); await shot('concluida'); await clickSel('#rvClose');
     await js("ipcRenderer.emit('menu', {}, 'help'); true"); await c.waitFor(() => js("!!document.querySelector('#keysBox')")); await shot('atalhos'); await clickSel('#keysClose');
   });
+  await feature('Estudos', 'Caderno de erros e metas semanais (painel Estudo e Painel de estudos)', 'Cliques e digitação reais; motivo por seletor; botão ＋ Erro; metas digitadas', async ({ shot }) => {
+    const leaf = await js('(() => { let t; map.walk((n, l) => { if (l === 2 && !t) t = n.title; }); return t; })()'); await clickNode(leaf); await clickSel('#ptabs [data-tab="study"]'); await wait(150);
+    await setVal('#errWhy', 'confundi', 'change'); await clickSel('#errNote'); await type('confundi crase com acento grave'); await wait(150); await clickSel('#errAdd');
+    await c.waitFor(() => js("document.querySelectorAll('#errList .err-row').length === 1"), 8000); await shot('painel-estudo');
+    await setVal('#errWhy', 'atencao', 'change'); await wait(150); await clickSel('#errAdd'); await c.waitFor(() => js("document.querySelectorAll('#errList .err-row').length === 2"), 8000);
+    await js('act.dash()'); await wait(300); await js("document.querySelector('#dash').scrollTop = 600"); await wait(200); await shot('painel-erros-e-metas');
+    await js("document.querySelector('#goals').scrollIntoView({ block: 'center' })"); await wait(200); await clickSel('#goalHours'); await key('A', ['control']); await type('6'); await clickSel('#goalQuestions'); await key('A', ['control']); await type('80'); await clickSel('#goalSave');
+    await c.waitFor(() => js("!!map.meta.goals && map.meta.goals.minutesWeek === 360 && map.meta.goals.questionsWeek === 80")); await wait(300); await js("document.querySelector('#goals').scrollIntoView({ block: 'center' })"); await wait(200); await shot('metas-salvas');
+    ok(await js("document.querySelectorAll('#goals .goal-row').length === 2"), 'barras das duas metas'); ok((await txt('#errSec')).includes('Caderno de erros (2)'), await txt('#errSec'));
+    await js("document.querySelector('#errSec').scrollIntoView({ block: 'center' })"); await wait(200); await clickSel('#errSec .rev .t'); await wait(200); ok(await js("document.querySelector('#dash').hidden"), 'clicar num erro leva ao tópico');
+  });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');
     await c.waitFor(() => fs.existsSync(draft)); const size = fs.statSync(draft).size; await js('draftExists = false; newMap()'); ok(fs.existsSync(draft), 'rascunho sobrevive');

@@ -8,6 +8,10 @@
 /** Intervalos (dias) entre revisões: 24h, 7d, 15d, 30d, 60d, 120d — o clássico de concursos. */
 const INTERVALS = [1, 7, 15, 30, 60, 120];
 const MAX_MIN_PER_DAY = 1440;
+/** Motivos do caderno de erros (chave → rótulo). */
+const ERR_REASONS = { atencao: 'Falta de atenção', 'nao-sabia': 'Não sabia o conteúdo', confundi: 'Confundi conceitos', tempo: 'Falta de tempo', chute: 'Chutei', outro: 'Outro' };
+const MAX_ERRS = 200, MAX_ERR_NOTE = 300;
+const MAX_GOAL_MIN = 7 * 1440, MAX_GOAL_Q = 100000;
 /** "Ponto fraco": tópico com pelo menos WEAK_MIN questões e acerto abaixo de WEAK_ACCURACY. */
 const WEAK_MIN = 5, WEAK_ACCURACY = 0.7, AGENDA_DAYS = 28;
 
@@ -51,6 +55,10 @@ function normalizeStudy(raw) {
   }
   if (Array.isArray(raw.reviews)) s.reviews = raw.reviews.filter((r) => r && isDateStr(r.d)).map((r) => ({ d: r.d, ok: r.ok !== false }));
   if (Number.isInteger(raw.stage) && raw.stage >= -1) s.stage = raw.stage;
+  if (Array.isArray(raw.errs)) {          // caderno de erros (só existe se houver registros)
+    const errs = raw.errs.filter((e) => e && isDateStr(e.d) && ERR_REASONS[e.why]).slice(-MAX_ERRS).map((e) => ({ d: e.d, why: e.why, note: String(e.note ?? '').slice(0, MAX_ERR_NOTE) }));
+    if (errs.length) s.errs = errs;
+  }
   if (isDateStr(raw.next)) s.next = raw.next;
   if (isDateStr(raw.last)) s.last = raw.last;
   return s;
@@ -98,6 +106,30 @@ function addQuestions(st, done, correct, today = null) {
   return s;
 }
 
+/** Registra um erro (motivo + anotação) no caderno de erros do tópico. */
+function addError(st, { why, note = '', today }) {
+  if (!isDateStr(today)) throw new Error(`Data inválida: ${today}`);
+  if (!ERR_REASONS[why]) throw new Error('Escolha o motivo do erro.');
+  const s = normalizeStudy(st);
+  if ((s.errs || []).length >= MAX_ERRS) throw new Error(`O caderno de erros deste tópico já tem ${MAX_ERRS} registros; apague os antigos.`);
+  s.errs = [...(s.errs || []), { d: today, why, note: String(note ?? '').trim().slice(0, MAX_ERR_NOTE) }];
+  return s;
+}
+function removeError(st, index) {
+  const s = normalizeStudy(st);
+  if (!s.errs || !s.errs[index]) throw new Error('Erro não encontrado.');
+  s.errs = s.errs.filter((_, i) => i !== index);
+  if (!s.errs.length) delete s.errs;
+  return s;
+}
+/** Metas semanais { minutesWeek, questionsWeek } (0 ou ausente = sem meta). Devolve null se nenhuma estiver definida. */
+function sanitizeGoals(g) {
+  if (!g || typeof g !== 'object') return null;
+  const m = Number.isInteger(g.minutesWeek) && g.minutesWeek > 0 ? Math.min(g.minutesWeek, MAX_GOAL_MIN) : 0;
+  const q = Number.isInteger(g.questionsWeek) && g.questionsWeek > 0 ? Math.min(g.questionsWeek, MAX_GOAL_Q) : 0;
+  return m || q ? { ...(m ? { minutesWeek: m } : {}), ...(q ? { questionsWeek: q } : {}) } : null;
+}
+
 function setNext(st, date) {
   if (date !== null && !isDateStr(date)) throw new Error(`Data inválida: ${date}`);
   const s = normalizeStudy(st); s.next = date; return s;
@@ -131,6 +163,13 @@ function* walkPath(node, path = []) {
   for (const c of node.children) yield* walkPath(c, [...path, node]);
 }
 
+/** Progresso das metas dos últimos 7 dias: { minutes:{goal,done,pct}, questions:{goal,done,pct} } ou null (sem metas). */
+function goalsProgress(goals, { minutes, questions }) {
+  const g = sanitizeGoals(goals); if (!g) return null;
+  const one = (goal, done) => (goal ? { goal, done, pct: Math.min(100, Math.round((done / goal) * 100)), left: Math.max(0, goal - done) } : null);
+  return { minutes: one(g.minutesWeek, minutes), questions: one(g.questionsWeek, questions) };
+}
+
 function summary(map, { today = todayStr() } = {}) {
   const root = map.root;
   const weekStart = addDays(today, -6);
@@ -139,6 +178,8 @@ function summary(map, { today = todayStr() } = {}) {
   const due = [], upcoming = [], perDay = {}, future = [], weak = [];
   let qWeekDone = 0, qWeekOk = 0;
   const pending = { leaves: 0, weighted: 0 };
+  const errAll = [], errTopics = [], errBy = {};
+  let errWeek = 0;
   let totalLeaves = 0, doneLeaves = 0, wSum = 0, wProg = 0;
 
   const disc = new Map(); // id da disciplina -> acumulador
@@ -162,6 +203,10 @@ function summary(map, { today = todayStr() } = {}) {
       }
       if (st.q.done >= WEAK_MIN && st.q.correct / st.q.done < WEAK_ACCURACY) weak.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), done: st.q.done, correct: st.q.correct, accuracy: st.q.correct / st.q.done });
       if (d) { d.qDone += st.q.done; d.qOk += st.q.correct; }
+      if (st.errs) {
+        for (const e of st.errs) { errAll.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), why: e.why, note: e.note, d: e.d }); errBy[e.why] = (errBy[e.why] || 0) + 1; if (e.d >= weekStart && e.d <= today) errWeek++; }
+        errTopics.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), count: st.errs.length });
+      }
       if (st.next && st.next <= today) {
         due.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), next: st.next, overdue: diffDays(st.next, today), weight: st.weight, stage: st.stage });
         if (d) d.due++;
@@ -207,6 +252,8 @@ function summary(map, { today = todayStr() } = {}) {
     week: Array.from({ length: 7 }, (_, i) => { const d = addDays(today, i - 6); return { date: d, minutes: perDay[d] || 0 }; }),
     questions: { done: qDone, correct: qOk, accuracy: qDone ? qOk / qDone : null, week: { done: qWeekDone, correct: qWeekOk, accuracy: qWeekDone ? qWeekOk / qWeekDone : null } },
     weak: weak.slice(0, 8), agenda,
+    errors: { total: errAll.length, week: errWeek, byWhy: errBy, topics: errTopics.sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 8), recent: errAll.sort((a, b) => b.d.localeCompare(a.d) || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 10) },
+    goals: goalsProgress(map.meta && map.meta.goals, { minutes: minWeek, questions: qWeekDone }),
     reviewsToday: revToday, streak, due, upcoming,
     disciplines: [...disc.values()].map((d) => ({ ...d, progress: d.w ? d.wp / d.w : 0, accuracy: d.qDone ? d.qOk / d.qDone : null })),
     exam: exam ? { name: exam.name || '', date: exam.date, daysLeft } : null, plan,
@@ -216,5 +263,6 @@ function summary(map, { today = todayStr() } = {}) {
 module.exports = {
   INTERVALS, MAX_MIN_PER_DAY, WEAK_MIN, WEAK_ACCURACY, AGENDA_DAYS, todayStr, parseDate, isDateStr, addDays, diffDays,
   emptyStudy, normalizeStudy, reviewed, addTime, addQuestions, setNext, setWeight,
+  ERR_REASONS, MAX_ERRS, MAX_ERR_NOTE, addError, removeError, sanitizeGoals, goalsProgress,
   totalMinutes, isDue, rollup, summary,
 };

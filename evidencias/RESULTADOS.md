@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 16:10 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 18:50 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -80,3 +80,9 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Resultados**: unitários 122/122 (+10: referências de PDF no .mom/biblioteca/Obsidian, .ics); e2e do leitor 11/11 (PDF real gerado com pdfkit: texto selecionável, tópico/nota com página e destaque, 1 desfazer, fontes no painel Notas, relink, salvar/reabrir, PDF inválido/sem texto/ausente, 60 páginas com desenho só das páginas próximas, divisor arrastável); revisão/.ics/atalhos 7/7; demais suítes inalteradas (nas duas interfaces); **QA com entrada real 77/77** (duplo clique real numa palavra do PDF → ＋ Tópico; capturas `qa/70_*`, `qa/71_*`), 0 erros de console.
 - **Erros reais achados pelos testes e corrigidos**: a "Revisão do dia" lia `map.find()` como se devolvesse o nó (devolve {node,parent}) e mostrava "sem anotações"; barra de seleção do PDF some ao rolar (comportamento correto) — os testes agora esperam a rolagem assentar.
 - **Não testado**: PDFs muito grandes (centenas de MB) e PDFs digitalizados com OCR; leitura em Linux/macOS; PDF de outra codificação de fontes exótica; abrir o .ics num calendário real (só o formato foi validado).
+
+## Rodada "caça a bugs" + caderno de erros e metas semanais
+- **Resultados**: unitários 136/136 (inclui 7 de fuzz: 40 sementes × 120 operações = 4 800 passos no modelo, texto hostil ×3 000, importações com lixo, referências/.ics, pacotes de biblioteca aleatórios, mapa de 3 000 tópicos, .mom adulterado); e2e todas as suítes passaram (editor, estudo, rede, assistente, biblioteca, notas nas duas interfaces + PDF 11, revisão 7, **erros e metas 9**, **desempenho 5**, **macaco 4**); QA com entrada real **78/78**, 0 erros de console. Varreduras longas do macaco: 6×250, 20×300 e 12×300 (com as novas ações) — todas verdes no final.
+- **Bugs reais achados (e corrigidos, com teste de regressão)**: (1) **o .mom alterava o texto do usuário** ao reabrir (tags como `<br>` em títulos/notas eram "limpas"; instável a cada ciclo) — agora só arquivos do Mindomo sofrem a limpeza (marca `mcWriter`); (2) **seleção apontando para tópico inexistente** após desfazer/refazer; (3) **tópico selecionado escondido por um ramo recolhido** causava erro (`reading 'w'`) ao criar filho/editar/navegar — agora a seleção vai para o ancestral visível; (4) ao sair da **apresentação** o editor ficava ~100 ms sem tópicos clicáveis (e o 1º passo agendado podia rodar já encerrado); (5) o teste da Revisão do dia expôs que `map.find()` devolve {node,parent}.
+- **Desempenho (3 000 tópicos, interface real)**: ~108 ms por seleção, painel de estudos ~100 ms, Estrutura (React) ~170 ms, desfazer+refazer ~200 ms, salvar .mom ~140 ms, guardar na biblioteca com verificação ~180 ms, abrir ~270 ms.
+- **Não testado**: Linux/macOS; PDFs gigantes/escaneados; uso simultâneo do banco por duas instâncias; CI.

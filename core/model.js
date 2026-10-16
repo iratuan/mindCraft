@@ -311,6 +311,16 @@ class MindMap {
     return true;
   }
 
+  /** Metas semanais (minutos e questões em 7 dias). null ou zeros = sem metas. */
+  setGoals(goals) {
+    if (goals !== null && (typeof goals !== 'object')) throw new Error('Metas inválidas.');
+    const g = goals === null ? null : study.sanitizeGoals(goals);
+    if (goals && !g && (goals.minutesWeek || goals.questionsWeek)) throw new Error('Informe números inteiros positivos (horas por semana e/ou questões por semana).');
+    this._snapshot();
+    if (g) this.meta.goals = g; else delete this.meta.goals;
+    return true;
+  }
+
   update(id, patch) {
     const r = this.find(id);
     if (!r) return false;

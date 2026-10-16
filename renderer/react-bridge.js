@@ -13,6 +13,7 @@ Object.assign(window.MC, {
   vaultDue: (today) => vaultDue(today), reportError: (m) => report(m), openTopic: (n) => openTopic(n),
   review: (id, today, ok) => runStudy((x) => map.mutateStudy(x, (st) => S.reviewed(st, { today, ok })), '', [id]),
   setExam: (exam) => { change(() => map.setExam(exam)); },
+  setGoals: (goals) => { change(() => map.setGoals(goals)); },
   mdToHtml: (t) => require(path.join(core, 'markdown')).mdToHtml(t),
   actions: { openReview: () => act.review(), exportIcs: () => exportIcs(), exportReport: (k) => exportReport(k), openImportModal: () => openImportModal(), openCsvModal: () => openCsvModal(), openPlanModal: () => openPlanModal(), openLibraryModal: () => openLibraryModal(), newStudyTemplate: () => newStudyTemplate(), closeDash: () => closeDash() },
 });

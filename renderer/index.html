@@ -116,6 +116,11 @@
             <div class="field-label">Questões</div>
             <div class="row"><input id="qDone" type="number" min="1" placeholder="feitas" aria-label="Questões feitas"><input id="qOk" type="number" min="0" placeholder="acertos" aria-label="Acertos"><button id="qAdd" class="btn">Registrar</button></div>
             <div id="studyQ" class="muted"></div>
+            <div class="field-label">Caderno de erros</div>
+            <div class="row"><select id="errWhy" aria-label="Motivo do erro"><option value="">Motivo do erro…</option><option value="atencao">Falta de atenção</option><option value="nao-sabia">Não sabia o conteúdo</option><option value="confundi">Confundi conceitos</option><option value="tempo">Falta de tempo</option><option value="chute">Chutei</option><option value="outro">Outro</option></select></div>
+            <div class="row"><input id="errNote" type="text" maxlength="300" placeholder="o que errei / como evitar" aria-label="Anotação do erro"><button id="errAdd" class="btn">＋ Erro</button></div>
+            <label class="opt"><input type="checkbox" id="errCount"> contar também como questão errada</label>
+            <div id="errList" class="errlist"></div>
             <div id="studyMsg" class="msg" role="status"></div>
           </div>
         </div>

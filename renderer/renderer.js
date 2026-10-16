@@ -50,6 +50,15 @@ function setStatus(msg) { $('#status').textContent = msg; }
 
 function render() {
   L = layoutMap(map, { today: nowStr() });
+  // a seleção pode ter desaparecido (desfazer/refazer, exclusão, restaurar versão): volta para a raiz em vez de ficar apontando para o nada
+  if (selectedId && !map.find(selectedId)) { selectedId = map.root.id; selIds = new Set([selectedId]); }
+  if (selectedRel && !map.meta.relations.some((r) => r.id === selectedRel)) selectedRel = null;
+  if (selectedId && !L.boxes.has(selectedId)) {      // o tópico selecionado ficou escondido por um ramo recolhido: seleciona o ancestral visível mais próximo
+    const trail = [];
+    (function dfs(n) { if (n.id === selectedId) return true; trail.push(n); for (const c of n.children) if (dfs(c)) return true; trail.pop(); return false; })(map.root);
+    const vis = trail.reverse().find((n) => L.boxes.has(n.id)) || map.root;
+    selectedId = vis.id; selIds = new Set([vis.id]);
+  }
   // selectedId manda: se foi trocado por outro código, descarta a seleção múltipla antiga
   if (!selectedId) selIds = new Set(); else if (!selIds.has(selectedId)) selIds = new Set([selectedId]);
   for (const id of [...selIds]) if (!map.find(id)) selIds.delete(id);
@@ -327,7 +336,7 @@ const act = {
   undo() { commitNotes(); if (map.undo()) { dirty = true; rev++; selectedRel = null; render(); } },
   redo() { if (map.redo()) { dirty = true; rev++; selectedRel = null; render(); } },
   fit,
-  bold() { const s = sel(); if (s) { const v = !(s.node.style.bold ?? L.boxes.get(s.node.id).style.bold); change(() => map.updateMany(targets(), { style: { bold: v } })); } },
+  bold() { const s = sel(); if (s) { const v = !(s.node.style.bold ?? (L.boxes.get(s.node.id) || { style: {} }).style.bold); change(() => map.updateMany(targets(), { style: { bold: v } })); } },
   toggle() {
     const s = sel(); if (!s || !s.node.children.length) return;
     const v = !s.node.collapsed;
@@ -387,7 +396,6 @@ function centerOn(id, k) {
 }
 function presentStep(d) {
   if (!present) return;                       // saiu da apresentação antes do 1º passo agendado (150 ms)
-  if (!present) return;                       // saiu da apresentação antes do 1º passo agendado (150 ms)
   const i = Math.min(present.order.length - 1, Math.max(0, present.i + d));
   present.i = i;
   const hud = $('#hud'); hud.hidden = false; hud.textContent = `${i + 1} / ${present.order.length}  ·  ← → navega · Esc sai`;
@@ -405,7 +413,8 @@ function stopPresent() {
   present = null; $('#hud').hidden = true;
   document.body.classList.remove('presenting');
   if (document.fullscreenElement) document.exitFullscreen();
-  setTimeout(() => { render(); fit(); }, 100);
+  render();                                   // o editor volta na hora (antes ficava ~100 ms com o desenho da apresentação, sem tópicos clicáveis)
+  setTimeout(() => { if (!present) { render(); fit(); } }, 100);   // e reajusta depois que a tela cheia terminar de sair
 }
 document.addEventListener('fullscreenchange', () => { if (present && !document.fullscreenElement) stopPresent(); });
 
@@ -477,7 +486,7 @@ function contrast(hex) {
 // ---------- edição inline ----------
 function startEdit() {
   const s = sel(); if (!s) return;
-  const b = L.boxes.get(s.node.id);
+  const b = L.boxes.get(s.node.id); if (!b) return;
   const w = Math.max(b.w * pan.k, 120);
   editor.hidden = false;
   editor.value = s.node.title;
@@ -679,8 +688,8 @@ window.addEventListener('keydown', (e) => {
     case 'F2': startEdit(); break;
     case 'Delete': case 'Backspace': act.delete(); break;
     case ' ': e.preventDefault(); act.toggle(); break;
-    case 'ArrowRight': nav(() => s && (L.boxes.get(s.node.id).side > 0 || !s.parent ? s.node.children[0] : s.parent)); break;
-    case 'ArrowLeft': nav(() => s && (L.boxes.get(s.node.id).side < 0 || !s.parent ? s.node.children[0] : s.parent)); break;
+    case 'ArrowRight': nav(() => s && L.boxes.get(s.node.id) && (L.boxes.get(s.node.id).side > 0 || !s.parent ? s.node.children[0] : s.parent)); break;
+    case 'ArrowLeft': nav(() => s && L.boxes.get(s.node.id) && (L.boxes.get(s.node.id).side < 0 || !s.parent ? s.node.children[0] : s.parent)); break;
     case 'ArrowDown': nav(() => { if (!s || !s.parent) return null; const i = s.parent.children.indexOf(s.node); return s.parent.children[i + 1]; }); break;
     case 'ArrowUp': nav(() => { if (!s || !s.parent) return null; const i = s.parent.children.indexOf(s.node); return s.parent.children[i - 1]; }); break;
   }

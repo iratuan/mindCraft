@@ -64,6 +64,53 @@ function Weak({ s }) {
   );
 }
 
+/** Metas semanais (minutos e questões nos últimos 7 dias): progresso + edição. */
+function Goals({ s }) {
+  const h = H(), map = h.map(), g = map.meta.goals || {};
+  const [msg, setMsg] = useState({ text: '', kind: '' });
+  const save = (clear) => {
+    try {
+      const hours = parseFloat(String(document.getElementById('goalHours').value).replace(',', '.')), q = parseInt(document.getElementById('goalQuestions').value, 10);
+      const goals = clear ? null : { minutesWeek: Number.isFinite(hours) && hours > 0 ? Math.round(hours * 60) : 0, questionsWeek: Number.isFinite(q) && q > 0 ? q : 0 };
+      if (!clear && !goals.minutesWeek && !goals.questionsWeek) throw new Error('Informe as horas por semana e/ou as questões por semana.');
+      h.setGoals(goals); setMsg({ text: clear ? 'Metas removidas.' : 'Metas salvas.', kind: 'ok' });
+    } catch (e) { setMsg({ text: e.message, kind: 'err' }); }
+  };
+  const row = (label, x, unit) => x && <div className="goal-row" data-goal={unit}><span>{label}</span><Bar pct={x.pct} cls={x.pct >= 100 ? 'ok' : ''} style={{ flex: 1 }} /><b>{x.pct}%</b><span className="muted">{x.left ? `faltam ${unit === 'min' ? h.fmtMin(x.left) : x.left + ' questões'}` : 'meta batida ✔'}</span></div>;
+  return (
+    <div className="dash-sec" id="goals">
+      <h3>Metas semanais (últimos 7 dias)</h3>
+      {s.goals && <div className="goal-bars">{row('Estudo', s.goals.minutes, 'min')}{row('Questões', s.goals.questions, 'q')}</div>}
+      <div className="goal-form">
+        <label>Horas por semana <input id="goalHours" type="text" inputMode="decimal" style={{ width: 64 }} defaultValue={g.minutesWeek ? String(g.minutesWeek / 60).replace('.', ',') : ''} key={'h' + (g.minutesWeek || 0)} /></label>
+        <label>Questões por semana <input id="goalQuestions" type="text" inputMode="numeric" style={{ width: 64 }} defaultValue={g.questionsWeek ? String(g.questionsWeek) : ''} key={'q' + (g.questionsWeek || 0)} /></label>
+        <button className="btn primary" id="goalSave" onClick={() => save(false)}>Salvar metas</button>
+        {map.meta.goals && <button className="btn" id="goalClear" onClick={() => save(true)}>Remover</button>}
+        <span className={'msg' + (msg.kind ? ' ' + msg.kind : '')} id="goalMsg">{msg.text}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Caderno de erros: por motivo, tópicos com mais erros e os mais recentes. */
+function Errors({ s }) {
+  const h = H(), e = s.errors, S = h.S;
+  const max = Math.max(1, ...Object.values(e.byWhy));
+  return (
+    <div className="dash-sec" id="errSec">
+      <h3>{`Caderno de erros (${e.total})`}</h3>
+      {!e.total && <div className="empty">Nenhum erro registrado. No painel Estudo, escolha o motivo e anote o que errou: aqui aparece onde você mais tropeça.</div>}
+      {e.total > 0 && (
+        <>
+          <div className="err-bars">{Object.entries(e.byWhy).sort((a, b) => b[1] - a[1]).map(([k, n]) => <div className="err-bar" key={k} data-why={k}><span>{S.ERR_REASONS[k]}</span><Bar pct={(n / max) * 100} style={{ flex: 1 }} /><b>{n}</b></div>)}</div>
+          <div className="muted">{`${e.week} nos últimos 7 dias · mais erros em: ${e.topics.slice(0, 3).map((t) => `${t.title} (${t.count})`).join(', ')}`}</div>
+          {e.recent.map((r, i) => <ReviewRow key={i} it={{ ...r, sub: `${S.ERR_REASONS[r.why]} · ${h.fmtDate(r.d)}${r.note ? ' — ' + r.note : ''}` }} onClick={() => h.goTo(r.id)} />)}
+        </>
+      )}
+    </div>
+  );
+}
+
 function Others({ today }) {
   const h = H();
   if (!h.hasOtherSources()) return <div />;
@@ -150,6 +197,8 @@ export function Dashboard() {
           : <Card k="Plano até a prova" v="—" s={s.exam ? (s.exam.daysLeft === 0 ? 'a prova é hoje' : 'prova já realizada') : 'defina a data da prova'} />}
       </div>
 
+      <Goals s={s} />
+
       <div className="dash-grid">
         <div>
           <div className="dash-sec">
@@ -171,6 +220,7 @@ export function Dashboard() {
               )}
           </div>
           <Agenda s={s} />
+          <Errors s={s} />
         </div>
         <div>
           <div className="dash-sec">

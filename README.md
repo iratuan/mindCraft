@@ -51,6 +51,12 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - O mapa guarda só o **caminho** do PDF (o arquivo não é copiado). Se o arquivo mudar de lugar (ou em outro computador), o leitor avisa e **Localizar o PDF…** reaponta; as fontes e destaques são preservados. As fontes entram também na exportação para o Obsidian ("Fonte: PDF, p. N — trecho"). PDF protegido por senha e PDF sem texto (só imagem) abrem com aviso claro (sem texto não há o que selecionar).
 - Só ler não altera o mapa; o PDF só é registrado no mapa quando você captura o primeiro trecho.
 
+## Caderno de erros e metas semanais
+- **Caderno de erros** (painel **Estudo** → "Caderno de erros"): escolha o **motivo** (falta de atenção, não sabia, confundi conceitos, falta de tempo, chutei, outro), anote o que errou/como evitar e clique **＋ Erro**; a opção "contar também como questão errada" soma 1 questão feita sem acerto (alimenta os pontos fracos). Cada erro é um desfazer e pode ser apagado (✕). Máx. 200 por tópico.
+- O **Painel de estudos** mostra o caderno: erros por motivo, quantos nos últimos 7 dias, tópicos com mais erros e os mais recentes (clique leva ao tópico). A **Revisão do dia** mostra "Seus erros neste tópico" ao revelar as anotações, e o **relatório** (.md/.docx) inclui o caderno.
+- **Metas semanais** (Painel de estudos): defina horas por semana e/ou questões por semana (ex.: "2,5" horas); barras mostram o progresso nos **últimos 7 dias** e quanto falta. Ficam salvas no mapa (.mom e biblioteca).
+- Estas duas funções existem na interface React; a versão clássica (reserva) não tem as metas nem a seção do caderno no painel.
+
 ## Revisão do dia, agenda (.ics) e atalhos
 - **Revisão do dia** (Ctrl+Shift+R ou botão no Painel de estudos): recordação ativa — aparece só o tópico; você tenta lembrar, pede **Mostrar anotações** (Espaço) e responde **Lembrei** (Y) ou **Errei** (N); **Pular** (S). Cada resposta usa o mesmo ciclo 1‑7‑15‑30‑60‑120 e é um desfazer.
 - **Agenda (.ics)** (Painel de estudos): um evento de dia inteiro por dia com revisões (as atrasadas caem em hoje) e a data da prova com alerta; importe no Google Agenda/Outlook. Reexportar mantém os mesmos identificadores (não duplica).
@@ -69,6 +75,9 @@ Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma ca
 - Opção no Painel de estudos: **Salvar mapas novos na biblioteca** (desligada por padrão: sem ela nada muda no seu fluxo atual com arquivos).
 - **Rede de conhecimento**: os mapas da biblioteca entram na rede (`[[Mapa#Tópico]]`, Conexões, grafo, Obsidian) e no "Em outros mapas" do painel de estudos. Um arquivo já migrado vale pela cópia da biblioteca.
 - O reabrir-o-último, o rascunho de sessão (autosave) e o aviso ao fechar funcionam também para mapas da biblioteca. Se o banco estiver danificado, o app avisa e continua funcionando com arquivos; o arquivo ruim nunca é apagado.
+
+## Testes e caça a bugs
+`npm test` (unitários + **fuzz** com sementes fixas: 4 800 operações aleatórias no modelo com invariantes, entradas hostis para Markdown/CSV/planilha/.mom/pacotes), `npm run e2e` (suítes por funcionalidade nas duas interfaces, **desempenho com 3 000 tópicos** e o **"macaco"**: ações aleatórias de interface com a invariante "sem alterações ⇒ o disco/biblioteca é igual à tela"), `npm run qa` (entrada real de mouse/teclado, com capturas). Rodada longa do macaco: `MONKEY_SEEDS=11,12,13 MONKEY_STEPS=300 npm run monkey`.
 
 ## Biblioteca SQLite (etapa 1 da migração React + SQLite)
 `core/library.js` guarda todos os mapas num banco SQLite (módulo nativo `node:sqlite`, sem compilar nada): tópicos, estudo, relações, tema e prova, com **versões** (até 30 por mapa), **lixeira** e consultas entre mapas (revisões vencidas, tempo e questões por dia, busca). O aplicativo atual ainda usa arquivos `.mom`; a biblioteca é a base da próxima etapa (interface em React).
