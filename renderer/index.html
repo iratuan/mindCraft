@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>MindCraft</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Barra do aplicativo -->
+  <header id="appbar">
+    <div class="brand" title="MindCraft">
+      <svg viewBox="0 0 24 24" width="22" height="22"><rect width="24" height="24" rx="5" fill="#2680eb"/><circle cx="12" cy="12" r="3.2" fill="#fff"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 12 6 6.5M12 12l6-5.5M12 12l-6 5.5M12 12l6 5.5"/></g></svg>
+    </div>
+    <div id="docinfo"><span id="docTitle">Sem título</span><span id="dirtyDot" hidden title="Alterações não salvas"></span></div>
+    <span class="grow"></span>
+    <div class="searchbox">
+      <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Buscar no mapa (Ctrl+F)" autocomplete="off">
+    </div>
+    <label class="select-btn" title="Exportar mapa"><span>Exportar</span>
+      <select id="export"><option value="">…</option><option value="pdf">PDF</option><option value="docx">Word (.docx)</option><option value="png">PNG</option><option value="svg">SVG</option><option value="md">Markdown</option><option value="opml">OPML</option></select>
+    </label>
+    <button id="lightToggle" class="icon-btn" title="Alternar tema claro/escuro" aria-label="Alternar tema"><svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="3.3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+  </header>
+
+  <!-- Barra de opções (contextual ao tópico selecionado) -->
+  <div id="options">
+    <span class="opt-label">Tópico</span>
+    <label class="opt">Preenchimento <input type="color" id="fill" value="#0073e6"></label>
+    <label class="opt">Forma
+      <select id="shape"><option value="">Padrão do tema</option><option value="pill">Pílula</option><option value="round">Arredondado</option><option value="rect">Retângulo</option><option value="underline">Sublinhado</option></select>
+    </label>
+    <button data-act="bold" class="txt-btn" title="Negrito"><b>B</b></button>
+    <label class="opt" title="Recolhe ou expande o mapa todo por profundidade">Níveis
+      <select id="levelSel"><option value="">escolher…</option><option value="1">Mostrar até o nível 1</option><option value="2">Mostrar até o nível 2</option><option value="3">Mostrar até o nível 3</option><option value="4">Mostrar até o nível 4</option><option value="all">Expandir tudo</option></select>
+    </label>
+    <span class="vsep"></span>
+    <span id="optHint" class="opt-hint">Tab: filho · Enter: irmão · F2: editar · Espaço: recolher · R: relação · F5: apresentar</span>
+  </div>
+
+  <div id="work">
+    <!-- Barra de ferramentas -->
+    <nav id="rail" aria-label="Ferramentas">
+      <button data-act="child" class="tool" title="Novo tópico filho (Tab)" aria-label="Novo filho"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><path d="M10 12h2.5V7H14M17.5 14v6M14.5 17h6"/></svg></button>
+      <button data-act="sibling" class="tool" title="Novo tópico irmão (Enter)" aria-label="Novo irmão"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><path d="M17 8v8M13 12h8"/></svg></button>
+      <button data-act="delete" class="tool" title="Excluir (Del)" aria-label="Excluir"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10.5 11v6M13.5 11v6"/></svg></button>
+      <span class="hsep"></span>
+      <button data-act="relate" class="tool" title="Relação entre tópicos (R)" aria-label="Relação"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="6.5" r="2.5"/><path d="M8 17.5c6 0 4-11 8-11" stroke-dasharray="2.5 2.2"/></svg></button>
+      <span class="hsep"></span>
+      <button data-act="undo" class="tool" title="Desfazer (Ctrl+Z)" aria-label="Desfazer"><svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" transform="translate(0 -3)"/></svg></button>
+      <button data-act="redo" class="tool" title="Refazer (Ctrl+Y)" aria-label="Refazer"><svg viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5h-9a5 5 0 0 0 0 10h2" transform="translate(0 -3)"/></svg></button>
+      <span class="hsep"></span>
+      <button data-act="dash" class="tool" title="Painel de estudos (Ctrl+E)" aria-label="Painel de estudos"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+      <span class="hsep"></span>
+      <button data-act="graph" class="tool" title="Rede de conhecimento (Ctrl+G)" aria-label="Rede de conhecimento"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="19" cy="15" r="1.6"/><path d="M8 8l8-1.5M7.2 9 11 16M13.6 16.7l4.4-1M17.4 8l1.2 5.4"/></svg></button>
+      <button data-act="fit" class="tool" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button data-act="present" class="tool" title="Apresentar (F5)" aria-label="Apresentar"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg></button>
+    </nav>
+
+    <!-- Área de trabalho -->
+    <main id="stage" tabindex="-1">
+      <svg id="svg"><g id="view"></g></svg>
+      <textarea id="editor" hidden></textarea>
+      <div id="marquee" hidden></div>
+      <div id="dash" hidden role="dialog" aria-label="Painel de estudos"></div>
+      <div id="graph" hidden role="dialog" aria-label="Rede de conhecimento"></div>
+      <div id="hud" hidden></div>
+    </main>
+
+    <!-- Painéis -->
+    <aside id="panels">
+      <div id="ptabs" role="tablist" aria-label="Painéis laterais">
+        <button class="ptab" data-tab="props" role="tab" title="Estilo do mapa, marcadores e progresso">Estilo</button>
+        <button class="ptab" data-tab="study" role="tab" title="Estudo do tópico: revisão, tempo e questões">Estudo</button>
+        <button class="ptab" data-tab="notes" role="tab" title="Notas do tópico (ou rótulo da relação)">Notas</button>
+        <button class="ptab" data-tab="links" role="tab" title="Links, retrolinks e menções">Conexões</button>
+        <button class="ptab" data-tab="outline" role="tab" title="Estrutura do mapa em árvore">Estrutura</button>
+      </div>
+      <section class="panel" data-panel="props">
+        <header class="panel-h"><span class="chev"></span>Propriedades</header>
+        <div class="panel-b">
+          <div class="field-label">Estilo do mapa</div>
+          <div id="themeGrid" class="theme-grid"></div>
+          <select id="theme" hidden></select>
+
+          <div class="field-label">Marcadores</div>
+          <div id="markerChips" class="chips"></div>
+          <select id="marker" hidden></select>
+
+          <div class="field-label">Progresso</div>
+          <div id="progressChips" class="chips seg"></div>
+          <select id="progress" hidden><option value="">—</option><option>0</option><option>25</option><option>50</option><option>75</option><option>100</option></select>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="study">
+        <header class="panel-h"><span class="chev"></span>Estudo do tópico</header>
+        <div class="panel-b">
+          <div id="studyEmpty" class="muted">Selecione um tópico para registrar estudo, revisão, tempo e questões.</div>
+          <div id="studyForm" hidden>
+            <div id="studyMulti" class="muted" hidden></div>
+            <div class="row"><label class="lbl">Peso <select id="studyWeight"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+              <label class="lbl grow">Próxima revisão <input type="date" id="studyNext"></label></div>
+            <div id="studyInfo" class="muted"></div>
+            <div class="btnrow"><button id="studyDone" class="btn primary">✓ Estudei / revisei hoje</button><button id="studyFail" class="btn" title="Volta ao início do ciclo: rever amanhã">↻ Errei</button></div>
+            <div class="field-label">Tempo</div>
+            <div class="row"><button id="timerBtn" class="btn">▶ Iniciar</button><span id="timerVal" class="mono">00:00:00</span></div>
+            <div class="row"><input id="studyMin" type="number" min="1" max="1440" placeholder="min" aria-label="Minutos"><button id="studyAddMin" class="btn">＋ minutos</button></div>
+            <div id="studyTime" class="muted"></div>
+            <div class="field-label">Questões</div>
+            <div class="row"><input id="qDone" type="number" min="1" placeholder="feitas" aria-label="Questões feitas"><input id="qOk" type="number" min="0" placeholder="acertos" aria-label="Acertos"><button id="qAdd" class="btn">Registrar</button></div>
+            <div id="studyQ" class="muted"></div>
+            <div id="studyMsg" class="msg" role="status"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="notes">
+        <header class="panel-h"><span class="chev"></span><span id="sideTitle">Notas</span></header>
+        <div class="panel-b">
+          <div class="field-label" id="notesLabel">Notas</div>
+          <div id="notesBar" class="nbar" role="toolbar" aria-label="Formatação das notas (Markdown)">
+            <span class="seg"><button id="nmEdit" class="on" aria-pressed="true" title="Editar o texto (Markdown)">Editar</button><button id="nmView" aria-pressed="false" title="Visualizar formatado">Visualizar</button></span>
+            <button data-fmt="bold" title="Negrito (Ctrl+B)"><b>B</b></button><button data-fmt="italic" title="Itálico (Ctrl+I)"><i>I</i></button><button data-fmt="strike" title="Riscado"><s>S</s></button>
+            <button data-fmt="h" title="Título (clique de novo para mudar o nível)">H</button><button data-fmt="ul" title="Lista">•≡</button><button data-fmt="ol" title="Lista numerada">1.</button><button data-fmt="task" title="Lista de tarefas">☑</button>
+            <button data-fmt="quote" title="Citação">❝</button><button data-fmt="code" title="Código">&lt;/&gt;</button><button data-fmt="link" title="Ligar a outro tópico [[ ]] (Ctrl+K)">[[ ]]</button><button data-fmt="url" title="Link da internet">🔗</button>
+          </div>
+          <div id="notesView" class="md" hidden></div>
+          <div class="notes-wrap"><textarea id="notes" placeholder="Notas do tópico selecionado. Digite [[ para ligar a outro tópico ou mapa…"></textarea><div id="linkSuggest" hidden role="listbox"></div></div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="links">
+        <header class="panel-h"><span class="chev"></span>Conexões</header>
+        <div class="panel-b"><div id="linksBody"><div class="muted">Selecione um tópico. Escreva [[Título]] nas notas para ligar conteúdos.</div></div></div>
+      </section>
+
+      <section class="panel grow-panel" data-panel="outline">
+        <header class="panel-h"><span class="chev"></span>Estrutura</header>
+        <div class="panel-b"><div id="outline" role="tree"></div></div>
+      </section>
+    </aside>
+  </div>
+
+  <!-- Barra de status -->
+  <footer id="statusbar">
+    <span id="status"></span>
+    <span class="grow"></span>
+    <button id="zoomOut" class="icon-btn sm" title="Reduzir zoom" aria-label="Reduzir zoom">−</button>
+    <input id="zoom" type="range" min="10" max="400" value="100" step="1" title="Zoom" aria-label="Zoom">
+    <button id="zoomIn" class="icon-btn sm" title="Ampliar zoom" aria-label="Ampliar zoom">+</button>
+    <span id="zoomVal">100%</span>
+  </footer>
+  <div id="modal" hidden role="dialog" aria-modal="true"></div>
+</div>
+<script src="renderer.js"></script>
+<script src="study-ui.js"></script>
+<script src="graph-ui.js"></script>
+<script src="notes-ui.js"></script>
+</body>
+</html>

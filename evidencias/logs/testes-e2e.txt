@@ -1,0 +1,119 @@
+
+> mindcraft@0.1.0 e2e
+> electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js
+
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+
+MindCraft e2e
+
+  ok   inicia com mapa de exemplo e sem erros
+  ok   Tab cria filho e edição inline confirma com Enter
+  ok   duplo clique edita; Escape cancela
+  ok   Enter cria irmão; Delete remove; undo/redo restauram
+  ok   arrastar tópico sobre outro o move; destino dentro do próprio ramo é recusado
+  ok   recolher (Espaço) oculta filhos e mostra contador
+  ok   marcadores, progresso e relação (R + clique), rótulo e remoção por Delete
+  ok   notas digitadas vão para o tópico certo ao trocar a seleção com o painel em foco
+  ok   muda de tema em todos os temas sem erro
+  ok   zoom pela roda do mouse e ajustar à tela
+  ok   salvar como (caminho com espaços e acentos) e reabrir preservam tudo
+  ok   salvar adiciona .mom quando falta e Salvar reutiliza o caminho
+  ok   falha ao salvar em local inválido não derruba nem marca como salvo
+  ok   confirmDiscard: Descartar prossegue, Cancelar bloqueia, Salvar grava
+  ok   exporta os 6 formatos com conteúdo válido (docx com imagem embutida)
+  ok   importa Markdown e OPML (sem sobrescrever o original) e rejeita arquivo corrompido
+  ok   modo apresentação: avança, volta e sai com Esc
+  ok   busca encontra tópicos e notas e navega com Enter
+  ok   mapa grande (600 tópicos): layout rápido, sem sobreposição, PDF/SVG gerados
+  ok   painéis: Estrutura seleciona/recolhe, cartões de tema, chips de marcador e progresso, zoom, recolher painel
+  ok   nenhum erro de console durante toda a sessão
+
+21/21 passaram
+
+
+
+MindCraft e2e — estudo, lote e segurança de dados
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   modelo de concurso cria 5 disciplinas × 4 etapas e pede confirmação só se houver alterações
+  ok   importar edital: contagem ao vivo, validação, novo mapa e adicionar abaixo do tópico
+  ok   painel do tópico: estudei hoje agenda +1 dia, é idempotente, "errei" reinicia o ciclo, desfaz em 1 passo
+  ok   minutos e questões: entradas inválidas são recusadas sem alterar nada
+  ok   cronômetro: registra minutos no tópico de origem, descarta < 30 s e permite mover
+  ok   vários tópicos selecionados: estudar vale para todos e desfaz num único passo
+  ok   selo de revisão pendente no mapa (individual e somado em ramo recolhido) e virada do dia
+  ok   painel de estudos: números conferem com o cálculo manual, revisão rápida, navegação e atalhos desligados
+  ok   relatório de estudos (.md e .docx) sai do painel com os mesmos números
+  ok   seleção múltipla: Ctrl+clique, retângulo (Shift), Selecionar tudo pelo menu, excluir em lote com 1 desfazer
+  ok   arrastar um grupo move todos; formatação, marcador e progresso valem para todos os selecionados
+  ok   copiar/recortar/colar tópicos pelo MENU: preserva conteúdo, descarta histórico de estudo, ids novos
+  ok   colar texto de fora vira ramos (edital/lista); vazio e grande demais são recusados
+  ok   dentro de um campo de texto, Copiar/Colar/Selecionar tudo agem no texto e não nos tópicos
+  ok   autosave: grava rascunho atômico, apaga ao salvar; recuperação restaura, descarta ou isola arquivo corrompido
+  ok   arquivos recentes: gravados em userData, listados no menu e ausentes são ignorados
+  ok   estudo e prova sobrevivem a salvar → abrir pela interface; painel mostra os mesmos números
+  ok   nenhum erro de console durante toda a sessão
+
+18/18 passaram
+
+
+
+MindCraft e2e — rede de conhecimento (links, grafo, vault, Obsidian)
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   links nas notas viram conexões: links de saída, retrolinks e link sem destino (fantasma)
+  ok   clicar numa conexão navega até o tópico; maiúsculas e acentos são ignorados na resolução
+  ok   menções sem link: detecta o título citado em texto livre e transforma em [[link]] com um clique (desfazível)
+  ok   autocompletar [[ nas notas: filtra, navega com setas, insere com Enter, Esc fecha e não reabre sem [[
+  ok   grafo (este mapa): nós, ligações, fantasma, seleção, busca, vizinhança, hierarquia, sem ligações, arrastar
+  ok   o grafo oculto não cobre o mapa (regressão: display:flex vencia o atributo hidden)
+  ok   Esc fecha o grafo; abrir o painel de estudos fecha o grafo; atalhos do mapa ficam desligados
+  ok   vault: escolher a pasta liga os mapas por [[Mapa#Tópico]]; o mapa aberto entra com edições NÃO salvas
+  ok   vault: duplo clique em tópico de outro mapa abre o arquivo (com confirmação se houver alterações)
+  ok   exportar para o Obsidian: um .md por mapa com [[Mapa#Tópico]], sem sobrescrever notas pessoais; abrir no Obsidian (sem lançar)
+  ok   segurança: título/nota com HTML não vira marcação no grafo nem no painel de conexões
+  ok   vault grande (40 mapas × 25 tópicos com links cruzados): carrega, resolve e desenha em tempo razoável
+  ok   nenhum erro de console durante toda a sessão
+
+13/13 passaram
+
+
+
+MindCraft e2e — assistente de estudo (CSV, agenda, backups…)
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   CSV: modelo salvo, instruções copiadas, prévia correta e mapa-esqueleto criado (com prova, pesos, hierarquia e links)
+  ok   CSV: arquivos ruins mostram o motivo, não criam nada e não derrubam o app
+  ok   CSV: adicionar abaixo do tópico selecionado; mapa grande abre recolhido até o nível 2
+  ok   agenda de 28 dias: contagens, dia de hoje com atrasadas, detalhe ao clicar e navegação até o tópico
+  ok   pontos fracos e acerto semanal: ranking pela UI, registro de questões por dia e relatório
+  ok   Alt+setas reordenam e mudam de nível (1 desfazer cada); limites e multisseleção explicam em vez de falhar
+  ok   backup automático ao salvar por cima; restaurar versão abre como mapa NOVO sem tocar o original
+  ok   reabrir o último mapa e o painel ao iniciar (configurável); sem arquivo recente não faz nada
+  ok   cronômetro rodando ao fechar: o tempo é registrado no tópico e salvo antes de fechar; o aviso sabe do cronômetro
+  ok   registro de erros: erros inesperados vão para logs/erros.log; falha esperada ao abrir arquivo também, sem console.error
+  ok   planilha de planejamento: exporta, edita fora do app, mostra a prévia e aplica tudo de uma vez (1 desfazer); reimportar não duplica
+  ok   nenhum erro de console durante toda a sessão (além do erro inventado de propósito)
+
+12/12 passaram
+
+
+
+MindCraft e2e — notas em Markdown e relações
+
+(electron) 'console-message' arguments are deprecated and will be removed. Please use Event<WebContentsConsoleMessageEventParams> object instead.
+  ok   abre com o editor de texto; a barra de formatação existe e vale só para o texto de tópicos
+  ok   negrito/itálico/riscado/código/link: envolve a seleção, clicar de novo desfaz, sem seleção insere modelo; grava no mapa
+  ok   Ctrl+B / Ctrl+I / Ctrl+K no campo de notas formatam o texto (e não mexem no estilo do tópico)
+  ok   prefixos de linha: título (cicla #→##→###→nada), lista, numerada, tarefa, citação — alterna e troca de tipo
+  ok   Visualizar: renderiza título, listas, tabela, código; textarea some; modo é lembrado ao trocar de tópico; Editar volta
+  ok   tarefas: clicar na caixa na visualização alterna [ ]/[x] no texto e grava no mapa (1 desfazer)
+  ok   [[link]] na visualização abre o tópico; link que não existe avisa; link da internet vai ao navegador (sem navegar o app)
+  ok   SEGURANÇA: HTML/script na nota nunca executa nem vira elemento; duplo clique na visualização volta a editar
+  ok   relação desenhada = conexão na rede: aparece em Conexões nos DOIS tópicos (com rótulo), junta com [[link]] do mesmo par, some ao apagar
+  ok   rótulo de relação: painel mostra texto simples, sem barra de formatação
+  ok   nenhum erro de console durante toda a sessão
+
+11/11 passaram
+

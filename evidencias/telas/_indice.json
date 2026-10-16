@@ -1,0 +1,117 @@
+[
+  {
+    "file": "telas/01_mapa-inicial.png",
+    "title": "Tela inicial",
+    "proves": "App abre com barra de ferramentas, painéis e prancheta (tema escuro)."
+  },
+  {
+    "file": "telas/02_mapa-de-estudo.png",
+    "title": "Mapa de estudo do concurso",
+    "proves": "Progresso agregado (barras azuis nos blocos), marcadores, relações, selos ↻ de revisão pendente e notas."
+  },
+  {
+    "file": "telas/03_estudo-do-topico.png",
+    "title": "Painel \"Estudo do tópico\"",
+    "proves": "Peso, próxima revisão, ciclo, tempo (cronômetro e manual) e questões do tópico selecionado."
+  },
+  {
+    "file": "telas/04_painel-de-estudos.png",
+    "title": "Painel de estudos",
+    "proves": "Contagem regressiva, progresso geral, tempo, sequência, acerto em questões, plano por dia, disciplinas e revisões."
+  },
+  {
+    "file": "telas/05_revisoes-e-semana.png",
+    "title": "Revisões pendentes e próximos 7 dias",
+    "proves": "Fila de revisão ordenada (mais atrasada primeiro) com ✓/↻ rápidos."
+  },
+  {
+    "file": "telas/06_painel-claro.png",
+    "title": "Painel de estudos no tema claro",
+    "proves": "A interface tem tema claro/escuro."
+  },
+  {
+    "file": "telas/07_mapa-claro.png",
+    "title": "Mapa no tema claro",
+    "proves": "Mesmo mapa no tema claro da interface."
+  },
+  {
+    "file": "telas/08_conexoes-e-links.png",
+    "title": "Painel de Conexões",
+    "proves": "Links de saída, \"citado em\" (retrolinks) e menções sem link do tópico selecionado."
+  },
+  {
+    "file": "telas/09_mencao-sem-link.png",
+    "title": "Menção sem link",
+    "proves": "O app detecta \"moralidade\" no texto de \"Atos administrativos\" e oferece transformar em [[link]]."
+  },
+  {
+    "file": "telas/10_autocompletar-links.png",
+    "title": "Autocompletar [[",
+    "proves": "Digitar [[ nas notas sugere tópicos do mapa (e Mapa#Tópico de outros mapas do vault)."
+  },
+  {
+    "file": "telas/11_grafo-do-mapa.png",
+    "title": "Rede de conhecimento — este mapa",
+    "proves": "Grafo de forças: tópicos ligados por [[links]] e relações; o pontilhado seria um link sem destino."
+  },
+  {
+    "file": "telas/12_grafo-detalhe.png",
+    "title": "Grafo — detalhes do nó",
+    "proves": "Selecionar um nó mostra seus links e retrolinks no painel lateral."
+  },
+  {
+    "file": "telas/13_grafo-so-links.png",
+    "title": "Grafo — só links",
+    "proves": "Desligando \"Hierarquia\", sobram apenas os [[links]] e as relações (como o grafo do Obsidian)."
+  },
+  {
+    "file": "telas/14_grafo-vizinhanca.png",
+    "title": "Grafo — vizinhança local + busca",
+    "proves": "Só os vizinhos do nó selecionado (1 salto) e destaque da busca."
+  },
+  {
+    "file": "telas/15_grafo-vault.png",
+    "title": "Grafo — vault com 3 mapas",
+    "proves": "Escolhendo a pasta, mapas diferentes (cores) se ligam por [[Mapa#Tópico]]."
+  },
+  {
+    "file": "telas/16_exportar-obsidian.png",
+    "title": "Exportação para o Obsidian",
+    "proves": "Gera um .md por mapa com [[Mapa#Tópico]] (ver exemplos/obsidian-vault/)."
+  },
+  {
+    "file": "telas/17_multisselecao.png",
+    "title": "Seleção múltipla",
+    "proves": "Ctrl/Shift+clique e retângulo de seleção; ações valem para todos os selecionados."
+  },
+  {
+    "file": "telas/18_lote-formatado.png",
+    "title": "Formatação em lote",
+    "proves": "Cor, marcador e progresso aplicados a vários tópicos de uma vez (um único desfazer)."
+  },
+  {
+    "file": "telas/19_importar-edital.png",
+    "title": "Importar edital",
+    "proves": "Cola o conteúdo programático; o app detecta disciplinas, numeração, itens a) e junta linhas quebradas do PDF."
+  },
+  {
+    "file": "telas/20_edital-importado.png",
+    "title": "Mapa gerado pelo edital",
+    "proves": "O edital virou mapa: disciplinas → itens → subitens."
+  },
+  {
+    "file": "telas/21_modelo-concurso.png",
+    "title": "Modelo de concurso",
+    "proves": "Estrutura pronta (disciplinas × Teoria/Resumos/Questões/Revisão)."
+  },
+  {
+    "file": "telas/22_apresentacao.png",
+    "title": "Modo apresentação",
+    "proves": "Revela os tópicos um a um em tela cheia (útil para revisar em voz alta)."
+  },
+  {
+    "file": "telas/23_pdf-exportado.png",
+    "title": "PDF exportado",
+    "proves": "O mapa (selos, barras, relações) e o outline em página A4, abertos no visualizador de PDF."
+  }
+]

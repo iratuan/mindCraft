@@ -1,0 +1,7 @@
+dist/
+node_modules/
+
+*.tmp-*
+qa-run.log
+*.bak
+.DS_Store

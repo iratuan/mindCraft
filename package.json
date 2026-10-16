@@ -1,0 +1,69 @@
+{
+  "name": "mindcraft",
+  "version": "0.1.0",
+  "author": "MindCraft",
+  "license": "MIT",
+  "description": "Editor de mapas mentais multiplataforma, compatível com arquivos .mom",
+  "main": "electron/main.js",
+  "bin": {
+    "mindcraft": "bin/mindcraft.js"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "e2e": "electron test/e2e.js && electron test/e2e-study.js && electron test/e2e-network.js && electron test/e2e-assistant.js && electron test/e2e-notes.js",
+    "evidence": "electron test/evidence.js",
+    "dist": "electron-builder --publish never",
+    "qa": "electron test/qa-tour.js"
+  },
+  "build": {
+    "appId": "dev.mindcraft.app",
+    "productName": "MindCraft",
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "core/**",
+      "electron/**",
+      "renderer/**",
+      "build/icon.png",
+      "package.json",
+      "node_modules/**",
+      "!**/*.map"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "mom",
+        "name": "Mapa mental",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    }
+  },
+  "dependencies": {
+    "adm-zip": "^0.6.1",
+    "dejavu-fonts-ttf": "^2.37.3",
+    "docx": "^9.11.0",
+    "pdfkit": "^0.20.2"
+  },
+  "devDependencies": {
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3"
+  }
+}
