@@ -6,6 +6,7 @@ const { normalizeStudy, isDateStr, sanitizeGoals } = require('./study');
 const { sanitizeStyle, THEMES } = require('./themes');
 const { MARKERS } = require('./markers');
 const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
+const { sanitizeSimulados } = require('./simulados');
 
 // Limites contra arquivos corrompidos ou maliciosos (o .mom é um ZIP vindo de fora).
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
@@ -99,6 +100,7 @@ function readMom(source) {
   map.meta._momDoc = doc; // preservado para round-trip
   if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
   if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
+  { const sims = sanitizeSimulados(doc.mcSimulados, newId); if (sims.length) map.meta.simulados = sims; }
   if (Array.isArray(doc.mcPdfs) && sanitizePdfs(doc.mcPdfs).length) map.meta.pdfs = sanitizePdfs(doc.mcPdfs);
   if (Array.isArray(doc.mcRelations)) {
     map.meta.relations = doc.mcRelations
@@ -151,6 +153,7 @@ function writeMom(map, target) {
   if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
   if (map.meta.goals) doc.mcGoals = map.meta.goals; else delete doc.mcGoals;
+  if (map.meta.simulados && map.meta.simulados.length) doc.mcSimulados = map.meta.simulados; else delete doc.mcSimulados;
   doc.mapInfo.name = map.meta.name || map.root.title;
   doc.mapInfo.rootId = map.root.id;
   doc.mapInfo.modificationDate = now;

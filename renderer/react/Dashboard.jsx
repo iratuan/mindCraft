@@ -92,6 +92,32 @@ function Goals({ s }) {
   );
 }
 
+/** Simulados: evolução (gráfico), médias, disciplinas mais fracas e os últimos registros. */
+function Simulados() {
+  const h = H(), list = h.map().meta.simulados || [], st = h.simuladoStats(list);
+  const W = 420, HH = 110, pad = 14, pts = st.series.map((p, i) => ({ ...p, x: st.series.length === 1 ? W / 2 : pad + (i * (W - 2 * pad)) / (st.series.length - 1), y: HH - pad - (p.pct / 100) * (HH - 2 * pad) }));
+  const arrow = (v) => (v == null ? '' : v > 0.5 ? ` ▲ +${Math.round(v)} pp` : v < -0.5 ? ` ▼ ${Math.round(v)} pp` : ' ▬');
+  return (
+    <div className="dash-sec" id="simSec">
+      <h3>{`Simulados (${st.count})`}<button className="link" id="btnSim" onClick={() => h.actions.openSimulado()}>＋ registrar simulado</button></h3>
+      {!st.count && <div className="empty">Nenhum simulado registrado. Use "＋ registrar simulado" para acompanhar a sua nota por disciplina ao longo do tempo.</div>}
+      {st.count > 0 && (
+        <>
+          <div className="muted" id="simSummary">{`média ${h.pctTxt(st.avg)} · melhor ${h.pctTxt(st.best.pct)} (${st.best.name}) · último ${h.pctTxt(st.last.pct)}${arrow(st.delta)}`}</div>
+          <svg className="sim-chart" viewBox={`0 0 ${W} ${HH}`} role="img" aria-label="Evolução da nota nos simulados">
+            {[0, 50, 100].map((g) => <line key={g} x1={pad} x2={W - pad} y1={HH - pad - (g / 100) * (HH - 2 * pad)} y2={HH - pad - (g / 100) * (HH - 2 * pad)} className="grid" />)}
+            {pts.length > 1 && <polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} className="line" />}
+            {pts.map((p) => <circle key={p.id} cx={p.x} cy={p.y} r="4" className="dot"><title>{`${p.name} (${h.fmtDate(p.d)}): ${h.pctTxt(p.pct)}`}</title></circle>)}
+          </svg>
+          <div className="sim-discs">{st.discs.slice(0, 6).map((d) => <div className="err-bar" key={d.disc} data-disc={d.disc}><span>{d.disc}</span><Bar pct={d.pct} style={{ flex: 1 }} cls={d.pct < 60 ? 'bad' : ''} /><b>{Math.round(d.pct)}%</b><span className="muted">{arrow(d.trend).trim()}</span></div>)}</div>
+          {[...list].sort((a, b) => b.d.localeCompare(a.d)).slice(0, 5).map((s) => { const t = st.series.find((x) => x.id === s.id); return (
+            <div className="rev" key={s.id} data-sim={s.id}><div className="t"><b>{s.name}</b><span>{`${h.fmtDate(s.d)}${s.banca ? ' · ' + s.banca : ''}${s.minutes ? ' · ' + h.fmtMin(s.minutes) : ''} · ${t.correct}/${t.done}`}</span></div><span className="tag">{h.pctTxt(t.pct)}</span><button className="mini sim-del" title="Apagar este simulado" onClick={() => h.removeSimulado(s.id)}>✕</button></div>); })}
+        </>
+      )}
+    </div>
+  );
+}
+
 /** Caderno de erros: por motivo, tópicos com mais erros e os mais recentes. */
 function Errors({ s }) {
   const h = H(), e = s.errors, S = h.S;
@@ -145,6 +171,7 @@ export function Dashboard() {
   const [dmsg, setDmsg] = useState({ text: '', kind: '' });
   const today = h.nowStr(), s = S.summary(map, { today }), cfg = h.loadCfg();
   const exam = s.exam;
+  const start = cfg.startScreen || (cfg.reopenLast === true ? 'last' : cfg.reopenLast === false ? 'blank' : 'home');   // mesma regra da inicialização (renderer.js)
   const n = exam ? exam.daysLeft : null;
   useEffect(() => { document.getElementById('dash').dataset.ui = 'react'; }, []);
 
@@ -163,7 +190,7 @@ export function Dashboard() {
           <h2>{`Painel de estudos — ${map.root.title}`}</h2>
           <div className="sub">{`Hoje: ${h.fmtDate(today)}`}</div>
           <div className="dash-opts">
-            <Option id="optReopen" label="Reabrir o último mapa ao iniciar" keyName="reopenLast" on={cfg.reopenLast !== false} refresh={refresh} />
+            <label className="opt"><input type="checkbox" id="optReopen" checked={start === 'last'} onChange={(e) => { h.saveCfg({ reopenLast: e.target.checked, startScreen: e.target.checked ? 'last' : (start === 'last' ? 'home' : start) }); refresh(); }} />Reabrir o último mapa ao iniciar</label>
             <Option id="optDashStart" label="Abrir este painel ao iniciar" keyName="dashOnStart" on={!!cfg.dashOnStart} refresh={refresh} />
             <Option id="optNewInLib" label="Salvar mapas novos na biblioteca" keyName="newInLibrary" on={!!cfg.newInLibrary} refresh={refresh} />
           </div>
@@ -221,6 +248,7 @@ export function Dashboard() {
           </div>
           <Agenda s={s} />
           <Errors s={s} />
+          <Simulados />
         </div>
         <div>
           <div className="dash-sec">

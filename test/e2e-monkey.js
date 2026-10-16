@@ -34,6 +34,7 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
       };
       visit(map.root, 0);
       for (const r of map.meta.relations) { if (!seen.has(r.from) || !seen.has(r.to)) out.push('relação órfã'); if (r.from === r.to) out.push('relação para si mesmo'); }
+      for (const sm of map.meta.simulados || []) { if (!sm.rows.length || sm.rows.some((x) => !(x.done >= 1 && x.correct >= 0 && x.correct <= x.done))) out.push('simulado inválido'); }
       if (map.meta.goals && JSON.stringify(map.meta.goals) !== JSON.stringify(S.sanitizeGoals(map.meta.goals))) out.push('metas inválidas');
       for (const n of __nodes()) for (const e of (n.study && n.study.errs) || []) if (!S.ERR_REASONS[e.why]) out.push('erro com motivo inválido');
       for (const n of __nodes()) for (const rf of n.refs || []) if (!(map.meta.pdfs || []).some((p) => p.id === rf.pdf)) out.push('fonte sem PDF');
@@ -45,7 +46,7 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
       return out;
     };
     window.__modalOpen = () => !document.querySelector('#modal').hidden;
-    window.__closeAll = () => { const m = document.querySelector('#modal'); if (!m.hidden) m.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); if (!m.hidden) closeModal(); if (typeof closeDash === 'function') closeDash(); if (typeof closeGraph === 'function') closeGraph(); if (present) { __key('Escape'); } };
+    window.__closeAll = () => { const m = document.querySelector('#modal'); if (!m.hidden) m.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); if (!m.hidden) closeModal(); if (typeof closeDash === 'function') closeDash(); if (window.MCReact && MCReact.homeIsOpen()) closeHome(); if (typeof closeGraph === 'function') closeGraph(); if (present) { __key('Escape'); } };
     true`);
 
   const saveTargets = [path.join(TMP, 'm1.mom'), path.join(TMP, 'm2.mom')];
@@ -72,6 +73,11 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
     ['erro', (r) => `{ const w = document.querySelector('#errWhy'); w.value = ${JSON.stringify(['atencao', 'tempo', 'chute', ''][Math.floor(r() * 4)])}; document.querySelector('#errNote').value = 'n${Math.floor(r() * 9)}'; document.querySelector('#errCount').checked = ${r() < 0.5}; document.querySelector('#errAdd').click(); }`],
     ['apagar erro', () => `{ const b = document.querySelector('#errList .err-del'); if (b) b.click(); }`],
     ['metas', (r) => `{ if (!dashOpen) act.dash(); const h = document.querySelector('#goalHours'), q = document.querySelector('#goalQuestions'); if (h) { h.value = ${JSON.stringify(['', '5', '2,5', 'abc', '-1'][Math.floor(r() * 5)])}; q.value = ${JSON.stringify(['', '40', 'x', '0'][Math.floor(r() * 4)])}; document.querySelector('#goalSave').click(); if (${r() < 0.3}) { const c = document.querySelector('#goalClear'); if (c) c.click(); } } }`],
+    ['início', () => `act.home()`],
+    ['início: clicar', (r) => `{ if (!window.MCReact.homeIsOpen()) return; window.__dlg.discard = ${Math.floor(r() * 3)}; window.__dlg.open = null; const b = [...document.querySelectorAll('#home .hm-big, #home .hm-open, #home .hm-continue, #home .hm-chip, #home .hm-exam')]; if (b.length) b[${Math.floor(r() * 999)} % b.length].click(); }`],
+    ['arrastar arquivo', (r) => `{ window.__dlg.discard = ${Math.floor(r() * 3)}; return MC.handleDroppedPaths([${JSON.stringify(r() < 0.5 ? seedMap : pdf)}, 'C:/x.txt']); }`],
+    ['simulado', (r) => `(async () => { act.simulado(); await new Promise((x) => setTimeout(x, 60)); const rows = [...document.querySelectorAll('.sim-row[data-disc]')]; if (!rows.length) return; const set = (e, v) => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(e, v); e.dispatchEvent(new Event('input', { bubbles: true })); }; rows.forEach((row, i) => { if (i < 2) { set(row.querySelector('.sim-done'), '${5 + Math.floor(r() * 20)}'); set(row.querySelector('.sim-ok'), '${Math.floor(r() * 26)}'); } }); document.querySelector('#simAdd').checked = ${r() < 0.5}; document.querySelector('#simSave').click(); })()`],
+    ['apagar simulado', () => `{ act.dash(); const b = document.querySelector('#simSec .sim-del'); if (b) b.click(); }`],
     ['aba', (r) => `showPanel(['props', 'study', 'notes', 'links', 'outline'][${Math.floor(r() * 5)}])`],
     ['painel de estudos', () => `act.dash()`], ['agenda: dia', (r) => `{ if (dashOpen) { const d = [...document.querySelectorAll('#agenda .ag-day')]; if (d.length) d[${Math.floor(r() * 99)} % d.length].click(); } }`],
     ['painel: ✓', () => `{ if (dashOpen) { const b = document.querySelector('#dash [data-act="rev-ok"]'); if (b) b.click(); } }`],

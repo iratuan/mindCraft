@@ -248,6 +248,7 @@ function buildGraphUI() {
 }
 
 function openGraph() {
+  if (typeof closeHome === 'function') closeHome();
   commitNotes(); if (dashOpen) closeDash();
   if (!gBuilt) buildGraphUI();
   graphOpen = true; $('#graph').hidden = false; document.querySelector('[data-act="graph"]').classList.add('on');

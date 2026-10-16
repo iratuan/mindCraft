@@ -36,6 +36,7 @@ let notesOwner = null;      // { rel: bool, id } — a quem pertence o texto exi
 
 // ---------- ciclo de vida ----------
 function newMap() {
+  if (typeof closeHome === 'function') closeHome();
   selectedRel = null; relateFrom = null; hits = null; selIds = new Set(); document.body.classList.remove('relating');
   if (typeof resetStudyUI === 'function') resetStudyUI();
   const root = createNode('Ideia central');
@@ -244,6 +245,7 @@ async function openPath(p, { silent = false } = {}) {
       : ext === 'opml' ? fromOPML(fs.readFileSync(p, 'utf8'), name) : readMom(fs.readFileSync(p));
     // md/opml são importações: o "Salvar" pede um .mom novo em vez de sobrescrever o original
     filePath = ext === 'mom' ? p : null; dirty = ext !== 'mom'; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
+    if (typeof closeHome === 'function') closeHome();
     render(); fit();
     if (ext === 'mom') { ipcRenderer.invoke('recent:add', p).catch(() => {}); saveCfg({ lastKind: 'file' }); }
     return true;
@@ -816,13 +818,17 @@ let today0 = nowStr();
 setInterval(() => { if (nowStr() !== today0) { today0 = nowStr(); render(); } }, 30000); // virou o dia: atualiza selos de revisão
 window.addEventListener('focus', () => { if (map && nowStr() !== today0) { today0 = nowStr(); render(); } });
 
+let firstInit = true;
 async function init() {
+  let forced; if (firstInit) { try { forced = await ipcRenderer.invoke('app:start-override'); } catch { forced = null; } } firstInit = false;   // só a 1ª inicialização (testes)
   try { userDataDir = await ipcRenderer.invoke('app:path', 'userData'); } catch { userDataDir = null; }
   await recoverSession();
   if (dirty) return;                                    // um rascunho foi restaurado: não mexe
   await new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));   // espera os demais scripts
   const cfg = loadCfg();
-  if (cfg.reopenLast !== false) {
+  const start = forced || cfg.startScreen || (cfg.reopenLast === true ? 'last' : cfg.reopenLast === false ? 'blank' : 'home');   // padrão: tela inicial
+  if (start === 'home' && window.MCReact && typeof act.home === 'function') { act.home(true); return; }
+  if (start === 'last') {
     if (cfg.lastKind === 'lib' && cfg.lastLib && libraryExists()) { if (!(await openFromLibrary(cfg.lastLib, { confirm: false, silent: true }))) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); } }
     else { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
   }   // app de estudo diário: volta de onde parou

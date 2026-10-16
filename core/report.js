@@ -35,6 +35,10 @@ function toStudyMarkdown(map, opts = {}) {
   o.push('', `## Revisões pendentes (${s.due.length})`, '');
   if (!s.due.length) o.push('Nenhuma revisão pendente. ✔');
   for (const r of s.due) o.push(`- ${r.path.join(' › ')}${r.path.length ? ' › ' : ''}${r.title} — prevista para ${fmtDate(r.next)}${r.overdue > 0 ? ` (**${r.overdue} dia${r.overdue === 1 ? '' : 's'} de atraso**)` : ' (hoje)'}`);
+  { const sim = require('./simulados'), st = sim.simuladoStats(map.meta.simulados || []);
+    o.push('', `## Simulados (${st.count})`, '');
+    if (!st.count) o.push('Nenhum simulado registrado.');
+    else { o.push(`Média ${acc(st.avg / 100)} · melhor ${acc(st.best.pct / 100)} (${st.best.name}) · último ${acc(st.last.pct / 100)}`, ''); for (const x of st.series) o.push(`- ${fmtDate(x.d)} — ${x.name}${x.banca ? ' (' + x.banca + ')' : ''}: ${x.correct}/${x.done} (${acc(x.pct / 100)})`); o.push('', 'Disciplinas (mais fracas primeiro): ' + st.discs.map((d) => `${d.disc} ${acc(d.pct / 100)}`).join(' · ')); } }
   o.push('', `## Caderno de erros (${s.errors.total})`, '');
   if (!s.errors.total) o.push('Nenhum erro registrado.');
   else {

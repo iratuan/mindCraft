@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
+process.env.MINDCRAFT_START = 'blank';   // começa num mapa em branco (a tela inicial tem testes próprios)
 if (process.env.CI) app.commandLine.appendSwitch('no-sandbox'); // runners Linux não têm o sandbox SUID do Chromium
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mc e2e çãé-'));
 app.setPath('userData', path.join(TMP, 'userData')); // evita conflito com instância aberta (single-instance lock)

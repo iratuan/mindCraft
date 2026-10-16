@@ -49,3 +49,6 @@ O que já foi corrigido por causa do QA está em `evidencias/RESULTADOS.md`; aqu
 5. **Destaques com cores** no PDF e lista de todos os trechos de um PDF; copiar o PDF para dentro do pacote .mcpack (opcional).
 6. **Remover as versões clássicas** das telas migradas e migrar a casca (React) depois de um período de uso.
 7. **Assinar o instalador** e criar atualização automática.
+
+## Atualização (tela inicial + simulados feitos)
+Já entregues: tela inicial, simulados, caderno de erros, metas, leitor de PDF, revisão do dia, agenda .ics. Próximos naturais: **questões por banca/ano** (usar o campo banca dos simulados), **notificação diária** das revisões, **relatório .docx** com simulados, **remover as versões clássicas** das telas migradas e **assinar o instalador**.

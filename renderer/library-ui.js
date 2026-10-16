@@ -66,6 +66,7 @@ async function openFromLibrary(id, { confirm = true, silent = false } = {}) {
     const m = lib.loadMap(id);
     if (typeof resetStudyUI === 'function') resetStudyUI();
     map = m; filePath = null; dirty = false; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
+    if (typeof closeHome === 'function') closeHome();
     render(); fit(); saveCfg({ lastKind: 'lib', lastLib: id });
     return true;
   } catch (e) {

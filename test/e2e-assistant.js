@@ -145,7 +145,7 @@ const S = require('../core/study');
     ok(await js(`document.querySelector('#optDashStart').checked && document.querySelector('#optReopen').checked`), 'opções refletem a configuração');
     await js(`document.querySelector('#optReopen').click(); document.querySelector('#optDashStart').click()`);
     eq(JSON.parse(fs.readFileSync(path.join(USERDATA, 'config.json'), 'utf8')).reopenLast, false, 'a opção do painel grava na configuração'); eq(JSON.parse(fs.readFileSync(path.join(USERDATA, 'config.json'), 'utf8')).dashOnStart, false);
-    await js(`closeDash(); saveCfg({ reopenLast: true })`);
+    await js(`closeDash(); saveCfg({ reopenLast: true, startScreen: 'last' })`);
     // arquivo recente que não existe mais é ignorado; arquivo corrompido não mostra diálogo
     fs.writeFileSync(path.join(USERDATA, 'recent.json'), JSON.stringify([path.join(TMP, 'sumiu.mom')])); await js(`dirty = false; newMap()`); await js(`init()`); await wait(300); eq(await js(`filePath`), null);
     const bad = path.join(TMP, 'ruim.mom'); fs.writeFileSync(bad, 'lixo'); fs.writeFileSync(path.join(USERDATA, 'recent.json'), JSON.stringify([bad])); await js(`window.__dlg.errors.length = 0; dirty = false; newMap()`); await js(`init()`); await wait(400);

@@ -829,76 +829,100 @@
     },
     {
       "n": 73,
+      "group": "Estudos",
+      "title": "Tela inicial: continuar, recentes, atalhos e biblioteca",
+      "how": "Menu Início; cliques reais no cartão \"continuar\", numa linha de recentes e em \"Novo mapa\"",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "73_inicio_tela-inicial-continuar-recentes-atalhos-e-biblio.png",
+        "73_novo-mapa_tela-inicial-continuar-recentes-atalhos-e-biblio.png"
+      ]
+    },
+    {
+      "n": 74,
+      "group": "Estudos",
+      "title": "Simulados: registrar por disciplina e acompanhar a evolução",
+      "how": "Formulário com digitação real; Painel de estudos com gráfico",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "74_formulario_simulados-registrar-por-disciplina-e-acompanhar-.png",
+        "74_painel_simulados-registrar-por-disciplina-e-acompanhar-.png"
+      ]
+    },
+    {
+      "n": 75,
       "group": "Dados",
       "title": "Autosave e recuperação de sessão",
       "how": "Alteração → rascunho em disco → \"queda\" → Restaurar",
       "status": "OK",
       "note": "rascunho de 10155 bytes",
       "files": [
-        "73_autosave-e-recuperacao-de-sessao.png"
+        "75_autosave-e-recuperacao-de-sessao.png"
       ]
     },
     {
-      "n": 74,
+      "n": 76,
       "group": "Dados",
       "title": "Arquivo corrompido não derruba o app nem o mapa atual",
       "how": "Abrir .mom inválido",
       "status": "OK",
       "note": "Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found",
       "files": [
-        "74_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
+        "76_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
       ]
     },
     {
-      "n": 75,
+      "n": 77,
       "group": "Extremos",
       "title": "Título enorme, HTML, emoji e caracteres especiais",
       "how": "Textos hostis e longos no mapa",
       "status": "OK",
       "note": "",
       "files": [
-        "75_titulo-enorme-html-emoji-e-caracteres-especiais.png"
+        "77_titulo-enorme-html-emoji-e-caracteres-especiais.png"
       ]
     },
     {
-      "n": 76,
+      "n": 78,
       "group": "Extremos",
       "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
       "how": "Gera 1 000 tópicos e mede layout/desenho",
       "status": "OK",
-      "note": "1001 tópicos · render 15 ms · nível 1: 26 visíveis",
+      "note": "1001 tópicos · render 16 ms · nível 1: 26 visíveis",
       "files": [
-        "76_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
-        "76_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+        "78_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
+        "78_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
       ]
     },
     {
-      "n": 77,
+      "n": 79,
       "group": "Extremos",
       "title": "Janela pequena (1000×640): a interface continua utilizável",
       "how": "Redimensiona a janela",
       "status": "OK",
       "note": "",
       "files": [
-        "77_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
-        "77_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
+        "79_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
+        "79_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
       ]
     },
     {
-      "n": 78,
+      "n": 80,
       "group": "Extremos",
       "title": "Estados vazios: painel, conexões e grafo sem dados",
       "how": "Mapa novo sem estudos nem links",
       "status": "OK",
       "note": "",
       "files": [
-        "78_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
-        "78_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
+        "80_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
+        "80_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
       ]
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 15 ms, render+ajuste 50 ms"
+    "Mapa de 1001 tópicos: render 16 ms, render+ajuste 51 ms"
   ],
   "errosDeConsole": []
 }

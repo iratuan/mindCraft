@@ -2,6 +2,7 @@
 const crypto = require('crypto');
 const study = require('./study');
 const pdfrefs = require('./pdfrefs');
+const simulados = require('./simulados');
 
 const newId = () => crypto.randomBytes(16).toString('hex');
 
@@ -308,6 +309,28 @@ class MindMap {
     if (!r || !Array.isArray(r.node.refs) || !r.node.refs[index]) return false;
     this._snapshot(); r.node.refs.splice(index, 1);
     if (!r.node.refs.length) delete r.node.refs;
+    return true;
+  }
+
+  // --- simulados (core/simulados.js) ---
+  /**
+   * Registra um simulado (uma ação desfazível). Com `addToQuestions`, soma as questões de cada disciplina que tenha `nodeId`
+   * ao histórico de questões daquele tópico (na data do simulado) — alimenta acerto e pontos fracos.
+   */
+  addSimulado(sim, { addToQuestions = false } = {}) {
+    if ((this.meta.simulados || []).length >= simulados.MAX_SIMS) throw new Error(`O mapa já tem ${simulados.MAX_SIMS} simulados.`);
+    const s = simulados.checkSimulado(sim); s.id = newId().slice(0, 16);
+    this.batch(() => {
+      this._snapshot();
+      (this.meta.simulados = this.meta.simulados || []).push(s);
+      if (addToQuestions) for (const r of s.rows) if (r.nodeId && this.find(r.nodeId)) this.mutateStudy(r.nodeId, (st) => study.addQuestions(st, r.done, r.correct, s.d));
+    });
+    return s;
+  }
+  removeSimulado(id) {
+    if (!(this.meta.simulados || []).some((x) => x.id === id)) return false;
+    this._snapshot(); this.meta.simulados = this.meta.simulados.filter((x) => x.id !== id);
+    if (!this.meta.simulados.length) delete this.meta.simulados;
     return true;
   }
 

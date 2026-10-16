@@ -8,7 +8,8 @@ const path = require('path');
 
 module.exports = async function start(title) {
   if (process.env.CI) app.commandLine.appendSwitch('no-sandbox'); // runners Linux não têm o sandbox SUID do Chromium
-  process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de verdade
+  process.env.MINDCRAFT_START = 'blank';   // os testes começam num mapa em branco (a tela inicial tem testes próprios)
+process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de verdade
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mc e2e çãé-'));
   const USERDATA = path.join(TMP, 'userData');
   app.setPath('userData', USERDATA);
@@ -59,7 +60,7 @@ module.exports = async function start(title) {
       await ctx.js(`window.__dlg = { save: null, open: null, csv: null, pack: null, pdf: null, openAt: null, folder: null, discard: 1, confirm: 0, errors: [], confirms: [] };
         const realInvoke = ipcRenderer.invoke.bind(ipcRenderer);
         ipcRenderer.invoke = async (ch, ...args) => {
-          if (ch === 'render-export' || ch === 'app:path' || ch === 'recent:add' || ch === 'clip:read' || ch === 'clip:write' || ch === 'obsidian:open' || ch === 'open-external') return realInvoke(ch, ...args);
+          if (ch === 'render-export' || ch === 'app:path' || ch === 'app:start-override' || ch === 'recent:add' || ch === 'recent:remove' || ch === 'recent:clear' || ch === 'recent:list' || ch === 'clip:read' || ch === 'clip:write' || ch === 'obsidian:open' || ch === 'open-external') return realInvoke(ch, ...args);
           if (ch === 'dialog:save') return window.__dlg.save;
           if (ch === 'dialog:open') return window.__dlg.open;
           if (ch === 'dialog:folder') return window.__dlg.folder;

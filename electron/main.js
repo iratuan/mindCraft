@@ -47,6 +47,7 @@ function buildMenu() {
   const template = [
     ...(isMac ? [{ role: 'appMenu' }] : []),
     { label: 'Arquivo', submenu: [
+      { label: 'Tela inicial', accelerator: 'CmdOrCtrl+Shift+H', click: send('home') },
       { label: 'Novo', accelerator: 'CmdOrCtrl+N', click: send('new') },
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: send('open') },
       { label: 'Restaurar versão anterior…', click: send('restore') },
@@ -105,6 +106,9 @@ function createWindow() {
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     webPreferences: { nodeIntegration: true, contextIsolation: false },
   });
+  // a janela só mostra o app: soltar um arquivo ou clicar num link nunca a leva para outra página (perderia o trabalho aberto)
+  win.webContents.on('will-navigate', (e) => e.preventDefault());
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   win.webContents.on('did-finish-load', () => {
     if (pendingFile) { win.webContents.send('open-path', pendingFile); pendingFile = null; }
@@ -207,7 +211,13 @@ ipcMain.handle('open-external', async (_e, url) => {
   if (process.env.MINDCRAFT_NO_LAUNCH === '1') return { ok: true, url: u, method: 'skipped' };
   try { await require('electron').shell.openExternal(u); return { ok: true, url: u }; } catch (e) { return { ok: false, error: e.message }; }
 });
+// Testes: força o modo de início ('home' | 'last' | 'blank') só na 1ª inicialização; no uso normal é sempre null.
+ipcMain.handle('app:start-override', () => process.env.MINDCRAFT_START || null);
 ipcMain.handle('app:path', (_e, name) => app.getPath(name));
+// Tela inicial: lista (com existência e data), remover um e limpar. Só devolve caminhos que o próprio app registrou.
+ipcMain.handle('recent:list', () => loadRecent().map((p) => { let st = null; try { st = fs.statSync(p); } catch { /* sumiu */ } return { path: p, exists: !!st && st.isFile(), mtime: st ? st.mtimeMs : null }; }));
+ipcMain.handle('recent:remove', (_e, p) => { saveRecent(loadRecent().filter((x) => x !== p)); buildMenu(); });
+ipcMain.handle('recent:clear', () => { saveRecent([]); buildMenu(); });
 ipcMain.handle('recent:add', (_e, p) => { if (typeof p === 'string') addRecent(p); });
 ipcMain.handle('dialog:confirm', async (_e, o) => (await dialog.showMessageBox(win, {
   type: 'question', buttons: o.buttons, defaultId: 0, cancelId: o.buttons.length - 1, title: 'MindCraft', message: o.message, detail: o.detail,

@@ -95,7 +95,11 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
       if (/^(Estudos|Rede)$/.test(group) && !/Modelo de concurso|Importar edital|Grafo|Navegar|Obsidian/.test(title)) await openMain();   // estado conhecido
       const r = await Promise.race([fn({ shot }), new Promise((_, rej) => setTimeout(() => rej(new Error('tempo limite da funcionalidade (70 s)')), 70000))]);
       if (typeof r === 'string') note = r;
-    } catch (e) { status = e && e.skip ? 'IGNORADO' : 'FALHA'; note = String(e.message).split('\n')[0]; }
+    } catch (e) {
+      status = e && e.skip ? 'IGNORADO' : 'FALHA'; note = String(e.message).split('\n')[0];
+      // uma falha não pode deixar sobreposições abertas (grafo, painel, janela, tela inicial) bloqueando os casos seguintes
+      try { await js("(() => { try { if (typeof closeGraph === 'function') closeGraph(); } catch {} try { closeDash(); } catch {} try { if (!document.querySelector('#modal').hidden) closeModal(); } catch {} try { if (window.MCReact) { MCReact.closeHome(); if (MCReact.pdfIsOpen()) MCReact.closePdf(); } } catch {} return true; })()"); } catch { /* sem página */ }
+    }
     if (!files.length) { try { await shot(); } catch { /* sem captura */ } }
     rows.push({ n, group, title, how, status, note, files });
     console.log(`  ${status === 'OK' ? 'ok  ' : status === 'IGNORADO' ? 'SKIP' : 'FAIL'} ${pad(n)} ${group} › ${title}${note && status !== 'OK' ? '\n         ' + note : ''}`);
@@ -577,6 +581,22 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await c.waitFor(() => js("!!map.meta.goals && map.meta.goals.minutesWeek === 360 && map.meta.goals.questionsWeek === 80")); await wait(300); await js("document.querySelector('#goals').scrollIntoView({ block: 'center' })"); await wait(200); await shot('metas-salvas');
     ok(await js("document.querySelectorAll('#goals .goal-row').length === 2"), 'barras das duas metas'); ok((await txt('#errSec')).includes('Caderno de erros (2)'), await txt('#errSec'));
     await js("document.querySelector('#errSec').scrollIntoView({ block: 'center' })"); await wait(200); await clickSel('#errSec .rev .t'); await wait(200); ok(await js("document.querySelector('#dash').hidden"), 'clicar num erro leva ao tópico');
+  });
+  await feature('Estudos', 'Tela inicial: continuar, recentes, atalhos e biblioteca', 'Menu Início; cliques reais no cartão "continuar", numa linha de recentes e em "Novo mapa"', async ({ shot }) => {
+    const recentFile = path.join(USERDATA, 'recent.json'); const f1 = path.join(TMP, 'Inicio A.mom'), f2 = path.join(TMP, 'Inicio B.mom');
+    const mkm = (t, kids) => { const mm = new MindMap(createNode(t)); mm.meta.name = t; for (const k of kids) mm.addChild(mm.root.id, k); return mm; }; writeMom(mkm('Inicio A', ['a1', 'a2']), f1); writeMom(mkm('Inicio B', ['b1']), f2);
+    fs.writeFileSync(recentFile, JSON.stringify([f1, f2, path.join(TMP, 'sumiu.mom')])); await js("dirty = false; window.__dlg.discard = 1; ipcRenderer.emit('menu', {}, 'home'); true"); await c.waitFor(() => js("!!document.querySelector('#home .hm')")); await wait(400); await shot('inicio');
+    await clickSel('#hmRecent .hm-row:nth-child(3) .hm-open'); await c.waitFor(() => js(`filePath === ${JSON.stringify(f2)}`)); ok(await js("document.querySelector('#home').hidden"), 'abrir um recente fecha a tela inicial');
+    await js("ipcRenderer.emit('menu', {}, 'home'); true"); await c.waitFor(() => js("!!document.querySelector('#home .hm')")); await clickSel('#hmContinue'); await c.waitFor(() => js(`filePath === ${JSON.stringify(f2)}`));
+    await js("ipcRenderer.emit('menu', {}, 'home'); true"); await c.waitFor(() => js("!!document.querySelector('#home .hm')")); await clickSel('#hmNew'); await c.waitFor(() => js("document.querySelector('#home').hidden")); eq(await js('filePath'), null); await shot('novo-mapa');
+  });
+  await feature('Estudos', 'Simulados: registrar por disciplina e acompanhar a evolução', 'Formulário com digitação real; Painel de estudos com gráfico', async ({ shot }) => {
+    await js("dirty = false; act.simulado(); true"); await c.waitFor(() => js("!!document.querySelector('#simBox')")); await wait(200);
+    const rows = await js("[...document.querySelectorAll('.sim-row[data-disc] .sim-done')].map((e, i) => i)"); ok(rows.length >= 2, 'linhas por disciplina');
+    await clickSel('.sim-row[data-disc]:nth-of-type(2) .sim-done'); await type('20'); await clickSel('.sim-row[data-disc]:nth-of-type(2) .sim-ok'); await type('14');
+    await clickSel('.sim-row[data-disc]:nth-of-type(3) .sim-done'); await type('20'); await clickSel('.sim-row[data-disc]:nth-of-type(3) .sim-ok'); await type('9'); await wait(150); await shot('formulario');
+    ok((await txt('#simTotal')).includes('23/40'), await txt('#simTotal')); await clickSel('#simSave'); await c.waitFor(() => js("document.querySelector('#modal').hidden")); ok(await js("(map.meta.simulados || []).length === 1"));
+    await js("act.dash()"); await wait(300); await js("document.querySelector('#simSec').scrollIntoView({ block: 'center' })"); await wait(200); await shot('painel'); ok((await txt('#simSec')).includes('Simulados (1)'), await txt('#simSec'));
   });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');

@@ -114,7 +114,7 @@ $('#qAdd').addEventListener('click', () => {
 });
 
 // ---------- painel de estudos (sobreposição) ----------
-function openDash() { commitNotes(); if (typeof closeGraph === 'function') closeGraph(); dashOpen = true; $('#dash').hidden = false; document.querySelector('[data-act="dash"]').classList.add('on'); renderDash(); }
+function openDash() { commitNotes(); if (typeof closeHome === 'function') closeHome(); if (typeof closeGraph === 'function') closeGraph(); dashOpen = true; $('#dash').hidden = false; document.querySelector('[data-act="dash"]').classList.add('on'); renderDash(); }
 function closeDash() { dashOpen = false; $('#dash').hidden = true; document.querySelector('[data-act="dash"]').classList.remove('on'); }
 act.dash = () => (dashOpen ? closeDash() : openDash());
 
@@ -331,6 +331,7 @@ async function exportReport(kind) {
 
 // ---------- adotar um mapa novo (modelo/edital) ----------
 function adopt(m) {
+  if (typeof closeHome === 'function') closeHome();
   resetStudyUI();
   map = m; filePath = null; dirty = true; rev++;
   selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null;

@@ -51,6 +51,17 @@ Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; 
 - O mapa guarda só o **caminho** do PDF (o arquivo não é copiado). Se o arquivo mudar de lugar (ou em outro computador), o leitor avisa e **Localizar o PDF…** reaponta; as fontes e destaques são preservados. As fontes entram também na exportação para o Obsidian ("Fonte: PDF, p. N — trecho"). PDF protegido por senha e PDF sem texto (só imagem) abrem com aviso claro (sem texto não há o que selecionar).
 - Só ler não altera o mapa; o PDF só é registrado no mapa quando você captura o primeiro trecho.
 
+## Tela inicial
+Abre ao iniciar o MindCraft (Ctrl+Shift+H, o botão da casa na barra esquerda ou Arquivo → Tela inicial a qualquer momento; Esc fecha). Mostra:
+- **Continuar de onde parou** (último mapa — do arquivo ou da biblioteca — com tópicos, progresso, revisões vencidas e dias para a prova);
+- **Atalhos**: novo mapa, novo mapa de concurso (modelo), importar edital (CSV da IA ou texto colado), abrir arquivo, biblioteca, ler um PDF, revisão do dia e registrar simulado;
+- **Arquivos recentes** (os 10 últimos; arquivo que sumiu aparece esmaecido; ✕ tira da lista e "limpar lista" esvazia — os arquivos em si nunca são tocados);
+- **Hoje** (revisões vencidas nos mapas da biblioteca, com atalho para revisar), **Próximas provas** (as 3 mais próximas, ≤ 14 dias em destaque) e os mapas mais recentes da **biblioteca**.
+- **Ao iniciar**: escolha mostrar esta tela (padrão), reabrir o último mapa ou começar em branco. Soltar um arquivo `.mom/.md/.opml` (abre, perguntando sobre alterações pendentes) ou `.pdf` (abre no leitor) na janela funciona em qualquer tela; soltar qualquer outro arquivo não faz a janela "navegar" para ele.
+
+## Simulados
+**Registrar simulado** (Tela inicial ou Painel de estudos): nome, banca, data, duração e, por disciplina do mapa, questões feitas e acertos (com total ao vivo). Opção "somar às questões de cada disciplina" alimenta o acerto e os pontos fracos (uma ação desfazível). O Painel de estudos mostra a **evolução** (gráfico), média, melhor e último com variação ▲/▼, as **disciplinas mais fracas** e os últimos simulados (✕ apaga, desfazível); o relatório .md inclui a seção.
+
 ## Caderno de erros e metas semanais
 - **Caderno de erros** (painel **Estudo** → "Caderno de erros"): escolha o **motivo** (falta de atenção, não sabia, confundi conceitos, falta de tempo, chutei, outro), anote o que errou/como evitar e clique **＋ Erro**; a opção "contar também como questão errada" soma 1 questão feita sem acerto (alimenta os pontos fracos). Cada erro é um desfazer e pode ser apagado (✕). Máx. 200 por tópico.
 - O **Painel de estudos** mostra o caderno: erros por motivo, quantos nos últimos 7 dias, tópicos com mais erros e os mais recentes (clique leva ao tópico). A **Revisão do dia** mostra "Seus erros neste tópico" ao revelar as anotações, e o **relatório** (.md/.docx) inclui o caderno.

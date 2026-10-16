@@ -11,6 +11,8 @@ import { Connections, Outline, RefsBox } from './Panels.jsx';
 import { PdfPane } from './PdfPane.jsx';
 import { ReviewMode } from './ReviewMode.jsx';
 import { ShortcutsModal } from './ShortcutsModal.jsx';
+import { Home } from './Home.jsx';
+import { SimuladoModal } from './SimuladoModal.jsx';
 
 let cur = null;
 function unmount() { if (cur) { try { cur.root.unmount(); } catch { /* o nó já foi removido por outro código */ } cur = null; } }
@@ -79,15 +81,32 @@ function renderRefs() {
 }
 document.addEventListener('mc:render', () => { if (document.getElementById('refsBox')) renderRefs(); });
 
+// Tela inicial: sobreposição #home (raiz criada ao abrir e descartada ao fechar).
+let homeRoot = null;
+function openHome() {
+  const box = document.getElementById('home');
+  if (!homeRoot) { box.textContent = ''; homeRoot = createRoot(box); }
+  box.hidden = false; box.dataset.ui = 'react';
+  document.querySelector('[data-act="home"]')?.classList.add('on');
+  flushSync(() => homeRoot.render(<Home onClose={closeHome} />));
+}
+function closeHome() {
+  if (!homeRoot) return;
+  try { homeRoot.unmount(); } catch { /* nó já removido */ }
+  homeRoot = null; const box = document.getElementById('home'); box.hidden = true; box.textContent = ''; delete box.dataset.ui;
+  document.querySelector('[data-act="home"]')?.classList.remove('on');
+}
+
 window.MCReact = {
   version: 1,
   openLibrary: (tab = 'maps') => mount(LibraryModal, { initialTab: tab }),
   openVersions: (id, opts = {}) => mount(VersionsModal, { mapId: id, back: opts.back !== false }),
   openCsv: () => mount(CsvModal, {}),
   openReview: () => mount(ReviewMode, {}),
+  openSimulado: () => mount(SimuladoModal, {}),
   openShortcuts: () => mount(ShortcutsModal, {}),
   openPlan: () => mount(PlanModal, {}),
-  renderDash, unmountDash, openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot, renderRefs,
+  openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash, openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot, renderRefs,
   renderLinks: (model) => renderPanel('linksBody', <Connections model={model} />), unmountLinks: () => unmountPanel('linksBody'),
   renderOutline: (rows) => renderPanel('outline', <Outline rows={rows} />), unmountOutline: () => unmountPanel('outline'),
   unmount,

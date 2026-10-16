@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 18:50 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 19:48 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -86,3 +86,9 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Bugs reais achados (e corrigidos, com teste de regressão)**: (1) **o .mom alterava o texto do usuário** ao reabrir (tags como `<br>` em títulos/notas eram "limpas"; instável a cada ciclo) — agora só arquivos do Mindomo sofrem a limpeza (marca `mcWriter`); (2) **seleção apontando para tópico inexistente** após desfazer/refazer; (3) **tópico selecionado escondido por um ramo recolhido** causava erro (`reading 'w'`) ao criar filho/editar/navegar — agora a seleção vai para o ancestral visível; (4) ao sair da **apresentação** o editor ficava ~100 ms sem tópicos clicáveis (e o 1º passo agendado podia rodar já encerrado); (5) o teste da Revisão do dia expôs que `map.find()` devolve {node,parent}.
 - **Desempenho (3 000 tópicos, interface real)**: ~108 ms por seleção, painel de estudos ~100 ms, Estrutura (React) ~170 ms, desfazer+refazer ~200 ms, salvar .mom ~140 ms, guardar na biblioteca com verificação ~180 ms, abrir ~270 ms.
 - **Não testado**: Linux/macOS; PDFs gigantes/escaneados; uso simultâneo do banco por duas instâncias; CI.
+
+## Rodada "tela inicial + simulados"
+- **Resultados**: unitários 141/141 (+5 simulados); e2e todas as suítes verdes (18 execuções): **tela inicial 11/11**, **simulados 8/8**, erros/metas 9, desempenho 5, macaco 4, leitor de PDF 11, revisão 7 e as demais nas duas interfaces; QA com entrada real **80/80**; macaco longo (12 × 300 ações, com início, simulado e arrastar arquivo) verde.
+- **Achados dos testes**: (1) o modal de simulado quebrava ao digitar (a linha de cabeçalho da tabela entrava na leitura dos campos → React desmontava a janela); (2) o `e2e.js` original não usava o harness e a tela inicial passou a cobrir o mapa (corrigido forçando o início em branco nos testes por IPC — variável de ambiente não chega ao processo da janela); (3) um caso do QA que falha deixava o grafo/painel abertos e derrubava os seguintes (agora cada falha fecha as sobreposições). Continua intermitente (já conhecido): "Grafo: arrastar nó e dar zoom com a roda" no QA completo (passa isolado).
+- **Segurança**: soltar um arquivo na janela (ou clicar num link) não navega mais a janela para outra página (`will-navigate` bloqueado) — antes isso podia perder o trabalho aberto.
+- **Não testado**: soltar arquivo pelo gerenciador do Windows (testei a lógica e os eventos de arrastar/soltar, não o gesto do SO); Linux/macOS; CI.

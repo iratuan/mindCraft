@@ -54,6 +54,8 @@ function check(m, ctx) {
   }
   if (new Set((m.meta.pdfs || []).map((p) => p.id)).size !== (m.meta.pdfs || []).length) fail('PDFs duplicados');
   if (m.meta.goals && JSON.stringify(m.meta.goals) !== JSON.stringify(S.sanitizeGoals(m.meta.goals))) fail('metas inválidas');
+  const sims = m.meta.simulados || []; if (m.meta.simulados && !sims.length) fail('lista de simulados vazia deveria não existir'); if (new Set(sims.map((x) => x.id)).size !== sims.length) fail('simulados com id repetido');
+  for (const x of sims) { try { require('../core/simulados').checkSimulado(x); } catch (e) { fail('simulado inválido guardado: ' + e.message); } }
 }
 
 function randomOp(m, r) {
@@ -73,6 +75,8 @@ function randomOp(m, r) {
     ['study-err', () => m.mutateStudy(any(), (s) => S.addError(s, { why: pick(r, ['atencao', 'tempo', 'chute', 'inventado']), note: word(r, 50), today: TODAY }))],
     ['study-unerr', () => m.mutateStudy(any(), (s) => S.removeError(s, Math.floor(r() * 3)))],
     ['goals', () => m.setGoals(r() < 0.2 ? null : { minutesWeek: pick(r, [0, 60, -1, 'x', 99999999]), questionsWeek: pick(r, [0, 10, 1.5, 200]) })],
+    ['simulado', () => m.addSimulado({ d: pick(r, [TODAY, TODAY, 'x']), name: word(r, 20), banca: word(r, 8), minutes: pick(r, [0, 90, -3, 99999]), rows: [{ disc: word(r, 10), nodeId: pick(r, [any(), 'zz', undefined]), done: pick(r, [0, 5, 20, -1, 'x']), correct: pick(r, [0, 3, 25, '']) }, { disc: 'Outra', nodeId: any(), done: 10, correct: 4 }] }, { addToQuestions: r() < 0.5 })],
+    ['unsimulado', () => { const x = (m.meta.simulados || [])[Math.floor(r() * 3)]; return x ? m.removeSimulado(x.id) : false; }],
     ['study-weight', () => m.mutateStudy(any(), (s) => S.setWeight(s, Math.floor(r() * 8) - 1))],
     ['exam', () => m.setExam(r() < 0.3 ? null : { name: word(r), date: r() < 0.8 ? S.addDays(TODAY, Math.floor(r() * 200)) : 'lixo' })],
     ['levels', () => m.showLevels(Math.floor(r() * 5))], ['autoLevels', () => m.autoLevels(1 + Math.floor(r() * 50))],
