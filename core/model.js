@@ -11,6 +11,9 @@ function createNode(title = 'Tópico', extra = {}) {
   return { id: newId(), title, notes: '', collapsed: false, style: {}, markers: [], progress: null, children: [], ...extra };
 }
 
+/** Níveis máximos de subtópicos (raiz = 0). Mapas reais ficam abaixo de 15; acima disso a recursão de exportações/biblioteca arrisca estourar a pilha. */
+const MAX_DEPTH = 100;
+
 class MindMap {
   constructor(root = createNode('Mapa mental'), meta = {}) {
     this.root = root;
@@ -86,9 +89,27 @@ class MindMap {
   }
 
   // --- edição ---
+  /** Profundidade de um tópico (raiz = 0), ou -1 se não existir. Iterativo: seguro em árvores muito fundas. */
+  depthOf(id) {
+    const stack = [[this.root, 0]];
+    while (stack.length) { const [n, d] = stack.pop(); if (n.id === id) return d; for (const c of n.children) stack.push([c, d + 1]); }
+    return -1;
+  }
+  /** Altura de uma subárvore (nó sem filhos = 0). Iterativo. */
+  static heightOf(node) {
+    let h = 0; const stack = [[node, 0]];
+    while (stack.length) { const [n, d] = stack.pop(); if (d > h) h = d; for (const c of n.children) stack.push([c, d + 1]); }
+    return h;
+  }
+  /** Garante que um tópico (ou subárvore de altura `height`) pendurado em `parentId` não passe de MAX_DEPTH níveis. */
+  _checkDepth(parentId, height = 0) {
+    if (this.depthOf(parentId) + 1 + height > MAX_DEPTH) throw new Error(`Profundidade máxima: ${MAX_DEPTH} níveis de subtópicos.`);
+  }
+
   addChild(parentId, title = 'Tópico', index) {
     const p = this.find(parentId);
     if (!p) return null;
+    this._checkDepth(parentId);
     this._snapshot();
     const n = createNode(title);
     p.node.collapsed = false;
@@ -242,7 +263,8 @@ class MindMap {
 
   /** Cópia profunda com ids novos. Por padrão descarta o histórico de estudo (a cópia é um tópico novo). */
   static cloneSubtree(node, { keepStudy = false } = {}) {
-    const c = { ...JSON.parse(JSON.stringify(node)), id: newId() };
+    const { children, ...rest } = node;   // sem serializar a subárvore inteira a cada nível (era quadrático)
+    const c = { ...JSON.parse(JSON.stringify(rest)), id: newId() };
     delete c._mom;
     if (!keepStudy) delete c.study;
     c.children = node.children.map((k) => MindMap.cloneSubtree(k, { keepStudy }));
@@ -252,6 +274,7 @@ class MindMap {
   addSubtree(parentId, tree, index) {
     const p = this.find(parentId);
     if (!p) return null;
+    this._checkDepth(parentId, MindMap.heightOf(tree));
     this._snapshot();
     p.node.collapsed = false;
     if (index == null || index > p.node.children.length) p.node.children.push(tree);
@@ -360,6 +383,7 @@ class MindMap {
     const np = this.find(newParentId);
     if (!r || !np || !r.parent) return false;
     if (this.find(newParentId, r.node)) return false; // destino dentro do próprio subtree
+    this._checkDepth(newParentId, MindMap.heightOf(r.node));
     this._snapshot();
     r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
     const i = index == null ? np.node.children.length : Math.min(index, np.node.children.length);
@@ -375,5 +399,5 @@ class MindMap {
   }
 }
 
-module.exports = { MindMap, createNode, newId };
+module.exports = { MindMap, createNode, newId, MAX_DEPTH };
 

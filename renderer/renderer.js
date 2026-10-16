@@ -138,7 +138,7 @@ function buildOutline() {
     const row = document.createElement('div');
     row.className = 'ol-row' + (n.id === selectedId ? ' sel' : '') + (hits && hits.has(n.id) ? ' hit' : '');
     row.dataset.olId = n.id; row.setAttribute('role', 'treeitem');
-    row.style.paddingLeft = 8 + depth * 14 + 'px';
+    row.style.paddingLeft = 8 + Math.min(depth, 8) * 14 + 'px';   // recuo limitado: níveis fundos não saem do painel
     const tog = document.createElement('span');
     tog.className = 'ol-tog';
     if (n.children.length) { tog.textContent = n.collapsed ? '▶' : '▼'; tog.dataset.olTog = n.id; }
@@ -146,7 +146,8 @@ function buildOutline() {
     dot.className = 'ol-dot'; dot.style.background = branch;
     const t = document.createElement('span');
     t.className = 'ol-t'; t.textContent = n.title;
-    row.append(tog, dot, t);
+    if (depth > 8) { const lv = document.createElement('span'); lv.className = 'ol-lvl'; lv.textContent = depth; row.title = `${n.title} — nível ${depth}`; row.append(tog, dot, lv, t); }
+    else row.append(tog, dot, t);
     if (n.progress != null) { const p = document.createElement('span'); p.className = 'ol-pct'; p.textContent = n.progress + '%'; row.append(p); }
     frag.append(row);
     if (!n.collapsed) n.children.forEach((c, i) => add(c, depth + 1, depth === 0 ? L.theme.branches[i % L.theme.branches.length] : branch));
@@ -197,7 +198,16 @@ function commitNotes() {
   }
 }
 
-function change(fn) { const r = fn(); if (r !== false && r !== null) { dirty = true; rev++; } render(); return r; }
+function change(fn) {
+  let r;
+  try { r = fn(); }
+  catch (e) {   // limite de profundidade: aviso claro, nada muda (o lote já foi revertido)
+    if (!/^Profundidade máxima/.test(e && e.message)) throw e;
+    render(); setStatus(e.message); return null;   // render() reescreve a barra de status: o aviso vem depois
+  }
+  if (r !== false && r !== null) { dirty = true; rev++; }
+  render(); return r;
+}
 
 /** Pergunta o que fazer com alterações pendentes. Retorna true se pode prosseguir. */
 async function confirmDiscard() {
@@ -312,8 +322,8 @@ async function doExport(fmt) {
 // ---------- ações de edição ----------
 const sel = () => selectedId && map.find(selectedId);
 const act = {
-  child() { const s = sel(); if (!s) return; const n = change(() => map.addChild(s.node.id)); selectedId = n.id; render(); reveal(n.id); startEdit(); },
-  sibling() { const s = sel(); if (!s) return; const n = s.parent ? change(() => map.addSibling(s.node.id)) : change(() => map.addChild(s.node.id)); selectedId = n.id; render(); reveal(n.id); startEdit(); },
+  child() { const s = sel(); if (!s) return; const n = change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
+  sibling() { const s = sel(); if (!s) return; const n = s.parent ? change(() => map.addSibling(s.node.id)) : change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
   moveUp() { reshape('moveSibling', -1, 'Já é o primeiro tópico deste nível.'); },
   moveDown() { reshape('moveSibling', +1, 'Já é o último tópico deste nível.'); },
   indent() { reshape('indent', undefined, 'Não há irmão acima para receber este tópico como filho.'); },
@@ -650,6 +660,7 @@ async function pasteSelection() {
   if (total > MAX_PASTE_NODES) { setStatus(`Texto grande demais para colar (${total} tópicos; limite ${MAX_PASTE_NODES}).`); return; }
   let added = [];
   change(() => map.batch(() => { added = trees.map((t) => map.addSubtree(parent, t)); return true; }));
+  if (!added.length) return;
   selIds = new Set(added.map((n) => n.id)); selectedId = added[0].id; render(); reveal(added[0].id);
   setStatus(`${total} tópico(s) colado(s)${fromInternal ? '' : ' a partir do texto'}`);
 }

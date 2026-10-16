@@ -88,12 +88,12 @@ test('ROBUSTEZ: ciclos, ids duplicados, órfãos, entradas absurdas e arquivos i
   assert.throws(() => readMom(noRoot.toBuffer()), /raiz/);
 });
 
-test('ROBUSTEZ: cadeia profunda (2000 níveis) é limitada e não estoura a pilha', () => {
+test('ROBUSTEZ: cadeia profunda (2000 níveis) é recusada com mensagem clara e não estoura a pilha', () => {
   const nodes = []; let prev = null;
   for (let i = 0; i < 2000; i++) { const id = 'n' + i; nodes.push({ id, ...(prev ? { parentId: prev } : {}), title: 'N' + i, index: 0 }); prev = id; }
   const z = new AdmZip(); z.addFile('document.json', Buffer.from(JSON.stringify({ mapInfo: { rootId: 'n0', name: 'x' } }))); z.addFile('nodes.json', Buffer.from(JSON.stringify(nodes)));
-  const m = readMom(z.toBuffer()); let depth = 0; m.walk((n, l) => { depth = Math.max(depth, l); });
-  assert.ok(depth <= 500, 'profundidade limitada: ' + depth);
+  // recusa com mensagem clara (nunca estouro de pilha, nunca corte silencioso que seria gravado por cima do original)
+  assert.throws(() => readMom(z.toBuffer()), (e) => e instanceof Error && !(e instanceof RangeError) && /mais de 500 níveis/.test(e.message));
 });
 
 test('GRAVAÇÃO: atômica (sem .tmp sobrando), preserva o original se falhar e aceita caminho com acentos', () => {

@@ -124,6 +124,7 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 .ol-tog:hover { background: var(--bg-active); color: var(--text-strong); }
 .ol-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; }
 .ol-t { overflow: hidden; text-overflow: ellipsis; }
+.ol-lvl { flex: none; font-size: 9px; line-height: 14px; padding: 0 4px; border-radius: 7px; background: var(--bg-active); color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .ol-pct { margin-left: auto; padding-left: 8px; color: var(--text-dim); font-size: 10.5px; }
 .ol-empty { padding: 10px 12px; color: var(--text-dim); }
 

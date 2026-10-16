@@ -394,6 +394,7 @@ function openImportModal() {
       const parent = selectedId || map.root.id; let added = [];
       closeModal();
       change(() => map.batch(() => { added = trees.map((t) => map.addSubtree(parent, t)); return true; }));
+      if (!added.length) return;
       selIds = new Set(added.map((x) => x.id)); selectedId = added[0].id; render();
       setStatus(`${n} tópicos adicionados.`);
     }
@@ -467,6 +468,7 @@ async function applyCsvImport(cm, { name, mode, close }) {
     const parent = selectedId || map.root.id; let added = [];
     close();
     change(() => map.batch(() => { added = cm.root.children.map((t) => map.addSubtree(parent, t)); return true; }));
+    if (!added.length) return true;
     selIds = new Set(added.map((x) => x.id)); selectedId = added[0].id; render(); reveal(added[0].id);
     setStatus(`${total} tópicos adicionados do CSV (a data da prova só é aplicada ao criar um mapa novo).`);
   }

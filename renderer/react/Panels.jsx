@@ -41,13 +41,16 @@ export function Connections({ model }) {
 }
 
 /** Painel "Estrutura" (árvore). Os cliques continuam tratados por delegação no #outline (renderer.js). */
+/** Recuo máximo (em níveis) da Estrutura: abaixo disso o texto sairia do painel; o nível exato aparece num selo. */
+const OL_MAX_INDENT = 8;
 export function Outline({ rows }) {
   return (
     <>
       {rows.map((r) => (
-        <div key={r.id} className={'ol-row' + (r.sel ? ' sel' : '') + (r.hit ? ' hit' : '')} data-ol-id={r.id} role="treeitem" style={{ paddingLeft: 8 + r.depth * 14 }}>
+        <div key={r.id} className={'ol-row' + (r.sel ? ' sel' : '') + (r.hit ? ' hit' : '')} data-ol-id={r.id} role="treeitem" style={{ paddingLeft: 8 + Math.min(r.depth, OL_MAX_INDENT) * 14 }} title={r.depth > OL_MAX_INDENT ? `${r.title} — nível ${r.depth}` : undefined}>
           <span className="ol-tog" data-ol-tog={r.hasChildren ? r.id : undefined}>{r.hasChildren ? (r.collapsed ? '▶' : '▼') : ''}</span>
           <span className="ol-dot" style={{ background: r.branch }} />
+          {r.depth > OL_MAX_INDENT && <span className="ol-lvl">{r.depth}</span>}
           <span className="ol-t">{r.title}</span>
           {r.progress != null && <span className="ol-pct">{r.progress + '%'}</span>}
         </div>

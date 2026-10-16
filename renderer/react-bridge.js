@@ -69,6 +69,7 @@ function pdfCapture({ source, page, text, rects, mode }) {
     }
     return true;
   }));
+  if (!target) throw new Error('Profundidade máxima: ' + require(path.join(core, 'model')).MAX_DEPTH + ' níveis de subtópicos.');   // o lote foi revertido; o leitor mostra a mensagem
   selectedId = target; selIds = new Set([target]); selectedRel = null; render(); reveal(target);
   return { id: target, title };
 }

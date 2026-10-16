@@ -89,7 +89,9 @@ function readMom(source) {
   const seen = new Set();
   const prune = (n, depth) => {
     seen.add(n.id);
-    n.children = depth >= MAX_DEPTH ? [] : n.children.filter((c) => !seen.has(c.id));
+    n.children = n.children.filter((c) => !seen.has(c.id));
+    // nunca cortar em silêncio: um "Salvar" depois gravaria o arquivo mutilado. Recusa abrir e deixa o original intacto.
+    if (depth >= MAX_DEPTH && n.children.length) throw new Error(`Arquivo .mom inválido: mais de ${MAX_DEPTH} níveis de profundidade (o arquivo não foi alterado).`);
     n.children.forEach((c) => prune(c, depth + 1));
   };
   prune(rootEntry.node, 0);
