@@ -1,6 +1,6 @@
 # Resultados dos testes
 
-Executados de verdade em 16/10/2026, 19:48 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
+Executados de verdade em 16/10/2026, 20:14 (Windows 11, Electron 44, Node 24). Logs completos em `logs/`.
 
 | Suíte | Comando | Resultado |
 |---|---|---|
@@ -92,3 +92,10 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Achados dos testes**: (1) o modal de simulado quebrava ao digitar (a linha de cabeçalho da tabela entrava na leitura dos campos → React desmontava a janela); (2) o `e2e.js` original não usava o harness e a tela inicial passou a cobrir o mapa (corrigido forçando o início em branco nos testes por IPC — variável de ambiente não chega ao processo da janela); (3) um caso do QA que falha deixava o grafo/painel abertos e derrubava os seguintes (agora cada falha fecha as sobreposições). Continua intermitente (já conhecido): "Grafo: arrastar nó e dar zoom com a roda" no QA completo (passa isolado).
 - **Segurança**: soltar um arquivo na janela (ou clicar num link) não navega mais a janela para outra página (`will-navigate` bloqueado) — antes isso podia perder o trabalho aberto.
 - **Não testado**: soltar arquivo pelo gerenciador do Windows (testei a lógica e os eventos de arrastar/soltar, não o gesto do SO); Linux/macOS; CI.
+
+## Rodada de testes e melhorias (robustez, layout e teclado)
+- **Resultados**: unitários 141/141 (e também nos fusos UTC, São Paulo, Auckland, Kolkata, Kiritimati e St. John's — inclusive a virada de horário de verão); e2e: **22 suítes verdes** (novas: texto hostil 7, falhas injetadas 7, layout 4, acessibilidade 11; desempenho agora com 300 mapas na biblioteca 6); QA com entrada real **81 casos** (inclui Tab/Shift+Tab/Delete/Esc reais nas janelas); macaco longo verde.
+- **Bug real e sério corrigido**: com uma janela aberta (biblioteca, simulado, CSV…) ou a tela inicial, **Tab criava tópicos no mapa de baixo e Delete/Backspace podiam apagar o selecionado** quando o foco estava num botão. Agora o teclado pertence a quem está na frente (teste de regressão verificado por mutação: falha sem a correção, passa com ela).
+- **Melhorias**: janelas pequenas (painel de estudos em 1 coluna sem rolagem horizontal; leitor de PDF não espreme o mapa em janelas < 900 px); janelas com papel de diálogo, rótulo, foco inicial, Tab preso e foco devolvido; tela inicial com foco no atalho principal; tabela de simulado com mais altura em telas baixas.
+- **Verificado e sem defeitos**: nenhum texto hostil vira elemento/script em nenhuma tela (mapa, painéis, grafo, revisão, simulados, erros, tela inicial, biblioteca, leitor, prévias de CSV/planilha, erros); falhas de disco/arquivo/banco não perdem o que está na tela (rascunho, "não salvo", sem arquivo temporário sobrando; banco travado espera 5 s e avisa); desempenho com 300 mapas (tela inicial ~60 ms, janela ~50 ms, busca ~8 ms, pacote ~230 ms).
+- **Não testado**: leitor de tela real (NVDA/Narrador) — só rótulos, foco e papéis; Linux/macOS; CI.

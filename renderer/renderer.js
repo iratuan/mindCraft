@@ -664,6 +664,10 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (dashOpen || graphOpen) return; // com um painel em tela cheia aberto, os atalhos do mapa ficam desligados (Esc fecha: study-ui.js)
+  // O teclado é de quem está na frente: com uma janela ou a tela inicial abertas, e dentro dos painéis/leitor/barras, Tab, Delete, Enter e setas
+  // pertencem ao controle focado (antes, Tab numa janela criava tópicos no mapa de baixo e Delete podia apagar o selecionado).
+  if (!$('#modal').hidden || (window.MCReact && window.MCReact.homeIsOpen())) return;
+  if (!(e.ctrlKey || e.metaKey || e.altKey) && e.target.closest && e.target.closest('#pdfpane, #panels, #ptabs, #appbar')) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); $('#search').focus(); return; }
   if (e.key === 'F5') { e.preventDefault(); return startPresent(); }
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || !editor.hidden) return;

@@ -36,6 +36,18 @@ const start = require('./harness');
     const op = await time(`await openPath(${JSON.stringify(f)})`); console.log('      · abrir .mom:', op, 'ms'); ok(op < 8000, 'abrir: ' + op + ' ms');
   });
 
+  await t('biblioteca com 300 mapas: tela inicial, janela da biblioteca, busca em todos e revisões vencidas continuam rápidas', async () => {
+    const path = require('path'); const { openLibrary } = require('../core/library'); const { MindMap, createNode } = require('../core/model'); const SS = require('../core/study');
+    const lib = openLibrary(path.join(c.USERDATA, 'biblioteca.db')); const t0 = Date.now();
+    lib.tx(() => { for (let k = 0; k < 300; k++) { const m = new MindMap(createNode('Mapa ' + k)); m.meta.name = 'Mapa ' + k; for (let i = 0; i < 6; i++) { const d = m.addChild(m.root.id, 'Disc ' + i); for (let j = 0; j < 4; j++) { const n = m.addChild(d.id, `Assunto ${k}.${i}.${j}`); if (j === 0) m.mutateStudy(n.id, (st) => SS.setNext(st, SS.addDays('2026-10-20', -1))); } } if (k % 10 === 0) m.setExam({ name: 'Prova ' + k, date: SS.addDays('2026-10-20', 20 + k) }); lib.saveMap(m, { snapshot: false }); } });
+    lib.close(); console.log('      · preparar 300 mapas:', Date.now() - t0, 'ms');
+    const home = await time(`window.__today = '2026-10-20'; act.home(true)`); console.log('      · tela inicial:', home, 'ms'); ok(home < 2500, 'tela inicial: ' + home + ' ms');
+    const todayTxt = await js(`document.querySelector('#hmToday').textContent`); ok(todayTxt.includes('2400 revisão(ões) vencida(s)') && todayTxt.includes('em 301 mapa(s)'), todayTxt); await js('closeHome()');
+    const mod = await time(`openLibraryModal()`); console.log('      · janela da biblioteca (300 linhas):', mod, 'ms'); ok(mod < 3000, 'janela: ' + mod + ' ms'); eq(await js(`document.querySelectorAll('#libList .lib-row').length`), 301);
+    const sr = await time(`const s = document.querySelector('#libSearch'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(s, 'Assunto 299.5'); s.dispatchEvent(new Event('input', { bubbles: true }))`); console.log('      · busca em 300 mapas:', sr, 'ms'); ok(sr < 2000, 'busca: ' + sr + ' ms'); ok((await js(`document.querySelectorAll('#libList .hit').length`)) >= 1, 'achou'); await js('closeModal()');
+    const pk = path.join(c.TMP, 'tudo.mcpack'); const exp = await time('getLibrary().exportPackage(' + JSON.stringify(pk) + ')'); console.log('      · exportar pacote (300 mapas):', exp, 'ms'); ok(exp < 15000, 'pacote: ' + exp + ' ms');
+  });
+
   await t('nenhum erro de console', async () => { eq(c.errors, [], 'erros de console'); });
   await c.finish();
 })().catch((e) => { console.error('Falha no harness:', e); require('electron').app.exit(2); });

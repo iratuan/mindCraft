@@ -598,6 +598,15 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     ok((await txt('#simTotal')).includes('23/40'), await txt('#simTotal')); await clickSel('#simSave'); await c.waitFor(() => js("document.querySelector('#modal').hidden")); ok(await js("(map.meta.simulados || []).length === 1"));
     await js("act.dash()"); await wait(300); await js("document.querySelector('#simSec').scrollIntoView({ block: 'center' })"); await wait(200); await shot('painel'); ok((await txt('#simSec')).includes('Simulados (1)'), await txt('#simSec'));
   });
+  await feature('Mapa', 'Teclado real nas janelas: Tab circula só dentro delas, Esc fecha e o mapa nunca é alterado', 'Teclas reais (Tab, Shift+Tab, Delete, Esc) com a janela da biblioteca e a tela inicial abertas', async ({ shot }) => {
+    const snap = () => js("JSON.stringify(map.root) + '|' + map._undo.length"); const base = await snap();
+    await js("document.body.focus(); ipcRenderer.emit('menu', {}, 'lib'); true"); await c.waitFor(() => js("!!document.querySelector('#libList')")); focusWin(); await wait(200);
+    for (let i = 0; i < 25; i++) { await key('Tab'); const inside = await js("document.querySelector('#modal .modal-box').contains(document.activeElement)"); if (!inside) throw new Error('o foco saiu da janela no Tab nº ' + (i + 1)); }
+    for (let i = 0; i < 6; i++) { await key('Tab', ['shift']); ok(await js("document.querySelector('#modal .modal-box').contains(document.activeElement)"), 'Shift+Tab'); }
+    await key('Delete'); await key('Backspace'); eq(await snap(), base, 'Delete/Backspace com a janela aberta não mexem no mapa'); await shot('janela-com-foco');
+    await key('Escape'); await c.waitFor(() => js("document.querySelector('#modal').hidden")); eq(await snap(), base);
+    await js("ipcRenderer.emit('menu', {}, 'home'); true"); await c.waitFor(() => js("!!document.querySelector('#home .hm')")); focusWin(); for (let i = 0; i < 6; i++) await key('Tab'); await key('Delete'); eq(await snap(), base, 'tela inicial aberta: teclas não mexem no mapa'); await key('Escape'); await c.waitFor(() => js("document.querySelector('#home').hidden"));
+  });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');
     await c.waitFor(() => fs.existsSync(draft)); const size = fs.statSync(draft).size; await js('draftExists = false; newMap()'); ok(fs.existsSync(draft), 'rascunho sobrevive');

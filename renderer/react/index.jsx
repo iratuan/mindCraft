@@ -17,15 +17,47 @@ import { SimuladoModal } from './SimuladoModal.jsx';
 let cur = null;
 function unmount() { if (cur) { try { cur.root.unmount(); } catch { /* o nó já foi removido por outro código */ } cur = null; } }
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const visible = (e) => !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length);
+let returnFocus = null, restoreTimer = null, pendingBack = null;
+window.addEventListener('keydown', (e) => trapKeys(e), true);   // vale para qualquer janela aberta (também as clássicas), mesmo com o foco fora dela
+/** Acessibilidade das janelas: papel de diálogo, foco inicial dentro dela, Tab/Shift+Tab presos nela e foco devolvido a quem a abriu. */
+function trapKeys(e) {
+  const m = document.getElementById('modal');
+  if (e.key !== 'Tab' || !m || m.hidden) return;
+  e.stopPropagation();                      // a tecla Tab é da janela: nunca chega aos atalhos do mapa
+  const items = [...m.querySelectorAll(FOCUSABLE)].filter(visible);
+  if (!items.length) { e.preventDefault(); return; }
+  const first = items[0], last = items[items.length - 1], cur = document.activeElement;
+  if (!m.contains(cur)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && cur === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && cur === last) { e.preventDefault(); first.focus(); }
+}
+function initialFocus(m) {
+  const box = m.querySelector('.modal-box'); if (!box) return;
+  const label = box.querySelector('h2'); if (label) m.setAttribute('aria-label', label.textContent.replace(/\s+/g, ' ').trim());
+  const first = (sel) => [...box.querySelectorAll(sel)].find(visible);
+  const target = first('[data-autofocus]') || first('input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([disabled])') || first('button.primary:not([disabled])') || first(FOCUSABLE);
+  if (target) target.focus();
+}
+
 /** Renderiza um componente dentro do #modal (substitui o conteúdo anterior). */
 function mount(Component, props) {
   const H = window.MC, m = H.modalEl();
   unmount();
+  if (restoreTimer) { clearTimeout(restoreTimer); restoreTimer = null; returnFocus = pendingBack; }           // uma janela substitui a outra (ex.: Versões → Biblioteca): quem abriu continua sendo o mesmo
+  else if (m.hidden && document.activeElement && document.activeElement !== document.body) returnFocus = document.activeElement;
+  m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
   m.textContent = ''; m.hidden = false;
   const host = document.createElement('div'); host.id = 'react-host'; m.appendChild(host);
   const root = createRoot(host); cur = { root, host };
-  const close = () => { unmount(); H.closeModal(); };
+  const close = () => {
+    unmount(); H.closeModal();
+    const back = returnFocus; returnFocus = null; pendingBack = back; clearTimeout(restoreTimer);
+    restoreTimer = setTimeout(() => { restoreTimer = null; if (H.modalEl().hidden && back && document.contains(back) && visible(back)) back.focus(); }, 0);   // devolve o foco a quem abriu (se nenhuma outra janela tomou o lugar)
+  };
   flushSync(() => root.render(<Component {...props} onClose={close} />));
+  initialFocus(m);
 }
 
 // Painel de estudos: uma raiz permanente em #dash, redesenhada a cada renderDash() (mesmos gatilhos da versão clássica).
@@ -89,6 +121,7 @@ function openHome() {
   box.hidden = false; box.dataset.ui = 'react';
   document.querySelector('[data-act="home"]')?.classList.add('on');
   flushSync(() => homeRoot.render(<Home onClose={closeHome} />));
+  const target = box.querySelector('#hmContinue') || box.querySelector('#hmNew'); if (target) target.focus();   // teclado: Enter já age no atalho principal
 }
 function closeHome() {
   if (!homeRoot) return;
