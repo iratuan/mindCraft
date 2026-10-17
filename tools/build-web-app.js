@@ -31,7 +31,7 @@ async function buildApp({ dir = out } = {}) {
   const scripts = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
   if (!scripts.length) throw new Error('index.html sem scripts: o montador precisa ser atualizado');
   html = html.replace(/<script src="[^"]+"><\/script>\s*/g, '');
-  html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">');
+  html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">');
   html = html.replace('</body>', `<script>window.__MC_APP_SCRIPTS = ${JSON.stringify(scripts)};</script>\n<script src="core-browser.js"></script>\n<script src="host.js"></script>\n</body>`);
   html = html.replace('</head>', '<link rel="icon" type="image/png" href="icon.png">\n</head>');
   fs.copyFileSync(path.join(root, 'build', 'icon.png'), path.join(dir, 'icon.png'));

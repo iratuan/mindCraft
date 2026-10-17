@@ -42,12 +42,12 @@ const { TODAY, d, concurso } = require('./fixtures');
   });
 
   await t('registrar: grava o simulado, soma às questões das disciplinas, é UM desfazer e aparece no painel (gráfico, resumo, ranking, lista)', async () => {
-    await setNative('#simDate', d(-14)); await setNative('#simName', 'Simulado TRF 1'); await setNative('#simBanca', 'Cebraspe'); await setNative('#simMin', '210');
+    await setNative('#simDate', d(-14)); await setNative('#simName', 'Simulado TRF 1'); await js(`(() => { const e = document.querySelector('#simBanca'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(e, 'CEBRASPE (CESPE)'); e.dispatchEvent(new Event('change', { bubbles: true })); })()`); await setNative('#simMin', '210');
     await fill('Língua Portuguesa', 20, 15); await fill('Direito Constitucional', 20, 10); await fill('Informática', 0, 0);
     const q0 = await qOf('Língua Portuguesa'); const undo0 = await js('map._undo.length'); await click('#simSave'); await c.waitFor(() => js(`!document.querySelector('#simBox') || document.querySelector('#modal').hidden`));
-    const l = await sims(); eq(l.length, 1); eq([l[0].name, l[0].banca, l[0].minutes, l[0].d, l[0].rows.length], ['Simulado TRF 1', 'Cebraspe', 210, d(-14), 2]); eq(await js('map._undo.length'), undo0 + 1);
+    const l = await sims(); eq(l.length, 1); eq([l[0].name, l[0].banca, l[0].minutes, l[0].d, l[0].rows.length], ['Simulado TRF 1', 'CEBRASPE (CESPE)', 210, d(-14), 2]); eq(await js('map._undo.length'), undo0 + 1);
     const q1 = await qOf('Língua Portuguesa'); eq([q1.done - q0.done, q1.correct - q0.correct], [20, 15]); eq((await study('Língua Portuguesa')).qlog[d(-14)], { done: 20, correct: 15 }); eq(await js('dirty'), true);
-    await js('act.dash()'); await wait(300); const sec = await txt('#simSec'); ok(sec.includes('Simulados (1)') && sec.includes('Simulado TRF 1') && sec.includes('Cebraspe') && sec.includes('25/40') && sec.includes('62,5%'), sec);
+    await js('act.dash()'); await wait(300); const sec = await txt('#simSec'); ok(sec.includes('Simulados (1)') && sec.includes('Simulado TRF 1') && sec.includes('CEBRASPE (CESPE)') && sec.includes('25/40') && sec.includes('62,5%'), sec);
     eq(await js(`document.querySelectorAll('#simSec .sim-chart .dot').length`), 1); eq(await js(`[...document.querySelectorAll('#simSec .err-bar')].map((b) => b.dataset.disc)`), ['Direito Constitucional', 'Língua Portuguesa'], 'mais fraca primeiro');
     await js('closeDash(); act.undo()'); eq(await sims(), []); eq((await qOf('Língua Portuguesa')).done, q0.done, 'desfazer reverte também as questões'); await js('act.redo()'); eq((await sims()).length, 1);
   });
@@ -69,7 +69,7 @@ const { TODAY, d, concurso } = require('./fixtures');
     eq(readMom(fs.readFileSync(f2)).meta.simulados.length, 3); await js(`dirty = false; openPath(${JSON.stringify(f2)})`); await c.waitFor(() => js(`filePath === ${JSON.stringify(f2)}`)); eq((await sims()).length, 3);
     ok(await js('moveToLibrary()')); await js('closeLibrary()'); ok(await js(`getLibrary().loadMap(map.meta.libId).meta.simulados.length === 3`));
     const md = path.join(TMP, 'rel.md'); await js(`window.__dlg.save = ${JSON.stringify(md)}; act.dash()`); await wait(300); await click('#btnReportMd'); await c.waitFor(() => fs.existsSync(md)); await js('closeDash()');
-    const text = fs.readFileSync(md, 'utf8'); ok(text.includes('## Simulados (3)') && text.includes('Simulado TRF 1 (Cebraspe): 25/40') && text.includes('Disciplinas (mais fracas primeiro): Informática'), text.slice(text.indexOf('## Simulados'), text.indexOf('## Simulados') + 500));
+    const text = fs.readFileSync(md, 'utf8'); ok(text.includes('## Simulados (3)') && text.includes('Simulado TRF 1 (CEBRASPE (CESPE)): 25/40') && text.includes('Disciplinas (mais fracas primeiro): Informática'), text.slice(text.indexOf('## Simulados'), text.indexOf('## Simulados') + 500));
   });
 
   await t('tela inicial tem o atalho "Registrar simulado"; Esc fecha o formulário sem gravar', async () => {

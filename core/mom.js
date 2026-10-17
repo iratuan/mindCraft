@@ -3,7 +3,8 @@ const fs = require('fs');
 const AdmZip = require('adm-zip');
 const { MindMap, createNode, newId } = require('./model');
 const { normalizeStudy, isDateStr, sanitizeGoals } = require('./study');
-const { sanitizeStyle, THEMES } = require('./themes');
+const { sanitizeStyle, sanitizeTheme, THEMES } = require('./themes');
+const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml } = require('./mindomo');
 const { MARKERS } = require('./markers');
 const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
 const { sanitizeSimulados } = require('./simulados');
@@ -56,11 +57,11 @@ function readMom(source) {
     const m = mc && typeof mc === 'object' ? mc : {};
     byId.set(nid, {
       node: createNode(clean(title), {
-        id: nid, notes: clean(n.notes?.text ?? (typeof n.notes === 'string' ? n.notes : '')),
+        id: nid, notes: clean(n.notes?.text ?? (typeof n.notes === 'string' ? n.notes : (!fromMindCraft && typeof n.description === 'string' ? htmlToMarkdown(n.description) : ''))),
         // extensões do MindCraft (campos próprios em "mc"), todas validadas
         markers: Array.isArray(m.markers) ? m.markers.filter((x) => typeof x === 'string' && MARKERS[x]) : [],
         progress: Number.isFinite(m.progress) ? Math.min(100, Math.max(0, m.progress)) : null,
-        style: sanitizeStyle(m.style),
+        style: fromMindCraft ? sanitizeStyle(m.style) : convertNodeStyle(n.style, n.titleStyle, title),
         collapsed: m.collapsed === true,
         ...(m.study ? { study: normalizeStudy(m.study) } : {}),
         ...(Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {}),
@@ -97,9 +98,14 @@ function readMom(source) {
   prune(rootEntry.node, 0);
   for (const e of byId.values()) e.node._mom = e.raw;
 
-  const theme = typeof doc.mcTheme === 'string' && THEMES[doc.mcTheme] ? doc.mcTheme : 'ocean';
+  // tema: o do MindCraft (mcTheme) ou o tema ORIGINAL do Mindomo (themes.json), convertido e validado; o original é guardado para regravar
+  const themes = get('themes.json'), tid = typeof doc.mapInfo?.themeId === 'string' ? doc.mapInfo.themeId : '';
+  const custom = fromMindCraft ? sanitizeTheme(doc.mcCustomTheme) : convertTheme(themes, tid, doc.mapInfo?.name);
+  const theme = doc.mcTheme === 'custom' && custom ? 'custom' : typeof doc.mcTheme === 'string' && THEMES[doc.mcTheme] ? doc.mcTheme : (!fromMindCraft && custom ? 'custom' : 'ocean');
   const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
   map.meta._momDoc = doc; // preservado para round-trip
+  if (custom) map.meta.customTheme = custom;
+  if (themes && tid && themes[tid] && JSON.stringify(themes[tid]).length < 400000) map.meta._momThemes = { [tid]: themes[tid] };   // regravado em themes.json: o Mindomo continua achando o tema
   if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
   if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
   { const sims = sanitizeSimulados(doc.mcSimulados, newId); if (sims.length) map.meta.simulados = sims; }
@@ -128,6 +134,8 @@ function writeMom(map, target) {
       style: raw.style || { valign: 32000, halign: 32000, orientation: parentId ? 0 : 101 },
       creatorId: raw.creatorId ?? 4,
       ...(node.notes ? { notes: { text: node.notes } } : {}),
+      // notas do Mindomo (HTML): só reescreve se o texto mudou aqui; senão o HTML original segue intacto
+      ...(typeof raw.description === 'string' && node.notes !== htmlToMarkdown(raw.description) ? { description: node.notes ? markdownToHtml(node.notes) : '' } : {}),
       ...(hasMc ? { mc: {
         markers: node.markers || [], progress: node.progress,
         ...(hasStyle ? { style: node.style } : {}), ...(node.collapsed ? { collapsed: true } : {}),
@@ -152,6 +160,7 @@ function writeMom(map, target) {
   doc.mcWriter = 'mindcraft';                    // texto puro nos títulos/notas (ver readMom)
   doc.mcRelations = map.meta.relations || [];
   doc.mcTheme = map.meta.theme || 'ocean';
+  if (map.meta.customTheme) doc.mcCustomTheme = map.meta.customTheme; else delete doc.mcCustomTheme;
   if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
   if (map.meta.goals) doc.mcGoals = map.meta.goals; else delete doc.mcGoals;
@@ -161,7 +170,7 @@ function writeMom(map, target) {
   doc.mapInfo.modificationDate = now;
 
   const zip = new AdmZip();
-  zip.addFile('themes.json', Buffer.from('{}'));
+  zip.addFile('themes.json', Buffer.from(JSON.stringify(map.meta._momThemes || {})));
   zip.addFile('document.json', Buffer.from(JSON.stringify(doc)));
   zip.addFile('nodes.json', Buffer.from(JSON.stringify(list)));
   zip.addFile('changes.json', Buffer.from('[]'));

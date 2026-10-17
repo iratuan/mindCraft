@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { H, useEscape, useMessage } from './hooks.js';
+import { BANCAS, OUTRA } from '../../core/bancas.js';
 
 /** Registrar um simulado: data, banca, duração e, por disciplina do mapa, questões feitas e acertos. */
 export function SimuladoModal({ onClose }) {
@@ -7,6 +8,7 @@ export function SimuladoModal({ onClose }) {
   const discs = map.root.children.length ? map.root.children.map((c) => ({ id: c.id, title: c.title })) : [{ id: null, title: 'Geral' }];
   const [msg, say] = useMessage();
   const [, tick] = useState(0);
+  const [outra, setOutra] = useState(false);
   const root = useRef(null);
   const n = (map.meta.simulados || []).length;
   useEscape(onClose);
@@ -14,7 +16,7 @@ export function SimuladoModal({ onClose }) {
   const read = () => {
     const q = (s) => root.current.querySelector(s);
     return {
-      d: q('#simDate').value, name: q('#simName').value, banca: q('#simBanca').value, minutes: q('#simMin').value,
+      d: q('#simDate').value, name: q('#simName').value, banca: q('#simBanca').value === OUTRA ? (q('#simBancaOutra') || {}).value || '' : q('#simBanca').value, minutes: q('#simMin').value,
       rows: [...root.current.querySelectorAll('.sim-row[data-disc]')].map((r) => ({ disc: r.dataset.disc, nodeId: r.dataset.node || undefined, done: r.querySelector('.sim-done').value, correct: r.querySelector('.sim-ok').value })),
     };
   };
@@ -38,7 +40,8 @@ export function SimuladoModal({ onClose }) {
       <div className="muted">Informe, por disciplina, as questões feitas e os acertos. A evolução aparece no Painel de estudos.</div>
       <div className="sim-top">
         <label>Nome <input id="simName" type="text" maxLength={120} defaultValue={`Simulado ${n + 1}`} /></label>
-        <label>Banca <input id="simBanca" type="text" maxLength={80} placeholder="opcional" /></label>
+        <label>Banca <select id="simBanca" defaultValue="" onChange={(e) => setOutra(e.target.value === OUTRA)}><option value="">opcional</option><optgroup label="Mais comuns em concursos">{BANCAS.map((b) => <option key={b} value={b}>{b}</option>)}</optgroup><option value={OUTRA}>Outra…</option></select></label>
+        {outra && <label>Nome da banca <input id="simBancaOutra" type="text" maxLength={80} placeholder="qual banca?" autoFocus /></label>}
         <label>Data <input id="simDate" type="date" defaultValue={h.nowStr()} /></label>
         <label>Duração (min) <input id="simMin" type="text" inputMode="numeric" style={{ width: 70 }} placeholder="opcional" /></label>
       </div>

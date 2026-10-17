@@ -26,8 +26,8 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, vis
   const dim = (id) => (visible && !visible.has(id) ? ' opacity="0.07"' : '');
 
   for (const e of L.edges) {
-    const w = theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
-    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${e.to.branch}" stroke-width="${w}" stroke-linecap="round"${dim(e.to.id)}/>`);
+    const w = e.to.style.edgeWidth || theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
+    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${e.to.style.edge || e.to.branch}" stroke-width="${w}" stroke-linecap="round"${dim(e.to.id)}/>`);
   }
 
   for (const { rel, geo } of L.relations) {
@@ -48,14 +48,18 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, vis
     const tx = b.x + b.markerW + (b.w - b.markerW) / 2;
     let shape = '';
     if (s.shape === 'underline') {
-      shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${b.branch}" stroke-width="2"/>`;
+      shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${s.stroke || b.branch}" stroke-width="${s.strokeWidth || 2}"/>`;
+    } else if (s.shape === 'none') {
+      shape = s.fill && s.fill !== 'none' ? `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="${s.fill}"/>` : '';   // "sem forma" do Mindomo: só o texto (e um fundo, se houver)
+    } else if (s.shape === 'ellipse') {
+      shape = `<ellipse cx="${b.x + b.w / 2}" cy="${b.y + b.h / 2}" rx="${b.w / 2}" ry="${b.h / 2}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ''}/>`;
     } else {
       const r = s.shape === 'pill' ? b.h / 2 : s.shape === 'round' ? 8 : 2;
-      shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="2"` : ''}/>`;
+      shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ''}/>`;
     }
     const startY = b.y + b.h / 2 - ((b.lines.length - 1) * b.lineHeight) / 2;
     const text = b.lines.map((l, i) =>
-      `<text x="${tx}" y="${startY + i * b.lineHeight}" text-anchor="middle" dominant-baseline="central" fill="${s.color}" font-size="${s.size}" font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ''}>${esc(l)}</text>`).join('');
+      `<text x="${tx}" y="${startY + i * b.lineHeight}" text-anchor="middle" dominant-baseline="central" fill="${s.color}" font-size="${s.size}"${s.font ? ` font-family="${esc(`'${s.font}', ${theme.font}`)}"` : ''} font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ''}>${esc(l)}</text>`).join('');
 
     const markers = b.markers.map((m, i) => {
       const d = b.markerD, cx = b.x + s.padX * 0.7 + d / 2 + i * (d + 4), cy = b.y + b.h / 2;

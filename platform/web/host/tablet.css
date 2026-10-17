@@ -49,3 +49,17 @@ html[data-host="web"] #tbScrim[hidden] { display: none; }
 @media (pointer: coarse) { #mcTouchBar .tb-extra { display: grid; } html[data-host="web"] #mcTouchBar { left: 74px; bottom: 52px; } html[data-host="web"] #mcHostMenu { left: 74px; } }
 @media (max-width: 1000px) { #mcTouchBar .tb-panels-btn { display: grid; } }
 @media (min-width: 1001px) { #mcTouchBar .tb-panels-btn { display: none !important; } }
+
+/* rede de conhecimento no toque: controles maiores, legenda e zoom fáceis de acertar */
+@media (pointer: coarse) {
+  html[data-host="web"] #graph .g-bar select, html[data-host="web"] #graph .g-bar input[type=search], html[data-host="web"] #graph .g-bar .btn { min-height: 44px; }
+  html[data-host="web"] #graph .g-bar label { min-height: 44px; }
+  html[data-host="web"] #graph .g-bar input[type=checkbox] { width: 22px; height: 22px; }
+  html[data-host="web"] .g-zoom .btn { width: 48px; height: 48px; font-size: 22px; }
+  html[data-host="web"] .g-legend .lg { padding: 7px 2px; font-size: 13px; }
+  html[data-host="web"] .g-side .lk { min-height: 44px; }
+}
+
+/* com a rede de conhecimento aberta a barra flutuante do mapa não serve para nada e cobriria a gaveta de detalhes */
+html[data-host="web"] body:has(#graph:not([hidden])) #mcTouchBar { display: none; }
+

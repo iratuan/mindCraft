@@ -500,9 +500,11 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     const r = await js(`(() => { const e = __gn('Legalidade').querySelector('circle').getBoundingClientRect(); return { x: e.x + e.width / 2, y: e.y + e.height / 2 }; })()`);
     await click(r.x, r.y); eq(await gsel(), 'Legalidade'); ok((await txt('#gSide')).includes('Citado em'));
   });
-  await feature('Rede', 'Grafo: só links (sem hierarquia)', 'Checkbox Hierarquia', async () => { await ensureGraph(); await clickSel('#gHier'); ok(!(await js('gOpt.hier'))); });
+  const viewMenu = async () => { if (!(await js(`document.querySelector('#gViewPop').open`))) await clickSel('#gViewPop > summary'); await wait(120); };
+  const moreMenu = async () => { if (!(await js(`document.querySelector('#gMenu').open`))) await clickSel('#gMenu > summary'); await wait(120); };
+  await feature('Rede', 'Grafo: só links (sem hierarquia)', 'Checkbox Hierarquia', async () => { await ensureGraph(); await viewMenu(); await clickSel('#gHier'); ok(!(await js('gOpt.hier'))); });
   await feature('Rede', 'Grafo: vizinhança local + busca', 'Checkbox Só vizinhança (do nó selecionado); busca com destaque', async () => { await ensureGraph();
-    await js(`__gclick('Legalidade')`); await clickSel('#gLocal'); const nodesLocal = await js(`gLast.nodes.length`); ok(nodesLocal < (await js(`gLast.g.nodes.length`)), 'filtrou a vizinhança: ' + nodesLocal);
+    await js(`__gclick('Legalidade')`); await viewMenu(); await clickSel('#gLocal'); const nodesLocal = await js(`gLast.nodes.length`); ok(nodesLocal < (await js(`gLast.g.nodes.length`)), 'filtrou a vizinhança: ' + nodesLocal);
     await clickSel('#gSearch'); await type('princ'); ok((await js(`gLast.match.filter(Boolean).length`)) >= 1, 'a busca destaca vizinhos');
   });
   await feature('Rede', 'Grafo: arrastar nó e dar zoom com a roda', 'Arrasto real de um nó; roda real sobre o grafo', async () => { await ensureGraph();
@@ -513,24 +515,24 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     if (!okW) { const sr = await rectOf('#gsvg'); const top = await js(`(() => { const e = document.elementFromPoint(${b.x}, ${b.y}); return e ? (e.id || e.tagName + '.' + (e.getAttribute('class') || '')) : null; })()`); throw new Error('zoom do grafo pela roda: ' + JSON.stringify({ k0, k: await js('gTrans.k'), b, svg: sr, noPonto: top })); }
   });
   await feature('Rede', 'Grafo do vault: vários mapas ligados por [[Mapa#Tópico]]', 'Escolher a pasta; cores por mapa', async () => {
-    await ensureGraph(); await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)')); await wait(900); await js('fitGraph()'); await wait(200);
+    await ensureGraph(); await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); await moreMenu(); await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)')); await wait(900); await js('fitGraph()'); await wait(200);
     ok((await txt('#gStat')).includes('0 sem destino'), await txt('#gStat'));
   });
   await feature('Rede', 'Navegar entre mapas pelo grafo (duplo clique real)', 'Duplo clique num nó de outro mapa abre o arquivo', async ({ shot }) => {
     await ensureGraph('vault'); await js('window.__dlg.discard = 1; dirty = false');
-    await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); if (!(await js(`!!__gn('Resumo de crase')`))) { await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)')); await wait(700); }
+    await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); if (!(await js(`!!__gn('Resumo de crase')`))) { await moreMenu(); await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)')); await wait(700); }
     const r = await js(`(() => { const e = __gn('Resumo de crase').querySelector('circle').getBoundingClientRect(); return { x: e.x + e.width / 2, y: e.y + e.height / 2 }; })()`);
     await dbl(r.x, r.y); await c.waitFor(() => js(`filePath && path.basename(filePath) === 'Resumos de Português.mom'`)); eq(await sel(), 'Resumo de crase'); ok(await js('document.querySelector("#graph").hidden'));
   });
   await feature('Rede', 'Exportar para o Obsidian (+ proteção de notas existentes)', 'Botão do grafo; arquivo .md aberto para captura', async ({ shot }) => {
     await openMain(); const out = path.join(TMP, 'obsidian'); fs.mkdirSync(path.join(out, 'MindCraft'), { recursive: true }); fs.writeFileSync(path.join(out, 'MindCraft', 'Questões comentadas.md'), '# minha nota pessoal\n');
-    await clickSel('[data-act="graph"]'); await c.waitFor(() => js(`document.querySelectorAll('#gview .gn').length > 0`)); await js(`window.__dlg.folder = ${JSON.stringify(out)}`); await clickSel('#gExport'); await c.waitFor(() => js(`!!document.querySelector('#gMsg')`));
+    await clickSel('[data-act="graph"]'); await c.waitFor(() => js(`document.querySelectorAll('#gview .gn').length > 0`)); await js(`window.__dlg.folder = ${JSON.stringify(out)}`); await moreMenu(); await clickSel('#gExport'); await c.waitFor(() => js(`!!document.querySelector('#gMsg')`));
     const dir = path.join(out, 'MindCraft'); const files = fs.readdirSync(dir).sort(); ok(files.includes('Questões comentadas (MindCraft).md') && files.includes('Concurso TRF 2026.md'), files.join(', ')); eq(fs.readFileSync(path.join(dir, 'Questões comentadas.md'), 'utf8'), '# minha nota pessoal\n');
     await shot('md', await peek(path.join(dir, 'Concurso TRF 2026.md'), 'text'));
   });
   await feature('Rede', 'Abrir no Obsidian (URL do protocolo)', 'Botão; o lançamento é desligado nos testes (MINDCRAFT_NO_LAUNCH)', async () => {
-    await ensureGraph('vault'); await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)'));
-    await clickSel('#gObsidian'); await c.waitFor(async () => (await txt('#gMsg')).includes('obsidian://')); return (await txt('#gMsg')).slice(0, 110);
+    await ensureGraph('vault'); await js(`window.__dlg.folder = ${JSON.stringify(vault)}`); await moreMenu(); await clickSel('#gPick'); await c.waitFor(async () => (await txt('#gStat')).includes('3 mapa(s)'));
+    await moreMenu(); await clickSel('#gObsidian'); await c.waitFor(async () => (await txt('#gMsg')).includes('obsidian://')); return (await txt('#gMsg')).slice(0, 110);
   });
   await js('closeGraph()');
 
@@ -609,14 +611,14 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
   await feature('Estudos', 'Questões por banca e ano + caderno de erros para refazer', 'Digitar banca/ano, registrar, ver as tabelas no painel de estudos e refazer um erro com o mouse', async ({ shot }) => {
     await clickNode('Licitações'); await clickSel('#ptabs [data-tab="study"]');
-    await clickSel('#qBanca'); await type('Cebraspe'); await clickSel('#qAno'); await type('2024'); await clickSel('#qDone'); await type('20'); await clickSel('#qOk'); await type('13'); await clickSel('#qAdd');
-    ok((await txt('#studyMsg')).includes('Cebraspe 2024'), await txt('#studyMsg'));
+    await js(`document.querySelector('#qBanca').focus()`); await key('Down'); eq(await js(`document.querySelector('#qBanca').value`), 'CEBRASPE (CESPE)', 'seta escolhe a 1ª banca da lista'); await clickSel('#qAno'); await type('2024'); await clickSel('#qDone'); await type('20'); await clickSel('#qOk'); await type('13'); await clickSel('#qAdd');
+    ok((await txt('#studyMsg')).includes('CEBRASPE (CESPE) 2024'), await txt('#studyMsg'));
     await clickSel('#qDone'); await type('10'); await clickSel('#qOk'); await type('9'); await clickSel('#qAdd');
     await setVal('#errWhy', 'confundi', 'change'); await clickSel('#errNote'); await type('pregão x concorrência'); await clickSel('#errAdd'); await wait(200);
-    ok((await txt('#errList')).includes('Cebraspe 2024'), await txt('#errList')); await shot('questoes-painel-estudo');
+    ok((await txt('#errList')).includes('CEBRASPE (CESPE) 2024'), await txt('#errList')); await shot('questoes-painel-estudo');
     await clickSel('[data-act="dash"]'); await wait(500);
     const q = await js("document.querySelector('#qsrcSec').scrollIntoView(); document.querySelector('#qsrcBanca tbody').textContent");
-    ok(q.includes('Cebraspe') && q.includes('22/30'), q); await shot('questoes-por-banca');
+    ok(q.includes('CEBRASPE (CESPE)') && q.includes('22/30'), q); await shot('questoes-por-banca');
     await clickSel('#errSec [data-act="err-redo-ok"]'); await wait(300); ok((await txt('#errStats')).startsWith('0 para refazer'), await txt('#errStats'));
     await clickSel('[data-act="dash"]'); await wait(200);
   });

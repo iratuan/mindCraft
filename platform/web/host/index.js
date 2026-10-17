@@ -13,6 +13,7 @@ const { installMenu } = require('./menu');
 const touch = require('./touch');
 const editorFit = require('./editor');
 const native = require('./native');
+const { webHttp } = require('./net');
 const tabletCss = require('./tablet.css');
 
 const loadScript = (src) => new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = src; s.async = false; s.onload = () => resolve(); s.onerror = () => reject(new Error('Não consegui carregar ' + src)); document.head.append(s); });
@@ -56,7 +57,7 @@ async function boot() {
     if (window.MC && window.MC.handleDroppedPaths) window.MC.handleDroppedPaths(paths);
   }, true);
 
-  window.__mcHost = { store, ipc, fs, path, restored, native: nat, idle: () => store.idle(), version: 1 };
+  window.__mcHost = { store, ipc, fs, path, restored, native: nat, http: webHttp, idle: () => store.idle(), version: 1 };
   installMenu({ emit: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), css: tabletCss });
   touch.install(); editorFit.install();
   // No desktop o evento "load" só acontece depois de TODOS os scripts da interface (renderer.js espera por ele antes de escolher a tela inicial).

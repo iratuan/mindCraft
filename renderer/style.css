@@ -258,9 +258,45 @@ body.light #gsvg text { stroke: #efefef; }
 .g-side h3 { margin: 0 0 2px; font-size: 14px; color: var(--text-strong); }
 .g-side .sub { color: var(--text-dim); font-size: 11.5px; margin-bottom: 8px; }
 .g-stat { position: absolute; left: 12px; bottom: 10px; color: var(--text-dim); font-size: 11.5px; pointer-events: none; }
-.g-legend { position: absolute; left: 12px; top: 12px; padding: 6px 9px; border-radius: 8px; background: rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--text-dim); pointer-events: none; }
+.g-legend { position: absolute; left: 12px; top: 12px; padding: 6px 9px; border-radius: 8px; background: rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--text-dim); pointer-events: auto; max-height: 45%; overflow: auto; max-width: 42%; }
+.g-legend .lg { display: flex; align-items: center; cursor: pointer; padding: 1px 0; user-select: none; }
+.g-legend .lg.off { opacity: .45; text-decoration: line-through; }
+.g-legend .lg:focus-visible { outline: 2px solid var(--accent, #4c9aff); outline-offset: 2px; border-radius: 4px; }
 .g-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
 .g-wrap { position: relative; flex: 1; display: flex; min-width: 0; }
+/* rede de conhecimento: alvo de toque, rótulos, relações, anel de progresso, selo "+N", zoom e gaveta */
+#gsvg .ghit { r: max(var(--r, 8px), calc(14px / var(--k))); }   /* área de toque de pelo menos ~28 px na tela, em qualquer zoom */
+#gsvg .glabel.big { font-weight: 600; }
+#gsvg .elabel { font-size: calc(11px / var(--k)); font-style: italic; fill: #ff8a8f; stroke-width: calc(3px / var(--k)); }
+#gsvg .gbt { font-size: calc(9.5px / var(--k)); fill: #fff; stroke: none; font-weight: 700; }
+#gsvg .gprog { pointer-events: none; }
+.g-count { color: var(--text-dim); font-size: 11.5px; white-space: nowrap; }
+.g-zoom { position: absolute; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.g-zoom .btn { width: 36px; height: 36px; padding: 0; font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+#gSideBtn { display: none; }
+/* barra: menus "Exibir" e "⋯" (<details>) e busca que encolhe; a gaveta de detalhes depende da largura DA REDE (container query), não da janela */
+.g-bar { flex-wrap: wrap; }
+.g-bar input[type=search] { flex: 1 1 150px; min-width: 110px; max-width: 280px; }
+.g-pop { position: relative; }
+.g-pop > summary { list-style: none; cursor: pointer; user-select: none; }
+.g-pop > summary::-webkit-details-marker { display: none; }
+.g-pop[open] > summary { background: var(--bg-hover, rgba(255,255,255,.12)); }
+.g-popbox { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 230px; max-width: min(340px, 90vw); display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+#gMenu .g-popbox { left: auto; right: 0; }
+.g-popbox .path { max-width: 100%; white-space: normal; word-break: break-all; direction: ltr; }
+#graph { container: graph / size; }
+@container graph ((max-width: 760px) or (max-height: 480px)) {
+  .g-bar { gap: 6px; padding: 6px 8px; }
+  .g-bar #gScope { max-width: 112px; }
+  #gSideBtn { display: inline-flex; align-items: center; justify-content: center; }
+  .g-main { position: relative; overflow: hidden; }
+  .g-side { position: absolute; left: 0; right: 0; bottom: 0; width: auto; max-height: 52%; border-left: 0; border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; transform: translateY(105%); transition: transform .2s ease; z-index: 3; box-shadow: 0 -8px 24px rgba(0,0,0,.35); }
+  .g-side.open { transform: none; }
+  .g-stat { max-width: 52%; }
+  .g-legend { max-width: 46%; max-height: 32%; }
+  .g-zoom { bottom: 12px; }
+}
+}
 body.presenting #graph { display: none; }
 
 /* elementos com display próprio precisam respeitar o atributo hidden */

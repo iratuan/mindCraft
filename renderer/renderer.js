@@ -72,6 +72,7 @@ function render() {
     + `<rect x="${bb.x}" y="${bb.y}" width="${bb.w}" height="${bb.h}" rx="3" fill="${L.theme.background}" filter="url(#abs)"/>`;
   view.innerHTML = board + renderGroup(L, { selectedId: present ? null : selectedId, selectedIds: present ? null : selIds, selectedRel, interactive: !present, visible, hits });
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
+  syncCustomTheme();
   $('#theme').value = map.meta.theme;
   const sel = selectedId && map.find(selectedId);
   const rel = selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
@@ -442,6 +443,25 @@ for (const [id, t] of Object.entries(THEMES)) {
   $('#themeGrid').append(card);
 }
 $('#theme').addEventListener('change', (e) => change(() => { map.meta.theme = e.target.value; }));
+
+/** Mapas importados do Mindomo trazem o tema original (map.meta.customTheme): ele aparece como mais uma opção, só nesses mapas. */
+function syncCustomTheme() {
+  let opt = $('#theme').querySelector('option[value="custom"]'), card = document.querySelector('.theme-card[data-theme="custom"]');
+  if (!opt) { opt = new Option('Original do arquivo', 'custom'); $('#theme').add(opt); }
+  if (!card) {
+    card = document.createElement('button'); card.className = 'theme-card'; card.dataset.theme = 'custom';
+    const sw = document.createElement('div'); sw.className = 'sw'; const lb = document.createElement('span'); card.append(sw, lb);
+    card.addEventListener('click', () => { $('#theme').value = 'custom'; $('#theme').dispatchEvent(new Event('change')); card.blur(); });
+    $('#themeGrid').prepend(card);
+  }
+  const ct = map && map.meta.customTheme;
+  opt.hidden = opt.disabled = card.hidden = !ct;
+  if (ct) {
+    opt.textContent = card.title = ct.name; card.querySelector('span').textContent = 'Original';
+    const sw = card.querySelector('.sw'); sw.style.background = ct.background; sw.textContent = '';
+    for (const c of ct.branches.slice(0, 4)) { const i = document.createElement('i'); i.style.background = c; sw.append(i); }
+  }
+}
 
 // chips de marcador (alternam) e de progresso (segmentado); os <select> ocultos continuam sendo a fonte da ação
 for (const [id, m] of Object.entries(MARKERS)) {

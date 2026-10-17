@@ -116,6 +116,33 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
     await c.shot(path.join(SHOTS, '08-rede-tablet.png')); void t0; await js('closeGraph(); true');
   });
 
+  await t('REDE no tablet (denso): controles com alvo de toque, +/−/ajustar por toque, menu "Exibir" por toque, rótulos sem sobreposição em paisagem e retrato, gaveta ao tocar num ponto', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400);
+    await js(`(() => { const lib = getLibrary(); let seed = 11; const rnd = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+      const titles = []; for (let mi = 0; mi < 2; mi++) { const m = new MindMap(createNode('Mapa denso ' + mi), { name: 'Mapa denso ' + mi }); const ids = [m.root.id];
+        for (let i = 1; i < 70; i++) { const p = ids[Math.floor(rnd() * Math.min(ids.length, 1 + i / 2))]; const n = m.addChild(p, 'Assunto ' + mi + '.' + i); ids.push(n.id); titles.push(n.title); }
+        lib.saveMap(m, { snapshot: false }); }
+      for (const row of lib.listMaps().filter((r) => /^Mapa denso/.test(r.title))) { const m = lib.loadMap(row.id); const all = []; m.walk((n) => all.push(n)); for (let k = 0; k < 20; k++) all[1 + Math.floor(rnd() * (all.length - 1))].notes += ' [[' + titles[Math.floor(rnd() * titles.length)] + ']]'; lib.saveMap(m, { snapshot: false }); }
+      saveCfg({ scope: 'vault' }); return titles.length; })()`);
+    const gb = await js(`__ctr('#rail [data-act="graph"]')`); await T().tap(gb.x, gb.y); await waitFor(() => js(`document.querySelectorAll('#gview .gn').length > 100`), 20000); await wait(900);
+    await js(`gSel = null; gHover = null; renderGraph(false); fitGraph(); true`); await wait(500);
+    const small = await js(`[...document.querySelectorAll('#graph .g-bar select, #graph .g-bar input[type=search], #graph .g-bar .btn, #graph .g-zoom .btn')].filter((e) => e.getBoundingClientRect().width > 0).map((e) => [e.id || e.textContent.trim(), Math.round(e.getBoundingClientRect().height), Math.round(e.getBoundingClientRect().width)]).filter(([, h, w]) => h < 43 || w < 43)`); eq(small, [], 'alvos pequenos: ' + JSON.stringify(small));
+    const stats = async () => js(`(() => { const L = [...document.querySelectorAll('#gview .glabel')].filter((e) => e.style.display !== 'none' && e.parentNode.style.display !== 'none').map((e) => e.getBoundingClientRect()); let clash = 0; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) clash++; } return { n: L.length, clash }; })()`);
+    let st = await stats(); ok(st.n >= 12 && st.clash === 0, 'paisagem: ' + JSON.stringify(st)); await c.shot(path.join(SHOTS, '09-rede-densa-paisagem.png'));
+    const k0 = await js('gTrans.k'); let z = await js(`__ctr('#gZoomIn')`); await T().tap(z.x, z.y); await wait(300); ok((await js('gTrans.k')) > k0 * 1.25, 'toque em + amplia'); z = await js(`__ctr('#gFit')`); await T().tap(z.x, z.y); await wait(300); ok(Math.abs((await js('gTrans.k')) - k0) < 0.01, 'toque em ajustar');
+    let v = await js(`__ctr('#gViewPop > summary')`); await T().tap(v.x, v.y); await wait(300); ok(await js(`document.querySelector('#gViewPop').open`), 'Exibir abre por toque');
+    const gg = await js(`__ctr('#gGroup')`); await T().tap(gg.x, gg.y); await wait(500); ok(await js('gOpt.group'), 'tocar na opção liga "agrupar folhas"'); ok((await js(`[...document.querySelectorAll('#gview .gn')].filter((e) => e.style.display === 'none').length`)) > 20, 'folhas agrupadas');
+    await T().tap(640, 700); await wait(300); ok(!(await js(`document.querySelector('#gViewPop').open`)), 'tocar fora fecha o menu'); await js(`document.querySelector('#gGroup').click(); true`); await wait(400);
+    await c.emulate({ width: 800, height: 1280 }); await wait(900); await js(`gSel = null; gHover = null; renderGraph(false); fitGraph(); true`); await wait(500);
+    st = await stats(); ok(st.n >= 8 && st.clash === 0, 'retrato: ' + JSON.stringify(st)); eq(await js('gNarrow()'), true, 'rede estreita em retrato'); await c.shot(path.join(SHOTS, '10-rede-densa-retrato.png'));
+    ok(!(await js(`document.querySelector('#gSide').classList.contains('open')`)), 'gaveta fechada');
+    const hub = await js(`[...gLast.nodes.keys()].filter((i) => gLast.nodes[i].kind === 'topic' && gLast.adj[i].size >= 2).find((i) => { const x = gLast.P[i].x * gTrans.k + gTrans.x, y = gLast.P[i].y * gTrans.k + gTrans.y; return x > 40 && y > 40 && x < document.querySelector('#gsvg').clientWidth - 40 && y < document.querySelector('#gsvg').clientHeight * 0.45; })`);
+    const pt = await js(`(() => { const r = document.querySelector('#gsvg').getBoundingClientRect(); return { x: r.left + gLast.P[${hub}].x * gTrans.k + gTrans.x, y: r.top + gLast.P[${hub}].y * gTrans.k + gTrans.y }; })()`); await T().tap(pt.x, pt.y); await wait(600);
+    eq(await js('gSel'), await js(`gLast.nodes[${hub}].id`), 'tocar no ponto seleciona'); ok(await js(`document.querySelector('#gSide').classList.contains('open')`), 'gaveta abre ao tocar num ponto');
+    const sb = await js(`__ctr('#gSideBtn')`); await T().tap(sb.x, sb.y); await wait(400); ok(!(await js(`document.querySelector('#gSide').classList.contains('open')`)), 'botão ℹ fecha a gaveta'); const sb2 = await js(`__ctr('#gSideBtn')`); await T().tap(sb2.x, sb2.y); await wait(400); ok(await js(`document.querySelector('#gSide').classList.contains('open')`), 'e abre de novo'); ok((await js(`__ctr('#gSideBtn').y`)) < (await js(`document.querySelector('#gSide').getBoundingClientRect().top`)), 'o botão fica acima da gaveta');
+    await c.shot(path.join(SHOTS, '11-rede-gaveta-retrato.png')); await js('closeGraph(); true'); await c.emulate({ width: 1280, height: 800 }); await wait(500);
+  });
+
   await t('leitor de PDF: selecionar texto com o dedo mostra "＋ Tópico / ＋ Nota" (ponte do mouseup) e criar o tópico funciona', async () => {
     const pdf = path.join(TMP, 'aula.pdf'); await new Promise((res) => { const d = new PDFDocument({ size: 'A4' }); const o = fs.createWriteStream(pdf); d.pipe(o); o.on('finish', res); d.fontSize(14).text('Licitação é o procedimento administrativo. '.repeat(20)); d.end(); });
     await fresh(); await c.pickNext([{ name: 'aula.pdf', b64: b64(fs.readFileSync(pdf)) }]); await js('act.pdf(); true'); await waitFor(() => js(`!!document.querySelector('#pdfOpen')`)); await js(`document.querySelector('#pdfOpen').click()`);
@@ -141,7 +168,7 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
     // dentro da gaveta: aba Estudo e registrar questões com banca/ano, por toque
     const tab = await js(`__ctr('#ptabs [data-tab="study"]')`); await T().tap(tab.x, tab.y); await wait(250);
     await js(`__sel2 = (title) => { let r; map.walk((n) => { if (n.title === title && !r) r = n.id; }); selectedId = r; selIds = new Set([r]); render(); }; __sel2('Tópico 1'); true`); await wait(200);
-    await js(`(() => { const set = (s, v) => { const e = document.querySelector(s); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(e, v); e.dispatchEvent(new Event('input', { bubbles: true })); }; set('#qBanca', 'CESPE'); set('#qAno', '2024'); set('#qDone', '10'); set('#qOk', '7'); return true; })()`);
+    await js(`(() => { const set = (s, v) => { const e = document.querySelector(s); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(e, v); e.dispatchEvent(new Event('input', { bubbles: true })); }; window.setQBanca('CESPE'); set('#qAno', '2024'); set('#qDone', '10'); set('#qOk', '7'); return true; })()`);
     const reg = await js(`__ctr('#qAdd')`); await T().tap(reg.x, reg.y); await wait(250); eq(await js(`(() => { let r; map.walk((n) => { if (n.title === 'Tópico 1') r = n; }); return r.study.qsrc[0].banca + r.study.qsrc[0].done; })()`), 'CESPE10');
     await T().tap(30, 640); await waitFor(() => js(`getComputedStyle(document.querySelector('#panels')).visibility === 'hidden'`), 3000);   // tocar no fundo (fora da gaveta) fecha
     eq(await js(`document.body.classList.contains('tb-panels')`), false);

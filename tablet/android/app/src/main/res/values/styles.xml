@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- a faixa das barras do sistema (área fora da área segura) fica da cor do app, não branca -->
+        <item name="android:windowBackground">#1b1b1b</item>
     </style>
 
 

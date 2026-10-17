@@ -208,42 +208,88 @@ notes.addEventListener('keydown', (e) => {
 
 // ---------- grafo ----------
 let gBuilt = false;
-const gOpt = { hier: true, orphans: true, local: false, depth: 1, q: '' };   // hierarquia ligada: cada mapa vira uma constelação
+const gOpt = { hier: true, orphans: true, local: false, depth: 1, q: '', density: 'normal', labels: 'auto', group: false, focus: false };   // hierarquia ligada: cada mapa vira uma constelação
 let gSel = null;                                  // id do nó selecionado no grafo
 let gTrans = { x: 0, y: 0, k: 1 };
 let gPinned = new Map();                          // posições arrastadas à mão
 let gLayoutSig = '', gPos = new Map(), gLast = null;
+let gHiddenMaps = new Set();                      // mapas ocultados pela legenda (só some do desenho: o layout não muda)
+let gExpanded = new Set();                        // pais cujas folhas foram abertas (modo "agrupar folhas")
+let gHover = null;                                // índice do nó sob o mouse
+let gSideSel = null;                              // seleção para a qual o painel de detalhes já foi mostrado
+let gMatchPos = -1;                               // resultado da busca em foco (Enter percorre; -1 = ainda nenhum)
 let lastExportDir = null;
 const PALETTE = (i) => `hsl(${(i * 67 + 205) % 360} 68% 60%)`;
 const colorIdx = new Map();
 function mapColor(key) { if (!colorIdx.has(key)) colorIdx.set(key, colorIdx.size); return PALETTE(colorIdx.get(key)); }
 
+/** Densidade: escala dos pontos, folga entre rótulos, quantos rótulos cabem por área e a partir de que zoom as folhas agrupadas se abrem. */
+const DENS = { compact: { rs: 0.8, gap: 10, budget: 0.5, open: 1.6 }, normal: { rs: 1, gap: 4, budget: 1, open: 1.1 }, detailed: { rs: 1.2, gap: 1, budget: 2.2, open: 0.7 } };
+const gDens = () => DENS[gOpt.density] || DENS.normal;
+const gR = (n) => (Math.min(20, 6 + Math.sqrt(n.deg) * 3.2) + (n.isRoot ? 3 : 0)) * gDens().rs;
+const gView = () => (loadCfg().graphView || {});
+
+/** Largura de um texto de 12 px (canvas, com cache): é o que decide se um rótulo cabe sem encostar em outro. */
+const _mctx = document.createElement('canvas').getContext('2d'); const _mw = new Map();
+function textW(s) { let w = _mw.get(s); if (w === undefined) { _mctx.font = '12px Segoe UI, Roboto, Arial, sans-serif'; w = _mctx.measureText(s).width; if (_mw.size > 5000) _mw.clear(); _mw.set(s, w); } return w; }
+function fitText(s, max) {
+  if (textW(s) <= max) return s;
+  let lo = 1, hi = s.length; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (textW(s.slice(0, mid) + '…') <= max) lo = mid; else hi = mid - 1; }
+  return s.slice(0, lo).trimEnd() + '…';
+}
+
 function buildGraphUI() {
-  const root = $('#graph'); root.textContent = '';
+  const root = $('#graph'); root.textContent = ''; root.tabIndex = -1;
+  const v = gView(); if (['compact', 'normal', 'detailed'].includes(v.density)) gOpt.density = v.density; if (['auto', 'all', 'relevant', 'none'].includes(v.labels)) gOpt.labels = v.labels; gOpt.group = !!v.group; gOpt.focus = !!v.focus;
   const bar = el('div', 'g-bar');
-  const sc = el('select'); sc.id = 'gScope'; sc.append(new Option('Este mapa', 'map'), new Option('Vault (pasta)', 'vault'));
-  const dirTxt = el('span', 'path'); dirTxt.id = 'gDir';
+  const sc = el('select'); sc.id = 'gScope'; sc.title = 'De onde vêm os tópicos'; sc.append(new Option('Este mapa', 'map'), new Option('Vault (pasta)', 'vault'));
+  const dirTxt = el('div', 'path'); dirTxt.id = 'gDir';
   const pick = el('button', 'btn', 'Pasta…'); pick.id = 'gPick'; pick.title = 'Escolher a pasta com seus mapas (.mom)';
-  const chk = (id, label, key) => { const l = el('label'); const i = el('input'); i.type = 'checkbox'; i.id = id; i.checked = gOpt[key]; i.onchange = () => { gOpt[key] = i.checked; renderGraph(true); }; l.append(i, document.createTextNode(label)); return l; };
-  const depth = el('select'); depth.id = 'gDepth'; for (const d of [1, 2, 3]) depth.append(new Option(`${d} salto${d > 1 ? 's' : ''}`, d));
+  const remember = () => saveCfg({ graphView: { density: gOpt.density, labels: gOpt.labels, group: gOpt.group, focus: gOpt.focus } });
+  const chk = (id, label, key, after) => { const l = el('label'); const i = el('input'); i.type = 'checkbox'; i.id = id; i.checked = gOpt[key]; i.onchange = () => { gOpt[key] = i.checked; if (after) after(); else renderGraph(true); }; l.append(i, document.createTextNode(label)); return l; };
+  const depth = el('select'); depth.id = 'gDepth'; depth.title = 'Quantos saltos a partir do tópico selecionado'; for (const d of [1, 2, 3]) depth.append(new Option(`${d} salto${d > 1 ? 's' : ''}`, d));
   depth.onchange = () => { gOpt.depth = +depth.value; renderGraph(true); };
   const q = el('input'); q.type = 'search'; q.id = 'gSearch'; q.placeholder = 'Buscar no grafo…';
-  q.oninput = () => { gOpt.q = q.value; renderGraph(false); };
-  q.onkeydown = (e) => { if (e.key === 'Enter') centerOnMatch(); e.stopPropagation(); };
-  const refresh = el('button', 'btn', 'Atualizar'); refresh.id = 'gRefresh'; refresh.onclick = () => renderGraph(true);
-  const exp = el('button', 'btn', 'Exportar p/ Obsidian…'); exp.id = 'gExport'; exp.onclick = exportVault;
-  const obs = el('button', 'btn', 'Abrir no Obsidian'); obs.id = 'gObsidian'; obs.onclick = openInObsidian;
+  const cnt = el('span', 'g-count'); cnt.id = 'gSearchCount';
+  q.oninput = () => { gOpt.q = q.value; gMatchPos = -1; renderGraph(false); };
+  q.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); centerOnMatch(e.shiftKey ? -1 : 1); } e.stopPropagation(); };
+  const dens = el('select'); dens.id = 'gDensity'; dens.title = 'Densidade: tamanho dos pontos, folga e quantidade de rótulos'; dens.append(new Option('Densidade: compacta', 'compact'), new Option('Densidade: normal', 'normal'), new Option('Densidade: detalhada', 'detailed')); dens.value = gOpt.density;
+  dens.onchange = () => { gOpt.density = dens.value; remember(); renderGraph(false); };
+  const lab = el('select'); lab.id = 'gLabels'; lab.title = 'Rótulos dos pontos'; lab.append(new Option('Rótulos: automáticos', 'auto'), new Option('Rótulos: todos', 'all'), new Option('Rótulos: só relevantes', 'relevant'), new Option('Rótulos: nenhum', 'none')); lab.value = gOpt.labels;
+  lab.onchange = () => { gOpt.labels = lab.value; remember(); updateLabels(); };
+  const refresh = el('button', 'btn', 'Atualizar'); refresh.id = 'gRefresh'; refresh.title = 'Recalcula as posições (as que você arrastou são mantidas)'; refresh.onclick = () => renderGraph(true);
+  const exp = el('button', 'btn', 'Exportar p/ Obsidian…'); exp.id = 'gExport'; exp.onclick = () => { closePops(); exportVault(); };
+  const obs = el('button', 'btn', 'Abrir no Obsidian'); obs.id = 'gObsidian'; obs.onclick = () => { closePops(); openInObsidian(); };
   const close = el('button', 'btn primary', 'Fechar'); close.id = 'gClose'; close.onclick = closeGraph;
   sc.onchange = () => { saveCfg({ scope: sc.value }); renderGraph(true); };
   pick.onclick = pickVaultDir;
-  bar.append(el('label', '', 'Escopo'), sc, dirTxt, pick, chk('gHier', 'Hierarquia', 'hier'), chk('gOrph', 'Sem ligações', 'orphans'), chk('gLocal', 'Só vizinhança', 'local'), depth, q, refresh, el('span', 'grow'), exp, obs, close);
+  // menus (<details>): "Exibir" guarda as opções de visualização; "⋯" guarda o que se usa pouco. Fecham ao clicar fora ou com Esc.
+  const pop = (id, label, title, ...kids) => { const d = el('details', 'g-pop'); d.id = id; const s = el('summary', 'btn', label); s.title = title; const b = el('div', 'g-popbox'); b.append(...kids); d.append(s, b); return d; };
+  const viewPop = pop('gViewPop', 'Exibir ▾', 'Opções de exibição da rede', chk('gHier', 'Hierarquia dos mapas', 'hier'), chk('gOrph', 'Pontos sem ligações', 'orphans'), chk('gLocal', 'Só a vizinhança do selecionado', 'local'), el('label', '', 'Alcance'), depth,
+    chk('gGroup', 'Agrupar folhas (+N)', 'group', () => { remember(); renderGraph(false); }), chk('gFocus', 'Focar a seleção', 'focus', () => { remember(); paintDim(); updateLabels(); }));
+  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick, exp, obs);
+  function closePops() { for (const d of bar.querySelectorAll('details[open]')) d.open = false; }
+  document.addEventListener('mousedown', (e) => { if (!bar.contains(e.target)) closePops(); }, true);
+  bar.addEventListener('toggle', (e) => { if (e.target.open) for (const d of bar.querySelectorAll('details[open]')) if (d !== e.target) d.open = false; }, true);
+  bar.append(sc, q, cnt, dens, lab, viewPop, refresh, el('span', 'grow'), menuPop, close);
   const main = el('div', 'g-main'), wrap = el('div', 'g-wrap');
   wrap.innerHTML = '<svg id="gsvg"><g id="gview"></g></svg>';
   const lg = el('div', 'g-legend'); lg.id = 'gLegend'; const st = el('div', 'g-stat'); st.id = 'gStat';
-  wrap.append(lg, st);
+  const zoom = el('div', 'g-zoom'); zoom.id = 'gZoom';
+  const zb = (id, txt, title, fn) => { const b = el('button', 'btn', txt); b.id = id; b.title = title; b.setAttribute('aria-label', title); b.onclick = fn; return b; };
+  zoom.append(zb('gZoomIn', '+', 'Aproximar (+)', () => zoomBy(1.3)), zb('gZoomOut', '−', 'Afastar (−)', () => zoomBy(1 / 1.3)), zb('gFit', '⤢', 'Ajustar tudo na tela (0)', () => fitGraph()), zb('gCenter', '◎', 'Centralizar a seleção (C)', () => centerSel()),
+    zb('gSideBtn', 'ℹ', 'Detalhes do ponto selecionado', () => toggleSide()));
+  wrap.append(lg, st, zoom);
   const side = el('aside', 'g-side'); side.id = 'gSide';
   main.append(wrap, side); root.append(bar, main);
   bindGraphEvents();
+  if (typeof ResizeObserver === 'function') {                        // ao girar o tablet ou mudar a janela, o mesmo ponto continua no centro
+    let last = null; new ResizeObserver(() => {
+      const sv = $('#gsvg'); if (!sv || !graphOpen) { last = null; return; }
+      const r = sv.getBoundingClientRect(); if (last && (r.width !== last.w || r.height !== last.h) && r.width > 0) { gTrans.x += (r.width - last.w) / 2; gTrans.y += (r.height - last.h) / 2; applyT(); }
+      last = { w: r.width, h: r.height }; placeZoom();
+    }).observe($('#gsvg'));
+  }
   gBuilt = true;
 }
 
@@ -253,7 +299,7 @@ function openGraph() {
   if (!gBuilt) buildGraphUI();
   graphOpen = true; $('#graph').hidden = false; document.querySelector('[data-act="graph"]').classList.add('on');
   const c = loadCfg(); $('#gScope').value = c.scope === 'vault' ? 'vault' : 'map';
-  gSel = selectedId ? `${curKey()}::${selectedId}` : null;
+  gSel = selectedId ? `${curKey()}::${selectedId}` : null; gHover = null; gSideSel = gSel;
   renderGraph(true); fitGraph();
 }
 function closeGraph() { graphOpen = false; const g = $('#graph'); if (g) g.hidden = true; const b = document.querySelector('[data-act="graph"]'); if (b) b.classList.remove('on'); }
@@ -287,38 +333,58 @@ function renderGraph(relayout) {
   }
   const idx = new Map(nodes.map((n, i) => [n.id, i]));
   const P = nodes.map((n) => gPinned.get(n.id) || gPos.get(n.id) || { x: 0, y: 0 });
-  const adj = nodes.map(() => new Set());
-  for (const e of edges) { adj[idx.get(e.from)].add(idx.get(e.to)); adj[idx.get(e.to)].add(idx.get(e.from)); }
+  const adj = nodes.map(() => new Set()), inc = nodes.map(() => []);
+  edges.forEach((e, ei) => { const a = idx.get(e.from), b = idx.get(e.to); adj[a].add(b); adj[b].add(a); inc[a].push(ei); inc[b].push(ei); });
   const q = norm(gOpt.q);
   const match = nodes.map((n) => !q || norm(n.title).includes(q));
-  const R = (n) => Math.min(20, 6 + Math.sqrt(n.deg) * 3.2) + (n.isRoot ? 3 : 0);
-  gLast = { g, nodes, edges, idx, P, adj, R, match };
+  // folhas da hierarquia (só uma ligação, e ela é "pai → este"): podem ficar agrupadas no pai ("+N") até haver zoom
+  const leafParent = nodes.map(() => -1), leafCount = nodes.map(() => 0);
+  nodes.forEach((n, i) => { if (inc[i].length === 1) { const e = edges[inc[i][0]]; if (e.type === 'hierarchy' && idx.get(e.to) === i) { leafParent[i] = idx.get(e.from); leafCount[leafParent[i]]++; } } });
+  const R = gR;
+  gLast = { g, nodes, edges, idx, P, adj, inc, R, match, leafParent, leafCount, info };
 
   const parts = [];
   edges.forEach((e, i) => {
     const st = e.type === 'relation' ? 'stroke="#e5484d" stroke-dasharray="6 4" stroke-width="1.6" opacity=".9"' : e.type === 'hierarchy' ? 'stroke="#8a94a6" stroke-width=".9" opacity=".32"' : 'stroke="#b7c3dd" stroke-width="1.8" opacity=".85"';
     parts.push(`<line class="edge" data-e="${i}" vector-effect="non-scaling-stroke" ${st}/>`);
   });
+  edges.forEach((e, i) => { if (e.type === 'relation' && e.label) parts.push(`<text class="elabel" data-e="${i}" text-anchor="middle" dominant-baseline="central" style="display:none">${gesc(e.label.length > 40 ? e.label.slice(0, 39) + '…' : e.label)}</text>`); });
   nodes.forEach((n, i) => {
-    const ghost = n.kind === 'ghost', hit = q && match[i], sel = n.id === gSel;
+    const ghost = n.kind === 'ghost', hit = q && match[i], sel = n.id === gSel, r = R(n);
     const fill = ghost ? 'none' : mapColor(n.mapKey), stroke = ghost ? 'var(--text-dim)' : sel ? '#ff9800' : 'rgba(255,255,255,.25)';
-    parts.push(`<g class="gn${q && !match[i] ? ' dim' : ''}" data-i="${i}"><circle r="${R(n)}" fill="${fill}" stroke="${stroke}" stroke-width="${sel ? 3 : ghost ? 1.4 : 1}"${ghost ? ' stroke-dasharray="3 2"' : ''}/>`
-      + (hit ? `<circle r="${R(n) + 5}" fill="none" stroke="#ffeb3b" stroke-width="2"/>` : '')
-      + `<text class="glabel" y="${R(n)}" dy="1.45em" text-anchor="middle"${ghost ? ' font-style="italic"' : ''}>${gesc(n.title.length > 38 ? n.title.slice(0, 37) + '…' : n.title)}</text><title>${gesc(n.title)}${n.mapName ? ' — ' + gesc(n.mapName) : ' (não existe)'}</title></g>`);
+    const prog = n.progress != null && !ghost ? `<circle class="gprog" r="${r + 3.5}" fill="none" stroke="#43a047" stroke-width="2.2" pathLength="100" stroke-dasharray="${Math.max(0, Math.min(100, n.progress))} 100" transform="rotate(-90)"/>` : '';
+    parts.push(`<g class="gn${q && !match[i] ? ' dim' : ''}" data-i="${i}"><circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sel ? 3 : ghost ? 1.4 : 1}"${ghost ? ' stroke-dasharray="3 2"' : ''}/>`
+      + `<circle class="ghit" style="--r:${r}px" fill="transparent" stroke="none"/>` + prog
+      + (hit ? `<circle r="${r + 5}" fill="none" stroke="#ffeb3b" stroke-width="2"/>` : '')
+      + (leafCount[i] ? `<g class="gbadge" style="display:none"><circle r="8" cx="${r * 0.8}" cy="${-r * 0.8}" fill="#455a7a" stroke="rgba(255,255,255,.55)" stroke-width="1"/><text class="gbt" x="${r * 0.8}" y="${-r * 0.8}" text-anchor="middle" dominant-baseline="central">+${leafCount[i]}</text></g>` : '')
+      + `<text class="glabel" text-anchor="middle" dominant-baseline="central"${ghost ? ' font-style="italic"' : ''} data-full="${gesc(n.title)}" style="display:none">${gesc(n.title.length > 38 ? n.title.slice(0, 37) + '…' : n.title)}</text><title>${gesc(n.title)}${n.mapName ? ' — ' + gesc(n.mapName) + (n.deg ? ` · ${n.deg} ligaç${n.deg > 1 ? 'ões' : 'ão'}` : '') : ' (não existe)'}</title></g>`);
   });
   $('#gview').innerHTML = parts.join('');
-  gLast.labels = nodes.map((_, i) => $('#gview').querySelector(`.gn[data-i="${i}"] text`));
+  const gv = $('#gview');
+  gLast.gn = nodes.map((_, i) => gv.querySelector(`.gn[data-i="${i}"]`));
+  gLast.labels = gLast.gn.map((x) => x && x.querySelector('.glabel'));
+  gLast.lines = [...gv.querySelectorAll('.edge')];
+  gLast.elabels = new Map([...gv.querySelectorAll('.elabel')].map((x) => [+x.dataset.e, x]));
   positionAll();
   applyT();
 
   const maps = [...new Set(nodes.filter((n) => n.mapKey).map((n) => n.mapKey))];
   const lg = $('#gLegend'); lg.textContent = '';
-  for (const k of maps.slice(0, 10)) { const d = el('div'); const i = el('i'); i.style.background = mapColor(k); d.append(i, document.createTextNode(g.nodes.find((n) => n.mapKey === k).mapName)); lg.append(d); }
+  for (const k of maps.slice(0, 12)) {
+    const d = el('div', 'lg' + (gHiddenMaps.has(k) ? ' off' : '')); d.title = gHiddenMaps.has(k) ? 'Mostrar este mapa' : 'Ocultar este mapa'; d.setAttribute('role', 'button'); d.tabIndex = 0; d.dataset.map = k;
+    const i = el('i'); i.style.background = mapColor(k); d.append(i, document.createTextNode(g.nodes.find((n) => n.mapKey === k).mapName));
+    const flip = () => { if (gHiddenMaps.has(k)) gHiddenMaps.delete(k); else gHiddenMaps.add(k); renderGraph(false); };
+    d.onclick = flip; d.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); flip(); } };
+    lg.append(d);
+  }
+  if (maps.length > 12) lg.append(el('div', 'muted', `… e mais ${maps.length - 12} mapa(s)`));
   const ghosts = nodes.filter((n) => n.kind === 'ghost').length;
-  $('#gStat').textContent = `${nodes.length - ghosts} tópicos · ${edges.filter((e) => e.type !== 'hierarchy').length} ligações · ${ghosts} sem destino · ${maps.length} mapa(s)`
+  gLast.statBase = `${nodes.length - ghosts} tópicos · ${edges.filter((e) => e.type !== 'hierarchy').length} ligações · ${ghosts} sem destino · ${maps.length} mapa(s)`
     + (info.truncated ? ' · pasta grande: leitura parcial' : '') + (info.errors && info.errors.length ? ` · ${info.errors.length} arquivo(s) ilegível(is)` : '');
+  $('#gStat').textContent = gLast.statBase;
   $('#gDir').textContent = scope === 'vault' ? (info.dir || '') : '(somente o mapa aberto)'; $('#gDir').title = info.dir || '';
   $('#gDepth').disabled = !gOpt.local;
+  const nm = match.filter(Boolean).length; $('#gSearchCount').textContent = q ? (nm ? (gMatchPos >= 0 ? `${gMatchPos + 1}/${nm}` : `${nm} resultado${nm > 1 ? 's' : ''}`) : 'nenhum resultado') : '';
   renderGraphSide();
 }
 
@@ -328,34 +394,98 @@ function applyT() {
   const sv = $('#gsvg'); sv.style.setProperty('--k', gTrans.k); sv.classList.toggle('zoomed', gTrans.k >= 1.4);
   scheduleLabels();
 }
+function zoomBy(f) {
+  const r = $('#gsvg').getBoundingClientRect(), mx = r.width / 2, my = r.height / 2, k = Math.min(6, Math.max(0.1, gTrans.k * f));
+  gTrans.x = mx - ((mx - gTrans.x) / gTrans.k) * k; gTrans.y = my - ((my - gTrans.y) / gTrans.k) * k; gTrans.k = k; applyT();
+}
 
-/** Rótulos têm tamanho fixo na tela; os que colidiriam com um de maior prioridade ficam ocultos até dar zoom ou passar o mouse. */
+/** Quais pontos aparecem agora: some o que a legenda ocultou e, no modo "agrupar folhas", as folhas de pais fechados (até haver zoom, seleção, busca ou abrir o pai). */
+function nodeVisible(i) {
+  const { nodes, leafParent, match, adj, idx } = gLast, n = nodes[i];
+  if (n.mapKey && gHiddenMaps.has(n.mapKey)) return false;
+  if (!gOpt.group || leafParent[i] < 0) return true;                       // só as folhas de hierarquia podem ficar agrupadas
+  const parent = nodes[leafParent[i]];
+  if (gTrans.k >= gDens().open || n.id === gSel || (gOpt.q && match[i]) || gPinned.has(n.id) || gExpanded.has(parent.id)) return true;
+  if (gHover !== null && (gHover === i || adj[gHover].has(i))) return true;   // passar o mouse no pai (ou na folha) mostra as folhas
+  const sel = gSel && idx.has(gSel) ? idx.get(gSel) : null; return sel !== null && leafParent[i] === sel;   // selecionar o pai abre as folhas dele
+}
+/** Quem fica esmaecido: a vizinhança do ponto sob o mouse; senão (se ligado "Focar seleção") a do selecionado; senão o que não casa com a busca. */
+function paintDim() {
+  if (!gLast) return;
+  const { nodes, adj, idx, edges, match, gn, lines } = gLast; const q = gOpt.q;
+  const centre = gHover !== null ? gHover : gOpt.focus && gSel && idx.has(gSel) ? idx.get(gSel) : null;
+  const keep = centre !== null ? new Set([centre, ...adj[centre]]) : null;
+  gn.forEach((x, i) => { if (x) x.classList.toggle('dim', keep ? !keep.has(i) : !!q && !match[i]); });
+  lines.forEach((l) => { const ed = edges[+l.dataset.e]; l.classList.toggle('dim', centre !== null && !(idx.get(ed.from) === centre || idx.get(ed.to) === centre)); });
+  void nodes;
+}
+
+/**
+ * Rótulos: tamanho fixo na tela, medidos de verdade. Cada um tenta 4 posições (embaixo, à direita, em cima, à esquerda) e só some se nenhuma estiver livre;
+ * a quantidade é limitada pela área (densidade). O selecionado, o sob o mouse, seus vizinhos e os resultados da busca sempre aparecem.
+ */
 let lblTimer = null;
-function scheduleLabels() { clearTimeout(lblTimer); lblTimer = setTimeout(updateLabels, 80); }
+function scheduleLabels() { clearTimeout(lblTimer); lblTimer = setTimeout(updateLabels, 60); }
 function updateLabels() {
   if (!gLast || !graphOpen || !gLast.labels) return;
-  const { nodes, P, R, match, labels } = gLast, k = gTrans.k, r = $('#gsvg').getBoundingClientRect();
-  const score = (i) => (nodes[i].id === gSel ? 1e6 : 0) + (gOpt.q && match[i] ? 1e5 : 0) + (nodes[i].isRoot ? 1e3 : 0) + nodes[i].deg * 10;
-  const order = nodes.map((_, i) => i).sort((a, b) => score(b) - score(a));
-  const placed = [];
+  const { nodes, P, R, match, labels, gn, adj, edges, idx, elabels } = gLast, k = gTrans.k, r = $('#gsvg').getBoundingClientRect(), D = gDens();
+  const mode = gOpt.labels, hov = gHover, selI = gSel && idx.has(gSel) ? idx.get(gSel) : null;
+  const vis = nodes.map((_, i) => nodeVisible(i));
+  gn.forEach((x, i) => { if (x) x.style.display = vis[i] ? '' : 'none'; });
+  gLast.lines.forEach((l) => { const ed = edges[+l.dataset.e]; l.style.display = vis[idx.get(ed.from)] && vis[idx.get(ed.to)] ? '' : 'none'; });
+  gn.forEach((x, i) => { const b = x && x.querySelector('.gbadge'); if (b) b.style.display = gOpt.group && vis[i] && gLast.leafCount[i] && gLast.leafParent.some((p, j) => p === i && !vis[j]) ? '' : 'none'; });
+  const scr = nodes.map((_, i) => ({ x: P[i].x * k + gTrans.x, y: P[i].y * k + gTrans.y, r: R(nodes[i]) * k }));
+  const onScreen = (i) => scr[i].x > -40 && scr[i].x < r.width + 40 && scr[i].y > -40 && scr[i].y < r.height + 40;
+  const near = new Set(); for (const c of [hov, selI]) if (c !== null && c !== undefined) { near.add(c); adj[c].forEach((j) => near.add(j)); }
+  const forced = (i) => near.has(i) || (gOpt.q && match[i]);
+  const score = (i) => (i === selI ? 1e7 : 0) + (i === hov ? 1e7 : 0) + (gOpt.q && match[i] ? 1e6 : 0) + (near.has(i) ? 1e5 : 0) + (nodes[i].isRoot ? 1e3 : 0) + nodes[i].deg * 10 + (gLast.leafCount[i] || 0);
+  const order = nodes.map((_, i) => i).filter((i) => vis[i] && onScreen(i)).sort((a, b) => score(b) - score(a));
+  // grade espacial: retângulos já ocupados (rótulos colocados + pontos), consulta em O(1) por célula de 80 px
+  const CELL = 80, grid = new Map(), keyOf = (cx, cy) => cx * 100003 + cy;
+  const put = (b) => { for (let cx = Math.floor(b.x / CELL); cx <= Math.floor((b.x + b.w) / CELL); cx++) for (let cy = Math.floor(b.y / CELL); cy <= Math.floor((b.y + b.h) / CELL); cy++) { const kk = keyOf(cx, cy); (grid.get(kk) || grid.set(kk, []).get(kk)).push(b); } };
+  const hits = (b, gap, skip) => { for (let cx = Math.floor((b.x - gap) / CELL); cx <= Math.floor((b.x + b.w + gap) / CELL); cx++) for (let cy = Math.floor((b.y - gap) / CELL); cy <= Math.floor((b.y + b.h + gap) / CELL); cy++) { const l = grid.get(keyOf(cx, cy)); if (l) for (const o of l) if (o !== skip && b.x - gap < o.x + o.w && o.x < b.x + b.w + gap && b.y - gap < o.y + o.h && o.y < b.y + b.h + gap) return true; } return false; };
+  const circ = []; for (const i of order) { circ[i] = { x: scr[i].x - scr[i].r, y: scr[i].y - scr[i].r, w: scr[i].r * 2, h: scr[i].r * 2 }; put(circ[i]); }
+  for (const sel of ['#gLegend', '#gZoom', '#gStat']) { const o = $(sel); if (!o || o.hidden) continue; const b = o.getBoundingClientRect(); if (b.width) put({ x: b.left - r.left - 4, y: b.top - r.top - 4, w: b.width + 8, h: b.height + 8 }); }   // o que flutua sobre o desenho também ocupa lugar
+  const budget = Math.max(10, Math.round(D.budget * (r.width * r.height) / 9000));
+  let shown = 0; const hide = (el0) => { if (el0.style.display !== 'none') el0.style.display = 'none'; };
+  const H = 15, placedLbl = new Set();
   for (const i of order) {
     const el0 = labels[i]; if (!el0) continue;
-    const w = Math.min(38, nodes[i].title.length) * 6.3 + 10, h = 15;
-    const x = P[i].x * k + gTrans.x - w / 2, y = P[i].y * k + gTrans.y + R(nodes[i]) * k + 4;
-    const inside = x > -4 && x + w < r.width + 4 && y > 0 && y + h < r.height + 4;
-    const force = nodes[i].id === gSel || (gOpt.q && match[i]);
-    const clash = placed.some((p) => x < p.x + p.w && p.x < x + w && y < p.y + p.h && p.y < y + h);
-    const show = force || (inside && !clash);
-    el0.style.display = show ? '' : 'none';
-    if (show) placed.push({ x, y, w, h });
+    const isForced = forced(i) || i === selI || i === hov;
+    const allowed = mode === 'all' ? true : mode === 'none' ? isForced : mode === 'relevant' ? (isForced || nodes[i].isRoot || nodes[i].deg >= 4) : (isForced || shown < budget);
+    if (!allowed) { hide(el0); continue; }
+    const full = el0.dataset.full, big = isForced;
+    const txt = fitText(full, big ? 300 : 170), w = textW(txt) + 6, s = scr[i], off = s.r + 4;
+    const cands = [{ x: s.x - w / 2, y: s.y + off, a: 'middle', ox: 0, oy: off + H / 2 }, { x: s.x + off, y: s.y - H / 2, a: 'start', ox: off, oy: 0 }, { x: s.x - w / 2, y: s.y - off - H, a: 'middle', ox: 0, oy: -off - H / 2 }, { x: s.x - off - w, y: s.y - H / 2, a: 'end', ox: -off, oy: 0 }];
+    let pick = null;
+    if (mode === 'all') pick = cands[0];
+    else for (const c of cands) { const b = { x: c.x, y: c.y, w, h: H }; if (b.x >= -2 && b.x + w <= r.width + 2 && b.y >= 0 && b.y + H <= r.height + 2 && !hits(b, D.gap, circ[i])) { pick = c; break; } }
+    if (!pick && isForced) pick = cands[0];                       // o que o usuário pediu nunca some (mesmo sobre outros rótulos)
+    if (!pick) { hide(el0); continue; }
+    put({ x: pick.x, y: pick.y, w, h: H }); shown++; placedLbl.add(i);
+    if (el0.textContent !== txt) el0.textContent = txt;
+    el0.setAttribute('x', pick.ox / k); el0.setAttribute('y', pick.oy / k); el0.setAttribute('text-anchor', pick.a); el0.style.display = '';
+    el0.classList.toggle('big', i === selI || i === hov);
   }
+  labels.forEach((l, i) => { if (l && !placedLbl.has(i)) hide(l); });
+  // rótulos das relações: no meio da linha; aparecem com zoom, ou quando ligam o ponto selecionado/sob o mouse
+  for (const [ei, t] of elabels) {
+    const e = edges[ei], a = idx.get(e.from), b = idx.get(e.to); const sa = scr[a], sb = scr[b];
+    const focus = [a, b].find((x) => x === selI || x === hov);             // ponta selecionada/sob o mouse: o rótulo fica perto dela mesmo que a outra ponta esteja longe
+    let fx = 0.5; if (focus !== undefined) { const len = Math.hypot(sa.x - sb.x, sa.y - sb.y) || 1; fx = Math.min(0.5, 110 / len); }
+    const from = focus === b ? b : a, to = focus === b ? a : b, mx = scr[from].x + (scr[to].x - scr[from].x) * fx, my = scr[from].y + (scr[to].y - scr[from].y) * fx;
+    const ok = vis[a] && vis[b] && mx > 0 && mx < r.width && my > 0 && my < r.height && (k >= 0.9 || focus !== undefined) && mode !== 'none';
+    t.style.display = ok ? '' : 'none'; if (ok) { t.setAttribute('x', P[from].x + (P[to].x - P[from].x) * fx); t.setAttribute('y', P[from].y + (P[to].y - P[from].y) * fx - 8 / k); }
+  }
+  gLast.shown = shown;
+  $('#gStat').textContent = gLast.statBase + (nodes.length > 20 ? ` · ${shown} rótulo(s)` : '');
 }
 function positionAll() {
   if (!gLast) return;
-  const { P, edges, idx, nodes } = gLast;
-  const gv = $('#gview');
-  gv.querySelectorAll('.gn').forEach((el0) => { const p = P[+el0.dataset.i]; el0.setAttribute('transform', `translate(${p.x} ${p.y})`); });
-  gv.querySelectorAll('.edge').forEach((l) => { const e = edges[+l.dataset.e], a = P[idx.get(e.from)], b = P[idx.get(e.to)]; l.setAttribute('x1', a.x); l.setAttribute('y1', a.y); l.setAttribute('x2', b.x); l.setAttribute('y2', b.y); });
+  const { P, edges, idx, gn, lines, nodes } = gLast;
+  gn.forEach((el0, i) => { if (el0) el0.setAttribute('transform', `translate(${P[i].x} ${P[i].y})`); });
+  lines.forEach((l) => { const e = edges[+l.dataset.e], a = P[idx.get(e.from)], b = P[idx.get(e.to)]; l.setAttribute('x1', a.x); l.setAttribute('y1', a.y); l.setAttribute('x2', b.x); l.setAttribute('y2', b.y); });
+  paintDim();
   applyT();
   void nodes;
 }
@@ -363,21 +493,35 @@ function fitGraph() {
   if (!gLast || !gLast.nodes.length) return;
   const svgEl = $('#gsvg'), r = svgEl.getBoundingClientRect();
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-  for (const p of gLast.P) { x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y); x2 = Math.max(x2, p.x); y2 = Math.max(y2, p.y); }
-  const w = Math.max(40, x2 - x1), h = Math.max(40, y2 - y1), mx = 150, my = 70; // margens em pixels: sobra espaço para os rótulos
+  gLast.P.forEach((p, i) => { if (!nodeVisible(i)) return; x1 = Math.min(x1, p.x); y1 = Math.min(y1, p.y); x2 = Math.max(x2, p.x); y2 = Math.max(y2, p.y); });
+  if (x1 === Infinity) return;
+  const w = Math.max(40, x2 - x1), h = Math.max(40, y2 - y1), mx = Math.min(150, r.width * 0.12), my = Math.min(70, r.height * 0.1); // margens em pixels: sobra espaço para os rótulos
   gTrans.k = Math.max(0.1, Math.min((r.width - 2 * mx) / w, (r.height - 2 * my) / h, 2.2));
   gTrans.x = r.width / 2 - ((x1 + x2) / 2) * gTrans.k; gTrans.y = r.height / 2 - ((y1 + y2) / 2) * gTrans.k;
   applyT();
   $('#gsvg').classList.toggle('zoomed', gTrans.k >= 1.4);
 }
-function centerOnMatch() {
-  if (!gLast) return;
-  const i = gLast.match.findIndex((m, k) => m && gOpt.q && gLast.nodes[k]);
-  if (i < 0) return;
-  const r = $('#gsvg').getBoundingClientRect(), p = gLast.P[i];
+function centerSel() {
+  if (!gLast || !gSel || !gLast.idx.has(gSel)) return;
+  const r = $('#gsvg').getBoundingClientRect(), p = gLast.P[gLast.idx.get(gSel)];
+  gTrans.k = Math.max(gTrans.k, 1.2); gTrans.x = r.width / 2 - p.x * gTrans.k; gTrans.y = r.height / 2 - p.y * gTrans.k; applyT();
+}
+/** Enter na busca vai para o resultado seguinte (Shift+Enter, o anterior). */
+function centerOnMatch(dir = 1) {
+  if (!gLast || !gOpt.q) return;
+  const list = []; gLast.match.forEach((m, i) => { if (m) list.push(i); });
+  const n = list.length; if (!n) return;
+  gMatchPos = gMatchPos < 0 ? (dir > 0 ? 0 : n - 1) : (gMatchPos + dir + n) % n;
+  const i = list[gMatchPos], r = $('#gsvg').getBoundingClientRect(), p = gLast.P[i];
   gTrans.k = Math.max(gTrans.k, 1.2); gTrans.x = r.width / 2 - p.x * gTrans.k; gTrans.y = r.height / 2 - p.y * gTrans.k;
   gSel = gLast.nodes[i].id; renderGraph(false);
 }
+
+/** Em telas estreitas o painel de detalhes vira uma gaveta embaixo; ela abre sozinha ao selecionar um ponto. */
+const gNarrow = () => { const e = $('#graph'); return e.clientWidth <= 760 || e.clientHeight <= 480; };   // mede a própria rede (o painel de Estudo ao lado também come largura)
+function toggleSide(force) { const s = $('#gSide'); if (!s) return; const open = force === undefined ? !s.classList.contains('open') : force; s.classList.toggle('open', open); $('#gSideBtn').setAttribute('aria-pressed', String(open)); placeZoom(); }
+/** Com a gaveta aberta, os botões de zoom (e o ℹ que a fecha) sobem para ficar acima dela, em vez de ficarem cobertos. */
+function placeZoom() { const s = $('#gSide'), z = $('#gZoom'); if (!s || !z) return; z.style.bottom = gNarrow() && s.classList.contains('open') ? (s.offsetHeight + 12) + 'px' : ''; }
 
 function renderGraphSide() {
   const side = $('#gSide'); side.textContent = '';
@@ -385,12 +529,14 @@ function renderGraphSide() {
   const { g } = gLast;
   const n = gSel && g.byId.get(gSel);
   if (!n) {
-    side.append(el('h3', '', 'Rede de conhecimento'), el('div', 'sub', 'Cada ponto é um tópico; cada linha, um [[link]] (sólida), uma relação do mapa (tracejada vermelha) ou, se ativada, a hierarquia.'),
-      el('div', 'muted', 'Clique num ponto para ver conexões · duplo clique abre o tópico · arraste para reposicionar · roda do mouse dá zoom.'),
-      el('div', 'muted', 'Pontos tracejados são links sem destino: crie o tópico para completar a rede.'));
+    gSideSel = gSel;
+    side.append(el('h3', '', 'Rede de conhecimento'), el('div', 'sub', 'Cada ponto é um tópico; cada linha, um [[link]] (sólida), uma relação do mapa (tracejada vermelha, com o rótulo dela) ou, se ativada, a hierarquia.'),
+      el('div', 'muted', 'Toque/clique num ponto para ver conexões · duplo toque abre o tópico · arraste para reposicionar · roda ou botões +/− dão zoom.'),
+      el('div', 'muted', 'Teclado: setas navegam entre pontos ligados · Enter abre · + − 0 zoom · C centraliza · F foca a seleção · / busca.'),
+      el('div', 'muted', 'Pontos tracejados são links sem destino: crie o tópico para completar a rede. O tamanho do ponto mostra quantas ligações ele tem; o anel verde, o progresso.'));
     return;
   }
-  side.append(el('h3', '', n.title), el('div', 'sub', n.kind === 'ghost' ? 'Link sem destino' : `${n.mapName}${n.isRoot ? ' · raiz do mapa' : ''}${n.progress != null ? ` · ${n.progress}%` : ''}`));
+  side.append(el('h3', '', n.title), el('div', 'sub', n.kind === 'ghost' ? 'Link sem destino' : `${n.mapName}${n.isRoot ? ' · raiz do mapa' : ''}${n.progress != null ? ` · ${n.progress}%` : ''}${n.deg ? ` · ${n.deg} ligaç${n.deg > 1 ? 'ões' : 'ão'}` : ''}`));
   const btns = el('div', 'btnrow');
   if (n.kind === 'topic') { const b = el('button', 'btn primary', 'Ir para o tópico'); b.id = 'gGo'; b.onclick = () => openTopic(n); btns.append(b); }
   else if (!/#/.test(n.title)) { const b = el('button', 'btn primary', 'Criar este tópico'); b.id = 'gCreate'; b.onclick = () => { if (createTopicFromLink(n.title)) { gSel = null; renderGraph(true); } }; btns.append(b); }
@@ -398,9 +544,26 @@ function renderGraphSide() {
   const list = (title, arr, pick) => {
     side.append(el('h4', '', `${title} (${arr.length})`));
     if (!arr.length) side.append(el('div', 'muted', 'Nenhum.'));
-    for (const e of arr) { const o = g.byId.get(pick(e)); const r = lkRow(g, o, { meta: o.mapName && o.mapKey !== n.mapKey ? o.mapName : '', type: e.type, onClick: () => { gSel = o.id; renderGraph(false); } }); side.append(r); }
+    for (const e of arr) { const o = g.byId.get(pick(e)); const r = lkRow(g, o, { meta: o.mapName && o.mapKey !== n.mapKey ? o.mapName : '', type: e.type, label: e.label, onClick: () => { gSel = o.id; renderGraph(false); } }); side.append(r); }
   };
   list('Links', g.outgoing(n.id), (e) => e.to); list('Citado em', g.incoming(n.id), (e) => e.from);
+  if (gNarrow() && gSel !== gSideSel) toggleSide(true);
+  gSideSel = gSel;
+  placeZoom();
+}
+
+/** Setas: vai para o ponto ligado ao selecionado que estiver mais na direção da tecla (sem selecionado, começa pelo de mais ligações). */
+function stepSelection(dx, dy) {
+  if (!gLast || !gLast.nodes.length) return;
+  const { nodes, idx, adj, P } = gLast; const cur = gSel && idx.has(gSel) ? idx.get(gSel) : null;
+  if (cur === null) { let best = 0; nodes.forEach((n, i) => { if (nodeVisible(i) && n.deg + (n.isRoot ? 1 : 0) > nodes[best].deg + (nodes[best].isRoot ? 1 : 0)) best = i; }); gSel = nodes[best].id; renderGraph(false); centerSel(); return; }
+  let best = -1, bs = -Infinity;
+  for (const j of adj[cur]) {
+    if (!nodeVisible(j)) continue;
+    const vx = P[j].x - P[cur].x, vy = P[j].y - P[cur].y, len = Math.hypot(vx, vy) || 1, dot = (vx * dx + vy * dy) / len;
+    if (dot > 0.35 && dot - len / 4000 > bs) { bs = dot - len / 4000; best = j; }
+  }
+  if (best >= 0) { gSel = nodes[best].id; renderGraph(false); }
 }
 
 function bindGraphEvents() {
@@ -428,30 +591,27 @@ function bindGraphEvents() {
     svgEl.classList.remove('panning');
     const d = drag; drag = null;
     if (!graphOpen || d.moved) return;
-    gSel = d.i == null ? null : gLast.nodes[d.i].id;
+    const id = d.i == null ? null : gLast.nodes[d.i].id;
+    if (id && gOpt.group && gLast.leafCount[d.i]) { if (gExpanded.has(id)) gExpanded.delete(id); else gExpanded.add(id); }   // clicar num pai com folhas agrupadas as abre/fecha
+    gSel = id;
     renderGraph(false);
   });
   svgEl.addEventListener('dblclick', (e) => { const nd = e.target.closest('.gn'); if (nd) openTopic(gLast.nodes[+nd.dataset.i]); });
   svgEl.addEventListener('wheel', (e) => {
     e.preventDefault();
     const r = svgEl.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-    const k = Math.min(6, Math.max(0.15, gTrans.k * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
+    const k = Math.min(6, Math.max(0.1, gTrans.k * (e.deltaY < 0 ? 1.15 : 1 / 1.15)));
     gTrans.x = mx - ((mx - gTrans.x) / gTrans.k) * k; gTrans.y = my - ((my - gTrans.y) / gTrans.k) * k; gTrans.k = k;
     applyT();
   }, { passive: false });
   // destaque dos vizinhos ao passar o mouse (sem redesenhar)
   svgEl.addEventListener('mouseover', (e) => {
     const nd = e.target.closest('.gn'); if (!nd || drag) return;
-    const i = +nd.dataset.i, keep = new Set([i, ...gLast.adj[i]]);
-    keep.forEach((j) => { if (gLast.labels[j]) gLast.labels[j].style.display = ''; });
-    $('#gview').querySelectorAll('.gn').forEach((x) => x.classList.toggle('dim', !keep.has(+x.dataset.i)));
-    $('#gview').querySelectorAll('.edge').forEach((l) => { const ed = gLast.edges[+l.dataset.e]; l.classList.toggle('dim', !(gLast.idx.get(ed.from) === i || gLast.idx.get(ed.to) === i)); });
+    gHover = +nd.dataset.i; paintDim(); updateLabels();
   });
   svgEl.addEventListener('mouseout', (e) => {
     if (!e.target.closest('.gn')) return;
-    $('#gview').querySelectorAll('.dim').forEach((x) => x.classList.remove('dim'));
-    scheduleLabels();
-    if (gOpt.q) $('#gview').querySelectorAll('.gn').forEach((x) => { if (!gLast.match[+x.dataset.i]) x.classList.add('dim'); });
+    gHover = null; paintDim(); scheduleLabels();
   });
 }
 
@@ -476,5 +636,21 @@ async function openInObsidian() {
   sideMsg(r.ok ? (r.method === 'skipped' ? 'Abriria no Obsidian: ' + r.url : 'Abrindo no Obsidian…') : 'Não consegui abrir o Obsidian: ' + (r.error || ''), r.ok ? 'ok' : 'err');
 }
 
-window.addEventListener('keydown', (e) => { if (graphOpen && e.key === 'Escape' && !present) { e.stopPropagation(); closeGraph(); } }, true);
+window.addEventListener('keydown', (e) => {
+  if (!graphOpen || present) return;
+  if (e.key === 'Escape') { const open = document.querySelector('#graph .g-bar details[open]'); if (open) { e.stopPropagation(); open.open = false; return; } e.stopPropagation(); if (gNarrow() && $('#gSide').classList.contains('open')) toggleSide(false); else closeGraph(); return; }
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(tag) || e.ctrlKey || e.metaKey || e.altKey) return;      // digitando num campo: as teclas são dele
+  const k = e.key; let used = true;
+  if (k === '+' || k === '=') zoomBy(1.3); else if (k === '-' || k === '_') zoomBy(1 / 1.3); else if (k === '0') fitGraph();
+  else if (k === 'c' || k === 'C') centerSel();
+  else if (k === 'f' || k === 'F') { $('#gFocus').click(); }
+  else if (k === 'l' || k === 'L') { $('#gLocal').click(); }
+  else if (k === 'g' || k === 'G') { $('#gGroup').click(); }
+  else if (k === '/') { $('#gSearch').focus(); }
+  else if (k === 'ArrowLeft') stepSelection(-1, 0); else if (k === 'ArrowRight') stepSelection(1, 0); else if (k === 'ArrowUp') stepSelection(0, -1); else if (k === 'ArrowDown') stepSelection(0, 1);
+  else if (k === 'Enter' && gSel && gLast && gLast.g.byId.get(gSel)) openTopic(gLast.g.byId.get(gSel));
+  else used = false;
+  if (used) { e.preventDefault(); e.stopPropagation(); }
+}, true);
 render();

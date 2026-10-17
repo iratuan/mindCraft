@@ -71,9 +71,10 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
   await t('estudo: questões por banca/ano, erro com origem, refazer, Painel de estudos (React) — e tudo persiste', async () => {
     await js(`closeHome(); window.__today = '${TODAY}'; openFromLibrary(getLibrary().listMaps()[0].id, { confirm: false }); true`); await waitFor(() => js(`inLibrary()`));
     await js(`map.addChild(map.root.id, 'Crase'); render(); true`); await select('Crase');
-    const reg = async (b, y, d, o) => { await setVal('#qBanca', b); await setVal('#qAno', y); await setVal('#qDone', String(d)); await setVal('#qOk', String(o)); await click('#qAdd'); await wait(120); };
+    const setBanca = (v) => js(`setQBanca(${JSON.stringify(v)})`);
+    const reg = async (b, y, d, o) => { await setBanca(b); await setVal('#qAno', y); await setVal('#qDone', String(d)); await setVal('#qOk', String(o)); await click('#qAdd'); await wait(120); };
     await reg('CESPE', '2024', 10, 4); await reg('cespé', '2024', 5, 5); await reg('FGV', '2023', 10, 9);
-    await setVal('#qBanca', 'FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
+    await setBanca('FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
     const s = await js(`__st('Crase')`); eq(s.qsrc.map((r) => [r.banca, r.year, r.done, r.correct]), [['CESPE', 2024, 15, 9], ['FGV', 2023, 10, 9]]); eq(s.errs[0].banca, 'FGV');
     await js('act.dash()'); await wait(500);
     eq(await js(`[...document.querySelectorAll('#qsrcBanca tbody tr')].map((r) => [...r.children].slice(0, 2).map((x) => x.textContent).join(' ')).join(' | ')`), 'CESPE 9/15 | FGV 9/10');

@@ -53,7 +53,7 @@ function wrap(text, size, bold, maxW) {
  * box: { id, x, y, w, h, level, side, lines, style, node }  (x,y = canto superior esquerdo)
  */
 function layoutMap(map, opts = {}) {
-  const theme = getTheme(opts.theme || map.meta.theme);
+  const theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
   const maxW = opts.maxTextWidth || 260;
   const boxes = new Map();
   const views = studyViews(map.root, opts.today || todayStr());

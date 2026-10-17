@@ -62,6 +62,7 @@ function buildMenu() {
       { label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
       { label: 'Biblioteca de mapas…', accelerator: 'CmdOrCtrl+Shift+B', click: send('lib') },
       { label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
+      { label: 'Sincronização (opcional)…', click: send('sync') },
       { type: 'separator' },
       { label: 'Novo mapa de concurso (modelo)', click: send('template') },
       { label: 'Importar edital (colar texto)…', click: send('edital') },

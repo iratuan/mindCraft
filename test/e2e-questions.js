@@ -22,14 +22,15 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'questoes');
   const st = (title) => js(`(() => { let r; map.walk((n) => { if (n.title === ${JSON.stringify(title)}) r = n; }); return r.study; })()`);
   const open = async () => { await js(`window.__today = '${TODAY}'; dirty = false; openPath(${JSON.stringify(file)})`); await c.waitFor(() => js(`filePath === ${JSON.stringify(file)}`)); await wait(200); };
   const select = async (title) => { await js(`showPanel('study'); __md(__id(${JSON.stringify(title)})); true`); await wait(150); };
-  const register = async (banca, ano, feitas, acertos) => { await setVal('#qBanca', banca); await setVal('#qAno', ano); await setVal('#qDone', String(feitas)); await setVal('#qOk', String(acertos)); await click('#qAdd'); await wait(150); };
+  const setBanca = (v) => js(`setQBanca(${JSON.stringify(v)})`);
+  const register = async (banca, ano, feitas, acertos) => { await setBanca(banca); await setVal('#qAno', ano); await setVal('#qDone', String(feitas)); await setVal('#qOk', String(acertos)); await click('#qAdd'); await wait(150); };
   const react = !c.CLASSIC;
   /** Estado conhecido: questões por banca/ano em 3 tópicos e 3 erros (2 com origem). */
   const buildState = async () => {
     await select('Legalidade'); await register('CESPE', '2024', 10, 4); await register('cespé', '2024', 5, 5); await register('FGV', '2023', 10, 9);
     await select('Crase'); await register('CESPE', '2023', 20, 10); await register('', '', 7, 7);
-    await select('Regência'); await setVal('#qBanca', 'Cebraspe'); await setVal('#qAno', '2022'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
-    await select('Crase'); await setVal('#qBanca', 'FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'nao-sabia'); await click('#errAdd'); await wait(150); await setVal('#qBanca', ''); await setVal('#qAno', ''); await setVal('#errWhy', 'tempo'); await click('#errAdd'); await wait(150);
+    await select('Regência'); await setBanca('Cebraspe'); await setVal('#qAno', '2022'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
+    await select('Crase'); await setBanca('FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'nao-sabia'); await click('#errAdd'); await wait(150); await setBanca(''); await setVal('#qAno', ''); await setVal('#errWhy', 'tempo'); await click('#errAdd'); await wait(150);
   };
 
   await t('registrar questões com banca e ano: grava o detalhe, mantém os totais, mantém banca/ano preenchidos e limpa só feitas/acertos; 1 desfazer', async () => {
@@ -53,18 +54,20 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'questoes');
   await t('sugestão de bancas (datalist) lista as já usadas no mapa; mais registros em outro tópico', async () => {
     await register('FGV', '2023', 10, 9); await select('Crase'); await register('CESPE', '2023', 20, 10); await register('FGV', '', 6, 3);
     await js(`document.querySelector('#qBanca').dispatchEvent(new Event('focus'))`);
-    eq(await js(`[...document.querySelectorAll('#bancaList option')].map((o) => o.value).sort()`), ['CESPE', 'FGV']);
+    eq(await js(`[...document.querySelectorAll('#qBanca optgroup[label^="Já"] option')].map((o) => o.value).sort()`), ['CESPE', 'FGV']);
+    const common = await js(`[...document.querySelectorAll('#qBanca optgroup[label^="Mais"] option')].map((o) => o.value)`); ok(common.includes('VUNESP') && common.includes('FCC') && !common.includes('FGV'), 'comuns sem repetir as já usadas: ' + common.join());
+    eq(await js(`document.querySelector('#qBanca option[value="__outra"]').textContent`), 'Outra…');
   });
 
   await t('erro com banca/ano (campos compartilhados): grava origem; ✔/✖ no painel marcam como refeito; ↶ desfaz; cada ação é desfazível', async () => {
-    await select('Regência'); await setVal('#qBanca', 'Cebraspe'); await setVal('#qAno', '2022'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
+    await select('Regência'); await setBanca('Cebraspe'); await setVal('#qAno', '2022'); await setVal('#errWhy', 'confundi'); await setVal('#errNote', 'literal x teleológico'); await click('#errAdd'); await wait(150);
     eq((await st('Regência')).errs, [{ d: TODAY, why: 'confundi', note: 'literal x teleológico', banca: 'Cebraspe', year: 2022 }]);
     ok((await txt('#errList')).includes('Cebraspe 2022'), await txt('#errList'));
     await click('#errList [data-act="err-redo-ok"]'); await wait(150); eq((await st('Regência')).errs[0].redo, { d: TODAY, ok: true }); ok((await txt('#errList')).includes('refeito em') && (await txt('#errList')).includes('acertei'), await txt('#errList'));
     eq(await js(`document.querySelectorAll('#errList [data-act="err-redo-ok"], #errList [data-act="err-redo-bad"]').length`), 0, 'refeito não oferece ✔/✖'); await click('#errList [data-act="err-redo-clear"]'); await wait(150); eq((await st('Regência')).errs[0].redo, undefined);
     await click('#errList [data-act="err-redo-bad"]'); await wait(150); eq((await st('Regência')).errs[0].redo, { d: TODAY, ok: false }); ok((await txt('#errList')).includes('errei de novo'));
     await js('act.undo()'); eq((await st('Regência')).errs[0].redo, undefined, 'desfazer volta a "para refazer"');
-    await select('Crase'); await setVal('#qBanca', 'FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'nao-sabia'); await click('#errAdd'); await wait(150); await setVal('#qBanca', ''); await setVal('#qAno', ''); await setVal('#errWhy', 'tempo'); await click('#errAdd'); await wait(150);
+    await select('Crase'); await setBanca('FGV'); await setVal('#qAno', '2023'); await setVal('#errWhy', 'nao-sabia'); await click('#errAdd'); await wait(150); await setBanca(''); await setVal('#qAno', ''); await setVal('#errWhy', 'tempo'); await click('#errAdd'); await wait(150);
     eq((await st('Crase')).errs.map((e) => [e.why, e.banca || null, e.year || null]), [['nao-sabia', 'FGV', 2023], ['tempo', null, null]]);
   });
 
@@ -133,6 +136,26 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'questoes');
     await js(`closeModal(); true`);
   });
 
+await t('BANCA é uma lista de seleção: bancas comuns do Brasil; escolher da lista grava o nome; "Outra…" abre um campo para digitar; a escolha fica para o próximo registro', async () => {
+    await select('Regência'); await js(`setQBanca(''); true`); await wait(100);
+    eq(await js(`document.querySelector('#qBanca').tagName`), 'SELECT');
+    const opts = await js(`[...document.querySelectorAll('#qBanca optgroup[label^="Mais"] option')].map((o) => o.value)`);
+    ok(['CEBRASPE (CESPE)', 'FGV', 'FCC', 'VUNESP', 'CESGRANRIO', 'IBFC', 'QUADRIX', 'AOCP', 'IDECAN', 'CONSULPLAN'].every((b) => opts.includes(b) || b === 'FGV'), opts.join());
+    eq(await js(`document.querySelector('#qBancaOutra').hidden`), true);
+    await js(`(() => { const s = document.querySelector('#qBanca'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(s, 'VUNESP'); s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    eq(await js(`document.querySelector('#qBanca').value`), 'VUNESP'); eq(await js(`document.querySelector('#qBancaOutra').hidden`), true);
+    await js(`(() => { const s = document.querySelector('#qBanca'); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(s, '__outra'); s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    eq(await js(`document.querySelector('#qBancaOutra').hidden`), false); eq(await js(`document.activeElement.id`), 'qBancaOutra', 'foco vai para o campo de texto');
+    await setVal('#qBancaOutra', 'Banca Rara 123'); eq(await js(`document.querySelector('#qBanca').value`), 'Banca Rara 123');
+    await setVal('#qAno', '2021'); await setVal('#qDone', '10'); await setVal('#qOk', '6'); await click('#qAdd'); await wait(200);
+    eq(await js(`map.find(selectedId).node.study.qsrc.map((r) => r.banca).pop()`), 'Banca Rara 123');
+    eq(await js(`document.querySelector('#qBanca').value`), 'Banca Rara 123', 'a banca fica para o próximo registro');
+    await js(`document.querySelector('#qBanca').dispatchEvent(new Event('focus')); true`);
+    eq(await js(`[...document.querySelectorAll('#qBanca optgroup[label^="Já"] option')].map((o) => o.value).includes('Banca Rara 123')`), true, 'agora aparece entre as já usadas');
+    eq(await js(`document.querySelector('#qBanca').value`), 'Banca Rara 123', 'a escolha sobrevive a remontar a lista'); eq(await js(`document.querySelector('#qBancaOutra').hidden`), true, 'como é uma já usada, volta a ser escolha da lista');
+    await js(`setQBanca('cebraspe (cespe)'); true`); eq(await js(`document.querySelector('#qBanca').value`), 'CEBRASPE (CESPE)', 'ignora caixa ao casar com a lista'); await js(`setQBanca(''); true`);
+    await c.shot(require('path').join(__dirname, '..', 'evidencias', 'banca', 'selecao.png'));
+  });
   await t('nenhum erro de console durante toda a sessão', async () => { eq(c.errors, [], 'erros de console'); });
   await c.finish();
 })().catch((e) => { console.error('Falha no harness:', e); require('electron').app.exit(2); });

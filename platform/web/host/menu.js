@@ -6,7 +6,7 @@
  */
 const ITEMS = [
   ['Arquivo', [['new', 'Novo mapa'], ['template', 'Novo mapa de concurso (modelo)'], ['open', 'Abrir arquivo…'], ['save', 'Salvar'], ['saveAs', 'Salvar como…'], ['home', 'Tela inicial']]],
-  ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
+  ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['sync', 'Sincronização (opcional)…'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
   ['Ver', [['graph', 'Rede de conhecimento'], ['pdf', 'Leitor de PDF'], ['present', 'Apresentar'], ['fit', 'Ajustar à tela'], ['help', 'Atalhos e ajuda']]],
   ['Editar', [['undo', 'Desfazer'], ['redo', 'Refazer']]],
 ];

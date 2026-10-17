@@ -56,12 +56,10 @@ const THEMES = {
   },
 };
 
-function getTheme(id) {
-  return THEMES[id] || THEMES.ocean;
-}
-
-const SHAPES = new Set(['pill', 'rect', 'round', 'underline']);
+const SHAPES = new Set(['pill', 'rect', 'round', 'underline', 'ellipse', 'none']);
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const FONT_NAME = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,39}$/;
+const num = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi;
 /**
  * Valida o estilo de um tópico vindo de arquivo ou de colagem. Só passa o que é conhecido e seguro:
  * estes valores vão parar em atributos de SVG, então nunca podem carregar texto arbitrário.
@@ -69,23 +67,61 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 function sanitizeStyle(s) {
   const o = {};
   if (!s || typeof s !== 'object') return o;
-  if (typeof s.fill === 'string' && HEX.test(s.fill)) o.fill = s.fill;
+  if (typeof s.fill === 'string' && (HEX.test(s.fill) || s.fill === 'none')) o.fill = s.fill;
   if (typeof s.color === 'string' && HEX.test(s.color)) o.color = s.color;
   if (typeof s.shape === 'string' && SHAPES.has(s.shape)) o.shape = s.shape;
   if (Number.isFinite(s.size) && s.size >= 6 && s.size <= 96) o.size = s.size;
   if (typeof s.bold === 'boolean') o.bold = s.bold;
   if (typeof s.italic === 'boolean') o.italic = s.italic;
+  // formatação vinda do Mindomo: borda, linha que liga ao pai e fonte
+  if (typeof s.stroke === 'string' && HEX.test(s.stroke)) o.stroke = s.stroke;
+  if (num(s.strokeWidth, 0, 10)) o.strokeWidth = s.strokeWidth;
+  if (typeof s.edge === 'string' && HEX.test(s.edge)) o.edge = s.edge;
+  if (num(s.edgeWidth, 0.5, 12)) o.edgeWidth = s.edgeWidth;
+  if (typeof s.font === 'string' && FONT_NAME.test(s.font)) o.font = s.font;
   return o;
+}
+
+/** Valida um tema inteiro vindo de arquivo (tema original do Mindomo). Devolve um tema seguro ou null. */
+function sanitizeTheme(t) {
+  if (!t || typeof t !== 'object' || !Array.isArray(t.levels) || !t.levels.length) return null;
+  const color = (v, d) => (typeof v === 'string' && HEX.test(v) ? v : d);
+  const levels = t.levels.slice(0, 16).map((l) => {
+    l = l && typeof l === 'object' ? l : {};
+    const o = { shape: SHAPES.has(l.shape) ? l.shape : 'round', fill: l.fill === 'none' || l.fill === 'branch' || HEX.test(l.fill || '') ? l.fill : 'none',
+      color: color(l.color, '#000000'), size: num(l.size, 6, 96) ? l.size : 14, bold: l.bold === true, padX: num(l.padX, 0, 60) ? l.padX : 8, padY: num(l.padY, 0, 40) ? l.padY : 5 };
+    if (l.italic === true) o.italic = true;
+    if (typeof l.stroke === 'string' && (HEX.test(l.stroke) || l.stroke === 'branch')) o.stroke = l.stroke;
+    if (num(l.strokeWidth, 0, 10)) o.strokeWidth = l.strokeWidth;
+    if (typeof l.edge === 'string' && HEX.test(l.edge)) o.edge = l.edge;
+    if (num(l.edgeWidth, 0.5, 12)) o.edgeWidth = l.edgeWidth;
+    if (typeof l.font === 'string' && FONT_NAME.test(l.font)) o.font = l.font;
+    return o;
+  });
+  const branches = (Array.isArray(t.branches) ? t.branches : []).filter((c) => typeof c === 'string' && HEX.test(c)).slice(0, 12);
+  const font = typeof t.font === 'string' && /^[A-Za-z0-9 ,"'_-]{1,160}$/.test(t.font) ? t.font : 'Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+  const widths = (t.line && Array.isArray(t.line.width) ? t.line.width : []).filter((w) => num(w, 0.5, 12)).slice(0, 16);
+  return { name: String(t.name || 'Original').replace(/[<>&"]/g, '').slice(0, 80), background: color(t.background, '#ffffff'), font,
+    branches: branches.length ? branches : ['#0073e6', '#00a896', '#f4a261', '#e76f51'], levels,
+    line: { width: widths.length ? widths : [2], curve: t.line && (t.line.curve === 'elbow' || t.line.curve === 'bezier') ? t.line.curve : 'bezier' } };
+}
+
+/** `custom` = tema do próprio mapa (id 'custom', ex.: o original do Mindomo); sem ele, vale a tabela de temas. */
+function getTheme(id, custom) {
+  if (id === 'custom' && custom) { const t = sanitizeTheme(custom); if (t) return t; }
+  return THEMES[id] || THEMES.ocean;
 }
 
 /** Estilo efetivo de um nível (níveis >2 herdam o último) já com overrides do nó aplicados. */
 function resolveStyle(theme, level, branchColor, nodeStyle = {}) {
   const base = theme.levels[Math.min(level, theme.levels.length - 1)];
   const clean = sanitizeStyle(nodeStyle); // defesa em profundidade: nunca interpola valor não validado
-  const s = { ...base, ...pick(clean, ['shape', 'color', 'size', 'bold', 'italic']) };
+  const s = { ...base, ...pick(clean, ['shape', 'color', 'size', 'bold', 'italic', 'edge', 'edgeWidth', 'font']) };
   const fill = clean.fill || base.fill;
   s.fill = fill === 'branch' ? branchColor : fill;
-  s.stroke = base.stroke === 'branch' ? branchColor : base.stroke;
+  s.stroke = clean.stroke || (base.stroke === 'branch' ? branchColor : base.stroke);
+  s.strokeWidth = clean.strokeWidth !== undefined ? clean.strokeWidth : (base.strokeWidth !== undefined ? base.strokeWidth : 2);
+  if (!(s.strokeWidth > 0)) s.stroke = undefined;
   s.branch = branchColor;
   return s;
 }
@@ -96,4 +132,4 @@ function pick(o, keys) {
   return r;
 }
 
-module.exports = { THEMES, getTheme, resolveStyle, sanitizeStyle };
+module.exports = { THEMES, getTheme, resolveStyle, sanitizeStyle, sanitizeTheme };

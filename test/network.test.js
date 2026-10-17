@@ -100,7 +100,7 @@ test('layout de forças: determinístico, dentro dos limites, sem sobreposição
   assert.deepEqual([...p1], [...p2], 'mesma semente => mesmas posições');
   assert.notDeepEqual([...p1], [...p3]);
   const pts = [...p1.values()];
-  for (const p of pts) { assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y)); assert.ok(Math.abs(p.x) <= 800 && Math.abs(p.y) <= 500); }
+  for (const p of pts) { assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y)); assert.ok(Math.abs(p.x) <= 800 && Math.abs(p.y) <= 800, 'compacto: ' + Math.round(p.x) + ',' + Math.round(p.y)); }
   let minD = Infinity; for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) minD = Math.min(minD, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
   assert.ok(minD > 5, 'nós não se sobrepõem: ' + minD);
   const d = (a, b) => Math.hypot(p1.get(a).x - p1.get(b).x, p1.get(a).y - p1.get(b).y);
@@ -227,4 +227,18 @@ test('Obsidian: não sobrescreve nota que não é do MindCraft; atualiza a que �
   assert.ok(fs.readFileSync(path.join(dir, 'Direito Constitucional (MindCraft).md'), 'utf8').includes('Progresso: 10%'));
   assert.equal(fs.readdirSync(dir).length, 2, 'não cria um arquivo novo a cada exportação'); assert.equal(r2.warnings.length, 1);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('layout de forças: componentes empacotados sem se sobrepor, órfãos em grade compacta, centrado na origem, excedentes sem pilha', () => {
+  const nodes = [], edges = [];
+  for (let c = 0; c < 6; c++) { for (let i = 0; i < 15 + c * 3; i++) nodes.push({ id: `c${c}n${i}`, mapKey: 'M' + c, deg: 1 }); for (let i = 1; i < 15 + c * 3; i++) edges.push({ from: `c${c}n${Math.floor((i - 1) / 2)}`, to: `c${c}n${i}`, type: 'hierarchy' }); }
+  for (let i = 0; i < 30; i++) nodes.push({ id: 'o' + i, mapKey: 'M0', deg: 0 });
+  const p = forceLayout(nodes, edges, { seed: 5 }); assert.equal(p.size, nodes.length);
+  const box = (pre) => { const pts = [...p].filter(([id]) => id.startsWith(pre)).map(([, v]) => v); return { x1: Math.min(...pts.map((q) => q.x)), x2: Math.max(...pts.map((q) => q.x)), y1: Math.min(...pts.map((q) => q.y)), y2: Math.max(...pts.map((q) => q.y)) }; };
+  const boxes = [0, 1, 2, 3, 4, 5].map((c) => box(`c${c}n`));
+  for (let a = 0; a < boxes.length; a++) for (let b = a + 1; b < boxes.length; b++) assert.ok(boxes[a].x2 < boxes[b].x1 || boxes[b].x2 < boxes[a].x1 || boxes[a].y2 < boxes[b].y1 || boxes[b].y2 < boxes[a].y1, `componentes ${a} e ${b} se sobrepõem`);
+  const orph = box('o'), compsBottom = Math.max(...boxes.map((b) => b.y2)); assert.ok(orph.y1 > compsBottom, 'órfãos ficam abaixo dos componentes'); assert.ok(orph.x2 - orph.x1 < 1500 && orph.y2 - orph.y1 < 600, 'grade compacta: ' + Math.round(orph.x2 - orph.x1) + 'x' + Math.round(orph.y2 - orph.y1));
+  const all = [...p.values()], cx = (Math.min(...all.map((q) => q.x)) + Math.max(...all.map((q) => q.x))) / 2, cy = (Math.min(...all.map((q) => q.y)) + Math.max(...all.map((q) => q.y))) / 2; assert.ok(Math.abs(cx) < 1 && Math.abs(cy) < 1, 'centrado');
+  let minD = Infinity; for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) minD = Math.min(minD, Math.hypot(all[i].x - all[j].x, all[i].y - all[j].y)); assert.ok(minD > 20, 'distância mínima ' + minD);
+  const capped = forceLayout(nodes, edges, { maxNodes: 40, iterations: 30 }); const seen = new Set([...capped.values()].map((q) => `${Math.round(q.x)},${Math.round(q.y)}`)); assert.equal(capped.size, nodes.length); assert.equal(seen.size, nodes.length, 'ninguém empilhado na mesma posição');
 });

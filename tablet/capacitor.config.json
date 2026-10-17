@@ -8,5 +8,11 @@
   },
   "android": {
     "allowMixedContent": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "css"
+    }
   }
 }

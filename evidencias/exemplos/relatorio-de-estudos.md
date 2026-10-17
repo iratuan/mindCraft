@@ -27,6 +27,18 @@ Gerado em 20/10/2026
 - Direito Constitucional › Direitos fundamentais — prevista para 19/10/2026 (**1 dia de atraso**)
 - Direito Constitucional › Princípios fundamentais — prevista para 20/10/2026 (hoje)
 
+## Simulados (0)
+
+Nenhum simulado registrado.
+
+## Caderno de erros (0)
+
+Nenhum erro registrado.
+
+## Pontos fracos (≥ 5 questões e acerto < 70%)
+
+- Direito Administrativo › Atos administrativos — 12/25 (48%)
+
 ## Próximos 7 dias
 
 - 21/10/2026 — Direito Administrativo › Atos administrativos

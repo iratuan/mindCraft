@@ -231,7 +231,59 @@ const fresh = () => ev(`closeHome(); closeModal && closeModal(); dirty = false; 
     step('Voltar fecha a rede'); shell('input', 'keyevent', '4'); await waitFor(() => ev('graphOpen === false'), 6000);                                                                                                  // Voltar fecha a rede
   });
 
-  await t('ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal', async () => {
+  await t('SINCRONIZAÇÃO com o Google Drive (servidor falso do Google, pela rede NATIVA do Android): entrar com o código, enviar, receber, conflito, desligar', async () => {
+  const { startMockGoogle } = require('../../test/mock-google'); const { openLibrary } = require('../../core/library'); const { syncLibrary } = require('../../core/sync');
+  const { DriveRemote } = require('../../core/sync-drive'); const { tokenSource } = require('../../core/oauth-device'); const { nodeHttp } = require('../../core/net-node');
+  const g = await startMockGoogle(); const port = new URL(g.base).port; sh('reverse', `tcp:${port}`, `tcp:${port}`);
+  const pc = openLibrary(':memory:');
+  const remote = () => new DriveRemote({ http: nodeHttp, getToken: tokenSource({ http: nodeHttp, clientId: g.S.clientId, clientSecret: g.S.clientSecret, auth: { refreshToken: 'rt-1' }, urls: g.urls }), api: g.urls.api, upload: g.urls.upload });
+  const text = (sel) => ev(`(document.querySelector(${JSON.stringify(sel)}) || {}).textContent || ''`);
+  try {
+    await ev(`closeHome(); closeModal && closeModal(); dirty = false; true`);
+    const id = await ev(`(() => { const m = new MindMap(createNode('Direito Android'), { name: 'Direito Android' }); m.addChild(m.root.id, 'Tópico A'); return getLibrary().saveMap(m, { snapshot: false }); })()`);
+    await ev(`window.__syncTestUrls = ${JSON.stringify(g.urls)}; act.sync(); true`); await waitFor(() => ev('!!document.querySelector("#syncBox")'));
+    eq(await ev('[...document.querySelector("#syncKind").options].map((o) => o.value)'), ['drive']);
+    await ev(`document.querySelector('#syncClientId').value = ${JSON.stringify(g.S.clientId)}; document.querySelector('#syncClientSecret').value = ${JSON.stringify(g.S.clientSecret)}; true`);
+    const [lx, ly] = await ctr('#syncLogin'); tapCss(lx, ly);                                                  // toque REAL no botão
+    await waitFor(async () => /ABCD-EFGH/.test(await text('#syncUserCode')), 20000); shot('30-sync-codigo'); g.S.deviceApproved = true;
+    await waitFor(async () => /Conectado/.test(await text('#syncMsg')), 25000);
+    const [nx, ny] = await ctr('#syncNow'); tapCss(nx, ny);
+    await waitFor(async () => /Pronto|Não sincronizou/.test(await text('#syncMsg')), 40000); const m1 = await text('#syncMsg'); const nSent = +/(\d+) enviado/.exec(m1)[1]; ok(nSent >= 1 && !/problema/.test(m1), m1); shot('31-sync-enviado');
+    ok(g.S.agents.length > 3 && g.S.agents.every((a) => !/Mozilla/.test(a)), 'as chamadas saíram pela rede NATIVA (não pelo WebView): ' + [...new Set(g.S.agents)].join(' | '));
+    const r = await syncLibrary(pc, remote(), {}); eq([r.pulled, r.errors.length], [nSent, 0], 'o outro aparelho recebeu tudo o que o tablet enviou');
+    const mm = pc.loadMap(id); mm.update(mm.root.children[0].id, { notes: 'do computador — ção 😀' }); pc.saveMap(mm, { snapshot: false }); await syncLibrary(pc, remote(), {});
+    const [n2x, n2y] = await ctr('#syncNow'); tapCss(n2x, n2y); await waitFor(async () => /1 recebido/.test(await text('#syncMsg')), 40000);
+    eq(await ev(`getLibrary().loadMap(${JSON.stringify(id)}).root.children[0].notes`), 'do computador — ção 😀');
+    await ev(`(() => { const l = getLibrary(), m = l.loadMap(${JSON.stringify(id)}); m.update(m.root.id, { title: 'No tablet' }); l.saveMap(m, { snapshot: false }); })()`);
+    const m3 = pc.loadMap(id); m3.update(m3.root.id, { title: 'No PC' }); pc.saveMap(m3, { snapshot: false }); await syncLibrary(pc, remote(), {});
+    const [n3x, n3y] = await ctr('#syncNow'); tapCss(n3x, n3y); await waitFor(async () => /1 conflito/.test(await text('#syncMsg')), 40000);
+    eq(await ev(`getLibrary().loadMap(${JSON.stringify(id)}).root.title`), 'No tablet'); ok(await ev(`getLibrary().listMaps().some((x) => /da sincronização/.test(x.title))`), 'a versão do outro aparelho ficou como cópia'); shot('32-sync-conflito');
+    const files = g.S.files.size; const [ox, oy] = await ctr('#syncOff'); tapCss(ox, oy); await wait(500);
+    const cfg = JSON.parse(await ev(`window.__mcHost.fs.readFileSync('/userdata/sync.json', 'utf8')`)); eq([cfg.enabled, cfg.drive.auth], [false, null]); eq(g.S.files.size, files, 'nada apagado no Drive');
+  } finally { try { sh('reverse', '--remove', `tcp:${port}`); } catch { /* ok */ } pc.close(); await g.close(); await ev(`delete window.__syncTestUrls; closeModal(); true`).catch(() => {}); }
+});
+await t('ÁREA SEGURA: o app NÃO fica sob a barra de status, a de navegação (gestos e 3 botões) nem o recorte da câmera — em paisagem e retrato', async () => {
+  const insets = () => { const out = []; for (const m of shell('dumpsys', 'window').matchAll(/InsetsSource id=\S+ type=(statusBars|navigationBars|displayCutout) frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\] visible=true/g)) { const r = { type: m[1], x1: +m[2], y1: +m[3], x2: +m[4], y2: +m[5] }; if (r.x2 > r.x1 && r.y2 > r.y1 && !out.some((o) => JSON.stringify(o) === JSON.stringify(r))) out.push(r); } return out; };
+  const webview = () => { sh('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); const m = /class="android\.webkit\.WebView"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/.exec(shell('cat', '/sdcard/ui.xml')); return m ? { x1: +m[1], y1: +m[2], x2: +m[3], y2: +m[4] } : null; };
+  const inter = (a, b) => Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1) > 1 && Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1) > 1;
+  const nav = (mode) => { for (const m of ['gestural', 'threebutton', 'twobutton']) sh('shell', 'cmd', 'overlay', m === mode ? 'enable' : 'disable', 'com.android.internal.systemui.navbar.' + m); };
+  const cutout = (name) => { for (const n of ['tall', 'corner', 'double', 'narrow', 'wide']) sh('shell', 'cmd', 'overlay', n === name ? 'enable' : 'disable', 'com.android.internal.display.cutout.emulation.' + n); };
+  const checks = []; const seen = [];
+  try {
+    for (const [navMode, cut, rot] of [['gestural', null, 0], ['threebutton', null, 0], ['threebutton', null, 1], ['gestural', 'tall', 0], ['gestural', 'double', 1], ['gestural', null, 0]]) {
+      nav(navMode); cutout(cut); sh('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '0'); sh('shell', 'settings', 'put', 'system', 'user_rotation', String(rot)); await wait(2500);
+      if (!appOnTop()) { sh('shell', 'am', 'start', '-n', PKG + '/.MainActivity'); await wait(2500); }
+      await waitFor(async () => { const w = webview(); return w && w.x2 > w.x1; }, 20000, 800); await wait(1200);
+      const w = webview(), bars = insets(); ok(w, 'WebView não encontrado'); ok(bars.some((b) => b.type === 'statusBars'), 'sem barra de status na medição: ' + JSON.stringify(bars));
+      const bad = bars.filter((b) => inter(w, b)); const label = navMode + (cut ? '+' + cut : '') + ' rot' + rot; seen.push(label + ' ' + JSON.stringify({ w, bars: bars.map((b) => b.type + ':' + [b.x1, b.y1, b.x2, b.y2]) }));
+      eq(bad, [], `o app invade as barras em ${label}: WebView ${JSON.stringify(w)} × ${JSON.stringify(bars)}`);
+      shot('40-area-segura-' + navMode + (cut ? '-' + cut : '') + '-rot' + rot); checks.push(label);
+    }
+  } finally { nav('gestural'); cutout(null); sh('shell', 'settings', 'put', 'system', 'user_rotation', '0'); sh('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '1'); await wait(1500); fs.writeFileSync(path.join(SHOTS, 'area-segura.json'), JSON.stringify(seen, null, 1)); }
+  ok(checks.length === 6, 'configurações testadas: ' + checks.join(' | '));
+});
+
+await t('ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal', async () => {
     await launch(); await watchErrors();
     const r = sh('shell', 'monkey', '-p', PKG, '--throttle', '60', '--pct-syskeys', '0', '--pct-nav', '0', '--pct-majornav', '0', '--pct-appswitch', '0', '--pct-anyevent', '0', '-s', '20261017', '--ignore-security-exceptions', '-v', '3000'); const out = r.stdout + r.stderr;
     ok(/Events injected: 3000/.test(out), 'monkey não terminou: ' + out.slice(-300)); ok(!/ANR|CRASH|Force finishing/i.test(out), 'monkey relatou: ' + (out.match(/.*(ANR|CRASH).*/i) || [''])[0]);

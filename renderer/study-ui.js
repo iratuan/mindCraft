@@ -104,8 +104,38 @@ $('#errAdd').addEventListener('click', () => {
   const origin = { banca: $('#qBanca').value, year: $('#qAno').value };
   if (runStudy((id) => map.mutateStudy(id, (s) => { const r = S.addError(s, { why, note, today, ...origin }); return count ? S.addQuestions(r, 1, 0, today, origin) : r; }), 'Erro registrado no caderno.', selectedId ? [selectedId] : [])) { $('#errNote').value = ''; $('#errWhy').value = ''; }
 });
-// sugestões de banca: as já usadas neste mapa (montadas só ao focar o campo; resumir o mapa a cada seleção seria desperdício)
-$('#qBanca').addEventListener('focus', () => { const dl = $('#bancaList'); dl.textContent = ''; try { for (const b of S.summary(map, { today: nowStr() }).questionsBy.banca) if (b.name !== 'Sem banca') { const o = document.createElement('option'); o.value = b.name; dl.append(o); } } catch { /* sem sugestões */ } });
+// ---------- banca: lista de seleção (as já usadas neste mapa + as mais comuns no Brasil + "Outra…") ----------
+// `#qBanca.value` continua sendo o NOME da banca (ou ''), venha da lista ou da opção "Outra…": quem lê o campo não precisa saber a diferença.
+const { BANCAS, OUTRA } = require(path.join(core, 'bancas'));
+{
+  const sel = $('#qBanca'), outra = $('#qBancaOutra'), proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  const opt = (v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t ?? v; return o; };
+  const group = (label, names) => { const g = document.createElement('optgroup'); g.label = label; for (const n of names) g.append(opt(n)); return g; };
+  /** Remonta a lista mantendo a escolha atual. Só as bancas já usadas neste mapa custam uma consulta; por isso roda ao abrir a lista, não a cada seleção. */
+  const fill = () => {
+    const keep = sel.value, eff = outra.hidden ? keep : outra.value;
+    let used = []; try { used = S.summary(map, { today: nowStr() }).questionsBy.banca.filter((b) => b.name !== 'Sem banca').map((b) => b.name); } catch { /* sem sugestões */ }
+    const seen = new Set(used.map((n) => S.bancaKey(n))); const common = BANCAS.filter((n) => !seen.has(S.bancaKey(n)));
+    sel.textContent = ''; sel.append(opt('', 'Banca (opcional)'));
+    if (used.length) sel.append(group('Já usadas neste mapa', used));
+    sel.append(group('Mais comuns em concursos', common), opt(OUTRA, 'Outra…'));
+    api.set(eff);
+  };
+  const api = {
+    get: () => (sel.selectedIndex >= 0 && proto.get.call(sel) === OUTRA ? outra.value : proto.get.call(sel)),
+    set: (v) => {
+      v = String(v ?? '').trim();
+      const has = [...sel.options].find((o) => o.value !== OUTRA && S.bancaKey(o.value) === S.bancaKey(v) && v);
+      if (!v) { proto.set.call(sel, ''); outra.hidden = true; outra.value = ''; }
+      else if (has) { proto.set.call(sel, has.value); outra.hidden = true; outra.value = ''; }
+      else { proto.set.call(sel, OUTRA); outra.hidden = false; outra.value = v; }
+    },
+  };
+  Object.defineProperty(sel, 'value', { get: api.get, set: api.set, configurable: true });
+  sel.addEventListener('focus', fill); sel.addEventListener('mousedown', () => { if (document.activeElement !== sel) fill(); });
+  sel.addEventListener('change', () => { outra.hidden = proto.get.call(sel) !== OUTRA; if (!outra.hidden) outra.focus(); });
+  fill(); window.setQBanca = api.set;
+}
 $('#studyDone').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: true })), 'Sessão registrada. Próxima revisão agendada.'); $('#studyDone').blur(); });
 $('#studyFail').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: false })), 'Registrado: rever amanhã.'); $('#studyFail').blur(); });
 $('#studyWeight').addEventListener('change', (e) => runStudy((id) => map.mutateStudy(id, (s) => S.setWeight(s, +e.target.value)), 'Peso atualizado.'));
