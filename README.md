@@ -93,6 +93,9 @@ O app funciona até 720×480: painéis do estudo viram uma coluna; com o leitor 
 ## Questões por banca e ano · erros para refazer
 No painel **Estudo**, informe a **banca** (com sugestões das já usadas) e o **ano** ao registrar questões; os campos valem também para o caderno de erros e ficam preenchidos para o próximo registro. O **Painel de estudos** mostra o acerto **por banca** e **por ano** (Cespé = CESPE; sem banca fica só nos totais) e o **Caderno de erros** com filtros (situação, motivo, banca, ano): marque ✔ "refiz e acertei" / ✖ "errei de novo" (↶ desfaz) — tudo desfazível. A **tela inicial** avisa quantos erros ainda estão para refazer na biblioteca, e os relatórios **.md e .docx** incluem simulados, as tabelas por banca/ano e a situação dos erros.
 
+## Aviso diário de revisões
+No **Painel de estudos**, marque "Avisar das revisões do dia às" e escolha o horário. O MindCraft mostra uma notificação do sistema ("5 revisões vencidas em 3 mapas · 2 erros para refazer"), no máximo **uma vez por dia**, só se houver algo a dizer; clicar nela abre a Revisão do dia. Vem **desligado**, e o botão "Testar aviso" confere se o Windows o exibe. Funciona **com o app aberto** (nada é agendado no sistema): se você abrir depois do horário, o aviso aparece no primeiro minuto. A opção e o horário vão no pacote .mcpack.
+
 ## Levar tudo para outro computador
 **Biblioteca → Exportar pacote** gera um `.mcpack` com **todos os mapas** (inclui questões por banca/ano, erros e "refeito", versões não — use Backup do banco para isso) **e as configurações** (tela inicial, tema, opções, leitor de PDF; nunca caminhos do computador), com verificação SHA-256 de cada parte. **Importar pacote** restaura os mapas (sem sobrescrever sem avisar) e as configurações. Para uma cópia exata do banco, use **Backup do banco**.
 

@@ -117,3 +117,8 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - O .docx agora traz **Simulados** (média, melhor, último, tabela e disciplinas mais fracas), **Questões por banca e ano** e a situação/origem dos erros — igual ao .md (antes só o .md tinha).
 - Teste unitário novo (171/171 no total): falha sem a mudança e passa com ela; sem dados não aparecem as seções extras; banca hostil é escapada no XML. e2e de estudo (19/19), erros (9/9) e simulados (8/8) seguem verdes.
 - Não testado: abrir o .docx no Word/LibreOffice (conferi só o XML interno).
+
+## Aviso diário de revisões (notificação)
+- **Novo**: opção no Painel de estudos (desligada por padrão) com horário e botão "Testar aviso"; notificação do sistema (Electron) com revisões vencidas (soma da biblioteca, "em N mapas") e erros para refazer; no máximo 1 por dia; silêncio quando não há nada; clicar abre a Revisão do dia; opção e horário viajam no .mcpack.
+- **Testes**: unitários 173/173 (+2: regras de quando avisar — horário, uma vez por dia, entradas inválidas — e texto singular/plural, validação do que chega ao processo principal); e2e do aviso 7/7 (desligado por padrão, opção e horário, antes/depois do horário, uma vez só, novo dia avisa de novo, biblioteca com 2 mapas, silêncio sem nada, pacote); todas as 27 execuções e2e verdes; QA 82/82; macaco verde. O toast real foi verificado no .exe empacotado (ver evidencias/logs).
+- **Limite honesto**: só avisa com o app aberto (nada é agendado no Windows). Não testado: modo "Não perturbe"/Foco do Windows, macOS/Linux, clique na notificação (o clique chama a Revisão do dia; só verifiquei a lógica, não cliquei no toast).

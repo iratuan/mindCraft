@@ -212,3 +212,24 @@ test('relatório .docx: inclui Simulados, Questões por banca e ano e a situaç�
   const h = mapa().m; h.mutateStudy(h.root.children[0].children[0].id, (st) => q(st, 1, 1, { banca: '<w:p>&"x' })); const x3 = new AdmZip(await R.toStudyDOCX(h, { today: TODAY })).getEntry('word/document.xml').getData().toString('utf8');
   assert.ok(!x3.includes('<w:p>&"x') && x3.includes('&lt;w:p&gt;&amp;'), 'banca hostil escapada no XML');
 });
+
+test('aviso diário: quando avisar (ligado, horário, uma vez por dia) e o que dizer (singular/plural, nada = silêncio)', () => {
+  const N = require('../core/notify'), base = { enabled: true, at: '08:00', today: TODAY, hm: '08:00', notifiedOn: null };
+  assert.equal(N.shouldNotify(base), true); assert.equal(N.shouldNotify({ ...base, hm: '07:59' }), false, 'antes do horário');
+  assert.equal(N.shouldNotify({ ...base, hm: '23:59' }), true, 'depois do horário também (abriu o app mais tarde)');
+  assert.equal(N.shouldNotify({ ...base, notifiedOn: TODAY }), false, 'já avisou hoje'); assert.equal(N.shouldNotify({ ...base, notifiedOn: '2026-10-19' }), true, 'avisou ontem');
+  for (const enabled of [false, undefined, null, 'true', 1]) assert.equal(N.shouldNotify({ ...base, enabled }), false, String(enabled));
+  for (const at of ['8:00', '24:00', '08:60', 'x', null, '', '08:00:00']) assert.equal(N.shouldNotify({ ...base, at }), false, 'horário inválido: ' + at);   // (o padrão 08:00 é aplicado por quem chama: cfg.notifyAt || '08:00')
+  assert.equal(N.shouldNotify({ ...base, hm: 'agora' }), false);
+  assert.equal(N.buildNotice({}), null); assert.equal(N.buildNotice({ due: 0, errors: 0 }), null); assert.equal(N.buildNotice({ due: -3, errors: NaN }), null);
+  assert.equal(N.buildNotice({ due: 1, dueMaps: 1 }).body, '1 revisão vencida'); assert.equal(N.buildNotice({ due: 5, dueMaps: 3, errors: 1 }).body, '5 revisões vencidas em 3 mapas · 1 erro para refazer');
+  assert.equal(N.buildNotice({ errors: 4 }).body, '4 erros para refazer');
+  assert.deepEqual(N.sanitizeNotice({ title: ' Oi\n', body: 'a'.repeat(500) }).body.length, 240); assert.equal(N.sanitizeNotice({ title: '', body: 'x' }), null);
+  for (const bad of [null, 5, 'x', [], { body: 'sem título' }]) assert.equal(N.sanitizeNotice(bad), null);
+  assert.equal(N.sanitizeNotice({ title: 'a\u0000b\u001fc', body: '' }).title, 'a b c');
+});
+
+test('settings: aviso diário viaja no pacote (ligado + horário válido); horário inválido é descartado', () => {
+  assert.deepEqual(sanitizeSettings({ notifyDaily: true, notifyAt: '07:30' }), { notifyDaily: true, notifyAt: '07:30' });
+  assert.deepEqual(sanitizeSettings({ notifyDaily: 'sim', notifyAt: '25:00' }), {}); assert.deepEqual(sanitizeSettings({ notifyAt: '7:30' }), {});
+});

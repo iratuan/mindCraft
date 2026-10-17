@@ -153,6 +153,32 @@ const homeActions = {
 };
 Object.assign(window.MC, { homeData, homeActions });
 
+// ---------- aviso diário de revisões ----------
+const NOTIFY = require(path.join(core, 'notify'));
+/** Revisões vencidas e erros para refazer: biblioteca inteira, ou só o mapa aberto se não há biblioteca. */
+function noticeCounts(today) {
+  if (libraryExists()) {
+    const lib = getLibrary(), maps = lib.listMaps({ today }).filter((m) => m.due > 0);
+    return { due: maps.reduce((a, m) => a + m.due, 0), dueMaps: maps.length, errors: lib.openErrors(5000).length };
+  }
+  if (map && map.root.children.length) { const s = S.summary(map, { today }); return { due: s.due.length, dueMaps: 1, errors: s.errors.open }; }
+  return { due: 0, dueMaps: 0, errors: 0 };
+}
+/** Confere se é hora de avisar (a cada minuto). `force` = botão "Testar aviso": mostra já, sem marcar o dia. */
+async function notifyTick(force = false) {
+  try {
+    const cfg = loadCfg(), today = nowStr(), d = new Date(), hm = window.__nowHM || String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (!force && !NOTIFY.shouldNotify({ enabled: cfg.notifyDaily === true, at: cfg.notifyAt || '08:00', notifiedOn: cfg.notifiedOn, today, hm })) return false;
+    const notice = NOTIFY.buildNotice(noticeCounts(today)) || (force ? { title: 'MindCraft — aviso de teste', body: 'Nada vencido agora. ✔ Os avisos aparecerão assim.' } : null);
+    if (!notice) return false;
+    const shown = await ipcRenderer.invoke('notify:show', notice);
+    if (!force) saveCfg({ notifiedOn: today });                // no máximo uma vez por dia (mesmo se o sistema não mostrar)
+    return shown;
+  } catch (e) { logOnly('aviso diário: ' + e.message); return false; }
+}
+Object.assign(window.MC, { notifyTest: () => notifyTick(true) }); window.__notifyTick = notifyTick;
+setTimeout(notifyTick, 5000); setInterval(notifyTick, 60000);
+
 // ---------- arrastar e soltar arquivos ----------
 /** .mom/.md/.opml abrem como mapa (perguntando sobre alterações pendentes); .pdf abre no leitor; o resto avisa. Devolve true se abriu algo. */
 async function handleDroppedPaths(paths) {

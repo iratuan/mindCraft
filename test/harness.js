@@ -61,6 +61,7 @@ process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de ve
         const realInvoke = ipcRenderer.invoke.bind(ipcRenderer);
         ipcRenderer.invoke = async (ch, ...args) => {
           if (ch === 'render-export' || ch === 'app:path' || ch === 'app:start-override' || ch === 'recent:add' || ch === 'recent:remove' || ch === 'recent:clear' || ch === 'recent:list' || ch === 'clip:read' || ch === 'clip:write' || ch === 'obsidian:open' || ch === 'open-external') return realInvoke(ch, ...args);
+          if (ch === 'notify:show') { (window.__dlg.notices = window.__dlg.notices || []).push(args[0]); return true; }   // não mostra toast de verdade nos testes
           if (ch === 'dialog:save') return window.__dlg.save;
           if (ch === 'dialog:open') return window.__dlg.open;
           if (ch === 'dialog:folder') return window.__dlg.folder;

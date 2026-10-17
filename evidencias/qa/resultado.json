@@ -913,7 +913,7 @@
       "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
       "how": "Gera 1 000 tópicos e mede layout/desenho",
       "status": "OK",
-      "note": "1001 tópicos · render 16 ms · nível 1: 26 visíveis",
+      "note": "1001 tópicos · render 15 ms · nível 1: 26 visíveis",
       "files": [
         "80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
         "80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
@@ -945,7 +945,7 @@
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 16 ms, render+ajuste 61 ms"
+    "Mapa de 1001 tópicos: render 15 ms, render+ajuste 53 ms"
   ],
   "errosDeConsole": []
 }

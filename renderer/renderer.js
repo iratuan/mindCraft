@@ -763,7 +763,7 @@ function saveCfg(patch) {
 /** Preferências que viajam no pacote .mcpack (nunca caminhos do computador). */
 function portableSettings() {
   const c = loadCfg();
-  return { startScreen: c.startScreen || (c.reopenLast === true ? 'last' : c.reopenLast === false ? 'blank' : 'home'), dashOnStart: !!c.dashOnStart, newInLibrary: !!c.newInLibrary,
+  return { startScreen: c.startScreen || (c.reopenLast === true ? 'last' : c.reopenLast === false ? 'blank' : 'home'), dashOnStart: !!c.dashOnStart, newInLibrary: !!c.newInLibrary, notifyDaily: c.notifyDaily === true, ...(typeof c.notifyAt === 'string' ? { notifyAt: c.notifyAt } : {}),
     ...(c.pdfScale !== undefined ? { pdfScale: c.pdfScale } : {}), ...(c.pdfWidth !== undefined ? { pdfWidth: c.pdfWidth } : {}), light: document.body.classList.contains('light') };
 }
 /** Aplica as preferências vindas de um pacote (já validadas pelo núcleo; validadas de novo aqui). Devolve quantas aplicou. */

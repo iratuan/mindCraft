@@ -10,8 +10,9 @@ function sanitizeSettings(raw) {
   const o = {};
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return o;
   if (START.includes(raw.startScreen)) o.startScreen = raw.startScreen;
-  for (const k of ['dashOnStart', 'newInLibrary', 'light']) if (isBool(raw[k])) o[k] = raw[k];
+  for (const k of ['dashOnStart', 'newInLibrary', 'light', 'notifyDaily']) if (isBool(raw[k])) o[k] = raw[k];
   if (raw.pdfScale === 'fit' || (Number.isFinite(raw.pdfScale) && raw.pdfScale >= 0.25 && raw.pdfScale <= 5)) o.pdfScale = raw.pdfScale;
+  if (typeof raw.notifyAt === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(raw.notifyAt)) o.notifyAt = raw.notifyAt;
   if (Number.isFinite(raw.pdfWidth) && raw.pdfWidth >= 240 && raw.pdfWidth <= 4000) o.pdfWidth = Math.round(raw.pdfWidth);
   return o;
 }

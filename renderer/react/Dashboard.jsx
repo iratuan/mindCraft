@@ -232,6 +232,10 @@ export function Dashboard() {
             <label className="opt"><input type="checkbox" id="optReopen" checked={start === 'last'} onChange={(e) => { h.saveCfg({ reopenLast: e.target.checked, startScreen: e.target.checked ? 'last' : (start === 'last' ? 'home' : start) }); refresh(); }} />Reabrir o último mapa ao iniciar</label>
             <Option id="optDashStart" label="Abrir este painel ao iniciar" keyName="dashOnStart" on={!!cfg.dashOnStart} refresh={refresh} />
             <Option id="optNewInLib" label="Salvar mapas novos na biblioteca" keyName="newInLibrary" on={!!cfg.newInLibrary} refresh={refresh} />
+            <Option id="optNotify" label="Avisar das revisões do dia às" keyName="notifyDaily" on={cfg.notifyDaily === true} refresh={refresh} />
+            <input type="time" id="optNotifyAt" aria-label="Horário do aviso diário" value={cfg.notifyAt || '08:00'} disabled={cfg.notifyDaily !== true} onChange={(e) => { if (/^\d\d:\d\d$/.test(e.target.value)) { h.saveCfg({ notifyAt: e.target.value }); refresh(); } }} />
+            <button className="btn small" id="optNotifyTest" title="Mostra um aviso agora, para conferir se o sistema o exibe" onClick={() => h.notifyTest()}>Testar aviso</button>
+            <span className="muted" title="Nada é agendado no sistema: o aviso aparece se o MindCraft estiver aberto no horário (ou ao abri-lo depois dele)">só com o app aberto</span>
           </div>
         </div>
         <div className="dash-exam">

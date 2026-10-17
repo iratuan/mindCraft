@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -213,6 +213,14 @@ ipcMain.handle('open-external', async (_e, url) => {
 });
 // Testes: força o modo de início ('home' | 'last' | 'blank') só na 1ª inicialização; no uso normal é sempre null.
 ipcMain.handle('app:start-override', () => process.env.MINDCRAFT_START || null);
+// Aviso diário de revisões: o renderer decide quando; aqui só validamos e mostramos. Clicar abre a Revisão do dia.
+ipcMain.handle('notify:show', (_e, n) => {
+  const m = require('../core/notify').sanitizeNotice(n);
+  if (!m || !Notification.isSupported()) return false;
+  const note = new Notification({ title: m.title, body: m.body, silent: false });
+  note.on('click', () => { if (!win) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); win.webContents.send('menu', 'review'); });
+  note.show(); return true;
+});
 ipcMain.handle('app:path', (_e, name) => app.getPath(name));
 // Tela inicial: lista (com existência e data), remover um e limpar. Só devolve caminhos que o próprio app registrou.
 ipcMain.handle('recent:list', () => loadRecent().map((p) => { let st = null; try { st = fs.statSync(p); } catch { /* sumiu */ } return { path: p, exists: !!st && st.isFile(), mtime: st ? st.mtimeMs : null }; }));
