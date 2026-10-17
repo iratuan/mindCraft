@@ -760,6 +760,19 @@ function saveCfg(patch) {
   const p = cfgPath(); if (!p) return;
   try { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify({ ...loadCfg(), ...patch })); } catch (e) { report('Não foi possível salvar a configuração: ' + e.message); }
 }
+/** Preferências que viajam no pacote .mcpack (nunca caminhos do computador). */
+function portableSettings() {
+  const c = loadCfg();
+  return { startScreen: c.startScreen || (c.reopenLast === true ? 'last' : c.reopenLast === false ? 'blank' : 'home'), dashOnStart: !!c.dashOnStart, newInLibrary: !!c.newInLibrary,
+    ...(c.pdfScale !== undefined ? { pdfScale: c.pdfScale } : {}), ...(c.pdfWidth !== undefined ? { pdfWidth: c.pdfWidth } : {}), light: document.body.classList.contains('light') };
+}
+/** Aplica as preferências vindas de um pacote (já validadas pelo núcleo; validadas de novo aqui). Devolve quantas aplicou. */
+function applyPortableSettings(raw) {
+  const s = require(path.join(core, 'settings')).sanitizeSettings(raw), { light, ...cfgPart } = s;
+  if (Object.keys(cfgPart).length) saveCfg(cfgPart);
+  if (typeof light === 'boolean') setLight(light);
+  return Object.keys(s).length;
+}
 /** Pasta do vault: a escolhida pelo usuário, ou a pasta do arquivo aberto (somente leitura, limitada). */
 const vaultDirEff = () => { const c = loadCfg(); return c.vaultDir || (filePath ? path.dirname(filePath) : null); };
 /** Arquivo mais recente da lista de recentes que ainda existe. */

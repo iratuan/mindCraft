@@ -169,12 +169,13 @@ function openLibraryModalClassic(tab = 'maps') {
   bPack.onclick = () => guard(async () => {
     const p = await ipcRenderer.invoke('dialog:open-pack'); if (!p) return;
     const r = lib.importPackage(p, { onConflict: conflict.value });
-    say(`Pacote com ${r.maps} mapa(s): ${r.imported} novo(s), ${r.copied} cópia(s), ${r.replaced} substituído(s), ${r.skipped} igual(is)/mantido(s).`, 'ok');
+    const nset = r.settings ? applyPortableSettings(r.settings) : 0;
+    say(`Pacote com ${r.maps} mapa(s): ${r.imported} novo(s), ${r.copied} cópia(s), ${r.replaced} substituído(s), ${r.skipped} igual(is)/mantido(s).${nset ? ` Configurações restauradas (${nset}).` : ''}`, 'ok');
     showReport(r.items.map((i) => `${i.title} — ${i.status}`)); render_();
   });
   bExp.onclick = () => guard(async () => {
     const t = await ipcRenderer.invoke('dialog:save', 'mcpack', 'meus-estudos.mcpack'); if (!t) return;
-    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack'); say(`Pacote salvo com ${r.maps} mapa(s). Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
+    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: portableSettings() }); say(`Pacote salvo com ${r.maps} mapa(s) e as configurações. Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
   });
   bBk.onclick = () => guard(async () => {
     const t = await ipcRenderer.invoke('dialog:save', 'db', 'biblioteca-backup.db'); if (!t) return;

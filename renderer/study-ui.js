@@ -88,9 +88,12 @@ function renderErrList(sel) {
   box.append(el('div', 'muted', `${errs.length} erro(s) registrado(s):`));
   for (const e of errs.slice(0, 12)) {
     const row = el('div', 'err-row'); row.dataset.err = String(e.i);
-    const t = el('div', 'grow'); t.append(el('b', '', S.ERR_REASONS[e.why]), el('span', 'muted', ` · ${fmtDate(e.d)}${e.note ? ' — ' + e.note : ''}`));
+    const src = [e.banca, e.year].filter(Boolean).join(' ');
+    const t = el('div', 'grow'); t.append(el('b', '', S.ERR_REASONS[e.why]), el('span', 'muted', ` · ${fmtDate(e.d)}${src ? ' · ' + src : ''}${e.note ? ' — ' + e.note : ''}`));
+    if (e.redo) t.append(el('span', 'err-redo ' + (e.redo.ok ? 'ok' : 'bad'), ` · refeito em ${fmtDate(e.redo.d)}: ${e.redo.ok ? 'acertei' : 'errei de novo'}`));
+    const redo = (ok, label, title, act) => { const b = el('button', 'err-redo-btn', label); b.title = title; b.dataset.act = act; b.onclick = () => runStudy((id) => map.mutateStudy(id, (s) => S.redoError(s, e.i, { today: nowStr(), ok })), ok === null ? 'Voltou para "refazer".' : ok ? 'Refeito: acertou.' : 'Refeito: errou de novo.', [sel.node.id]); return b; };
     const del = el('button', 'err-del', '✕'); del.title = 'Apagar este erro'; del.dataset.act = 'err-del'; del.onclick = () => runStudy((id) => map.mutateStudy(id, (s) => S.removeError(s, e.i)), 'Erro apagado.', [sel.node.id]);
-    row.append(t, del); box.append(row);
+    row.append(t, ...(e.redo ? [redo(null, '↶', 'Desfazer: voltar para "refazer"', 'err-redo-clear')] : [redo(true, '✔', 'Refiz e acertei', 'err-redo-ok'), redo(false, '✖', 'Refiz e errei de novo', 'err-redo-bad')]), del); box.append(row);
   }
   if (errs.length > 12) box.append(el('div', 'muted', `… e mais ${errs.length - 12} (mais antigos)`));
 }
@@ -98,8 +101,11 @@ $('#errAdd').addEventListener('click', () => {
   const why = $('#errWhy').value, note = $('#errNote').value, count = $('#errCount').checked;
   if (!why) { msg('Escolha o motivo do erro.', 'err'); return; }
   const today = nowStr();
-  if (runStudy((id) => map.mutateStudy(id, (s) => { const r = S.addError(s, { why, note, today }); return count ? S.addQuestions(r, 1, 0, today) : r; }), 'Erro registrado no caderno.', selectedId ? [selectedId] : [])) { $('#errNote').value = ''; $('#errWhy').value = ''; }
+  const origin = { banca: $('#qBanca').value, year: $('#qAno').value };
+  if (runStudy((id) => map.mutateStudy(id, (s) => { const r = S.addError(s, { why, note, today, ...origin }); return count ? S.addQuestions(r, 1, 0, today, origin) : r; }), 'Erro registrado no caderno.', selectedId ? [selectedId] : [])) { $('#errNote').value = ''; $('#errWhy').value = ''; }
 });
+// sugestões de banca: as já usadas neste mapa (montadas só ao focar o campo; resumir o mapa a cada seleção seria desperdício)
+$('#qBanca').addEventListener('focus', () => { const dl = $('#bancaList'); dl.textContent = ''; try { for (const b of S.summary(map, { today: nowStr() }).questionsBy.banca) if (b.name !== 'Sem banca') { const o = document.createElement('option'); o.value = b.name; dl.append(o); } } catch { /* sem sugestões */ } });
 $('#studyDone').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: true })), 'Sessão registrada. Próxima revisão agendada.'); $('#studyDone').blur(); });
 $('#studyFail').addEventListener('click', () => { runStudy((id) => map.mutateStudy(id, (s) => S.reviewed(s, { today: nowStr(), ok: false })), 'Registrado: rever amanhã.'); $('#studyFail').blur(); });
 $('#studyWeight').addEventListener('change', (e) => runStudy((id) => map.mutateStudy(id, (s) => S.setWeight(s, +e.target.value)), 'Peso atualizado.'));
@@ -110,7 +116,8 @@ $('#studyAddMin').addEventListener('click', () => {
 });
 $('#qAdd').addEventListener('click', () => {
   const d = Number($('#qDone').value), c = Number($('#qOk').value === '' ? NaN : $('#qOk').value);
-  if (runStudy((id) => map.mutateStudy(id, (s) => S.addQuestions(s, d, c, nowStr())), `${c}/${d} questões registradas.`, selectedId ? [selectedId] : [])) { $('#qDone').value = ''; $('#qOk').value = ''; }
+  const origin = { banca: $('#qBanca').value, year: $('#qAno').value };   // banca/ano ficam preenchidos: costuma-se registrar várias vezes da mesma prova
+  if (runStudy((id) => map.mutateStudy(id, (s) => S.addQuestions(s, d, c, nowStr(), origin)), `${c}/${d} questões registradas${origin.banca.trim() || origin.year ? ' (' + [origin.banca.trim(), origin.year].filter(Boolean).join(' ') + ')' : ''}.`, selectedId ? [selectedId] : [])) { $('#qDone').value = ''; $('#qOk').value = ''; }
 });
 
 // ---------- painel de estudos (sobreposição) ----------

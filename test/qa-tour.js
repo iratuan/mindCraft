@@ -607,6 +607,19 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await key('Escape'); await c.waitFor(() => js("document.querySelector('#modal').hidden")); eq(await snap(), base);
     await js("ipcRenderer.emit('menu', {}, 'home'); true"); await c.waitFor(() => js("!!document.querySelector('#home .hm')")); focusWin(); for (let i = 0; i < 6; i++) await key('Tab'); await key('Delete'); eq(await snap(), base, 'tela inicial aberta: teclas não mexem no mapa'); await key('Escape'); await c.waitFor(() => js("document.querySelector('#home').hidden"));
   });
+  await feature('Estudos', 'Questões por banca e ano + caderno de erros para refazer', 'Digitar banca/ano, registrar, ver as tabelas no painel de estudos e refazer um erro com o mouse', async ({ shot }) => {
+    await clickNode('Licitações'); await clickSel('#ptabs [data-tab="study"]');
+    await clickSel('#qBanca'); await type('Cebraspe'); await clickSel('#qAno'); await type('2024'); await clickSel('#qDone'); await type('20'); await clickSel('#qOk'); await type('13'); await clickSel('#qAdd');
+    ok((await txt('#studyMsg')).includes('Cebraspe 2024'), await txt('#studyMsg'));
+    await clickSel('#qDone'); await type('10'); await clickSel('#qOk'); await type('9'); await clickSel('#qAdd');
+    await setVal('#errWhy', 'confundi', 'change'); await clickSel('#errNote'); await type('pregão x concorrência'); await clickSel('#errAdd'); await wait(200);
+    ok((await txt('#errList')).includes('Cebraspe 2024'), await txt('#errList')); await shot('questoes-painel-estudo');
+    await clickSel('[data-act="dash"]'); await wait(500);
+    const q = await js("document.querySelector('#qsrcSec').scrollIntoView(); document.querySelector('#qsrcBanca tbody').textContent");
+    ok(q.includes('Cebraspe') && q.includes('22/30'), q); await shot('questoes-por-banca');
+    await clickSel('#errSec [data-act="err-redo-ok"]'); await wait(300); ok((await txt('#errStats')).startsWith('0 para refazer'), await txt('#errStats'));
+    await clickSel('[data-act="dash"]'); await wait(200);
+  });
   await feature('Dados', 'Autosave e recuperação de sessão', 'Alteração → rascunho em disco → "queda" → Restaurar', async ({ shot }) => {
     await openMain(); const draft = path.join(USERDATA, 'drafts', 'session.json'); await clickNode('Moralidade'); await key('Tab'); await type('Trabalho que não pode se perder'); await key('Enter');
     await c.waitFor(() => fs.existsSync(draft)); const size = fs.statSync(draft).size; await js('draftExists = false; newMap()'); ok(fs.existsSync(draft), 'rascunho sobrevive');

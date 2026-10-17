@@ -72,6 +72,7 @@ export function Home({ onClose }) {
               ? <div className="hm-today"><b>{`${d.library.dueTotal} revisão(ões) vencida(s)`}</b><span className="muted">{`em ${d.library.dueMaps.length} mapa(s) da biblioteca`}</span>
                 {d.library.dueMaps.slice(0, 4).map((m) => <button className="hm-chip" key={m.id} data-id={m.id} onClick={act(() => A.openLib(m.id, true))}>{`${m.title} (${m.due})`}</button>)}</div>
               : <div className="hm-today"><b>Nada vencido na biblioteca ✔</b><span className="muted">Estude um tópico novo ou resolva questões.</span></div>)}
+            {d.library.openErrors > 0 && <div className="hm-today" id="hmErrors"><b>{`${d.library.openErrors} erro(s) para refazer`}</b><span className="muted">no caderno de erros dos seus mapas — refazer a questão é a melhor revisão.</span></div>}
           </div>
           <div className="hm-sec" id="hmExams">
             <h3>Próximas provas</h3>

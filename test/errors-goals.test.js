@@ -36,7 +36,7 @@ test('resumo: erros por motivo, da semana, por tópico e os mais recentes', () =
   assert.deepEqual([e.total, e.week], [3, 2]); assert.deepEqual(e.byWhy, { atencao: 2, confundi: 1 });
   assert.deepEqual(e.topics.map((t) => [t.title, t.count]), [['Crase', 2], ['Regência', 1]]);
   assert.deepEqual(e.recent.map((r) => [r.title, r.why, r.d]), [['Crase', 'confundi', TODAY], ['Regência', 'atencao', '2026-10-17'], ['Crase', 'atencao', '2026-10-10']]);
-  assert.deepEqual(e.recent[0].path, ['Direito']); assert.deepEqual(S.summary(new MindMap(createNode('x')), { today: TODAY }).errors, { total: 0, week: 0, byWhy: {}, topics: [], recent: [] });
+  assert.deepEqual(e.recent[0].path, ['Direito']); assert.deepEqual(S.summary(new MindMap(createNode('x')), { today: TODAY }).errors, { total: 0, week: 0, open: 0, redoneOk: 0, redoneBad: 0, byWhy: {}, list: [], topics: [], recent: [] });
 });
 
 test('erros sobrevivem a .mom, biblioteca SQLite e cópia de tópico; o estudo é descartado ao colar (como já era)', () => {

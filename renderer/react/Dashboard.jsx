@@ -119,9 +119,34 @@ function Simulados() {
 }
 
 /** Caderno de erros: por motivo, tópicos com mais erros e os mais recentes. */
-function Errors({ s }) {
+const pctOf = (c) => (c.done ? Math.round((c.correct / c.done) * 100) : 0);
+
+/** Acerto por banca e por ano do mapa aberto (só o que foi registrado com banca/ano). */
+function QuestionsBySource({ s }) {
+  const h = H(), qb = s.questionsBy, tem = (qb.banca.length > 1 || (qb.banca[0] && qb.banca[0].name !== 'Sem banca')) || qb.year.some((y) => y.year);
+  const Tbl = ({ rows, label, id }) => (
+    <table className="tbl" id={id}><thead><tr><th>{label}</th><th className="num">Feitas</th><th>Acerto</th></tr></thead><tbody>
+      {rows.map((c) => <tr key={c.name} data-key={c.name}><td>{c.name}</td><td className="num">{`${c.correct}/${c.done}`}</td><td><div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><Bar pct={pctOf(c)} cls={pctOf(c) < 70 ? 'warn' : ''} style={{ flex: 1 }} /><span>{h.pctTxt(c.accuracy * 100)}</span></div></td></tr>)}
+    </tbody></table>
+  );
+  return (
+    <div className="dash-sec" id="qsrcSec">
+      <h3>Questões por banca e ano</h3>
+      {!tem && <div className="empty">Registre as questões informando a <b>banca</b> e o <b>ano</b> (painel Estudo) para ver aqui onde você acerta menos — cada banca tem um estilo.</div>}
+      {tem && <><Tbl rows={qb.banca} label="Banca" id="qsrcBanca" /><div style={{ height: 10 }} /><Tbl rows={qb.year} label="Ano" id="qsrcYear" /></>}
+    </div>
+  );
+}
+
+function Errors({ s, today }) {
   const h = H(), e = s.errors, S = h.S;
+  const [f, setF] = useState({ state: 'open', banca: '', year: '', why: '' });
+  const set = (k) => (ev) => setF((o) => ({ ...o, [k]: ev.target.value }));
   const max = Math.max(1, ...Object.values(e.byWhy));
+  const bancas = [...new Set(e.list.map((r) => r.banca).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const years = [...new Set(e.list.map((r) => r.year).filter(Boolean))].sort((a, b) => b - a);
+  const rows = e.list.filter((r) => (f.state === 'all' || (f.state === 'open' ? !r.redo : !!r.redo)) && (!f.banca || r.banca === f.banca) && (!f.year || String(r.year) === f.year) && (!f.why || r.why === f.why));
+  const redo = (r, ok) => h.redoError(r.id, r.i, today, ok);
   return (
     <div className="dash-sec" id="errSec">
       <h3>{`Caderno de erros (${e.total})`}</h3>
@@ -129,8 +154,22 @@ function Errors({ s }) {
       {e.total > 0 && (
         <>
           <div className="err-bars">{Object.entries(e.byWhy).sort((a, b) => b[1] - a[1]).map(([k, n]) => <div className="err-bar" key={k} data-why={k}><span>{S.ERR_REASONS[k]}</span><Bar pct={(n / max) * 100} style={{ flex: 1 }} /><b>{n}</b></div>)}</div>
-          <div className="muted">{`${e.week} nos últimos 7 dias · mais erros em: ${e.topics.slice(0, 3).map((t) => `${t.title} (${t.count})`).join(', ')}`}</div>
-          {e.recent.map((r, i) => <ReviewRow key={i} it={{ ...r, sub: `${S.ERR_REASONS[r.why]} · ${h.fmtDate(r.d)}${r.note ? ' — ' + r.note : ''}` }} onClick={() => h.goTo(r.id)} />)}
+          <div className="muted" id="errStats">{`${e.open} para refazer · ${e.redoneOk} refeito(s) e acertado(s) · ${e.redoneBad} errado(s) de novo · ${e.week} nos últimos 7 dias · mais erros em: ${e.topics.slice(0, 3).map((t) => `${t.title} (${t.count})`).join(', ')}`}</div>
+          <div className="err-filters">
+            <select id="errFState" aria-label="Situação" value={f.state} onChange={set('state')}><option value="open">Para refazer</option><option value="done">Já refeitos</option><option value="all">Todos</option></select>
+            <select id="errFWhy" aria-label="Motivo" value={f.why} onChange={set('why')}><option value="">Todos os motivos</option>{Object.entries(S.ERR_REASONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <select id="errFBanca" aria-label="Banca" value={f.banca} onChange={set('banca')}><option value="">Todas as bancas</option>{bancas.map((b) => <option key={b} value={b}>{b}</option>)}</select>
+            <select id="errFYear" aria-label="Ano" value={f.year} onChange={set('year')}><option value="">Todos os anos</option>{years.map((y) => <option key={y} value={String(y)}>{y}</option>)}</select>
+          </div>
+          {!rows.length && <div className="empty" id="errEmpty">{f.state === 'open' && !f.banca && !f.year && !f.why ? 'Nada para refazer. ✔' : 'Nenhum erro com esses filtros.'}</div>}
+          {rows.slice(0, 40).map((r) => (
+            <ReviewRow key={r.id + ':' + r.i} dataReview={undefined} it={{ ...r, sub: `${S.ERR_REASONS[r.why]} · ${h.fmtDate(r.d)}${r.banca || r.year ? ' · ' + [r.banca, r.year].filter(Boolean).join(' ') : ''}${r.note ? ' — ' + r.note : ''}` }} onClick={() => h.goTo(r.id)} right={
+              r.redo
+                ? <><span className={'tag ' + (r.redo.ok ? 'today' : 'late')}>{r.redo.ok ? 'acertei ao refazer' : 'errei de novo'}</span><button className="mini" title="Voltar para “refazer”" data-act="err-redo-clear" data-err={r.id + ':' + r.i} onClick={() => redo(r, null)}>↶</button></>
+                : <><button className="mini" title="Refiz e acertei" data-act="err-redo-ok" data-err={r.id + ':' + r.i} onClick={() => redo(r, true)}>✔</button><button className="mini" title="Refiz e errei de novo" data-act="err-redo-bad" data-err={r.id + ':' + r.i} onClick={() => redo(r, false)}>✖</button></>
+            } />
+          ))}
+          {rows.length > 40 && <div className="muted">{`… e mais ${rows.length - 40}. Use os filtros para refinar.`}</div>}
         </>
       )}
     </div>
@@ -247,7 +286,8 @@ export function Dashboard() {
               )}
           </div>
           <Agenda s={s} />
-          <Errors s={s} />
+          <QuestionsBySource s={s} />
+          <Errors s={s} today={today} />
           <Simulados />
         </div>
         <div>

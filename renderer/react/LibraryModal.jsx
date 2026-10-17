@@ -57,13 +57,14 @@ export function LibraryModal({ initialTab, onClose }) {
   const onImpPack = guard(async () => {
     const p = await h.ipc('dialog:open-pack'); if (!p) return;
     const r = lib.importPackage(p, { onConflict: conflict.current.value });
-    say(`Pacote com ${r.maps} mapa(s): ${r.imported} novo(s), ${r.copied} cópia(s), ${r.replaced} substituído(s), ${r.skipped} igual(is)/mantido(s).`, 'ok');
+    const nset = r.settings ? h.applyPortableSettings(r.settings) : 0;
+    say(`Pacote com ${r.maps} mapa(s): ${r.imported} novo(s), ${r.copied} cópia(s), ${r.replaced} substituído(s), ${r.skipped} igual(is)/mantido(s).${nset ? ` Configurações restauradas (${nset}).` : ''}`, 'ok');
     setReport(r.items.map((i) => `${i.title} — ${i.status}`)); refresh();
   });
   const onExpPack = guard(async () => {
     const t = await save('mcpack', 'meus-estudos.mcpack'); if (!t) return;
-    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack');
-    say(`Pacote salvo com ${r.maps} mapa(s). Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
+    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: h.portableSettings() });
+    say(`Pacote salvo com ${r.maps} mapa(s) e as configurações. Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
   });
   const onBackup = guard(async () => {
     const t = await save('db', 'biblioteca-backup.db'); if (!t) return;

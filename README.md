@@ -90,6 +90,12 @@ Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma ca
 ## Janelas pequenas e teclado
 O app funciona até 720×480: painéis do estudo viram uma coluna; com o leitor de PDF aberto numa janela estreita (< 900 px) o painel lateral se recolhe para o mapa não ficar espremido. **Teclado**: nas janelas (biblioteca, simulado, CSV…), Tab e Shift+Tab circulam só dentro delas, Esc fecha e devolve o foco a quem abriu; com uma janela, a tela inicial ou os painéis em foco, Tab/Delete/Enter/setas pertencem ao controle focado e **nunca** alteram o mapa por baixo.
 
+## Questões por banca e ano · erros para refazer
+No painel **Estudo**, informe a **banca** (com sugestões das já usadas) e o **ano** ao registrar questões; os campos valem também para o caderno de erros e ficam preenchidos para o próximo registro. O **Painel de estudos** mostra o acerto **por banca** e **por ano** (Cespé = CESPE; sem banca fica só nos totais) e o **Caderno de erros** com filtros (situação, motivo, banca, ano): marque ✔ "refiz e acertei" / ✖ "errei de novo" (↶ desfaz) — tudo desfazível. A **tela inicial** avisa quantos erros ainda estão para refazer na biblioteca, e o relatório .md inclui as tabelas e a situação dos erros.
+
+## Levar tudo para outro computador
+**Biblioteca → Exportar pacote** gera um `.mcpack` com **todos os mapas** (inclui questões por banca/ano, erros e "refeito", versões não — use Backup do banco para isso) **e as configurações** (tela inicial, tema, opções, leitor de PDF; nunca caminhos do computador), com verificação SHA-256 de cada parte. **Importar pacote** restaura os mapas (sem sobrescrever sem avisar) e as configurações. Para uma cópia exata do banco, use **Backup do banco**.
+
 ## Profundidade dos tópicos
 Você pode aninhar até **100 níveis** de subtópicos (mapas reais ficam abaixo de 15). Ao tentar passar disso — criando, movendo ou colando um ramo — o app avisa na barra de status e **não altera nada**. Arquivos `.mom` com mais de 500 níveis são **recusados** (antes o ramo era cortado em silêncio e um "Salvar" depois gravaria o arquivo mutilado). Todos os recursos enxergam qualquer profundidade: rede de conhecimento (um nó por tópico, aresta de hierarquia por nível, relações entre níveis distantes), Estrutura (recuo limitado + selo com o nível), revisões, planilha, exportações e biblioteca.
 

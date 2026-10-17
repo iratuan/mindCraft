@@ -445,3 +445,9 @@ body.pdf-dragging { cursor: col-resize; user-select: none; }
   body.pdf-open #panels { display: none; }
   #pdfpane { min-width: 240px; width: 50%; }
 }
+
+/* ---------- Questões por banca/ano e caderno de erros (refazer) ---------- */
+.err-filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; } .err-filters select { max-width: 100%; }
+.err-redo.ok { color: #7bd88f; } .err-redo.bad { color: #ff8a90; }
+#qsrcSec .tbl td:first-child { overflow-wrap: anywhere; }
+.err-redo-btn { width: 20px; height: 20px; border: 0; border-radius: 10px; background: transparent; color: var(--text-dim); cursor: pointer; } .err-redo-btn:hover { background: var(--accent); color: #fff; }

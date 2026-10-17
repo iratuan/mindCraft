@@ -2,7 +2,7 @@
 > mindcraft@0.1.0 preqa
 > node tools/build-ui.js
 
-interface React empacotada: renderer\bundle\react-ui.js (891 KB)
+interface React empacotada: renderer\bundle\react-ui.js (899 KB)
 
 > mindcraft@0.1.0 qa
 > electron test/qa-tour.js
@@ -108,16 +108,17 @@ MindCraft — QA exaustivo por funcionalidade
   ok   73 Estudos › Tela inicial: continuar, recentes, atalhos e biblioteca
   ok   74 Estudos › Simulados: registrar por disciplina e acompanhar a evolução
   ok   75 Mapa › Teclado real nas janelas: Tab circula só dentro delas, Esc fecha e o mapa nunca é alterado
-  ok   76 Dados › Autosave e recuperação de sessão
-  ok   77 Dados › Arquivo corrompido não derruba o app nem o mapa atual
+  ok   76 Estudos › Questões por banca e ano + caderno de erros para refazer
+  ok   77 Dados › Autosave e recuperação de sessão
+  ok   78 Dados › Arquivo corrompido não derruba o app nem o mapa atual
 
 — CASOS EXTREMOS E ESTADOS VAZIOS —
 
-  ok   78 Extremos › Título enorme, HTML, emoji e caracteres especiais
-  ok   79 Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
-  ok   80 Extremos › Janela pequena (1000×640): a interface continua utilizável
-  ok   81 Extremos › Estados vazios: painel, conexões e grafo sem dados
+  ok   79 Extremos › Título enorme, HTML, emoji e caracteres especiais
+  ok   80 Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
+  ok   81 Extremos › Janela pequena (1000×640): a interface continua utilizável
+  ok   82 Extremos › Estados vazios: painel, conexões e grafo sem dados
 
-81/81 funcionalidades OK  ·  erros de console: 0
+82/82 funcionalidades OK  ·  erros de console: 0
 
 

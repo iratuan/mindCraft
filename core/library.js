@@ -13,6 +13,7 @@ const { DatabaseSync } = require('node:sqlite');
 const { MindMap, newId } = require('./model');
 const { readMom, writeMom } = require('./mom');
 const study = require('./study');
+const { sanitizeSettings } = require('./settings');
 
 const PACKAGE_FORMAT = 'mindcraft-library';
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
@@ -48,6 +49,21 @@ const MIGRATIONS = [
     CREATE TABLE snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, map_id TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE, created_at TEXT NOT NULL, reason TEXT NOT NULL, data BLOB NOT NULL);
     CREATE INDEX snapshots_map ON snapshots(map_id, id);
   `),
+  // 2: questões por banca/ano e caderno de erros (tabelas DERIVADAS, refeitas a cada gravação; esta migração preenche as dos mapas já guardados)
+  (db) => {
+    db.exec(`
+      CREATE TABLE qsrc (map_id TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE, topic_id TEXT NOT NULL, day TEXT NOT NULL, banca TEXT NOT NULL, bkey TEXT NOT NULL, year INTEGER, done INTEGER NOT NULL, correct INTEGER NOT NULL);
+      CREATE INDEX qsrc_map ON qsrc(map_id);
+      CREATE TABLE qerr (map_id TEXT NOT NULL REFERENCES maps(id) ON DELETE CASCADE, topic_id TEXT NOT NULL, idx INTEGER NOT NULL, day TEXT NOT NULL, why TEXT NOT NULL, note TEXT NOT NULL, banca TEXT, year INTEGER, redo_day TEXT, redo_ok INTEGER, PRIMARY KEY (map_id, topic_id, idx));
+    `);
+    const insS = db.prepare('INSERT INTO qsrc(map_id,topic_id,day,banca,bkey,year,done,correct) VALUES (?,?,?,?,?,?,?,?)');
+    const insE = db.prepare('INSERT INTO qerr(map_id,topic_id,idx,day,why,note,banca,year,redo_day,redo_ok) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    for (const t of db.prepare('SELECT map_id, id, study_json FROM topics WHERE study_json IS NOT NULL').all()) {
+      let st; try { st = study.normalizeStudy(JSON.parse(t.study_json)); } catch { continue; }
+      for (const r of st.qsrc || []) insS.run(t.map_id, t.id, r.d, r.banca || '', study.bancaKey(r.banca), r.year ?? null, r.done, r.correct);
+      (st.errs || []).forEach((e, i) => insE.run(t.map_id, t.id, i, e.d, e.why, e.note, e.banca ?? null, e.year ?? null, e.redo ? e.redo.d : null, e.redo ? (e.redo.ok ? 1 : 0) : null));
+    }
+  },
 ];
 
 const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
@@ -131,7 +147,7 @@ class Library {
       if (cur) {
         this.db.prepare('UPDATE maps SET title=?, theme=?, exam_name=?, exam_date=?, meta_json=?, root_id=?, source_path=COALESCE(?, source_path), source_hash=COALESCE(?, source_hash), updated_at=?, deleted_at=NULL, rev=rev+1 WHERE id=?')
           .run(...row.map(nz), nz(source), nz(hash), now, id);
-        for (const t of ['topics', 'study_log', 'qlog', 'relations']) this.db.prepare(`DELETE FROM ${t} WHERE map_id = ?`).run(id);
+        for (const t of ['topics', 'study_log', 'qlog', 'qsrc', 'qerr', 'relations']) this.db.prepare(`DELETE FROM ${t} WHERE map_id = ?`).run(id);
       } else {
         this.db.prepare('INSERT INTO maps(title, theme, exam_name, exam_date, meta_json, root_id, source_path, source_hash, created_at, updated_at, id) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
           .run(...row.map(nz), nz(source), nz(hash), now, now, id);
@@ -147,6 +163,8 @@ class Library {
     const ins = this.db.prepare('INSERT INTO topics(map_id,id,parent_id,pos,title,notes,collapsed,progress,markers,style,study_json,raw,extra,weight,next_review,last_review,minutes_total,q_done,q_correct) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     const insLog = this.db.prepare('INSERT INTO study_log(map_id,topic_id,day,minutes) VALUES (?,?,?,?)');
     const insQ = this.db.prepare('INSERT INTO qlog(map_id,topic_id,day,done,correct) VALUES (?,?,?,?,?)');
+    const insS = this.db.prepare('INSERT INTO qsrc(map_id,topic_id,day,banca,bkey,year,done,correct) VALUES (?,?,?,?,?,?,?,?)');
+    const insE = this.db.prepare('INSERT INTO qerr(map_id,topic_id,idx,day,why,note,banca,year,redo_day,redo_ok) VALUES (?,?,?,?,?,?,?,?,?,?)');
     const seen = new Set();
     const visit = (n, parent, pos) => {
       if (seen.has(n.id)) throw new Error(`Tópico repetido no mapa: ${n.id}`);
@@ -159,6 +177,8 @@ class Library {
       if (st) {
         for (const [d, m] of Object.entries(st.log)) insLog.run(mapId, n.id, d, m);
         for (const [d, q] of Object.entries(st.qlog)) insQ.run(mapId, n.id, d, q.done, q.correct);
+        for (const r of st.qsrc || []) insS.run(mapId, n.id, r.d, r.banca || '', study.bancaKey(r.banca), r.year ?? null, r.done, r.correct);
+        (st.errs || []).forEach((e, i) => insE.run(mapId, n.id, i, e.d, e.why, e.note, e.banca ?? null, e.year ?? null, e.redo ? e.redo.d : null, e.redo ? (e.redo.ok ? 1 : 0) : null));
       }
       n.children.forEach((c, i) => visit(c, n.id, i));
     };
@@ -265,14 +285,17 @@ class Library {
   }
 
   /** Pacote portátil (.mcpack): manifest.json + maps/<id>.mom, cada um com SHA-256. Leve para levar a outro computador. */
-  exportPackage(target, { mapIds = null } = {}) {
+  exportPackage(target, { mapIds = null, settings = null } = {}) {
     const maps = this.listMaps().filter((m) => !mapIds || mapIds.includes(m.id));
     const zip = new AdmZip(); const items = [];
     for (const m of maps) {
       const data = writeMom(this.loadMap(m.id)); const file = `maps/${m.id}.mom`;
       zip.addFile(file, data); items.push({ id: m.id, title: m.title, file, sha256: sha256(data), topics: m.topics, updated_at: m.updated_at });
     }
-    zip.addFile('manifest.json', Buffer.from(JSON.stringify({ format: PACKAGE_FORMAT, version: 1, created_at: this.now(), app: 'MindCraft', maps: items }, null, 2)));
+    // preferências portáteis (opcionais; pacotes antigos não têm): validadas na ida e na volta
+    let setItem = null;
+    if (settings) { const data = Buffer.from(JSON.stringify(sanitizeSettings(settings), null, 2)); zip.addFile('settings.json', data); setItem = { file: 'settings.json', sha256: sha256(data) }; }
+    zip.addFile('manifest.json', Buffer.from(JSON.stringify({ format: PACKAGE_FORMAT, version: 1, created_at: this.now(), app: 'MindCraft', maps: items, ...(setItem ? { settings: setItem } : {}) }, null, 2)));
     const buf = zip.toBuffer();
     if (target) { const tmp = `${target}.tmp-${process.pid}`; try { fs.writeFileSync(tmp, buf); fs.renameSync(tmp, target); } catch (e) { fs.rmSync(tmp, { force: true }); throw e; } }
     return { maps: items.length, bytes: buf.length, buffer: buf };
@@ -299,7 +322,14 @@ class Library {
       if (sha256(data) !== it.sha256) throw new Error(`Pacote corrompido: a verificação (SHA-256) de "${it.title || it.file}" falhou.`);
       prepared.push({ it, data, map: readMom(data) });
     }
-    const report = { maps: prepared.length, imported: 0, skipped: 0, replaced: 0, copied: 0, items: [] };
+    let settings = null;                                          // preferências do pacote (se houver): validadas aqui; quem chama decide aplicar
+    if (man.settings) {
+      const se = man.settings.file === 'settings.json' ? zip.getEntry('settings.json') : null;
+      if (!se || se.header.size > 65536) throw new Error('Pacote inválido: configurações ilegíveis.');
+      const data = se.getData(); if (sha256(data) !== man.settings.sha256) throw new Error('Pacote corrompido: a verificação (SHA-256) das configurações falhou.');
+      try { settings = sanitizeSettings(JSON.parse(data.toString('utf8'))); } catch { throw new Error('Pacote inválido: configurações ilegíveis.'); }
+    }
+    const report = { maps: prepared.length, imported: 0, skipped: 0, replaced: 0, copied: 0, items: [], settings };
     this.tx(() => {                                               // 2) grava tudo ou nada
       for (const { it, data, map } of prepared) {
         const hash = sha256(data), cur = this.db.prepare('SELECT id, source_hash, deleted_at FROM maps WHERE id = ?').get(it.id);
@@ -336,6 +366,21 @@ class Library {
     return this.db.prepare(`SELECT t.map_id AS mapId, m.title AS mapTitle, t.id AS topicId, t.title, substr(t.notes, 1, 120) AS notes
       FROM topics t JOIN maps m ON m.id = t.map_id WHERE m.deleted_at IS NULL AND (t.title LIKE ? ESCAPE '\\' OR t.notes LIKE ? ESCAPE '\\')
       ORDER BY m.title, t.title LIMIT ?`).all(like, like, limit);
+  }
+  /** Acerto por banca e por ano em TODOS os mapas (só o que foi registrado com banca/ano). */
+  questionsBySource() {
+    const live = 'm.deleted_at IS NULL';
+    const banca = this.db.prepare(`SELECT MIN(q.banca) AS name, q.bkey AS key, SUM(q.done) AS done, SUM(q.correct) AS correct FROM qsrc q JOIN maps m ON m.id = q.map_id WHERE ${live} GROUP BY q.bkey ORDER BY done DESC, name`).all()
+      .map((r) => ({ name: r.name || 'Sem banca', key: r.key, done: r.done, correct: r.correct, accuracy: r.correct / r.done }));
+    const year = this.db.prepare(`SELECT q.year AS year, SUM(q.done) AS done, SUM(q.correct) AS correct FROM qsrc q JOIN maps m ON m.id = q.map_id WHERE ${live} GROUP BY q.year ORDER BY q.year DESC`).all()
+      .map((r) => ({ year: r.year, name: r.year ? String(r.year) : 'Sem ano', done: r.done, correct: r.correct, accuracy: r.correct / r.done }));
+    return { banca, year };
+  }
+  /** Erros do caderno AINDA NÃO refeitos, em todos os mapas (mais antigos primeiro: é o que está esquecido). */
+  openErrors(limit = 200) {
+    return this.db.prepare(`SELECT e.map_id AS mapId, m.title AS mapTitle, e.topic_id AS topicId, t.title, e.idx, e.day AS d, e.why, e.note, e.banca, e.year
+      FROM qerr e JOIN maps m ON m.id = e.map_id JOIN topics t ON t.map_id = e.map_id AND t.id = e.topic_id
+      WHERE m.deleted_at IS NULL AND e.redo_day IS NULL ORDER BY e.day, m.title, t.title LIMIT ?`).all(limit);
   }
   minutesByDay(from, to) { return this.db.prepare('SELECT s.day, SUM(s.minutes) AS minutes FROM study_log s JOIN maps m ON m.id = s.map_id WHERE m.deleted_at IS NULL AND s.day BETWEEN ? AND ? GROUP BY s.day ORDER BY s.day').all(from, to); }
   questionsByDay(from, to) { return this.db.prepare('SELECT q.day, SUM(q.done) AS done, SUM(q.correct) AS correct FROM qlog q JOIN maps m ON m.id = q.map_id WHERE m.deleted_at IS NULL AND q.day BETWEEN ? AND ? GROUP BY q.day ORDER BY q.day').all(from, to); }

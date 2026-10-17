@@ -11,6 +11,18 @@ const MAX_MIN_PER_DAY = 1440;
 /** Motivos do caderno de erros (chave → rótulo). */
 const ERR_REASONS = { atencao: 'Falta de atenção', 'nao-sabia': 'Não sabia o conteúdo', confundi: 'Confundi conceitos', tempo: 'Falta de tempo', chute: 'Chutei', outro: 'Outro' };
 const MAX_ERRS = 200, MAX_ERR_NOTE = 300;
+/** Questões por origem (banca/ano): até MAX_QSRC registros por tópico (um por dia+banca+ano). */
+const MAX_QSRC = 500, MAX_BANCA = 60, MIN_YEAR = 1950, MAX_YEAR = 2100;
+/** Nome de banca limpo (espaços colapsados, até 60 caracteres) ou ''. */
+function cleanBanca(b) { return String(b ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_BANCA); }
+/** Ano válido (inteiro 1950–2100; aceita texto numérico) ou null. */
+function cleanYear(y) {
+  if (y === null || y === undefined || y === '') return null;
+  const n = typeof y === 'string' && /^\d{4}$/.test(y.trim()) ? Number(y) : y;
+  return Number.isInteger(n) && n >= MIN_YEAR && n <= MAX_YEAR ? n : null;
+}
+/** Chave de agrupamento: banca sem diferença de caixa/acentos ("CESPE" = "Cespe" = "cespé"). */
+const bancaKey = (b) => cleanBanca(b).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const MAX_GOAL_MIN = 7 * 1440, MAX_GOAL_Q = 100000;
 /** "Ponto fraco": tópico com pelo menos WEAK_MIN questões e acerto abaixo de WEAK_ACCURACY. */
 const WEAK_MIN = 5, WEAK_ACCURACY = 0.7, AGENDA_DAYS = 28;
@@ -39,7 +51,7 @@ function diffDays(a, b) { return Math.round((parseDate(b) - parseDate(a)) / 8640
 
 // ---------- estado de estudo de um tópico ----------
 function emptyStudy() {
-  return { weight: 1, log: {}, q: { done: 0, correct: 0 }, qlog: {}, reviews: [], stage: -1, next: null, last: null };
+  return { weight: 1, log: {}, q: { done: 0, correct: 0 }, qlog: {}, reviews: [], stage: -1, next: null, last: null };   // + errs, qsrc: só existem se houver registros
 }
 /** Normaliza (e valida) o que veio de um arquivo; nunca confia em dados externos. */
 function normalizeStudy(raw) {
@@ -56,8 +68,24 @@ function normalizeStudy(raw) {
   if (Array.isArray(raw.reviews)) s.reviews = raw.reviews.filter((r) => r && isDateStr(r.d)).map((r) => ({ d: r.d, ok: r.ok !== false }));
   if (Number.isInteger(raw.stage) && raw.stage >= -1) s.stage = raw.stage;
   if (Array.isArray(raw.errs)) {          // caderno de erros (só existe se houver registros)
-    const errs = raw.errs.filter((e) => e && isDateStr(e.d) && ERR_REASONS[e.why]).slice(-MAX_ERRS).map((e) => ({ d: e.d, why: e.why, note: String(e.note ?? '').slice(0, MAX_ERR_NOTE) }));
+    const errs = raw.errs.filter((e) => e && isDateStr(e.d) && ERR_REASONS[e.why]).slice(-MAX_ERRS).map((e) => {
+      const o = { d: e.d, why: e.why, note: String(e.note ?? '').slice(0, MAX_ERR_NOTE) };
+      const b = cleanBanca(e.banca), y = cleanYear(e.year);
+      if (b) o.banca = b; if (y) o.year = y;
+      if (e.redo && isDateStr(e.redo.d) && typeof e.redo.ok === 'boolean') o.redo = { d: e.redo.d, ok: e.redo.ok };   // refeita em d (acertou/errou de novo)
+      return o;
+    });
     if (errs.length) s.errs = errs;
+  }
+  if (Array.isArray(raw.qsrc)) {          // questões por banca/ano (detalhe; os totais continuam em q/qlog)
+    const seen = new Map();
+    for (const r of raw.qsrc.slice(0, MAX_QSRC)) {
+      if (!r || !isDateStr(r.d) || !Number.isInteger(r.done) || !Number.isInteger(r.correct) || r.done <= 0 || r.correct < 0 || r.correct > r.done) continue;
+      const b = cleanBanca(r.banca), y = cleanYear(r.year); if (!b && !y) continue;
+      const k = r.d + '|' + bancaKey(b) + '|' + (y || '');
+      const cur = seen.get(k); if (cur) { cur.done += r.done; cur.correct += r.correct; } else seen.set(k, { d: r.d, ...(b ? { banca: b } : {}), ...(y ? { year: y } : {}), done: r.done, correct: r.correct });
+    }
+    if (seen.size) s.qsrc = [...seen.values()];
   }
   if (isDateStr(raw.next)) s.next = raw.next;
   if (isDateStr(raw.last)) s.last = raw.last;
@@ -96,23 +124,44 @@ function addTime(st, today, minutes) {
   return s;
 }
 
-function addQuestions(st, done, correct, today = null) {
+function addQuestions(st, done, correct, today = null, { banca = '', year = null } = {}) {
   if (today !== null && !isDateStr(today)) throw new Error(`Data inválida: ${today}`);
+  const b = cleanBanca(banca), y = cleanYear(year);
+  if (String(year ?? '').trim() !== '' && y === null) throw new Error(`Ano inválido: use um ano entre ${MIN_YEAR} e ${MAX_YEAR}.`);
   if (!Number.isInteger(done) || !Number.isInteger(correct) || done <= 0 || correct < 0) throw new Error('Informe números inteiros (feitas > 0, acertos ≥ 0).');
   if (correct > done) throw new Error('Os acertos não podem superar as questões feitas.');
   const s = normalizeStudy(st);
   s.q = { done: s.q.done + done, correct: s.q.correct + correct };
   if (today) { const d0 = s.qlog[today] || { done: 0, correct: 0 }; s.qlog[today] = { done: d0.done + done, correct: d0.correct + correct }; } // histórico por dia (acerto semanal)
+  if ((b || y) && today) {                 // detalhe por banca/ano (só quando informado)
+    const list = s.qsrc || (s.qsrc = []), k = bancaKey(b);
+    const cur = list.find((r) => r.d === today && bancaKey(r.banca) === k && (r.year || null) === y);
+    if (cur) { cur.done += done; cur.correct += correct; }
+    else if (list.length >= MAX_QSRC) throw new Error(`O histórico por banca/ano deste tópico já tem ${MAX_QSRC} registros.`);
+    else list.push({ d: today, ...(b ? { banca: b } : {}), ...(y ? { year: y } : {}), done, correct });
+  }
   return s;
 }
 
 /** Registra um erro (motivo + anotação) no caderno de erros do tópico. */
-function addError(st, { why, note = '', today }) {
+function addError(st, { why, note = '', today, banca = '', year = null }) {
   if (!isDateStr(today)) throw new Error(`Data inválida: ${today}`);
   if (!ERR_REASONS[why]) throw new Error('Escolha o motivo do erro.');
   const s = normalizeStudy(st);
   if ((s.errs || []).length >= MAX_ERRS) throw new Error(`O caderno de erros deste tópico já tem ${MAX_ERRS} registros; apague os antigos.`);
-  s.errs = [...(s.errs || []), { d: today, why, note: String(note ?? '').trim().slice(0, MAX_ERR_NOTE) }];
+  const b = cleanBanca(banca), y = cleanYear(year);
+  if (String(year ?? '').trim() !== '' && y === null) throw new Error(`Ano inválido: use um ano entre ${MIN_YEAR} e ${MAX_YEAR}.`);
+  s.errs = [...(s.errs || []), { d: today, why, note: String(note ?? '').trim().slice(0, MAX_ERR_NOTE), ...(b ? { banca: b } : {}), ...(y ? { year: y } : {}) }];
+  return s;
+}
+/** Marca o erro como REFEITO em `today` (ok = acertou ao refazer). `ok: null` desmarca (volta a "para refazer"). */
+function redoError(st, index, { today, ok }) {
+  const s = normalizeStudy(st);
+  if (!s.errs || !s.errs[index]) throw new Error('Erro não encontrado.');
+  if (ok === null) { delete s.errs[index].redo; return s; }
+  if (!isDateStr(today)) throw new Error(`Data inválida: ${today}`);
+  if (typeof ok !== 'boolean') throw new Error('Informe se acertou ao refazer.');
+  s.errs[index].redo = { d: today, ok };
   return s;
 }
 function removeError(st, index) {
@@ -178,7 +227,8 @@ function summary(map, { today = todayStr() } = {}) {
   const due = [], upcoming = [], perDay = {}, future = [], weak = [];
   let qWeekDone = 0, qWeekOk = 0;
   const pending = { leaves: 0, weighted: 0 };
-  const errAll = [], errTopics = [], errBy = {};
+  const errAll = [], errTopics = [], errBy = {}, bySrc = { banca: new Map(), year: new Map() };
+  let errOpen = 0, errRedoOk = 0, errRedoBad = 0;
   let errWeek = 0;
   let totalLeaves = 0, doneLeaves = 0, wSum = 0, wProg = 0;
 
@@ -203,8 +253,16 @@ function summary(map, { today = todayStr() } = {}) {
       }
       if (st.q.done >= WEAK_MIN && st.q.correct / st.q.done < WEAK_ACCURACY) weak.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), done: st.q.done, correct: st.q.correct, accuracy: st.q.correct / st.q.done });
       if (d) { d.qDone += st.q.done; d.qOk += st.q.correct; }
+      if (st.qsrc) for (const r of st.qsrc) {
+        const add = (m, key, name) => { const c = m.get(key) || { name, done: 0, correct: 0 }; c.done += r.done; c.correct += r.correct; m.set(key, c); };
+        add(bySrc.banca, r.banca ? bancaKey(r.banca) : '', r.banca || 'Sem banca'); add(bySrc.year, r.year || 0, r.year ? String(r.year) : 'Sem ano');
+      }
       if (st.errs) {
-        for (const e of st.errs) { errAll.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), why: e.why, note: e.note, d: e.d }); errBy[e.why] = (errBy[e.why] || 0) + 1; if (e.d >= weekStart && e.d <= today) errWeek++; }
+        st.errs.forEach((e, i) => {
+          errAll.push({ id: n.id, i, title: n.title, path: path.slice(1).map((x) => x.title), why: e.why, note: e.note, d: e.d, ...(e.banca ? { banca: e.banca } : {}), ...(e.year ? { year: e.year } : {}), ...(e.redo ? { redo: e.redo } : {}) });
+          errBy[e.why] = (errBy[e.why] || 0) + 1; if (e.d >= weekStart && e.d <= today) errWeek++;
+          if (!e.redo) errOpen++; else if (e.redo.ok) errRedoOk++; else errRedoBad++;
+        });
         errTopics.push({ id: n.id, title: n.title, path: path.slice(1).map((x) => x.title), count: st.errs.length });
       }
       if (st.next && st.next <= today) {
@@ -252,7 +310,12 @@ function summary(map, { today = todayStr() } = {}) {
     week: Array.from({ length: 7 }, (_, i) => { const d = addDays(today, i - 6); return { date: d, minutes: perDay[d] || 0 }; }),
     questions: { done: qDone, correct: qOk, accuracy: qDone ? qOk / qDone : null, week: { done: qWeekDone, correct: qWeekOk, accuracy: qWeekDone ? qWeekOk / qWeekDone : null } },
     weak: weak.slice(0, 8), agenda,
-    errors: { total: errAll.length, week: errWeek, byWhy: errBy, topics: errTopics.sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 8), recent: errAll.sort((a, b) => b.d.localeCompare(a.d) || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 10) },
+    questionsBy: {
+      banca: [...bySrc.banca.values()].map((c) => ({ ...c, accuracy: c.correct / c.done })).sort((a, b) => b.done - a.done || a.name.localeCompare(b.name, 'pt-BR')),
+      year: [...bySrc.year.entries()].map(([k, c]) => ({ ...c, year: k || null, accuracy: c.correct / c.done })).sort((a, b) => (b.year || 0) - (a.year || 0)),
+    },
+    errors: { total: errAll.length, week: errWeek, open: errOpen, redoneOk: errRedoOk, redoneBad: errRedoBad, byWhy: errBy,
+      list: [...errAll].sort((a, b) => (a.redo ? 1 : 0) - (b.redo ? 1 : 0) || b.d.localeCompare(a.d) || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 500), topics: errTopics.sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 8), recent: errAll.sort((a, b) => b.d.localeCompare(a.d) || a.title.localeCompare(b.title, 'pt-BR')).slice(0, 10) },
     goals: goalsProgress(map.meta && map.meta.goals, { minutes: minWeek, questions: qWeekDone }),
     reviewsToday: revToday, streak, due, upcoming,
     disciplines: [...disc.values()].map((d) => ({ ...d, progress: d.w ? d.wp / d.w : 0, accuracy: d.qDone ? d.qOk / d.qDone : null })),
@@ -263,6 +326,6 @@ function summary(map, { today = todayStr() } = {}) {
 module.exports = {
   INTERVALS, MAX_MIN_PER_DAY, WEAK_MIN, WEAK_ACCURACY, AGENDA_DAYS, todayStr, parseDate, isDateStr, addDays, diffDays,
   emptyStudy, normalizeStudy, reviewed, addTime, addQuestions, setNext, setWeight,
-  ERR_REASONS, MAX_ERRS, MAX_ERR_NOTE, addError, removeError, sanitizeGoals, goalsProgress,
+  ERR_REASONS, MAX_ERRS, MAX_ERR_NOTE, MAX_QSRC, MIN_YEAR, MAX_YEAR, cleanBanca, cleanYear, bancaKey, addError, redoError, removeError, sanitizeGoals, goalsProgress,
   totalMinutes, isDue, rollup, summary,
 };

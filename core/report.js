@@ -39,11 +39,19 @@ function toStudyMarkdown(map, opts = {}) {
     o.push('', `## Simulados (${st.count})`, '');
     if (!st.count) o.push('Nenhum simulado registrado.');
     else { o.push(`Média ${acc(st.avg / 100)} · melhor ${acc(st.best.pct / 100)} (${st.best.name}) · último ${acc(st.last.pct / 100)}`, ''); for (const x of st.series) o.push(`- ${fmtDate(x.d)} — ${x.name}${x.banca ? ' (' + x.banca + ')' : ''}: ${x.correct}/${x.done} (${acc(x.pct / 100)})`); o.push('', 'Disciplinas (mais fracas primeiro): ' + st.discs.map((d) => `${d.disc} ${acc(d.pct / 100)}`).join(' · ')); } }
+  { const qb = s.questionsBy, has = qb.banca.some((b) => b.name !== 'Sem banca') || qb.year.some((y) => y.year);
+    if (has) {
+      o.push('', '## Questões por banca e ano', '', '| Banca | Questões | Acerto |', '|---|---:|---:|');
+      for (const b of qb.banca) o.push(`| ${b.name.replace(/\|/g, '\\|')} | ${b.correct}/${b.done} | ${acc(b.accuracy)} |`);
+      o.push('', '| Ano | Questões | Acerto |', '|---|---:|---:|');
+      for (const y of qb.year) o.push(`| ${y.name} | ${y.correct}/${y.done} | ${acc(y.accuracy)} |`);
+    } }
   o.push('', `## Caderno de erros (${s.errors.total})`, '');
   if (!s.errors.total) o.push('Nenhum erro registrado.');
   else {
     o.push(Object.entries(s.errors.byWhy).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${ERR_REASONS[k]}: ${n}`).join(' · '), '');
-    for (const e of s.errors.recent) o.push(`- ${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.note ? ': ' + e.note : ''}`);
+    o.push(`${s.errors.open} para refazer · ${s.errors.redoneOk} refeito(s) e acertado(s) · ${s.errors.redoneBad} errado(s) de novo`, '');
+    for (const e of s.errors.recent) o.push(`- ${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.banca || e.year ? ' · ' + [e.banca, e.year].filter(Boolean).join(' ') : ''}${e.redo ? ` · refeito em ${fmtDate(e.redo.d)}: ${e.redo.ok ? 'acertei' : 'errei de novo'}` : ''}${e.note ? ': ' + e.note : ''}`);
   }
   o.push('', `## Pontos fracos (≥ ${S_WEAK_MIN} questões e acerto < ${Math.round(S_WEAK_ACC * 100)}%)`, '');
   if (!s.weak.length) o.push('Nenhum ponto fraco identificado.');

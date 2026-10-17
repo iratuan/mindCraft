@@ -28,7 +28,7 @@ const rich = () => {                         // mapa com TUDO: estudo, notas, ma
 test('esquema: cria, versiona (user_version) e passa na verificação de integridade; abrir de novo não perde nada', () => {
   const dir = tmp(), f = path.join(dir, 'lib', 'biblioteca.db');
   const lib = openLibrary(f); assert.deepEqual(lib.integrityCheck(), ['ok']);
-  assert.equal(lib.db.prepare('PRAGMA user_version').get().user_version, 1); assert.equal(lib.db.prepare('PRAGMA foreign_keys').get().foreign_keys, 1);
+  assert.equal(lib.db.prepare('PRAGMA user_version').get().user_version, 2); assert.equal(lib.db.prepare('PRAGMA foreign_keys').get().foreign_keys, 1);
   const id = lib.saveMap(rich()); lib.close();
   const again = openLibrary(f); assert.equal(again.listMaps().length, 1); assert.equal(again.loadMap(id).root.title, 'Concurso TRF 2026'); again.close();
 });

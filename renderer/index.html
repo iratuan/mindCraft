@@ -116,7 +116,9 @@
             <div class="row"><button id="timerBtn" class="btn">▶ Iniciar</button><span id="timerVal" class="mono">00:00:00</span></div>
             <div class="row"><input id="studyMin" type="number" min="1" max="1440" placeholder="min" aria-label="Minutos"><button id="studyAddMin" class="btn">＋ minutos</button></div>
             <div id="studyTime" class="muted"></div>
-            <div class="field-label">Questões</div>
+            <div class="field-label">Questões <span class="muted" style="text-transform:none;font-weight:400">(banca e ano valem também para o erro)</span></div>
+            <div class="row"><input id="qBanca" type="text" list="bancaList" maxlength="60" placeholder="banca (opcional)" aria-label="Banca da questão" autocomplete="off"><input id="qAno" type="number" min="1950" max="2100" placeholder="ano" aria-label="Ano da prova"></div>
+            <datalist id="bancaList"></datalist>
             <div class="row"><input id="qDone" type="number" min="1" placeholder="feitas" aria-label="Questões feitas"><input id="qOk" type="number" min="0" placeholder="acertos" aria-label="Acertos"><button id="qAdd" class="btn">Registrar</button></div>
             <div id="studyQ" class="muted"></div>
             <div class="field-label">Caderno de erros</div>

@@ -12,6 +12,8 @@ Object.assign(window.MC, {
   hasOtherSources: () => (typeof vaultDirEff === 'function' && !!vaultDirEff()) || libraryExists(),
   vaultDue: (today) => vaultDue(today), reportError: (m) => report(m), openTopic: (n) => openTopic(n),
   review: (id, today, ok) => runStudy((x) => map.mutateStudy(x, (st) => S.reviewed(st, { today, ok })), '', [id]),
+  redoError: (id, i, today, ok) => runStudy((x) => map.mutateStudy(x, (st) => S.redoError(st, i, { today, ok })), '', [id]),
+  portableSettings: () => portableSettings(), applyPortableSettings: (s) => applyPortableSettings(s),
   setExam: (exam) => { change(() => map.setExam(exam)); },
   setGoals: (goals) => { change(() => map.setGoals(goals)); },
   addSimulado: (sim, opts) => { let s; change(() => { s = map.addSimulado(sim, opts); return true; }); return s; },
@@ -130,7 +132,8 @@ function homeData() {
     }
   }
   let dueHere = 0; try { dueHere = map && map.root.children.length ? S.summary(map, { today }).due.length : 0; } catch { /* sem resumo */ }
-  return { today, recent, last, exams, dueHere, library: { total: maps.length, recent: maps.slice(0, 6), dueTotal: dueMaps.reduce((a, m) => a + m.due, 0), dueMaps } };
+  let openErrors = 0; try { openErrors = lib ? lib.openErrors(5000).length : 0; } catch { /* sem contagem */ }
+  return { today, recent, last, exams, dueHere, library: { openErrors, total: maps.length, recent: maps.slice(0, 6), dueTotal: dueMaps.reduce((a, m) => a + m.due, 0), dueMaps } };
 }
 const homeGo = async (fn) => { if (!(await confirmDiscard())) return false; await fn(); return true; };
 const homeActions = {

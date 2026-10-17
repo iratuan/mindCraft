@@ -142,7 +142,7 @@ const { TODAY, d, concurso } = require('./fixtures');
     const d0 = JSON.parse(fs.readFileSync(path.join(USERDATA, 'drafts', 'session.json'), 'utf8')); eq(d0.map.meta.libId, id);
     await js(`window.__dlg.confirm = 0; draftExists = false; dirty = false; newMap()`); await js('recoverSession()'); await c.waitFor(() => js(`map.root.title === 'Rascunho lib'`)); eq(await js('map.meta.libId'), id); eq(await js('dirty'), true);
     ok(await js('save(false)')); const lib = openLibrary(dbFile); eq(lib.loadMap(id).root.title, 'Rascunho lib'); lib.close();
-    await js(`removeDraft(); dirty = false; newMap(); saveCfg({ reopenLast: true, lastKind: 'lib', lastLib: ${JSON.stringify(id)} })`); await js('init()'); await c.waitFor(() => js(`map.meta.libId === ${JSON.stringify(id)}`)); eq(await js('map.root.title'), 'Rascunho lib');
+    await js(`removeDraft(); dirty = false; newMap(); saveCfg({ reopenLast: true, startScreen: 'last', lastKind: 'lib', lastLib: ${JSON.stringify(id)} })`); await js('init()'); await c.waitFor(() => js(`map.meta.libId === ${JSON.stringify(id)}`)); eq(await js('map.root.title'), 'Rascunho lib');
     await js(`dirty = false; newMap(); saveCfg({ lastKind: 'lib', lastLib: 'nao-existe' })`); fs.writeFileSync(path.join(USERDATA, 'recent.json'), JSON.stringify([fileMap])); await js('init()'); await wait(500);
     eq(await js('filePath'), fileMap, 'caiu no último arquivo'); eq(await js('window.__dlg.errors.length'), 0, 'sem diálogo de erro');
   });

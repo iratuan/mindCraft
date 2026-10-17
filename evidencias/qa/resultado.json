@@ -864,76 +864,88 @@
     },
     {
       "n": 76,
+      "group": "Estudos",
+      "title": "Questões por banca e ano + caderno de erros para refazer",
+      "how": "Digitar banca/ano, registrar, ver as tabelas no painel de estudos e refazer um erro com o mouse",
+      "status": "OK",
+      "note": "",
+      "files": [
+        "76_questoes-painel-estudo_questoes-por-banca-e-ano-caderno-de-erros-para-r.png",
+        "76_questoes-por-banca_questoes-por-banca-e-ano-caderno-de-erros-para-r.png"
+      ]
+    },
+    {
+      "n": 77,
       "group": "Dados",
       "title": "Autosave e recuperação de sessão",
       "how": "Alteração → rascunho em disco → \"queda\" → Restaurar",
       "status": "OK",
       "note": "rascunho de 10155 bytes",
       "files": [
-        "76_autosave-e-recuperacao-de-sessao.png"
+        "77_autosave-e-recuperacao-de-sessao.png"
       ]
     },
     {
-      "n": 77,
+      "n": 78,
       "group": "Dados",
       "title": "Arquivo corrompido não derruba o app nem o mapa atual",
       "how": "Abrir .mom inválido",
       "status": "OK",
       "note": "Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found",
       "files": [
-        "77_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
+        "78_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png"
       ]
     },
     {
-      "n": 78,
+      "n": 79,
       "group": "Extremos",
       "title": "Título enorme, HTML, emoji e caracteres especiais",
       "how": "Textos hostis e longos no mapa",
       "status": "OK",
       "note": "",
       "files": [
-        "78_titulo-enorme-html-emoji-e-caracteres-especiais.png"
-      ]
-    },
-    {
-      "n": 79,
-      "group": "Extremos",
-      "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
-      "how": "Gera 1 000 tópicos e mede layout/desenho",
-      "status": "OK",
-      "note": "1001 tópicos · render 20 ms · nível 1: 26 visíveis",
-      "files": [
-        "79_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
-        "79_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+        "79_titulo-enorme-html-emoji-e-caracteres-especiais.png"
       ]
     },
     {
       "n": 80,
+      "group": "Extremos",
+      "title": "Mapa grande (1 000 tópicos): desempenho e legibilidade",
+      "how": "Gera 1 000 tópicos e mede layout/desenho",
+      "status": "OK",
+      "note": "1001 tópicos · render 16 ms · nível 1: 26 visíveis",
+      "files": [
+        "80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png",
+        "80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png"
+      ]
+    },
+    {
+      "n": 81,
       "group": "Extremos",
       "title": "Janela pequena (1000×640): a interface continua utilizável",
       "how": "Redimensiona a janela",
       "status": "OK",
       "note": "",
       "files": [
-        "80_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
-        "80_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
+        "81_pequena_janela-pequena-1000-640-a-interface-continua-uti.png",
+        "81_painel_janela-pequena-1000-640-a-interface-continua-uti.png"
       ]
     },
     {
-      "n": 81,
+      "n": 82,
       "group": "Extremos",
       "title": "Estados vazios: painel, conexões e grafo sem dados",
       "how": "Mapa novo sem estudos nem links",
       "status": "OK",
       "note": "",
       "files": [
-        "81_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
-        "81_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
+        "82_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png",
+        "82_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png"
       ]
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 20 ms, render+ajuste 62 ms"
+    "Mapa de 1001 tópicos: render 16 ms, render+ajuste 52 ms"
   ],
   "errosDeConsole": []
 }
