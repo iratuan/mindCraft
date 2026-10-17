@@ -31,9 +31,17 @@ test('sha256: vetores conhecidos (vazio, abc, 1 milhão de "a") e igualdade com 
   assert.equal(createHash('sha256').update('ação — çãõ 日本語 🙂').digest('hex'), nodeCrypto.createHash('sha256').update('ação — çãõ 日本語 🙂').digest('hex'), 'UTF-8');
 });
 
+test('sha1: vetores conhecidos e igualdade com o crypto do Node em todos os tamanhos (usado só para nomear pastas de backup)', () => {
+  const { createHash } = W('crypto');
+  assert.equal(createHash('sha1').update('abc').digest('hex'), 'a9993e364706816aba3e25717850c26c9cd0d89d'); assert.equal(createHash('sha1').update('').digest('hex'), 'da39a3ee5e6b4b0d3255bfef95601890afd80709');
+  let seed = 11; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+  for (let n = 0; n <= 300; n++) { const b = Buffer.from(Array.from({ length: n }, () => Math.floor(rnd() * 256))); assert.equal(createHash('sha1').update(b).digest('hex'), nodeCrypto.createHash('sha1').update(b).digest('hex'), 'tamanho ' + n); }
+  assert.equal(createHash('sha1').update('C:\\Users\\Ação\\mapa.mom'.toLowerCase()).digest('hex').slice(0, 12), nodeCrypto.createHash('sha1').update('C:\\Users\\Ação\\mapa.mom'.toLowerCase()).digest('hex').slice(0, 12));
+});
+
 test('sha256: digest só uma vez, algoritmo desconhecido recusado; randomBytes devolve bytes distintos do tamanho pedido', () => {
   const { createHash, randomBytes } = W('crypto'); const h = createHash('sha256'); h.update('x'); h.digest('hex');
-  assert.throws(() => h.digest('hex'), /já calculado/); assert.throws(() => h.update('y'), /já calculado/); assert.throws(() => createHash('md5'), /sha256/);
+  assert.throws(() => h.digest('hex'), /já calculado/); assert.throws(() => h.update('y'), /já calculado/); assert.throws(() => createHash('md5'), /sha256 e sha1/);
   const a = randomBytes(16), b = randomBytes(16); assert.equal(a.length, 16); assert.notEqual(a.toString('hex'), b.toString('hex')); assert.equal(randomBytes(70000).length, 70000);
 });
 

@@ -12,7 +12,7 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "e2e": "electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic && electron test/e2e-pdf.js && electron test/e2e-review.js && electron test/e2e-errors.js && electron test/e2e-perf.js && electron test/e2e-monkey.js && electron test/e2e-home.js && electron test/e2e-simulados.js && electron test/e2e-hostile.js && electron test/e2e-failures.js && electron test/e2e-layout.js && electron test/e2e-a11y.js && electron test/e2e-deep.js && electron test/e2e-deep.js --classic && electron test/e2e-questions.js && electron test/e2e-questions.js --classic && electron test/e2e-notify.js",
+    "e2e": "electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic && electron test/e2e-pdf.js && electron test/e2e-review.js && electron test/e2e-errors.js && electron test/e2e-perf.js && electron test/e2e-monkey.js && electron test/e2e-home.js && electron test/e2e-simulados.js && electron test/e2e-hostile.js && electron test/e2e-failures.js && electron test/e2e-layout.js && electron test/e2e-a11y.js && electron test/e2e-deep.js && electron test/e2e-deep.js --classic && electron test/e2e-questions.js && electron test/e2e-questions.js --classic && electron test/e2e-notify.js && electron test/e2e-web.js",
     "evidence": "electron test/evidence.js",
     "dist": "electron-builder --publish never",
     "qa": "electron test/qa-tour.js",
@@ -24,7 +24,9 @@
     "predist": "node tools/build-ui.js",
     "monkey": "electron test/e2e-monkey.js",
     "build:web": "node tools/build-web-core.js",
-    "test:web": "node tools/build-web-core.js parity && node --import ./test/web-parity-hook.mjs --test test/*.test.js"
+    "test:web": "node tools/build-web-core.js parity && node --import ./test/web-parity-hook.mjs --test test/*.test.js",
+    "build:web-app": "node tools/build-web-app.js",
+    "test:web-app": "electron test/e2e-web.js"
   },
   "build": {
     "appId": "dev.mindcraft.app",

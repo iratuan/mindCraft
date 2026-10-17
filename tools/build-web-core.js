@@ -15,7 +15,7 @@ const W = (f) => path.join(root, 'platform', 'web', f);
 const out = path.join(root, 'build', 'web');
 
 /** Módulos do núcleo que fazem parte da versão web (os que dependem de pastas do sistema ficam de fora). */
-const MODULES = ['study', 'model', 'mom', 'library', 'graph', 'markdown', 'csv', 'planner', 'simulados', 'report', 'layout', 'svg', 'notify', 'settings', 'pdfrefs', 'ics', 'links', 'mentions', 'markers', 'themes', 'forcelayout', 'import', 'edital'];
+const MODULES = ['study', 'model', 'mom', 'library', 'graph', 'markdown', 'csv', 'planner', 'simulados', 'report', 'layout', 'svg', 'notify', 'settings', 'pdfrefs', 'ics', 'links', 'mentions', 'markers', 'themes', 'forcelayout', 'import', 'edital', 'export', 'vault', 'obsidian', 'errorlog', 'backup'];
 
 const entry = (extra = '') => MODULES.map((m) => `${m}: require(${JSON.stringify(path.join(root, 'core', m + '.js'))})`).join(',\n  ') + extra;
 
@@ -23,6 +23,7 @@ async function build(mode, { outfile } = {}) {
   fs.mkdirSync(out, { recursive: true });
   const common = { bundle: true, logLevel: 'silent', legalComments: 'none', sourcemap: false };
   const alias = { 'node:sqlite': W('sqlite.js'), 'adm-zip': W('adm-zip.js'), crypto: W('crypto.js'), 'node:crypto': W('crypto.js') };
+  const NO_PDF = W('pdfkit-stub.js');
   const stdin = (code) => ({ contents: code, resolveDir: root, loader: 'js' });
   if (mode === 'parity') {
     return esbuild.build({ ...common, platform: 'node', format: 'cjs', outfile: outfile || path.join(out, 'parity-core.js'), alias, external: ['docx', 'pdfkit'],
@@ -30,9 +31,9 @@ async function build(mode, { outfile } = {}) {
   }
   if (mode === 'browser') {
     return esbuild.build({ ...common, platform: 'browser', format: 'iife', globalName: 'MindCore', outfile: outfile || path.join(out, 'core-browser.js'),
-      alias: { ...alias, fs: W('fs.js'), path: W('path.js'), os: W('os.js'), zlib: W('empty.js'), 'node:fs': W('fs.js'), 'node:path': W('path.js') },
+      alias: { ...alias, pdfkit: NO_PDF, fs: W('fs.js'), path: W('path.js'), os: W('os.js'), zlib: W('empty.js'), 'node:fs': W('fs.js'), 'node:path': W('path.js') },
       inject: [W('globals.js')], define: { 'process.env.NODE_ENV': '"production"' },
-      stdin: stdin(`module.exports = {\n  ${entry(`,\n  __sqlite: require(${JSON.stringify(W('sqlite.js'))}),\n  __fs: require(${JSON.stringify(W('fs.js'))})`)}\n};`) });
+      stdin: stdin(`module.exports = {\n  ${entry(`,\n  __sqlite: require(${JSON.stringify(W('sqlite.js'))}),\n  __fs: require(${JSON.stringify(W('fs.js'))}),\n  __path: require(${JSON.stringify(W('path.js'))})`)}\n};`) });
   }
   throw new Error('modo desconhecido: ' + mode);
 }
