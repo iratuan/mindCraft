@@ -200,3 +200,15 @@ test('FUZZ (semente fixa): lixo aleatório em qsrc/errs/settings nunca gera esta
   }
   for (let i = 0; i < 2000; i++) { const o = sanitizeSettings(pick([{}, { startScreen: val(), dashOnStart: val(), newInLibrary: val(), light: val(), pdfScale: val(), pdfWidth: val() }, val()])); assert.ok(Object.values(o).every((v) => ['string', 'boolean', 'number'].includes(typeof v))); assert.deepEqual(sanitizeSettings(o), o); }
 });
+
+test('relatório .docx: inclui Simulados, Questões por banca e ano e a situação dos erros; abre como zip válido; sem dados, sem as seções extras', async () => {
+  const R = require('../core/report');
+  const { m } = mapa(); m.addSimulado({ d: '2026-10-10', name: 'Simulado 1', banca: 'CESPE', rows: [{ disc: 'Direito', done: 20, correct: 14 }, { disc: 'Português', done: 20, correct: 9 }] });
+  const buf = await R.toStudyDOCX(m, { today: TODAY }); const xml = new AdmZip(buf).getEntry('word/document.xml').getData().toString('utf8');
+  for (const txt of ['Simulados (1)', 'Simulado 1', 'Questões por banca e ano', 'CESPE', '14/30', '2 para refazer', 'refeito em 15/10/2026: acertei', 'Disciplinas (mais fracas primeiro)']) assert.ok(xml.includes(txt), 'falta no .docx: ' + txt);
+  const vazio = new MindMap(createNode('x')); vazio.meta.name = 'x'; const x2 = new AdmZip(await R.toStudyDOCX(vazio, { today: TODAY })).getEntry('word/document.xml').getData().toString('utf8');
+  assert.ok(x2.includes('Nenhum simulado registrado.') && !x2.includes('Questões por banca e ano'));
+  // texto hostil vira texto (o XML escapa)
+  const h = mapa().m; h.mutateStudy(h.root.children[0].children[0].id, (st) => q(st, 1, 1, { banca: '<w:p>&"x' })); const x3 = new AdmZip(await R.toStudyDOCX(h, { today: TODAY })).getEntry('word/document.xml').getData().toString('utf8');
+  assert.ok(!x3.includes('<w:p>&"x') && x3.includes('&lt;w:p&gt;&amp;'), 'banca hostil escapada no XML');
+});

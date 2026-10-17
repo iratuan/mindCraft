@@ -87,9 +87,24 @@ async function toStudyDOCX(map, opts = {}) {
   kids.push(new Paragraph({ text: `Revisões pendentes (${s.due.length})`, heading: HeadingLevel.HEADING_1 }));
   if (!s.due.length) kids.push(P('Nenhuma revisão pendente.'));
   for (const r of s.due) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...r.path, r.title].join(' › ')} — prevista para ${fmtDate(r.next)}${r.overdue > 0 ? ` (${r.overdue} dia${r.overdue === 1 ? '' : 's'} de atraso)` : ' (hoje)'}` })] }));
+  { const sim = require('./simulados'), st = sim.simuladoStats(map.meta.simulados || []);
+    kids.push(new Paragraph({ text: `Simulados (${st.count})`, heading: HeadingLevel.HEADING_1 }));
+    if (!st.count) kids.push(P('Nenhum simulado registrado.'));
+    else {
+      kids.push(P(`Média ${acc(st.avg / 100)} · melhor ${acc(st.best.pct / 100)} (${st.best.name}) · último ${acc(st.last.pct / 100)}`));
+      kids.push(new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ tableHeader: true, children: ['Data', 'Simulado', 'Banca', 'Questões', 'Acerto'].map((h) => cell(h, { bold: true })) }),
+        ...st.series.map((x) => new TableRow({ children: [cell(fmtDate(x.d)), cell(x.name), cell(x.banca || '—'), cell(`${x.correct}/${x.done}`, { right: true }), cell(acc(x.pct / 100), { right: true })] }))] }));
+      kids.push(P('Disciplinas (mais fracas primeiro): ' + st.discs.map((d) => `${d.disc} ${acc(d.pct / 100)}`).join(' · ')));
+    } }
+  { const qb = s.questionsBy;
+    if (qb.banca.some((x) => x.name !== 'Sem banca') || qb.year.some((y) => y.year)) {
+      const tbl = (label, rows) => new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [new TableRow({ tableHeader: true, children: [label, 'Questões', 'Acerto'].map((h) => cell(h, { bold: true })) }), ...rows.map((r) => new TableRow({ children: [cell(r.name), cell(`${r.correct}/${r.done}`, { right: true }), cell(acc(r.accuracy), { right: true })] }))] });
+      kids.push(new Paragraph({ text: 'Questões por banca e ano', heading: HeadingLevel.HEADING_1 }), tbl('Banca', qb.banca), P(''), tbl('Ano', qb.year));
+    } }
   kids.push(new Paragraph({ text: `Caderno de erros (${s.errors.total})`, heading: HeadingLevel.HEADING_1 }));
   if (!s.errors.total) kids.push(P('Nenhum erro registrado.'));
-  for (const e of s.errors.recent) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.note ? ': ' + e.note : ''}` })] }));
+  else kids.push(P(`${s.errors.open} para refazer · ${s.errors.redoneOk} refeito(s) e acertado(s) · ${s.errors.redoneBad} errado(s) de novo`));
+  for (const e of s.errors.recent) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...e.path, e.title].join(' › ')} — ${ERR_REASONS[e.why]} (${fmtDate(e.d)})${e.banca || e.year ? ' · ' + [e.banca, e.year].filter(Boolean).join(' ') : ''}${e.redo ? ` · refeito em ${fmtDate(e.redo.d)}: ${e.redo.ok ? 'acertei' : 'errei de novo'}` : ''}${e.note ? ': ' + e.note : ''}` })] }));
   kids.push(new Paragraph({ text: 'Pontos fracos', heading: HeadingLevel.HEADING_1 }));
   if (!s.weak.length) kids.push(P('Nenhum ponto fraco identificado.'));
   for (const w of s.weak) kids.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: `${[...w.path, w.title].join(' › ')} — ${w.correct}/${w.done} (${acc(w.accuracy)})` })] }));

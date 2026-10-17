@@ -1,10 +1,10 @@
 # Relatório de QA por funcionalidade
 
-Gerado por `npm run qa` em 16/10/2026, 21:29:21 — entrada real (mouse/teclado via Chromium), app executando de verdade.
+Gerado por `npm run qa` em 16/10/2026, 21:39:51 — entrada real (mouse/teclado via Chromium), app executando de verdade.
 
 **82 de 82 funcionalidades OK**.
 
-**Medições:** Mapa de 1001 tópicos: render 16 ms, render+ajuste 52 ms
+**Medições:** Mapa de 1001 tópicos: render 16 ms, render+ajuste 61 ms
 
 | # | Grupo | Funcionalidade | Como foi exercitada | Resultado | Captura |
 |---|---|---|---|---|---|

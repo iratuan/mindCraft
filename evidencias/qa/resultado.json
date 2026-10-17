@@ -945,7 +945,7 @@
     }
   ],
   "metrics": [
-    "Mapa de 1001 tópicos: render 16 ms, render+ajuste 52 ms"
+    "Mapa de 1001 tópicos: render 16 ms, render+ajuste 61 ms"
   ],
   "errosDeConsole": []
 }

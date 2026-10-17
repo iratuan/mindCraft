@@ -112,3 +112,8 @@ O caso "zoom do grafo pela roda" do QA, que usa entrada simulada do sistema, osc
 - **Testes**: unitários 170/170 (+15: limpeza/validação, soma por dia+banca+ano, limites, normalização, fuzz com semente fixa, resumo, relatório, biblioteca, migração v1→v2, pacote com configurações adulteradas/hostis/antigo); e2e de questões 11/11 (React) e 8/8 (clássico); todas as 26 execuções e2e verdes; QA com entrada real 82/82 sem erros de console; macaco verde. Capturas em `evidencias/questoes/`.
 - **Corrigido no caminho**: botão novo de "refazer" colidia com o seletor do botão apagar (teste pegou); importar pacote grava `startScreen` explicitamente (o teste antigo gravava só o campo legado).
 - **Não testado**: restauração entre dois computadores reais (só entre duas bibliotecas na mesma máquina); pacotes com milhares de mapas e configurações; Linux/macOS.
+
+## Relatório .docx completo
+- O .docx agora traz **Simulados** (média, melhor, último, tabela e disciplinas mais fracas), **Questões por banca e ano** e a situação/origem dos erros — igual ao .md (antes só o .md tinha).
+- Teste unitário novo (171/171 no total): falha sem a mudança e passa com ela; sem dados não aparecem as seções extras; banca hostil é escapada no XML. e2e de estudo (19/19), erros (9/9) e simulados (8/8) seguem verdes.
+- Não testado: abrir o .docx no Word/LibreOffice (conferi só o XML interno).
