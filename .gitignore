@@ -8,3 +8,16 @@ qa-run.log
 renderer/bundle/
 *.log
 build/web/
+
+# Android (tablet/): nada gerado nem segredo vai para o Git
+tablet/node_modules/
+tablet/keystore/
+tablet/dist/
+tablet/android/local.properties
+tablet/android/.gradle/
+tablet/android/build/
+tablet/android/app/build/
+tablet/android/app/src/main/assets/public/
+tablet/android/app/src/main/assets/capacitor.config.json
+tablet/android/app/src/main/assets/capacitor.plugins.json
+tablet/android/capacitor-cordova-android-plugins/build/

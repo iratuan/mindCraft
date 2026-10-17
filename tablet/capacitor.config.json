@@ -1,0 +1,12 @@
+{
+  "appId": "app.mindcraft.estudos",
+  "appName": "MindCraft",
+  "webDir": "../build/web/app",
+  "backgroundColor": "#1b1b1b",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

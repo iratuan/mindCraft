@@ -49,10 +49,37 @@ module.exports = async function start(title, { width = 1280, height = 800 } = {}
     for (let i = 1; ; i++) { try { await win.loadURL(url); break; } catch (e) { if (i >= 4) throw e; await wait(500 * i); } }
     await waitFor(() => ctx.js(`!!(window.__mcHost && window.MCReact && typeof act !== 'undefined' && document.documentElement.dataset.host === 'web')`), 30000);
     await ctx.js(`window.__downloads = []; window.__mcDownload = ({ name, bytes }) => window.__downloads.push({ name, len: bytes.length, b64: btoa(String.fromCharCode(...bytes.subarray(0, 4000000))) }); window.__pickQueue = []; window.__mcPick = async () => window.__pickQueue.shift() || null; true`);
+    if (ctx.emu) await ctx.applyEmulation();
     await wait(250); win.focus(); win.webContents.focus();
     return win;
   };
   /** Próximo seletor de arquivo devolve estes arquivos (bytes em base64): é o "usuário escolheu o arquivo". */
+  /**
+   * Emula um tablet (tela, "pointer: coarse", toques reais). Os toques vão pelo protocolo do Chromium (Input.dispatchTouchEvent),
+   * então a página recebe pointerdown/move/up com pointerType 'touch', exatamente como num aparelho.
+   */
+  ctx.emulate = async ({ width = 1280, height = 800, dsf = 1 } = {}) => { ctx.emu = { width, height, dsf }; if (ctx.win) await ctx.applyEmulation(); if (ctx.win) { try { ctx.win.setContentSize(width, height); } catch { /* tamanho da janela é só estética */ } } };
+  ctx.applyEmulation = async () => {
+    const dbg = ctx.win.webContents.debugger; if (!dbg.isAttached()) dbg.attach('1.3');
+    const { width, height, dsf } = ctx.emu;
+    await dbg.sendCommand('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dsf, mobile: true, screenWidth: width, screenHeight: height });
+    await dbg.sendCommand('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    await dbg.sendCommand('Emulation.setEmitTouchEventsForMouse', { enabled: false });
+  };
+  const send = (type, pts) => ctx.win.webContents.debugger.sendCommand('Input.dispatchTouchEvent', { type, touchPoints: pts.map((p, i) => ({ x: p.x, y: p.y, id: p.id ?? i + 1, radiusX: 8, radiusY: 8, force: 0.5 })) });
+  ctx.touch = {
+    tap: async (x, y) => { await send('touchStart', [{ x, y }]); await wait(30); await send('touchEnd', []); },
+    doubleTap: async (x, y, gap = 90) => { await ctx.touch.tap(x, y); await wait(gap); await ctx.touch.tap(x, y); },
+    longPress: async (x, y, ms = 750) => { await send('touchStart', [{ x, y }]); await wait(ms); await send('touchEnd', []); },
+    drag: async (x1, y1, x2, y2, steps = 12) => { await send('touchStart', [{ x: x1, y: y1 }]); for (let i = 1; i <= steps; i++) { await send('touchMove', [{ x: x1 + ((x2 - x1) * i) / steps, y: y1 + ((y2 - y1) * i) / steps }]); await wait(12); } await wait(30); await send('touchEnd', []); },
+    /** Pinça horizontal em torno de (cx,cy): a distância entre os dedos vai de d1 a d2 (CSS px). */
+    pinch: async (cx, cy, d1, d2, steps = 14) => {
+      const pts = (d) => [{ x: cx - d / 2, y: cy, id: 1 }, { x: cx + d / 2, y: cy, id: 2 }];
+      await send('touchStart', pts(d1)); await wait(20);
+      for (let i = 1; i <= steps; i++) { await send('touchMove', pts(d1 + ((d2 - d1) * i) / steps)); await wait(12); }
+      await wait(30); await send('touchEnd', []);
+    },
+  };
   ctx.pickNext = (files) => ctx.js(`window.__pickQueue.push(${JSON.stringify(files)}.map((f) => ({ name: f.name, bytes: Uint8Array.from(atob(f.b64), (c) => c.charCodeAt(0)) }))); true`);
   ctx.downloads = () => ctx.js('window.__downloads');
   ctx.idle = () => ctx.js('window.__mcHost.idle()');

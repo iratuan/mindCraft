@@ -1,0 +1,23 @@
+{
+  "name": "mindcraft-tablet",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Empacotamento Android (Capacitor) do MindCraft: a mesma interface do desktop, gerada em ../build/web/app. Isolado do app desktop.",
+  "scripts": {
+    "prepare:web": "node ../tools/build-web-app.js",
+    "sync": "npm run prepare:web && cap sync android",
+    "apk:debug": "npm run sync && node scripts/gradle.js assembleDebug",
+    "apk:release": "npm run sync && node scripts/gradle.js assembleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}

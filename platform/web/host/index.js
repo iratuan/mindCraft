@@ -10,6 +10,10 @@ const { createIpc } = require('./ipc');
 const dialogs = require('./dialogs');
 const files = require('./files');
 const { installMenu } = require('./menu');
+const touch = require('./touch');
+const editorFit = require('./editor');
+const native = require('./native');
+const tabletCss = require('./tablet.css');
 
 const loadScript = (src) => new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = src; s.async = false; s.onload = () => resolve(); s.onerror = () => reject(new Error('Não consegui carregar ' + src)); document.head.append(s); });
 
@@ -32,11 +36,15 @@ async function boot() {
     throw new Error('Módulo indisponível na versão tablet: ' + name);
   };
 
+  // Android (.apk): arquivos entregues pelo compartilhamento do sistema, notificações agendadas, botão Voltar
+  const nat = native.installNative({ ipc, fs, store, dialogs, emitMenu: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), readCfg: () => JSON.parse(fs.readFileSync('/userdata/config.json', 'utf8')) });
+  const deliver = nat ? nat.deliver : files.deliver;
+
   // exportações (tudo que a interface grava em /exports) viram download quando a gravação termina
   const timers = new Map();
   fs.vfs.onChange(({ op, path: p }) => {
     if (op !== 'write' || !p.startsWith('/exports/') || /\.tmp-/.test(p)) return;
-    clearTimeout(timers.get(p)); timers.set(p, setTimeout(() => { timers.delete(p); try { const bytes = new Uint8Array(fs.readFileSync(p)); files.deliver(path.basename(p), bytes); fs.rmSync(p, { force: true }); } catch (e) { dialogs.errorBox('Não consegui entregar o arquivo: ' + e.message); } }, 120));
+    clearTimeout(timers.get(p)); timers.set(p, setTimeout(() => { timers.delete(p); try { const bytes = new Uint8Array(fs.readFileSync(p)); deliver(path.basename(p), bytes); fs.rmSync(p, { force: true }); } catch (e) { dialogs.errorBox('Não consegui entregar o arquivo: ' + e.message); } }, 120));
   });
 
   // arrastar arquivos para a janela
@@ -48,13 +56,19 @@ async function boot() {
     if (window.MC && window.MC.handleDroppedPaths) window.MC.handleDroppedPaths(paths);
   }, true);
 
-  window.__mcHost = { store, ipc, fs, path, restored, idle: () => store.idle(), version: 1 };
-  installMenu({ emit: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd) });
+  window.__mcHost = { store, ipc, fs, path, restored, native: nat, idle: () => store.idle(), version: 1 };
+  installMenu({ emit: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), css: tabletCss });
+  touch.install(); editorFit.install();
   // No desktop o evento "load" só acontece depois de TODOS os scripts da interface (renderer.js espera por ele antes de escolher a tela inicial).
   // Aqui os scripts entram dinamicamente, então reproduzimos a mesma ordem: a página fica "carregando" até o último script e então dispara "load".
   let ready = 'loading'; Object.defineProperty(document, 'readyState', { configurable: true, get: () => ready });
-  for (const src of window.__MC_APP_SCRIPTS || []) await loadScript(src);
-  document.documentElement.dataset.host = 'web';
+  // Os scripts da interface assumem que TODOS já foram lidos antes de qualquer temporizador disparar (no desktop o HTML os carrega de uma vez;
+  // ex.: graph-ui.js agenda renderLinks() para 160 ms depois, e a função vem do último script). Carregar um por vez quebra isso em aparelhos mais lentos.
+  // Por isso: baixa todos em paralelo e executa em sequência, na MESMA tarefa (nada entra no meio).
+  const srcs = window.__MC_APP_SCRIPTS || [];
+  const texts = await Promise.all(srcs.map(async (src) => { const r = await fetch(src); if (!r.ok) throw new Error('Não consegui carregar ' + src + ' (' + r.status + ')'); return r.text(); }));
+  srcs.forEach((src, i) => { const s = document.createElement('script'); s.textContent = texts[i] + '\n//# sourceURL=' + new URL(src, document.baseURI).href; document.head.append(s); s.remove(); });
+  document.documentElement.dataset.host = 'web'; if (nat) document.documentElement.dataset.native = 'android';
   ready = 'complete'; window.dispatchEvent(new Event('load'));
 }
 boot().catch((e) => { console.error('MindCraft web: falha ao iniciar', e); document.body.insertAdjacentHTML('afterbegin', '<pre style="color:#ff8a90;padding:16px;white-space:pre-wrap">Não foi possível iniciar o MindCraft: ' + String(e && e.message).replace(/</g, '&lt;') + '</pre>'); });

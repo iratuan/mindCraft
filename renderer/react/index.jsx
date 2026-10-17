@@ -37,8 +37,13 @@ function initialFocus(m) {
   const box = m.querySelector('.modal-box'); if (!box) return;
   const label = box.querySelector('h2'); if (label) m.setAttribute('aria-label', label.textContent.replace(/\s+/g, ' ').trim());
   const first = (sel) => [...box.querySelectorAll(sel)].find(visible);
-  const target = first('[data-autofocus]') || first('input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([disabled])') || first('button.primary:not([disabled])') || first(FOCUSABLE);
-  if (target) target.focus();
+  // Em telas de toque o teclado virtual sobe sozinho quando um campo de texto recebe o foco: abrir uma janela não pode fazer isso (o teclado
+  // esconderia metade dela). Lá o foco inicial vai para o botão principal; com mouse e teclado (desktop) nada muda.
+  const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const typing = (e) => e && /^(INPUT|TEXTAREA)$/.test(e.tagName) && !/^(button|submit|checkbox|radio|range|color|file)$/i.test(e.type || '');
+  let target = first('[data-autofocus]') || first('input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([disabled])') || first('button.primary:not([disabled])') || first(FOCUSABLE);
+  if (touch && typing(target)) target = first('button.primary:not([disabled])') || first('button:not([disabled])') || box;
+  if (target) { if (target === box) box.setAttribute('tabindex', '-1'); target.focus(); }
 }
 
 /** Renderiza um componente dentro do #modal (substitui o conteúdo anterior). */

@@ -1,0 +1,51 @@
+/* Ajustes da versão tablet (só entram na versão web). A interface é a do desktop; aqui só mudam tamanhos, gavetas e gestos. */
+html[data-host="web"] { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+html[data-host="web"] #svg, html[data-host="web"] #gsvg { touch-action: none; }
+html[data-host="web"] body { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+
+/* ---------- aparelhos de toque: alvos de pelo menos 44 px ---------- */
+@media (pointer: coarse) {
+  html[data-host="web"] body { font-size: 14px; }
+  html[data-host="web"] #appbar { height: 52px; gap: 12px; }
+  html[data-host="web"] #appbar .searchbox input { height: 40px; }
+  html[data-host="web"] .icon-btn { width: 44px; height: 44px; }
+  html[data-host="web"] .icon-btn.sm { width: 44px; height: 44px; font-size: 20px; }
+  html[data-host="web"] #options { height: 48px; overflow-x: auto; gap: 14px; scrollbar-width: none; }
+  html[data-host="web"] #options > * { flex: none; }
+  html[data-host="web"] #options .opt-hint { display: none; }
+  /* Barra lateral: TODOS os botões precisam caber sem rolar em tablets de ~744 dp de altura (12 botões): 46 px cada (≥ 44), sem separadores. */
+  html[data-host="web"] #rail { width: 62px; gap: 2px; padding: 4px 0; overflow-y: auto; }
+  html[data-host="web"] #rail .hsep { display: none; }
+  html[data-host="web"] .tool { width: 46px; height: 46px; border-radius: 10px; flex: none; }   /* nunca encolhem; se a tela for mais baixa, a barra rola */
+  html[data-host="web"] .tool svg { width: 24px; height: 24px; }
+  html[data-host="web"] .btn, html[data-host="web"] .mini, html[data-host="web"] .txt-btn { min-height: 44px; min-width: 44px; }
+  html[data-host="web"] .chip { min-height: 40px; min-width: 40px; }
+  html[data-host="web"] select, html[data-host="web"] input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), html[data-host="web"] textarea { min-height: 44px; font-size: 15px; }
+  html[data-host="web"] .row input, html[data-host="web"] .row select, html[data-host="web"] .modal-box input { height: 44px; }
+  html[data-host="web"] input[type=checkbox], html[data-host="web"] input[type=radio] { width: 22px; height: 22px; }
+  html[data-host="web"] input[type=range] { height: 36px; }
+  html[data-host="web"] #ptabs .ptab { min-height: 48px; font-size: 14px; }
+  html[data-host="web"] #statusbar { height: 42px; font-size: 13px; }
+  html[data-host="web"] .ol-row { height: 40px; }
+  html[data-host="web"] .rev { min-height: 52px; }
+  html[data-host="web"] #modal .modal-box { max-height: calc(100% - 32px); }
+  html[data-host="web"] .hm-big { min-height: 84px; }
+}
+
+/* ---------- janela estreita (tablet em pé, ou lado a lado com outro app): painéis viram gaveta ---------- */
+@media (max-width: 1000px) {
+  html[data-host="web"] #panels { position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 88vw); z-index: 9000; transform: translateX(105%); visibility: hidden; transition: transform .2s ease, visibility 0s linear .2s; box-shadow: -10px 0 34px rgba(0,0,0,.5); padding-top: env(safe-area-inset-top, 0px); }
+  html[data-host="web"] body.tb-panels #panels { transform: none; visibility: visible; transition: transform .2s ease; }
+  html[data-host="web"] body.pdf-open #panels { display: flex; }      /* (o recolhimento automático do desktop não se aplica: aqui é gaveta) */
+}
+html[data-host="web"] #tbScrim { position: fixed; inset: 0; z-index: 8999; background: rgba(0,0,0,.28); touch-action: none; }
+html[data-host="web"] #tbScrim[hidden] { display: none; }
+
+/* ---------- barra flutuante (menu, editar, recolher, painéis) ---------- */
+#mcTouchBar { position: fixed; left: 10px; bottom: 56px; z-index: 99990; display: flex; gap: 6px; padding: 6px; border-radius: 28px; background: var(--bg-panel, #2b2b2b); border: 1px solid var(--line-soft, #555); box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+#mcTouchBar button { width: 48px; height: 48px; border-radius: 24px; border: 0; background: transparent; color: var(--text-strong, #fff); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+#mcTouchBar button:active, #mcTouchBar button[aria-pressed="true"], #mcTouchBar button[aria-expanded="true"] { background: var(--accent-soft, #264b78); }
+#mcTouchBar .tb-extra { display: none; }
+@media (pointer: coarse) { #mcTouchBar .tb-extra { display: grid; } html[data-host="web"] #mcTouchBar { left: 74px; bottom: 52px; } html[data-host="web"] #mcHostMenu { left: 74px; } }
+@media (max-width: 1000px) { #mcTouchBar .tb-panels-btn { display: grid; } }
+@media (min-width: 1001px) { #mcTouchBar .tb-panels-btn { display: none !important; } }

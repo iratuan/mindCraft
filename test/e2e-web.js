@@ -11,7 +11,7 @@ const { openLibrary } = require('../core/library');
 const S = require('../core/study');
 const { TODAY, concurso } = require('./fixtures');
 
-const SHOTS = path.join(__dirname, '..', 'evidencias', 'tablet');
+const SHOTS = path.join(__dirname, '..', 'evidencias', 'web');
 const b64 = (buf) => Buffer.from(buf).toString('base64');
 
 (async () => {

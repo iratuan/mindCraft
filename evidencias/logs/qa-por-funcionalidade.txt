@@ -2,7 +2,7 @@
 > mindcraft@0.1.0 preqa
 > node tools/build-ui.js
 
-interface React empacotada: renderer\bundle\react-ui.js (900 KB)
+interface React empacotada: renderer\bundle\react-ui.js (901 KB)
 
 > mindcraft@0.1.0 qa
 > electron test/qa-tour.js
