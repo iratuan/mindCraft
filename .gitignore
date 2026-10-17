@@ -7,3 +7,4 @@ qa-run.log
 .DS_Store
 renderer/bundle/
 *.log
+build/web/

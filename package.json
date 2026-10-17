@@ -22,7 +22,9 @@
     "preqa": "node tools/build-ui.js",
     "preevidence": "node tools/build-ui.js",
     "predist": "node tools/build-ui.js",
-    "monkey": "electron test/e2e-monkey.js"
+    "monkey": "electron test/e2e-monkey.js",
+    "build:web": "node tools/build-web-core.js",
+    "test:web": "node tools/build-web-core.js parity && node --import ./test/web-parity-hook.mjs --test test/*.test.js"
   },
   "build": {
     "appId": "dev.mindcraft.app",
@@ -71,11 +73,13 @@
     "pdfkit": "^0.20.2"
   },
   "devDependencies": {
+    "buffer": "^6.0.3",
     "electron": "^44.8.0",
     "electron-builder": "^26.15.3",
     "esbuild": "0.25.10",
     "pdfjs-dist": "4.10.38",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "sql.js": "^1.15.0"
   }
 }

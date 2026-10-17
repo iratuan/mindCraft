@@ -93,6 +93,11 @@ O app funciona até 720×480: painéis do estudo viram uma coluna; com o leitor 
 ## Questões por banca e ano · erros para refazer
 No painel **Estudo**, informe a **banca** (com sugestões das já usadas) e o **ano** ao registrar questões; os campos valem também para o caderno de erros e ficam preenchidos para o próximo registro. O **Painel de estudos** mostra o acerto **por banca** e **por ano** (Cespé = CESPE; sem banca fica só nos totais) e o **Caderno de erros** com filtros (situação, motivo, banca, ano): marque ✔ "refiz e acertei" / ✖ "errei de novo" (↶ desfaz) — tudo desfazível. A **tela inicial** avisa quantos erros ainda estão para refazer na biblioteca, e os relatórios **.md e .docx** incluem simulados, as tabelas por banca/ano e a situação dos erros.
 
+## Versão para tablet Android (em construção)
+O plano é uma versão para tablets (> 10") para **estudar, revisar e editar mapas**, com **sincronização com uma pasta no Google Drive** e instalação por **.apk** (Capacitor). A base é o mesmo núcleo do desktop, sem duplicar regras.
+- **Etapa 1 (concluída)**: o núcleo (`core/`) roda **sem Node**, com adaptadores em `platform/web/` (SHA-256 em JS, zip via fflate, SQLite em WebAssembly com gravação durável após cada transação, sistema de arquivos virtual). `npm run build:web` gera `build/web/core-browser.js`; `npm run test:web` roda **os mesmos testes unitários do desktop contra o núcleo da web** (prova de equivalência). O desktop não foi alterado.
+- Próximas etapas: desacoplar a interface do Windows (camada de plataforma), layout e toque para tablet, empacotar o .apk, edição por gestos e sincronização com o Drive.
+
 ## Aviso diário de revisões
 No **Painel de estudos**, marque "Avisar das revisões do dia às" e escolha o horário. O MindCraft mostra uma notificação do sistema ("5 revisões vencidas em 3 mapas · 2 erros para refazer"), no máximo **uma vez por dia**, só se houver algo a dizer; clicar nela abre a Revisão do dia. Vem **desligado**, e o botão "Testar aviso" confere se o Windows o exibe. Funciona **com o app aberto** (nada é agendado no sistema): se você abrir depois do horário, o aviso aparece no primeiro minuto. A opção e o horário vão no pacote .mcpack.
 
