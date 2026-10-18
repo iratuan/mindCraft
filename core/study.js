@@ -326,6 +326,6 @@ function summary(map, { today = todayStr() } = {}) {
 module.exports = {
   INTERVALS, MAX_MIN_PER_DAY, WEAK_MIN, WEAK_ACCURACY, AGENDA_DAYS, todayStr, parseDate, isDateStr, addDays, diffDays,
   emptyStudy, normalizeStudy, reviewed, addTime, addQuestions, setNext, setWeight,
-  ERR_REASONS, MAX_ERRS, MAX_ERR_NOTE, MAX_QSRC, MIN_YEAR, MAX_YEAR, cleanBanca, cleanYear, bancaKey, addError, redoError, removeError, sanitizeGoals, goalsProgress,
+  ERR_REASONS, MAX_ERRS, MAX_ERR_NOTE, MAX_QSRC, MIN_YEAR, MAX_YEAR, cleanBanca, cleanYear, bancaKey, addError, redoError, removeError, sanitizeGoals,
   totalMinutes, isDue, rollup, summary,
 };

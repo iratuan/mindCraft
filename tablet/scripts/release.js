@@ -18,7 +18,7 @@ function pickJdk() {
   const j = cands.find((h) => fs.existsSync(path.join(h, 'lib', 'tzdb.dat')) && fs.existsSync(path.join(h, 'bin')));
   if (!j) { console.error('Nenhum JDK íntegro encontrado. Instale o Android Studio ou defina MINDCRAFT_JAVA_HOME.'); process.exit(2); } return j;
 }
-const jdk = pickJdk(), exe = process.platform === 'win32' ? '.exe' : '', bat = process.platform === 'win32' ? '.bat' : '';
+const jdk = pickJdk(), exe = process.platform === 'win32' ? '.exe' : '';
 const keytool = path.join(jdk, 'bin', 'keytool' + exe);
 
 // 1) chave de assinatura (uma vez)

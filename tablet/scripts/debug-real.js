@@ -1,6 +1,6 @@
 'use strict';
 // Depuração manual no Android: abre a biblioteca, toca de verdade em "Exportar pacote…" e mostra o que aconteceu (diálogos, atividades, erros).
-const { connect, adb, sh } = require('./cdp');
+const { connect, sh } = require('./cdp');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms)); const shell = (...a) => sh('shell', ...a).stdout.trim();
 (async () => {
   const c = await connect(); await c.send('Runtime.enable');

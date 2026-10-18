@@ -28,4 +28,4 @@ function sanitizeNotice(n) {
   const title = t(n.title, 80), body = t(n.body, 240);
   return title ? { title, body } : null;
 }
-module.exports = { isTime, shouldNotify, buildNotice, sanitizeNotice };
+module.exports = { shouldNotify, buildNotice, sanitizeNotice };

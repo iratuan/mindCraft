@@ -109,7 +109,7 @@ function htmlToMarkdown(html) {
   s = decode(s).replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/(\S)[ \t]{2,}(?=\S)/g, '$1 ').replace(/\n{3,}/g, '\n\n');
   return s.trim();
 }
-const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escHtml = require('./text').escapeHtml;
 /** Markdown simples → HTML do Mindomo (parágrafos, **negrito**, *itálico*), com TUDO escapado. */
 function markdownToHtml(md) {
   const inline = (t) => escHtml(t).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');

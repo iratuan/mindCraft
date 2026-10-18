@@ -5,7 +5,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms)); const shell = (...a)
 (async () => {
   const c = await connect(); const dpr = await c.ev('devicePixelRatio');
   await c.ev(`closeHome(); closeModal(); dirty = false; newMap(); fit(); window.__pd = []; window.addEventListener('pointerdown', (e) => window.__pd.push([e.clientX, e.clientY]), true); true`); await wait(500);
-  shell('input', 'tap', '1000', '1000'); await wait(300); const [cx, cy] = await c.ev('window.__pd[window.__pd.length - 1]'); const offY = 1000 - cy * dpr;
+  shell('input', 'tap', '1000', '1000'); await wait(300); const [, cy] = await c.ev('window.__pd[window.__pd.length - 1]'); const offY = 1000 - cy * dpr;
   const [nx, ny] = await c.ev(`(() => { let id; map.walk((n) => { if (n.title === 'Tópico 1' && !id) id = n.id; }); const r = document.querySelector('[data-id="' + id + '"]').getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()`);
   const X = Math.round(nx * dpr), Y = Math.round(ny * dpr + offY); shell('input tap ' + X + ' ' + Y + '; input tap ' + X + ' ' + Y);
   await wait(1500);

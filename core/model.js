@@ -213,6 +213,29 @@ class MindMap {
     return changes.length;
   }
 
+  /**
+   * Põe os tópicos `ids` (em ordem de documento) ANTES ou DEPOIS do tópico `targetId`, como irmãos dele — é o "soltar entre irmãos" do arrastar.
+   * Serve para reordenar (mesmo pai) e para mudar de pai ao mesmo tempo. Uma única ação desfazível. A raiz não tem irmãos.
+   * @param where 'before' | 'after'
+   */
+  moveBeside(ids, targetId, where) {
+    const t = this.find(targetId);
+    if (!t || !t.parent || (where !== 'before' && where !== 'after')) return false;
+    const tops = this.topLevel(ids);
+    if (!tops.length || tops.some((n) => n.id === targetId || this.find(targetId, n))) return false;   // soltar sobre si mesmo ou dentro do próprio ramo
+    const parentId = t.parent.id;
+    this.batch(() => {
+      let anchor = t.node;
+      for (const n of tops) {
+        const kids = t.parent.children.filter((c) => c !== n);                       // índice no vetor SEM o tópico que está saindo (move() remove antes de inserir)
+        const at = kids.indexOf(anchor);
+        this.move(n.id, parentId, where === 'before' && anchor === t.node ? at : at + 1);
+        anchor = n;                                                                   // o próximo entra logo depois deste: a ordem do grupo é preservada
+      }
+    });
+    return true;
+  }
+
   // ---- reordenar e mudar de nível (teclado: Alt+setas) ----
   /** Troca de lugar com o irmão anterior (dir = -1) ou seguinte (dir = +1). */
   moveSibling(id, dir) {

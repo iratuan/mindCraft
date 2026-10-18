@@ -39,7 +39,7 @@ function readMom(source) {
   const taken = new Set();
   const mapId = (old) => {
     if (idMap.has(old)) return idMap.get(old);
-    let nid = typeof old === 'string' && SAFE_ID.test(old) && !taken.has(old) ? old : newId();
+    const nid = typeof old === 'string' && SAFE_ID.test(old) && !taken.has(old) ? old : newId();
     taken.add(nid); idMap.set(old, nid);
     return nid;
   };

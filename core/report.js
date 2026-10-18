@@ -114,4 +114,4 @@ async function toStudyDOCX(map, opts = {}) {
   return Packer.toBuffer(new Document({ creator: 'MindCraft', title: `Relatório de estudos — ${title}`, sections: [{ children: kids }] }));
 }
 
-module.exports = { buildReport, toStudyMarkdown, toStudyDOCX, fmtMin, fmtPct, fmtDate, parseDate };
+module.exports = { toStudyMarkdown, toStudyDOCX, fmtMin, fmtDate, parseDate };

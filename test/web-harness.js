@@ -48,7 +48,7 @@ module.exports = async function start(title, { width = 1280, height = 800 } = {}
     win.webContents.on('render-process-gone', (_e, d) => ctx.errors.push('processo da página caiu: ' + d.reason));
     for (let i = 1; ; i++) { try { await win.loadURL(url); break; } catch (e) { if (i >= 4) throw e; await wait(500 * i); } }
     await waitFor(() => ctx.js(`!!(window.__mcHost && window.MCReact && typeof act !== 'undefined' && document.documentElement.dataset.host === 'web')`), 30000);
-    await ctx.js(`window.__downloads = []; window.__mcDownload = ({ name, bytes }) => window.__downloads.push({ name, len: bytes.length, b64: btoa(String.fromCharCode(...bytes.subarray(0, 4000000))) }); window.__pickQueue = []; window.__mcPick = async () => window.__pickQueue.shift() || null; true`);
+    await ctx.js(`window.__mcSaveAsAuto = true; window.__downloads = []; window.__mcDownload = ({ name, bytes }) => window.__downloads.push({ name, len: bytes.length, b64: btoa(String.fromCharCode(...bytes.subarray(0, 4000000))) }); window.__pickQueue = []; window.__mcPick = async () => window.__pickQueue.shift() || null; true`);
     if (ctx.emu) await ctx.applyEmulation();
     await wait(250); win.focus(); win.webContents.focus();
     return win;

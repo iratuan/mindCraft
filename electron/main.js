@@ -77,6 +77,11 @@ function buildMenu() {
       { label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
       { label: 'Refazer', accelerator: isMac ? 'Shift+Cmd+Z' : 'Ctrl+Y', click: send('redo') },
       { type: 'separator' },
+      { label: 'Subir tópico (Alt+↑)', click: send('moveUp') },
+      { label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
+      { label: 'Promover — subir um nível (Alt+←)', click: send('outdent') },
+      { label: 'Rebaixar — virar filho do irmão de cima (Alt+→)', click: send('indent') },
+      { type: 'separator' },
       // itens próprios (não 'role'): em campos de texto agem no texto; no mapa, nos tópicos (ver editCommand no renderer)
       { id: 'cut', label: 'Recortar', accelerator: 'CmdOrCtrl+X', click: send('cut') },
       { id: 'copy', label: 'Copiar', accelerator: 'CmdOrCtrl+C', click: send('copy') },

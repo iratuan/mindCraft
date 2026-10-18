@@ -5,7 +5,7 @@ const extOf = (n) => { const m = /\.([A-Za-z0-9]{1,8})$/.exec(n); return m ? m[1
 
 /** Nome seguro: sem pastas, sem caracteres de controle/proibidos, tamanho limitado. */
 function safeName(name, fallback = 'arquivo') {
-  let n = String(name ?? '').split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '_').replace(/^\.+/, '').trim().slice(0, 120);
+  const n = String(name ?? '').split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '_').replace(/^\.+/, '').trim().slice(0, 120);
   return n || fallback;
 }
 const bytesEqual = (a, b) => { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
@@ -46,4 +46,4 @@ function deliver(name, bytes) {
   const blob = new Blob([bytes], { type: MIME[extOf(name)] || 'application/octet-stream' }), url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; a.style.display = 'none'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
-module.exports = { pick, place, deliver, safeName, extOf };
+module.exports = { pick, place, deliver, safeName, extOf, MIME };

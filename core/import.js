@@ -32,7 +32,7 @@ const unesc = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quo
  */
 function fromMarkdown(text, fallbackTitle = 'Mapa importado') {
   const items = []; // { level, title, notes }
-  let headingStack = []; // níveis de títulos abertos
+  const headingStack = []; // níveis de títulos abertos
   let cur = null;
   let inFence = false;
   for (const raw of text.replace(/\r\n?/g, '\n').split('\n')) {

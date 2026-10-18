@@ -78,7 +78,7 @@ function forceLayout(nodes, edges, { iterations = 300, seed = 7, maxNodes = 1500
     if (x > 0 && x + b.w > target) { x = 0; y += rowH + gap; rowH = 0; }
     placed.push({ b, ox: x, oy: y }); x += b.w + gap; rowH = Math.max(rowH, b.h); usedW = Math.max(usedW, x - gap);
   }
-  let bottom = blocks.length ? y + rowH : 0;
+  const bottom = blocks.length ? y + rowH : 0;
   for (const { b, ox, oy } of placed) b.c.forEach((g, i) => pos.set(list[g].id, { x: ox + b.pts[i].x, y: oy + b.pts[i].y }));
   const lone = [...orphans.map((i) => list[i].id), ...extra.map((e) => e.id)];
   if (lone.length) {                                                          // grade compacta para quem não tem ligações

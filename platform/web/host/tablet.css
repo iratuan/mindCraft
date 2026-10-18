@@ -63,3 +63,9 @@ html[data-host="web"] #tbScrim[hidden] { display: none; }
 /* com a rede de conhecimento aberta a barra flutuante do mapa não serve para nada e cobriria a gaveta de detalhes */
 html[data-host="web"] body:has(#graph:not([hidden])) #mcTouchBar { display: none; }
 
+
+/* reordenar: no tablet vale a barra flutuante (▲ ▼ ◀ ▶); a barra lateral já está no limite de altura */
+html[data-host="web"] #rail .tool-reorder { display: none; }
+
+/* botões da barra flutuante desativados (ex.: recolher sem subtópicos) ficam apagados e não respondem */
+html[data-host="web"] #mcTouchBar button:disabled { opacity: .35; }

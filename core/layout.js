@@ -182,5 +182,5 @@ function relationGeometry(boxes, rel) {
   return { a, b, c, arrow, label: { x: 0.25 * a.x + 0.5 * c.x + 0.25 * b.x, y: 0.25 * a.y + 0.5 * c.y + 0.25 * b.y } };
 }
 
-module.exports = { layoutMap, edgePoints, relationGeometry, textWidth };
+module.exports = { layoutMap, edgePoints, textWidth };
 

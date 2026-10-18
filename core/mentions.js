@@ -37,7 +37,8 @@ function linkify(text, title, { target } = {}) {
   const t = norm(title).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   if (!t) return null;
   // mapeia cada caractere original para sua forma normalizada (índices voltam ao texto original)
-  let n = '', map = [];
+  let n = '';
+  const map = [];
   let i = 0;
   for (const ch of src) {
     const f = ch.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, ' ');

@@ -39,7 +39,7 @@ async function saveToLibrary() {
 /** "Salvar como…" de um mapa da biblioteca: exporta uma CÓPIA .mom; o mapa continua na biblioteca. */
 async function exportCopyMom() {
   commitNotes();
-  const target = await ipcRenderer.invoke('dialog:save', 'mom', (map.root.title || 'mapa') + '.mom'); if (!target) return false;
+  const target = await ipcRenderer.invoke('dialog:save', 'mom', saveDefaultPath((map.root.title || 'mapa') + '.mom')); if (!target) return false; rememberSaveDir(target);
   try { writeMom(map, /\.mom$/i.test(target) ? target : target + '.mom'); } catch (e) { libFail('Falha ao exportar: ' + e.message); return false; }
   setStatus('Cópia .mom salva em ' + target + '. O mapa continua na biblioteca.');
   return true;

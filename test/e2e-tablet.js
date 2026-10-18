@@ -30,7 +30,7 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
 
   await t('é reconhecido como aparelho de toque: pointer coarse, barra flutuante com botões extras, nenhuma rolagem horizontal, sem erros', async () => {
     const r = await js(`({ coarse: matchMedia('(pointer: coarse)').matches, vw: innerWidth, vh: innerHeight, scrollW: document.documentElement.scrollWidth, extras: [...document.querySelectorAll('#mcTouchBar .tb-extra')].filter((b) => b.offsetWidth).map((b) => b.id), meta: document.querySelector('meta[name=viewport]').content })`);
-    eq([r.coarse, r.vw, r.vh], [true, 1280, 800]); ok(r.scrollW <= r.vw, 'sem rolagem horizontal: ' + r.scrollW); eq(r.extras, ['tbEdit', 'tbFold'], 'em paisagem larga, sem o botão de painéis'); ok(/interactive-widget=resizes-content/.test(r.meta), r.meta);
+    eq([r.coarse, r.vw, r.vh], [true, 1280, 800]); ok(r.scrollW <= r.vw, 'sem rolagem horizontal: ' + r.scrollW); eq(r.extras, ['tbEdit', 'tbFold', 'tbUp', 'tbDown', 'tbOut', 'tbIn'], 'em paisagem larga, sem o botão de painéis'); ok(/interactive-widget=resizes-content/.test(r.meta), r.meta);
     await c.shot(path.join(SHOTS, '05-tablet-paisagem.png'));
   });
 
@@ -42,7 +42,7 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
   await t('barra lateral: TODOS os botões visíveis sem rolar em tablets de 744 dp e 720 dp de altura (nenhuma ferramenta escondida abaixo da dobra)', async () => {
     for (const h of [744, 720]) {
       await c.emulate({ width: 1280, height: h }); await wait(500);
-      const r = await js(`(() => { const rail = document.querySelector('#rail').getBoundingClientRect(); const hidden = [...document.querySelectorAll('#rail .tool')].filter((b) => { const r = b.getBoundingClientRect(); return r.bottom > rail.bottom + 0.5 || r.top < rail.top - 0.5; }).map((b) => b.dataset.act); return { hidden, n: document.querySelectorAll('#rail .tool').length, scroll: document.querySelector('#rail').scrollHeight - document.querySelector('#rail').clientHeight }; })()`);
+      const r = await js(`(() => { const rail = document.querySelector('#rail').getBoundingClientRect(); const hidden = [...document.querySelectorAll('#rail .tool')].filter((b) => getComputedStyle(b).display !== 'none').filter((b) => { const r = b.getBoundingClientRect(); return r.bottom > rail.bottom + 0.5 || r.top < rail.top - 0.5; }).map((b) => b.dataset.act); return { hidden, n: [...document.querySelectorAll('#rail .tool')].filter((b) => getComputedStyle(b).display !== 'none').length, scroll: document.querySelector('#rail').scrollHeight - document.querySelector('#rail').clientHeight }; })()`);
       eq(r.hidden, [], 'botões fora da área visível da barra em ' + h + ' dp (n=' + r.n + ')');
     }
     await c.emulate({ width: 1280, height: 800 }); await wait(400);
@@ -177,6 +177,52 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
   await t('retrato: tela inicial, Painel de estudos e biblioteca cabem sem rolagem horizontal; nenhuma janela estoura a tela', async () => {
     const wide = async (what) => js(`(() => { const de = document.documentElement; const bad = []; if (de.scrollWidth > innerWidth + 1) bad.push('página ' + de.scrollWidth); for (const sel of ['#home:not([hidden])', '#dash:not([hidden])', '#modal:not([hidden]) .modal-box']) { const e = document.querySelector(sel); if (e) { const r = e.getBoundingClientRect(); if (r.right > innerWidth + 1 || r.left < -1) bad.push(sel + ' ' + Math.round(r.left) + '..' + Math.round(r.right)); } } return bad; })()`);
     await js(`act.home(true); true`); await wait(500); eq(await wide(), [], 'tela inicial'); await c.shot(path.join(SHOTS, '12-inicio-retrato.png')); await js('closeHome(); act.dash(); true'); await wait(600); eq(await wide(), [], 'painel de estudos'); await js('closeDash(); openLibraryModal(); true'); await wait(400); eq(await wide(), [], 'biblioteca'); await js('closeModal(); true');
+  });
+
+  await t('REORDENAR por toque: arrastar com o dedo ENTRE irmãos (cima/baixo/meio) e botões ▲ ▼ ◀ ▶ da barra flutuante (alvos ≥ 44 px)', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400);
+    await js(`window.__id = (title) => { let r; map.walk((n) => { if (n.title === title && !r) r = n.id; }); return r; }; true`);
+    await js(`dirty = false; newMap(); (() => { const m = map; m.root.title = 'Raiz'; m.root.children = []; for (const t of ['A', 'B', 'C', 'D']) m.addChild(m.root.id, t); for (const t of ['a1', 'a2']) m.addChild(m.root.children[0].id, t); m._undo = []; m._redo = []; selectedId = m.root.id; selIds = new Set([m.root.id]); render(); fit(); })(); true`); await wait(500);
+    const order = (p) => js(`map.find(__id(${JSON.stringify(p)})).node.children.map((n) => n.title).join(',')`);
+    const at = (title, frac) => js(`(() => { const id = __id(${JSON.stringify(title)}), b = L.boxes.get(id), r = svg.getBoundingClientRect(); return { x: r.left + (b.x + b.w / 2) * pan.k + pan.x, y: r.top + (b.y + b.h * ${frac}) * pan.k + pan.y }; })()`);
+    eq(await order('Raiz'), 'A,B,C,D');
+    let a = await at('D', 0.5), b = await at('A', 0.1); await T().drag(a.x, a.y, b.x, b.y, 14); await wait(400); eq(await order('Raiz'), 'D,A,B,C', 'dedo: soltar na parte de cima de A');
+    a = await at('D', 0.5); b = await at('C', 0.92); await T().drag(a.x, a.y, b.x, b.y, 14); await wait(400); eq(await order('Raiz'), 'A,B,C,D', 'dedo: soltar na parte de baixo de C');
+    a = await at('D', 0.5); b = await at('B', 0.5); await T().drag(a.x, a.y, b.x, b.y, 14); await wait(400); eq(await order('B'), 'D', 'dedo: soltar no meio vira filho');
+    await js('map.undo(); render(); true'); await wait(200); eq(await order('Raiz'), 'A,B,C,D');
+    const small = await js(`['tbUp', 'tbDown', 'tbOut', 'tbIn'].map((id) => { const r = document.getElementById(id).getBoundingClientRect(); return [id, Math.round(r.width), Math.round(r.height)]; }).filter(([, w, h]) => w < 43 || h < 43)`); eq(small, [], 'alvos pequenos: ' + JSON.stringify(small));
+    ok(await js(`getComputedStyle(document.querySelector('#rail [data-act="moveUp"]')).display === 'none'`), 'a barra lateral não ganha botões no tablet (altura no limite)');
+    await wait(1500);   // o arrasto simulado por CDP termina com velocidade: o Chromium ainda está em "fling" e consome o 1º toque seguinte (artefato do teste, não do app)
+    await js(`selectedId = __id('C'); selIds = new Set([selectedId]); render(); true`); const tap = async (id) => { const p = await js(`__ctr('#${id}')`); await T().tap(p.x, p.y); await wait(250); };
+    await tap('tbUp'); const diag = await js("document.querySelector('#status').textContent + ' | sel=' + (map.find(selectedId) && map.find(selectedId).node.title) + ' | selIds=' + selIds.size"); eq(await order('Raiz'), 'A,C,B,D', '▲ (' + diag + ')'); await tap('tbDown'); await tap('tbDown'); eq(await order('Raiz'), 'A,B,D,C', '▼ ▼');
+    await js(`selectedId = __id('a2'); selIds = new Set([selectedId]); render(); true`); await tap('tbOut'); eq(await order('Raiz'), 'A,a2,B,D,C', '◀ promove'); await tap('tbIn'); eq(await order('A'), 'a1,a2', '▶ rebaixa de volta');
+    await tap('tbUp'); eq(await order('A'), 'a2,a1', '▲ no nível de baixo'); await c.shot(path.join(SHOTS, '12-reordenar-barra.png'));
+  });
+
+  await t('BOTÃO DEPOIS DO LÁPIS = recolher/expandir ramo, com função clara: ícone e texto mudam (⊟ recolher / ⊞ expandir) e dizem quantos subtópicos; desativado sem subtópicos; avisa o que fez', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400);
+    await js(`window.__id = (title) => { let r; map.walk((n) => { if (n.title === title && !r) r = n.id; }); return r; }; dirty = false; newMap(); (() => { const m = map; m.root.title = 'Raiz'; m.root.children = []; const a = m.addChild(m.root.id, 'A'); m.addChild(a.id, 'a1'); m.addChild(a.id, 'a2'); m.addChild(m.root.id, 'B'); m._undo = []; m._redo = []; selectedId = a.id; selIds = new Set([a.id]); render(); fit(); })(); true`); await wait(500);
+    const st = () => js(`(() => { const b = document.getElementById('tbFold'); return { disabled: b.disabled, text: b.textContent, label: b.getAttribute('aria-label'), title: b.title }; })()`);
+    const order = await js(`[...document.querySelectorAll('#mcTouchBar button')].map((b) => b.id)`); eq(order.slice(0, 3), ['mcHostMenuBtn', 'tbEdit', 'tbFold'], 'o botão logo depois do lápis é o de recolher/expandir');
+    let x = await st(); eq([x.disabled, x.text], [false, '⊟']); ok(/Recolher o ramo: esconder 2 subtópico/.test(x.label), x.label); eq(x.title, x.label);
+    const tap = async () => { const p = await js(`__ctr('#tbFold')`); await T().tap(p.x, p.y); await wait(350); };
+    await tap(); eq(await js('map.find(__id("A")).node.collapsed'), true, 'recolheu'); x = await st(); eq([x.disabled, x.text], [false, '⊞']); ok(/Expandir o ramo: mostrar 2 subtópico/.test(x.label), x.label);
+    ok(/Ramo recolhido: 2 subtópico/.test(await js(`document.querySelector('#status').textContent`)), 'avisa: ' + await js(`document.querySelector('#status').textContent`));
+    await tap(); eq(await js('map.find(__id("A")).node.collapsed'), false, 'expandiu'); x = await st(); eq(x.text, '⊟'); ok(/Ramo expandido/.test(await js(`document.querySelector('#status').textContent`)));
+    await js(`selectedId = __id('B'); selIds = new Set([selectedId]); render(); true`); await wait(250); x = await st(); eq([x.disabled, x.text], [true, '⊟']); ok(/selecione um tópico que tenha subtópicos/.test(x.label), x.label);
+    const before = await js('JSON.stringify(map.toJSON())'); await js(`document.getElementById('tbFold').click(); true`); eq(await js('JSON.stringify(map.toJSON())'), before, 'desativado: não altera nada');
+    await js(`act.toggle(); true`); ok(/não tem subtópicos/.test(await js(`document.querySelector('#status').textContent`)), 'a tecla Espaço num tópico sem filhos explica o motivo');
+    await js(`selectedId = __id('A'); selIds = new Set([selectedId]); render(); true`); await wait(200); await c.shot(path.join(SHOTS, '13-botao-recolher.png'));
+  });
+
+  await t('SALVAR COMO por toque: a janela abre SEM subir o teclado (não foca o campo); tocar no nome edita; Salvar usa o nome digitado', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400); await js('window.__mcSaveAsAuto = false; true');
+    await js(`dirty = false; filePath = null; newMap(); map.root.title = 'Plano por toque'; dirty = true; window.__r = undefined; save(false).then((v) => { window.__r = v; }); true`); await waitFor(() => js('!!document.querySelector("[data-mc-saveas]")'), 5000); await wait(300);
+    eq(await js('document.activeElement && document.activeElement.tagName'), 'BUTTON', 'o foco vai ao botão, não ao campo de texto'); eq(await js('document.activeElement.dataset.act'), 'ok');
+    const inp = await js(`__ctr('[data-mc-saveas] input[type=text]')`); const small = await js(`[...document.querySelectorAll('[data-mc-saveas] input, [data-mc-saveas] button')].map((e) => { const r = e.closest('label') ? e.closest('label').getBoundingClientRect() : e.getBoundingClientRect(); return Math.round(r.height); }).filter((h) => h < 43)`); eq(small, [], 'alvos de toque ≥ 44 px');
+    await T().tap(inp.x, inp.y); await wait(300); eq(await js('document.activeElement.type'), 'text', 'tocar no nome o foca (aí o teclado pode subir)');
+    await js(`(() => { const i = document.querySelector('[data-mc-saveas] input[type=text]'); i.value = 'Nome digitado no toque'; return 1; })()`); const ok1 = await js(`__ctr('[data-mc-saveas] button[data-act=ok]')`); await T().tap(ok1.x, ok1.y); await waitFor(() => js('window.__r === true'), 5000);
+    eq(await js('filePath'), '/docs/Nome digitado no toque.mom'); await js('window.__mcSaveAsAuto = true; true');
   });
 
   // ---------------- EDITAR NÓ (mapa e rede) POR TOQUE ----------------

@@ -128,4 +128,4 @@ async function pull(lib, remote, id, ver, { replace, create = false }) {
   });
 }
 
-module.exports = { syncLibrary, parseListing, hashOf, remoteName, NAME };
+module.exports = { syncLibrary, parseListing, hashOf, NAME };

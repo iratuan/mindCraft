@@ -124,6 +124,20 @@ No painel Estudo (e no registro de simulado) a **banca** é uma lista: as **já 
 
 ## Tablet: área segura
 O app abre **dentro da área segura**: não fica sob a barra de status, a de navegação (gestos ou 3 botões) nem o recorte da câmera. Antes dependia da versão do WebView (nos novos, com `viewport-fit=cover`, o conteúdo passava por baixo das barras). Agora o Capacitor sempre reserva a área, o fundo da janela tem a cor do app e os ícones das barras são claros.
+## Reordenar tópicos
+- **Arrastar entre irmãos**: solte um tópico na parte de **cima** (30%) do alvo para ficar **antes** dele, na de **baixo** (30%) para ficar **depois** — uma **linha laranja** mostra o ponto exato — e no **meio** para torná-lo **filho** (como antes). Funciona entre pais diferentes, com vários tópicos selecionados (a ordem do documento é mantida) e com o dedo no tablet. Tudo é **uma ação desfazível**; soltar sobre si mesmo, dentro do próprio ramo ou no vazio não altera nada.
+- **Sem arrastar**: botões **▲ ▼** na barra lateral (desktop) e **▲ ▼ ◀ ▶** na barra flutuante do tablet (subir, descer, promover, rebaixar); menu **Editar** (desktop) e menu ☰ (tablet); atalhos **Alt+↑ / ↓** (subir/descer) e **Alt+← / →** (promover/rebaixar).
+## Salvar e Salvar como (nome e local editáveis)
+- **Desktop**: o diálogo do sistema deixa mudar **nome e pasta**; ele agora **começa na pasta do arquivo atual** (ou na última usada). Mapas da biblioteca são salvos na biblioteca; "Salvar como…" exporta uma cópia `.mom` onde você escolher.
+- **Tablet**: "Salvar" de um mapa novo e "Salvar como…" abrem uma janela com o **nome editável** e o **destino**: *Documentos do MindCraft* (reabre pela tela inicial), *Escolher pasta e nome no aparelho…* (o seletor de documentos do Android: Downloads, Google Drive, cartão SD — lá também dá para editar o nome e a pasta) ou, para exportações, *Compartilhar*. Depois de escolher um arquivo do aparelho, **cada Salvar o atualiza** (também depois de fechar e reabrir o app). Se a gravação no local escolhido falhar, a cópia no app continua segura e a mensagem diz como escolher outro local.
+- Corrigido junto: no tablet o **backup antes de sobrescrever** nunca funcionava (faltava `copyFileSync` no sistema de arquivos virtual).
+
+## Para quem vai evoluir o projeto
+- **`CLAUDE.md`** — regras de ouro, comandos, armadilhas e convenções (comece por aqui, pessoa ou IA).
+- **`docs/ARCHITECTURE.md`** — camadas, módulos, fluxos, formatos e dívidas técnicas · **`docs/DECISIONS.md`** — por que é assim (ADRs).
+- **`docs/TESTING.md`** — pirâmide de testes e como rodar/escrever cada um · **`docs/CONTRIBUTING.md`** — estilo, segurança, checklist por tipo de mudança, definição de pronto.
+- **`.claude/skills/`** — receitas: `mindcraft-verify`, `mindcraft-release`, `mindcraft-new-core-module`, `mindcraft-ui-change`, `mindcraft-android-test`, `mindcraft-sync-provider`.
+- Qualidade automática: `npm run check` (ESLint sem avisos + unitários + **testes de arquitetura** + paridade com o núcleo web). `CHANGELOG.md` resume as versões.
 ## Aviso diário de revisões
 No **Painel de estudos**, marque "Avisar das revisões do dia às" e escolha o horário. O MindCraft mostra uma notificação do sistema ("5 revisões vencidas em 3 mapas · 2 erros para refazer"), no máximo **uma vez por dia**, só se houver algo a dizer; clicar nela abre a Revisão do dia. Vem **desligado**, e o botão "Testar aviso" confere se o Windows o exibe. Funciona **com o app aberto** (nada é agendado no sistema): se você abrir depois do horário, o aviso aparece no primeiro minuto. A opção e o horário vão no pacote .mcpack.
 

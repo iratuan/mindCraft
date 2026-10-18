@@ -33,7 +33,7 @@ const { MindMap, createNode } = require('../core/model');
   await js(`saveCfg({ scope: 'vault' }); dirty = false; true`);
 
   const open = async () => { await js(`closeGraph(); true`); await js('act.graph(); true'); await waitFor(() => js(`document.querySelectorAll('#gview .gn').length > 100`), 20000); await wait(400); };
-  const clear = async () => { await js(`gSel = null; gHover = null; renderGraph(false); fitGraph(); true`); await wait(450); };
+  const clear = async () => { win.webContents.sendInputEvent({ type: 'mouseMove', x: 3, y: 3 }); await js(`gSel = null; gHover = null; gHoverId = null; renderGraph(false); fitGraph(); true`); await wait(300); win.webContents.sendInputEvent({ type: 'mouseMove', x: 3, y: 3 }); await wait(250); };
   const q = (code) => js(code);
   /** Retângulos (tela) dos rótulos visíveis e dos pontos visíveis. */
   const geo = () => js(`(() => { const r = (e) => { const b = e.getBoundingClientRect(); return { x: b.left, y: b.top, w: b.width, h: b.height }; };
@@ -204,6 +204,15 @@ const { MindMap, createNode } = require('../core/model');
     ok(r.updateLabels < 60 && r.render < 900, JSON.stringify(r)); fs.writeFileSync(path.join(SHOTS, 'desempenho.json'), JSON.stringify({ nos: await js('gLast.nodes.length'), ...r }, null, 1));
   });
 
+  await t('REGRESSÃO: passar o mouse num ponto e mudar o conjunto de pontos (vizinhança, legenda) não deixa índice velho: sem erro e o destaque some ou continua no MESMO ponto', async () => {
+    await clear(); const total = await js('gLast.nodes.length'); const hub = await js(`[...gLast.nodes.keys()].filter((i) => gLast.adj[i].size >= 3).pop()`); const id = await js(`gLast.nodes[${hub}].id`);
+    await js(`document.querySelectorAll('#gview .gn')[${hub}].dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); true`); await wait(150); eq(await js('gHover'), hub);
+    await js(`gSel = ${JSON.stringify(id)}; document.querySelector('#gLocal').click(); true`); await wait(500);
+    const small = await js('gLast.nodes.length'); ok(small < total, 'vizinhança reduziu: ' + small);
+    const h = await js('gHover'); ok(h === null || (await js(`gLast.nodes[${h}].id`)) === id, 'hover aponta para o mesmo ponto ou nenhum');
+    await js(`document.querySelector('#gLocal').click(); gSel = null; true`); await wait(500); eq(await js('gLast.nodes.length'), total);
+    const h2 = await js('gHover'); ok(h2 === null || (await js(`gLast.nodes[${h2}].id`)) === id, 'depois de voltar: mesmo ponto ou nenhum'); eq(c.errors, [], 'sem erro de console');
+  });
   await t('Enter abre o tópico selecionado; Esc fecha a rede; nenhum erro de console', async () => {
     const target = await js(`gLast.nodes.findIndex((n) => n.kind === 'topic' && n.mapKey === curKey())`); await js(`gSel = gLast.nodes[${target}].id; renderGraph(false); true`); key('Enter'); await wait(500);
     ok(!(await js('graphOpen')), 'abrir o tópico fecha a rede'); await open(); key('Escape'); await wait(300); ok(!(await js('graphOpen')));

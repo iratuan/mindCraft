@@ -46,7 +46,7 @@ function decodeCsvBuffer(buf) {
 
 /** Leitor CSV (RFC 4180): aspas, aspas duplicadas, quebras de linha dentro de células, delimitador automático (, ; tab). */
 function parseCsv(text) {
-  const src = String(text).replace(/^﻿/, '');
+  const src = String(text).replace(/^\uFEFF/, '');
   const firstLine = src.split(/\r?\n/, 1)[0] || '';
   const count = (ch) => { let n = 0, q = false; for (const c of firstLine) { if (c === '"') q = !q; else if (c === ch && !q) n++; } return n; };
   const delim = [',', ';', '\t'].map((d) => [d, count(d)]).sort((a, b) => b[1] - a[1])[0];

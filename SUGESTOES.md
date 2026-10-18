@@ -1,5 +1,7 @@
 # Sugestões de melhoria — MindCraft como suíte de gestão de estudos
 
+> **Situação (17/10/2026):** várias já foram feitas (agenda de revisões, metas semanais, questões por banca/ano, caderno de erros, simulados, tela inicial, tablet, sincronização). Confira CHANGELOG.md e o README antes de propor algo daqui.
+
 Baseadas no QA por funcionalidade (62 casos, entrada real) e na revisão das 82 capturas. Ordem = o que eu faria primeiro.
 O que já foi corrigido por causa do QA está em `evidencias/RESULTADOS.md`; aqui estão só as **melhorias novas**.
 

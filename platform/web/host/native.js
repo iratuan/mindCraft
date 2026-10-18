@@ -45,6 +45,15 @@ function installNative({ ipc, fs, store, dialogs, emitMenu, readCfg }) {
     shareChain = shareChain.then(run, run); return shareChain;
   }
 
+  // ---------- salvar em qualquer lugar do aparelho (seletor de documentos do sistema: a pessoa escolhe pasta e edita o nome) ----------
+  /** Abre o seletor "Salvar como" do Android. Devolve { uri, name } ou null se cancelou. */
+  async function pickTarget(name, mime) {
+    try { return await cap().nativePromise('SaveFile', 'pick', { name, mime: mime || 'application/octet-stream' }); }
+    catch (e) { if (/cancel/i.test(String(e && (e.code || e.message || e)))) return null; throw e; }
+  }
+  /** Grava (substitui) o conteúdo do arquivo escolhido. */
+  async function writeTarget(uri, bytes) { return call('SaveFile', 'write', { uri, data: toBase64(bytes) }); }
+
   // ---------- notificações ----------
   async function ensurePermission(ask) {
     let p = (await call('LocalNotifications', 'checkPermissions')).display;
@@ -104,6 +113,6 @@ function installNative({ ipc, fs, store, dialogs, emitMenu, readCfg }) {
     return call('App', 'minimizeApp').catch(() => {});                                   // raiz: vai para o fundo (não fecha o app)
   }
   listen('App', 'backButton', onBack);
-  return { deliver, showNow, syncReminders, onBack, ensurePermission, isNative: true };
+  return { deliver, pickTarget, writeTarget, showNow, syncReminders, onBack, ensurePermission, isNative: true };
 }
 module.exports = { installNative, isNative, nextTimes, toBase64 };

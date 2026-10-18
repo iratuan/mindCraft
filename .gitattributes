@@ -1,0 +1,14 @@
+# Normaliza fins de linha no repositório (LF) e deixa o checkout seguir a plataforma.
+* text=auto
+*.png binary
+*.jpg binary
+*.ico binary
+*.wasm binary
+*.pdf binary
+*.mom binary
+*.mcpack binary
+*.apk binary
+*.jks binary
+*.keystore binary
+gradlew eol=lf
+*.bat eol=crlf

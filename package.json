@@ -1,6 +1,6 @@
 {
   "name": "mindcraft",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "MindCraft",
   "license": "MIT",
   "description": "Editor de mapas mentais multiplataforma, compatível com arquivos .mom",
@@ -12,7 +12,9 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.js",
-    "e2e": "electron test/e2e.js && electron test/e2e.js --classic && electron test/e2e-study.js && electron test/e2e-study.js --classic && electron test/e2e-network.js && electron test/e2e-network.js --classic && electron test/e2e-assistant.js && electron test/e2e-assistant.js --classic && electron test/e2e-notes.js && electron test/e2e-library.js && electron test/e2e-library.js --classic && electron test/e2e-pdf.js && electron test/e2e-review.js && electron test/e2e-errors.js && electron test/e2e-perf.js && electron test/e2e-monkey.js && electron test/e2e-home.js && electron test/e2e-simulados.js && electron test/e2e-hostile.js && electron test/e2e-failures.js && electron test/e2e-layout.js && electron test/e2e-a11y.js && electron test/e2e-deep.js && electron test/e2e-deep.js --classic && electron test/e2e-questions.js && electron test/e2e-questions.js --classic && electron test/e2e-notify.js && electron test/e2e-web.js && electron test/e2e-edit.js && electron test/e2e-tablet.js && electron test/e2e-sync.js && electron test/e2e-sync-web.js && electron test/e2e-mindomo.js && electron test/e2e-graph.js",
+    "lint": "eslint . --max-warnings 0",
+    "check": "npm run lint && npm test && npm run test:web",
+    "e2e": "node tools/run-e2e.js",
     "evidence": "electron test/evidence.js",
     "dist": "electron-builder --publish never",
     "qa": "electron test/qa-tour.js",
@@ -75,10 +77,13 @@
     "pdfkit": "^0.20.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "buffer": "^6.0.3",
     "electron": "^44.8.0",
     "electron-builder": "^26.15.3",
     "esbuild": "0.25.10",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
     "pdfjs-dist": "4.10.38",
     "react": "18.3.1",
     "react-dom": "18.3.1",

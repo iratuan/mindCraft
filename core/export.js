@@ -4,7 +4,6 @@ const PDFDocument = require('pdfkit');
 const docx = require('docx');
 const { layoutMap, edgePoints } = require('./layout');
 const { MARKERS, tagText } = require('./markers');
-const { plainLinks } = require('./links');
 const { mdToPlain } = require('./markdown');
 
 // ---------- Markdown / OPML / texto ----------

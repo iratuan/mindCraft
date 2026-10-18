@@ -3,12 +3,13 @@
    grafo interativo e exportação para o Obsidian. Carregado depois de study-ui.js (usa os globais dele e de renderer.js). */
 const { buildGraph, neighborhood } = require(path.join(core, 'graph'));
 const { forceLayout } = require(path.join(core, 'forcelayout'));
+const { placeLabels, relationLabelAnchor } = require(path.join(core, 'graph-labels'));
 const { loadVault } = require(path.join(core, 'vault'));
 const { unlinkedMentions, linkify } = require(path.join(core, 'mentions'));
 const { exportObsidian } = require(path.join(core, 'obsidian'));
 const { norm } = require(path.join(core, 'links'));
 
-const gesc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const { escapeHtml: gesc } = require(path.join(core, 'text'));
 
 // ---------- coleta dos mapas ----------
 const curKey = () => (map.meta.libId ? libMapKey(map.meta.libId) : filePath ? path.resolve(filePath) : '(mapa atual)');
@@ -210,12 +211,13 @@ notes.addEventListener('keydown', (e) => {
 let gBuilt = false;
 const gOpt = { hier: true, orphans: true, local: false, depth: 1, q: '', density: 'normal', labels: 'auto', group: false, focus: false };   // hierarquia ligada: cada mapa vira uma constelação
 let gSel = null;                                  // id do nó selecionado no grafo
-let gTrans = { x: 0, y: 0, k: 1 };
+const gTrans = { x: 0, y: 0, k: 1 };
 let gPinned = new Map();                          // posições arrastadas à mão
 let gLayoutSig = '', gPos = new Map(), gLast = null;
-let gHiddenMaps = new Set();                      // mapas ocultados pela legenda (só some do desenho: o layout não muda)
-let gExpanded = new Set();                        // pais cujas folhas foram abertas (modo "agrupar folhas")
-let gHover = null;                                // índice do nó sob o mouse
+const gHiddenMaps = new Set();                      // mapas ocultados pela legenda (só some do desenho: o layout não muda)
+const gExpanded = new Set();                        // pais cujas folhas foram abertas (modo "agrupar folhas")
+let gHover = null;                                // índice do nó sob o mouse (válido só para o desenho atual)
+let gHoverId = null;                              // id do mesmo nó: sobrevive ao redesenho; o índice é refeito a partir dele
 let gSideSel = null;                              // seleção para a qual o painel de detalhes já foi mostrado
 let gMatchPos = -1;                               // resultado da busca em foco (Enter percorre; -1 = ainda nenhum)
 let lastExportDir = null;
@@ -299,7 +301,7 @@ function openGraph() {
   if (!gBuilt) buildGraphUI();
   graphOpen = true; $('#graph').hidden = false; document.querySelector('[data-act="graph"]').classList.add('on');
   const c = loadCfg(); $('#gScope').value = c.scope === 'vault' ? 'vault' : 'map';
-  gSel = selectedId ? `${curKey()}::${selectedId}` : null; gHover = null; gSideSel = gSel;
+  gSel = selectedId ? `${curKey()}::${selectedId}` : null; gHover = null; gHoverId = null; gSideSel = gSel;
   renderGraph(true); fitGraph();
 }
 function closeGraph() { graphOpen = false; const g = $('#graph'); if (g) g.hidden = true; const b = document.querySelector('[data-act="graph"]'); if (b) b.classList.remove('on'); }
@@ -335,6 +337,7 @@ function renderGraph(relayout) {
   const P = nodes.map((n) => gPinned.get(n.id) || gPos.get(n.id) || { x: 0, y: 0 });
   const adj = nodes.map(() => new Set()), inc = nodes.map(() => []);
   edges.forEach((e, ei) => { const a = idx.get(e.from), b = idx.get(e.to); adj[a].add(b); adj[b].add(a); inc[a].push(ei); inc[b].push(ei); });
+  gHover = gHoverId !== null && idx.has(gHoverId) ? idx.get(gHoverId) : null;   // o redesenho pode ter mudado o conjunto de pontos: nunca reaproveite o índice antigo
   const q = norm(gOpt.q);
   const match = nodes.map((n) => !q || norm(n.title).includes(q));
   // folhas da hierarquia (só uma ligação, e ela é "pai → este"): podem ficar agrupadas no pai ("+N") até haver zoom
@@ -413,7 +416,7 @@ function nodeVisible(i) {
 function paintDim() {
   if (!gLast) return;
   const { nodes, adj, idx, edges, match, gn, lines } = gLast; const q = gOpt.q;
-  const centre = gHover !== null ? gHover : gOpt.focus && gSel && idx.has(gSel) ? idx.get(gSel) : null;
+  const centre = gHover !== null && adj[gHover] ? gHover : gOpt.focus && gSel && idx.has(gSel) ? idx.get(gSel) : null;
   const keep = centre !== null ? new Set([centre, ...adj[centre]]) : null;
   gn.forEach((x, i) => { if (x) x.classList.toggle('dim', keep ? !keep.has(i) : !!q && !match[i]); });
   lines.forEach((l) => { const ed = edges[+l.dataset.e]; l.classList.toggle('dim', centre !== null && !(idx.get(ed.from) === centre || idx.get(ed.to) === centre)); });
@@ -437,45 +440,28 @@ function updateLabels() {
   const scr = nodes.map((_, i) => ({ x: P[i].x * k + gTrans.x, y: P[i].y * k + gTrans.y, r: R(nodes[i]) * k }));
   const onScreen = (i) => scr[i].x > -40 && scr[i].x < r.width + 40 && scr[i].y > -40 && scr[i].y < r.height + 40;
   const near = new Set(); for (const c of [hov, selI]) if (c !== null && c !== undefined) { near.add(c); adj[c].forEach((j) => near.add(j)); }
-  const forced = (i) => near.has(i) || (gOpt.q && match[i]);
+  const isForced = (i) => near.has(i) || !!(gOpt.q && match[i]);
   const score = (i) => (i === selI ? 1e7 : 0) + (i === hov ? 1e7 : 0) + (gOpt.q && match[i] ? 1e6 : 0) + (near.has(i) ? 1e5 : 0) + (nodes[i].isRoot ? 1e3 : 0) + nodes[i].deg * 10 + (gLast.leafCount[i] || 0);
-  const order = nodes.map((_, i) => i).filter((i) => vis[i] && onScreen(i)).sort((a, b) => score(b) - score(a));
-  // grade espacial: retângulos já ocupados (rótulos colocados + pontos), consulta em O(1) por célula de 80 px
-  const CELL = 80, grid = new Map(), keyOf = (cx, cy) => cx * 100003 + cy;
-  const put = (b) => { for (let cx = Math.floor(b.x / CELL); cx <= Math.floor((b.x + b.w) / CELL); cx++) for (let cy = Math.floor(b.y / CELL); cy <= Math.floor((b.y + b.h) / CELL); cy++) { const kk = keyOf(cx, cy); (grid.get(kk) || grid.set(kk, []).get(kk)).push(b); } };
-  const hits = (b, gap, skip) => { for (let cx = Math.floor((b.x - gap) / CELL); cx <= Math.floor((b.x + b.w + gap) / CELL); cx++) for (let cy = Math.floor((b.y - gap) / CELL); cy <= Math.floor((b.y + b.h + gap) / CELL); cy++) { const l = grid.get(keyOf(cx, cy)); if (l) for (const o of l) if (o !== skip && b.x - gap < o.x + o.w && o.x < b.x + b.w + gap && b.y - gap < o.y + o.h && o.y < b.y + b.h + gap) return true; } return false; };
-  const circ = []; for (const i of order) { circ[i] = { x: scr[i].x - scr[i].r, y: scr[i].y - scr[i].r, w: scr[i].r * 2, h: scr[i].r * 2 }; put(circ[i]); }
-  for (const sel of ['#gLegend', '#gZoom', '#gStat']) { const o = $(sel); if (!o || o.hidden) continue; const b = o.getBoundingClientRect(); if (b.width) put({ x: b.left - r.left - 4, y: b.top - r.top - 4, w: b.width + 8, h: b.height + 8 }); }   // o que flutua sobre o desenho também ocupa lugar
+  const items = []; nodes.forEach((n, i) => { if (vis[i] && labels[i] && onScreen(i)) items.push({ id: i, x: scr[i].x, y: scr[i].y, r: scr[i].r, text: labels[i].dataset.full, forced: isForced(i), score: score(i), relevant: n.isRoot || n.deg >= 4 }); });
+  const obstacles = [];   // o que flutua sobre o desenho também ocupa lugar
+  for (const sel of ['#gLegend', '#gZoom', '#gStat']) { const o = $(sel); if (!o || o.hidden) continue; const bb = o.getBoundingClientRect(); if (bb.width) obstacles.push({ x: bb.left - r.left - 4, y: bb.top - r.top - 4, w: bb.width + 8, h: bb.height + 8 }); }
   const budget = Math.max(10, Math.round(D.budget * (r.width * r.height) / 9000));
-  let shown = 0; const hide = (el0) => { if (el0.style.display !== 'none') el0.style.display = 'none'; };
-  const H = 15, placedLbl = new Set();
-  for (const i of order) {
-    const el0 = labels[i]; if (!el0) continue;
-    const isForced = forced(i) || i === selI || i === hov;
-    const allowed = mode === 'all' ? true : mode === 'none' ? isForced : mode === 'relevant' ? (isForced || nodes[i].isRoot || nodes[i].deg >= 4) : (isForced || shown < budget);
-    if (!allowed) { hide(el0); continue; }
-    const full = el0.dataset.full, big = isForced;
-    const txt = fitText(full, big ? 300 : 170), w = textW(txt) + 6, s = scr[i], off = s.r + 4;
-    const cands = [{ x: s.x - w / 2, y: s.y + off, a: 'middle', ox: 0, oy: off + H / 2 }, { x: s.x + off, y: s.y - H / 2, a: 'start', ox: off, oy: 0 }, { x: s.x - w / 2, y: s.y - off - H, a: 'middle', ox: 0, oy: -off - H / 2 }, { x: s.x - off - w, y: s.y - H / 2, a: 'end', ox: -off, oy: 0 }];
-    let pick = null;
-    if (mode === 'all') pick = cands[0];
-    else for (const c of cands) { const b = { x: c.x, y: c.y, w, h: H }; if (b.x >= -2 && b.x + w <= r.width + 2 && b.y >= 0 && b.y + H <= r.height + 2 && !hits(b, D.gap, circ[i])) { pick = c; break; } }
-    if (!pick && isForced) pick = cands[0];                       // o que o usuário pediu nunca some (mesmo sobre outros rótulos)
-    if (!pick) { hide(el0); continue; }
-    put({ x: pick.x, y: pick.y, w, h: H }); shown++; placedLbl.add(i);
-    if (el0.textContent !== txt) el0.textContent = txt;
-    el0.setAttribute('x', pick.ox / k); el0.setAttribute('y', pick.oy / k); el0.setAttribute('text-anchor', pick.a); el0.style.display = '';
+  const { placed, shown } = placeLabels(items, { width: r.width, height: r.height, obstacles, mode, budget, gap: D.gap, measure: textW, fit: fitText });
+  labels.forEach((el0, i) => {
+    if (!el0) return;
+    const p = placed.get(i);
+    if (!p) { if (el0.style.display !== 'none') el0.style.display = 'none'; return; }
+    if (el0.textContent !== p.text) el0.textContent = p.text;
+    el0.setAttribute('x', p.ox / k); el0.setAttribute('y', p.oy / k); el0.setAttribute('text-anchor', p.anchor); el0.style.display = '';
     el0.classList.toggle('big', i === selI || i === hov);
-  }
-  labels.forEach((l, i) => { if (l && !placedLbl.has(i)) hide(l); });
+  });
   // rótulos das relações: no meio da linha; aparecem com zoom, ou quando ligam o ponto selecionado/sob o mouse
   for (const [ei, t] of elabels) {
-    const e = edges[ei], a = idx.get(e.from), b = idx.get(e.to); const sa = scr[a], sb = scr[b];
-    const focus = [a, b].find((x) => x === selI || x === hov);             // ponta selecionada/sob o mouse: o rótulo fica perto dela mesmo que a outra ponta esteja longe
-    let fx = 0.5; if (focus !== undefined) { const len = Math.hypot(sa.x - sb.x, sa.y - sb.y) || 1; fx = Math.min(0.5, 110 / len); }
-    const from = focus === b ? b : a, to = focus === b ? a : b, mx = scr[from].x + (scr[to].x - scr[from].x) * fx, my = scr[from].y + (scr[to].y - scr[from].y) * fx;
-    const ok = vis[a] && vis[b] && mx > 0 && mx < r.width && my > 0 && my < r.height && (k >= 0.9 || focus !== undefined) && mode !== 'none';
-    t.style.display = ok ? '' : 'none'; if (ok) { t.setAttribute('x', P[from].x + (P[to].x - P[from].x) * fx); t.setAttribute('y', P[from].y + (P[to].y - P[from].y) * fx - 8 / k); }
+    const e = edges[ei], ia = idx.get(e.from), ib = idx.get(e.to);
+    const focusEnd = ia === selI || ia === hov ? 'a' : ib === selI || ib === hov ? 'b' : null;     // ponta em foco: o rótulo fica perto dela
+    const an = relationLabelAnchor(scr[ia], scr[ib], focusEnd), from = focusEnd === 'b' ? ib : ia, to = focusEnd === 'b' ? ia : ib;
+    const ok = vis[ia] && vis[ib] && an.x > 0 && an.x < r.width && an.y > 0 && an.y < r.height && (k >= 0.9 || focusEnd !== null) && mode !== 'none';
+    t.style.display = ok ? '' : 'none'; if (ok) { t.setAttribute('x', P[from].x + (P[to].x - P[from].x) * an.t); t.setAttribute('y', P[from].y + (P[to].y - P[from].y) * an.t - 8 / k); }
   }
   gLast.shown = shown;
   $('#gStat').textContent = gLast.statBase + (nodes.length > 20 ? ` · ${shown} rótulo(s)` : '');
@@ -607,11 +593,11 @@ function bindGraphEvents() {
   // destaque dos vizinhos ao passar o mouse (sem redesenhar)
   svgEl.addEventListener('mouseover', (e) => {
     const nd = e.target.closest('.gn'); if (!nd || drag) return;
-    gHover = +nd.dataset.i; paintDim(); updateLabels();
+    gHover = +nd.dataset.i; gHoverId = gLast.nodes[gHover].id; paintDim(); updateLabels();
   });
   svgEl.addEventListener('mouseout', (e) => {
     if (!e.target.closest('.gn')) return;
-    gHover = null; paintDim(); scheduleLabels();
+    gHover = null; gHoverId = null; paintDim(); scheduleLabels();
   });
 }
 

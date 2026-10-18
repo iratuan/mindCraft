@@ -8,14 +8,8 @@ function install() {
   let timer = null;
   function refit() {
     const ed = document.getElementById('editor');
-    if (!ed || ed.hidden || typeof selectedId === 'undefined' || !selectedId || typeof L === 'undefined') return;
-    try {
-      if (typeof reveal === 'function') reveal(selectedId, 90);                               // rola o mapa até o tópico caber na área visível
-      const b = L.boxes.get(selectedId); if (!b) return;
-      const w = Math.max(b.w * pan.k, 120);
-      editBase = { cx: (b.x + b.w / 2) * pan.k + pan.x, top: b.y * pan.k + pan.y, minW: w, size: Math.max(12, b.style.size * pan.k), bold: !!b.style.bold };   // eslint-disable-line no-undef
-      ed.style.top = editBase.top + 'px'; fitEditor();                                          // fitEditor mantém o campo dentro da área visível
-    } catch { /* se a interface mudar, o campo continua usável (só não é reposicionado) */ }
+    if (!ed || ed.hidden || !window.MCView) return;
+    try { window.MCView.refitEditor(); } catch { /* se a interface mudar, o campo continua usável (só não é reposicionado) */ }
   }
   const later = () => { clearTimeout(timer); timer = setTimeout(refit, 150); };
   window.addEventListener('resize', later);

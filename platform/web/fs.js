@@ -58,6 +58,14 @@ function statSync(p) {
   if (dirs.has(p)) return { isFile: () => false, isDirectory: () => true, size: 0, mtimeMs: 0 };
   throw enoent(p, 'stat');
 }
+/** Copia o conteúdo (o backup antes de sobrescrever um arquivo depende disto). */
+function copyFileSync(a, b) { a = norm(a); const d = files.get(a); if (!d) throw enoent(a, 'copyfile'); writeFileSync(b, d); }
+/** Ajusta a data de modificação (Date ou segundos/milissegundos). */
+function utimesSync(p, _atime, mtime) {
+  p = norm(p); if (!files.has(p)) throw enoent(p, 'utime');
+  const ms = mtime instanceof Date ? mtime.getTime() : Number(mtime) < 1e11 ? Number(mtime) * 1000 : Number(mtime);
+  mtimes.set(p, Number.isFinite(ms) ? ms : Date.now());
+}
 const vfs = {
   snapshot: () => ({ files: [...files].map(([k, v]) => [k, Array.from(v)]), dirs: [...dirs] }),
   restore: (s) => { files.clear(); mtimes.clear(); dirs.clear(); dirs.add('/'); for (const d of s.dirs || []) dirs.add(d); for (const [k, v] of s.files || []) files.set(k, new Uint8Array(v)); },
@@ -70,4 +78,4 @@ const vfs = {
   loadRaw: (entries, dirList) => { files.clear(); mtimes.clear(); dirs.clear(); dirs.add('/'); for (const d of dirList || []) dirs.add(d); for (const [k, v, mt] of entries || []) { files.set(k, v); if (mt) mtimes.set(k, mt); } },
   paths: () => ({ files: [...files.keys()], dirs: [...dirs] }),
 };
-module.exports = { mkdirSync, writeFileSync, readFileSync, existsSync, renameSync, rmSync, readdirSync, statSync, unlinkSync: (p) => rmSync(p), vfs };
+module.exports = { mkdirSync, writeFileSync, readFileSync, existsSync, renameSync, rmSync, readdirSync, statSync, copyFileSync, utimesSync, unlinkSync: (p) => rmSync(p), vfs };

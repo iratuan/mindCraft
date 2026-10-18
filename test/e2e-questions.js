@@ -132,7 +132,8 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'questoes');
     await js(`openLibraryModal()`); await c.waitFor(() => js(`!!document.querySelector('#libImpPack')`)); await js(`window.__dlg.pack = ${JSON.stringify(pack)}`); await click('#libImpPack'); await c.waitFor(() => js(`document.body.classList.contains('light')`), 8000);
     eq(await js(`(() => { const c = loadCfg(); return [c.startScreen, c.dashOnStart, c.newInLibrary, document.body.classList.contains('light')]; })()`), ['last', true, true, true]);
     ok((await js(`document.querySelector('#libMsg') ? document.querySelector('#libMsg').textContent : document.querySelector('#modal').textContent`)).includes('Configurações restauradas'), 'avisa que restaurou');
-    eq(await js(`JSON.stringify(Object.keys(loadCfg()).filter((k) => /vault|path|dir/i.test(k)))`), '[]', 'nenhum caminho entrou');
+    eq(await js(`JSON.stringify(Object.keys(loadCfg()).filter((k) => /vault|path|dir/i.test(k) && k !== 'lastSaveDir'))`), '[]', 'nenhum caminho entrou (lastSaveDir é preferência LOCAL, nunca exportada)');
+    const packKeys = Object.keys(JSON.parse(new (require('adm-zip'))(pack).getEntry('settings.json').getData().toString())); ok(packKeys.length > 0 && packKeys.every((k) => ['startScreen', 'dashOnStart', 'newInLibrary', 'light', 'notifyDaily', 'notifyAt', 'pdfScale', 'pdfWidth'].includes(k)), 'o pacote só leva preferências permitidas: ' + packKeys.join());
     await js(`closeModal(); true`);
   });
 

@@ -3,7 +3,7 @@
 // conversor para texto simples (Word/PDF) e alternância de tarefas. O texto da nota continua sendo Markdown puro.
 const { rewriteLinks, plainLinks } = require('./links');
 
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const { escapeHtml: esc } = require('./text');
 const SAFE_URL = /^(https?:\/\/|mailto:)[^\s<>"']+$/i;
 const FENCE = /^\s{0,3}(```|~~~)/;
 const LIST = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;

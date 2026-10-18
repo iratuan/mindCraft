@@ -8,7 +8,7 @@ const ITEMS = [
   ['Arquivo', [['new', 'Novo mapa'], ['template', 'Novo mapa de concurso (modelo)'], ['open', 'Abrir arquivo…'], ['save', 'Salvar'], ['saveAs', 'Salvar como…'], ['home', 'Tela inicial']]],
   ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['sync', 'Sincronização (opcional)…'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
   ['Ver', [['graph', 'Rede de conhecimento'], ['pdf', 'Leitor de PDF'], ['present', 'Apresentar'], ['fit', 'Ajustar à tela'], ['help', 'Atalhos e ajuda']]],
-  ['Editar', [['undo', 'Desfazer'], ['redo', 'Refazer']]],
+  ['Editar', [['undo', 'Desfazer'], ['redo', 'Refazer'], ['moveUp', 'Subir tópico'], ['moveDown', 'Descer tópico'], ['outdent', 'Promover (subir um nível)'], ['indent', 'Rebaixar (virar filho do irmão de cima)']]],
 ];
 
 function installMenu({ emit, css = '' }) {
@@ -23,9 +23,13 @@ function installMenu({ emit, css = '' }) {
   const bar = document.createElement('div'); bar.id = 'mcTouchBar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', 'Menu e ações rápidas');
   const mk = (id, label, text, cls = '') => { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = text; b.setAttribute('aria-label', label); b.title = label; if (cls) b.className = cls; return b; };
   const btn = mk('mcHostMenuBtn', 'Menu', '☰'); btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
-  const edit = mk('tbEdit', 'Editar o texto do tópico', '✎', 'tb-extra'), fold = mk('tbFold', 'Recolher ou expandir o ramo', '⇕', 'tb-extra'), panels = mk('tbPanels', 'Painéis (Estudo, Notas, Conexões…)', '☷', 'tb-extra tb-panels-btn');
+  const edit = mk('tbEdit', 'Editar o texto do tópico', '✎', 'tb-extra'), fold = mk('tbFold', 'Recolher ou expandir o ramo', '⊟', 'tb-extra'), panels = mk('tbPanels', 'Painéis (Estudo, Notas, Conexões…)', '☷', 'tb-extra tb-panels-btn');
   panels.setAttribute('aria-expanded', 'false');
-  bar.append(btn, edit, fold, panels);
+  // reordenar sem teclado (no desktop é Alt+setas): sobe/desce entre irmãos, promove/rebaixa de nível
+  const up = mk('tbUp', 'Subir o tópico (trocar com o irmão de cima)', '▲', 'tb-extra'), down = mk('tbDown', 'Descer o tópico (trocar com o irmão de baixo)', '▼', 'tb-extra');
+  const out = mk('tbOut', 'Promover: subir um nível', '◀', 'tb-extra'), inn = mk('tbIn', 'Rebaixar: virar filho do irmão de cima', '▶', 'tb-extra');
+  up.onclick = () => emit('moveUp'); down.onclick = () => emit('moveDown'); out.onclick = () => emit('outdent'); inn.onclick = () => emit('indent');
+  bar.append(btn, edit, fold, up, down, out, inn, panels);
 
   const panel = document.createElement('div'); panel.id = 'mcHostMenu'; panel.hidden = true; panel.setAttribute('role', 'menu');
   for (const [group, items] of ITEMS) {
@@ -40,7 +44,15 @@ function installMenu({ emit, css = '' }) {
 
   // teclas que no desktop são só teclado: mesmos eventos que a interface já trata
   const key = (k) => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
-  edit.onclick = () => key('F2'); fold.onclick = () => key(' ');
+  edit.onclick = () => key('F2'); fold.onclick = () => emit('toggle');
+  // ⊟ = recolher o ramo (esconde os subtópicos) · ⊞ = expandir. Desativado quando o tópico não tem subtópicos. O texto diz quantos subtópicos mexem.
+  const syncFold = () => {
+    const st = window.MCView && window.MCView.branchState ? window.MCView.branchState() : { can: false };
+    fold.disabled = !st.can; fold.textContent = st.can && st.collapsed ? '⊞' : '⊟';
+    const lbl = !st.can ? 'Recolher ou expandir o ramo (selecione um tópico que tenha subtópicos)' : st.collapsed ? `Expandir o ramo: mostrar ${st.count} subtópico(s)` : `Recolher o ramo: esconder ${st.count} subtópico(s)`;
+    fold.title = lbl; fold.setAttribute('aria-label', lbl);
+  };
+  window.addEventListener('mc:render', syncFold); syncFold();
 
   // gaveta de painéis (janela estreita)
   const scrim = document.createElement('div'); scrim.id = 'tbScrim'; scrim.hidden = true;

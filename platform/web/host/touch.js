@@ -44,15 +44,12 @@ function install({ vibrate = true } = {}) {
 
   function zoomAt(root, cx, cy, factor) {
     const r = root.getBoundingClientRect(), mx = cx - r.left, my = cy - r.top;
-    if (root.id === 'svg' && typeof pan !== 'undefined' && typeof render === 'function') {        // mapa: zoom contínuo, igual à roda do mouse (mesma fórmula)
-      const k = Math.min(4, Math.max(0.1, pan.k * factor));
-      pan.x = mx - ((mx - pan.x) / pan.k) * k; pan.y = my - ((my - pan.y) / pan.k) * k; pan.k = k; render(); return;
-    }
+    if (root.id === 'svg' && window.MCView) { window.MCView.zoomAt(mx, my, factor); return; }        // mapa: zoom contínuo, igual à roda do mouse (mesma fórmula)
     st.acc = (st.acc || 0) + Math.log(factor) / Math.log(1.12);                                    // rede: usa a roda do mouse (passos de 12%)
     while (Math.abs(st.acc) >= 1) { const up = st.acc > 0; st.acc += up ? -1 : 1; root.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: cx, clientY: cy, deltaY: up ? -100 : 100 })); }
   }
   function panBy(root, dx, dy) {
-    if (root.id === 'svg' && typeof pan !== 'undefined' && typeof render === 'function') { pan.x += dx; pan.y += dy; render(); }
+    if (root.id === 'svg' && window.MCView) window.MCView.panBy(dx, dy);
   }
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y), mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
   const sendTap = (x, y, detail, ctrl) => {

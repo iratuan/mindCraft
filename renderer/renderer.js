@@ -49,6 +49,8 @@ function newMap() {
 
 function setStatus(msg) { $('#status').textContent = msg; }
 
+/** Quantos tópicos existem abaixo de `node` (todos os níveis). */
+function descendantCount(node) { let n = 0; for (const c of node.children) n += 1 + descendantCount(c); return n; }
 function render() {
   L = layoutMap(map, { today: nowStr() });
   // a seleção pode ter desaparecido (desfazer/refazer, exclusão, restaurar versão): volta para a raiz em vez de ficar apontando para o nada
@@ -90,6 +92,7 @@ function render() {
   ipcRenderer.send('dirty', { dirty, timing: typeof timer !== 'undefined' && !!timer });
   syncChrome(sel);
   autosaveTick();
+  window.dispatchEvent(new Event('mc:render'));          // quem precisa refletir o estado (ex.: botões da barra do tablet) escuta isto
 }
 
 // ---------- interface (barras e painéis) ----------
@@ -267,13 +270,19 @@ async function openPath(p, { silent = false } = {}) {
   }
 }
 /** Retorna true se salvou, false se cancelou ou falhou. */
+/** Caminho inicial do "Salvar como": pasta do arquivo atual (ou a última usada) + nome sugerido. O diálogo do sistema deixa mudar nome e pasta. */
+function saveDefaultPath(name) {
+  try { const dir = filePath ? path.dirname(filePath) : loadCfg().lastSaveDir; if (dir && fs.existsSync(dir)) return path.join(dir, name); } catch { /* sem pasta: só o nome */ }
+  return name;
+}
+const rememberSaveDir = (target) => { try { if (typeof target === 'string' && target) saveCfg({ lastSaveDir: path.dirname(target) }); } catch { /* preferência é opcional */ } };
 async function save(as) {
   commitNotes();
   if (inLibrary()) return as ? exportCopyMom() : saveToLibrary();            // casa = biblioteca (SQLite); "Salvar como" exporta uma cópia .mom
   if (!filePath && !as && loadCfg().newInLibrary && getLibrary()) return saveToLibrary();   // opção: mapas novos já nascem na biblioteca
   let target = filePath;
   if (!target || as) {
-    target = await ipcRenderer.invoke('dialog:save', 'mom', (map.root.title || 'mapa') + '.mom');
+    target = await ipcRenderer.invoke('dialog:save', 'mom', saveDefaultPath((map.root.title || 'mapa') + '.mom'));
     if (!target) return false;
     if (!/\.mom$/i.test(target)) target += '.mom';
   }
@@ -282,7 +291,7 @@ async function save(as) {
     if (userDataDir) { try { backupBefore(target, path.join(userDataDir, 'backups')); } catch (e) { report('Backup falhou (o salvamento continua): ' + e.message); } }   // guarda a versão anterior
     writeMom(map, target);
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
-  filePath = target; dirty = false; render();
+  filePath = target; dirty = false; render(); rememberSaveDir(target);
   ipcRenderer.invoke('recent:add', target).catch(() => {});
   saveCfg({ lastKind: 'file' });
   return true;
@@ -304,8 +313,8 @@ const rasterize = (size = 2) => new Promise((resolve, reject) => {
 async function doExport(fmt) {
   if (!fmt) return;
   commitNotes();
-  const p = await ipcRenderer.invoke('dialog:save', fmt, (map.root.title || 'mapa') + '.' + fmt);
-  if (!p) return;
+  const p = await ipcRenderer.invoke('dialog:save', fmt, saveDefaultPath((map.root.title || 'mapa') + '.' + fmt));
+  if (!p) return; rememberSaveDir(p);
   try {
     let data;
     if (fmt === 'pdf') data = await ipcRenderer.invoke('render-export', 'pdf', map.toJSON(), { outline: true });
@@ -350,10 +359,14 @@ const act = {
   redo() { if (map.redo()) { dirty = true; rev++; selectedRel = null; render(); } },
   fit,
   bold() { const s = sel(); if (s) { const v = !(s.node.style.bold ?? (L.boxes.get(s.node.id) || { style: {} }).style.bold); change(() => map.updateMany(targets(), { style: { bold: v } })); } },
+  /** Recolhe ou expande o ramo do tópico selecionado (Espaço; botão ⊟/⊞ da barra do tablet). Sempre diz o que fez ou por que não pôde. */
   toggle() {
-    const s = sel(); if (!s || !s.node.children.length) return;
-    const v = !s.node.collapsed;
-    change(() => map.updateMany(targets().filter((id) => map.find(id).node.children.length), { collapsed: v }));
+    const s = sel();
+    if (!s) return setStatus('Selecione um tópico para recolher ou expandir o ramo dele.');
+    if (!s.node.children.length) return setStatus('Este tópico não tem subtópicos para recolher.');
+    const v = !s.node.collapsed, ids = targets().filter((id) => map.find(id) && map.find(id).node.children.length), hidden = ids.reduce((n, id) => n + descendantCount(map.find(id).node), 0);
+    change(() => map.updateMany(ids, { collapsed: v }));
+    setStatus(v ? `Ramo recolhido: ${hidden} subtópico(s) escondido(s). Toque de novo para expandir.` : 'Ramo expandido.');
   },
 };
 /** Reordena/muda o nível do tópico selecionado (um por vez; uma ação desfazível). */
@@ -546,6 +559,23 @@ function fitEditor() {
   if (editBase) editor.style.top = Math.max(8, Math.min(editBase.top, sh - h - 8)) + 'px';
 }
 editor.addEventListener('input', fitEditor);
+/** Depois que o teclado virtual aparece/some ou a tela gira: rola o mapa até o tópico em edição caber e reposiciona o campo de texto. */
+function refitEditorToViewport() {
+  if (editor.hidden || !selectedId || !L) return;
+  reveal(selectedId, 90);                                                    // rola o mapa até o tópico caber na área visível
+  const b = L.boxes.get(selectedId); if (!b) return;
+  editBase = { cx: (b.x + b.w / 2) * pan.k + pan.x, top: b.y * pan.k + pan.y, minW: Math.max(b.w * pan.k, 120), size: Math.max(12, b.style.size * pan.k), bold: !!b.style.bold };
+  editor.style.top = editBase.top + 'px'; fitEditor();                        // fitEditor mantém o campo dentro da área visível
+}
+/**
+ * FACHADA para a camada de plataforma (platform/web/host: toque, teclado virtual). É a ÚNICA porta de entrada da plataforma no estado do mapa:
+ * ela não enxerga pan/L/editBase diretamente. Ao mudar o que está aqui, rode test/e2e-tablet.js.
+ */
+window.MCView = {
+  zoomAt: zoomMapAt, panBy(dx, dy) { pan.x += dx; pan.y += dy; render(); }, refitEditor: refitEditorToViewport,
+  /** Estado do ramo do tópico selecionado, para o botão recolher/expandir: { can, collapsed, count }. */
+  branchState() { const s = sel(); return s && s.node.children.length ? { can: true, collapsed: !!s.node.collapsed, count: descendantCount(s.node) } : { can: false, collapsed: false, count: 0 }; },
+};
 function endEdit(commit) {
   if (editor.hidden) return;
   editor.hidden = true;
@@ -612,10 +642,35 @@ window.addEventListener('mousemove', (e) => {
   }
   if (!drag.id) { pan.x = drag.ox + dx; pan.y = drag.oy + dy; view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`); svg.classList.add('panning'); return; }
   const t = nodeAt(document.elementFromPoint(e.clientX, e.clientY));
-  view.querySelectorAll('.drop').forEach((el) => el.classList.remove('drop'));
-  drag.target = t && t.dataset.id !== drag.id ? t.dataset.id : null;
-  if (drag.target) t.classList.add('drop');
+  if (!drag.hinted) { drag.hinted = true; setStatus('Solte na parte de CIMA ou de BAIXO de um tópico para reordenar (linha laranja); no MEIO, para torná-lo filho.'); }
+  clearDropMarks();
+  drag.target = t && t.dataset.id !== drag.id ? t.dataset.id : null; drag.mode = 'child';
+  if (drag.target) {
+    drag.mode = dropMode(drag.target, e.clientY);
+    if (drag.mode === 'child') t.classList.add('drop'); else showDropLine(drag.target, drag.mode);
+  }
 });
+/** Remove a marcação do alvo de soltar (contorno de "filho" e linha de "entre irmãos"). */
+function clearDropMarks() { view.querySelectorAll('.drop').forEach((el) => el.classList.remove('drop')); const l = view.querySelector('#dropLine'); if (l) l.remove(); }
+/**
+ * Onde soltar em relação ao tópico-alvo, pela altura do ponteiro: 30% de cima = 'before' (irmão antes), 30% de baixo = 'after' (irmão depois),
+ * meio = 'child'. A raiz não tem irmãos: sempre 'child'.
+ */
+function dropMode(targetId, clientY) {
+  const r = map.find(targetId), b = L.boxes.get(targetId);
+  if (!r || !r.parent || !b) return 'child';
+  const top = svg.getBoundingClientRect().top + b.y * pan.k + pan.y, rel = (clientY - top) / Math.max(1, b.h * pan.k);
+  return rel < 0.3 ? 'before' : rel > 0.7 ? 'after' : 'child';
+}
+/** Linha laranja entre os irmãos: mostra exatamente onde o tópico vai ficar. */
+function showDropLine(targetId, mode) {
+  const b = L.boxes.get(targetId); if (!b) return;
+  const y = mode === 'before' ? b.y - 4 : b.y + b.h + 4, w = 3 / pan.k, ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns, 'g'); g.id = 'dropLine'; g.setAttribute('pointer-events', 'none');
+  const ln = document.createElementNS(ns, 'line'); for (const [k, v] of Object.entries({ x1: b.x - 6, x2: b.x + b.w + 6, y1: y, y2: y, stroke: '#ff9800', 'stroke-width': w, 'stroke-linecap': 'round' })) ln.setAttribute(k, v);
+  g.append(ln); for (const x of [b.x - 6, b.x + b.w + 6]) { const c = document.createElementNS(ns, 'circle'); for (const [k, v] of Object.entries({ cx: x, cy: y, r: 4 / pan.k, fill: '#ff9800' })) c.setAttribute(k, v); g.append(c); }
+  view.append(g);
+}
 window.addEventListener('mouseup', (e) => {
   if (!drag) return;
   svg.classList.remove('panning');
@@ -633,10 +688,12 @@ window.addEventListener('mouseup', (e) => {
     render(); setStatus(`${ids.length} tópico(s) selecionado(s)`);
     return;
   }
+  clearDropMarks();
   if (d.moved && d.id && d.target) {
     const ids = selIds.has(d.id) ? [...selIds] : [d.id]; // arrastar um selecionado leva o grupo todo
-    const ok = change(() => map.moveMany(ids, d.target));
-    if (!ok) setStatus('Movimento inválido.');
+    const beside = d.mode === 'before' || d.mode === 'after';
+    const ok = change(() => (beside ? map.moveBeside(ids, d.target, d.mode) : map.moveMany(ids, d.target)));
+    if (!ok) { if (ok === false) setStatus('Movimento inválido.'); } else setStatus(beside ? 'Tópico reposicionado.' : 'Tópico movido para dentro do tópico escolhido.');
   } else if (d.moved && d.id) render();
   else if (!d.id && !d.moved && !d.marquee) { selectedId = null; render(); }
   else if (d.id && !d.moved && selIds.size > 1) { selIds = new Set([d.id]); selectedId = d.id; render(); } // clique simples reduz o grupo a um
@@ -646,10 +703,14 @@ svg.addEventListener('dblclick', (e) => { if (nodeAt(e.target)) startEdit(); });
 svg.addEventListener('wheel', (e) => {
   e.preventDefault();
   const r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-  const k = Math.min(4, Math.max(0.1, pan.k * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+  zoomMapAt(mx, my, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+}, { passive: false });
+/** Zoom do mapa em torno de um ponto (coordenadas relativas ao #svg): roda do mouse e pinça compartilham esta fórmula. */
+function zoomMapAt(mx, my, factor) {
+  const k = Math.min(4, Math.max(0.1, pan.k * factor));
   pan.x = mx - ((mx - pan.x) / pan.k) * k; pan.y = my - ((my - pan.y) / pan.k) * k; pan.k = k;
   render();
-}, { passive: false });
+}
 
 // ---------- copiar / recortar / colar ----------
 let clip = null; // { text, trees } — cópia interna (mantém marcadores, progresso e notas); o texto também vai à área de transferência

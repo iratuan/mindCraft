@@ -141,7 +141,10 @@ const fresh = () => ev(`closeHome(); closeModal && closeModal(); dirty = false; 
 
   await t('SALVAR e FECHAR O APP À FORÇA (force-stop): o arquivo e o mapa voltam ao reabrir', async () => {
     await fresh(); await ev(`map.root.title = 'Direito Constitucional'; map.addChild(map.root.id, 'Controle de constitucionalidade'); dirty = true; render(); true`);
-    ok(await ev('save(true)'), 'salvou'); const p = await ev('filePath'); ok(/^\/docs\/.+\.mom$/.test(p), p); await wait(400);
+    // "Salvar como" agora abre a janela (nome editável + destino): toque real em "Salvar" com o padrão (Documentos do MindCraft)
+    await ev('window.__r = undefined; save(true).then((v) => { window.__r = v; }); true'); await waitFor(() => ev('!!document.querySelector("[data-mc-saveas]")'), 10000);
+    eq(await ev('document.querySelector("[data-mc-saveas] input[type=text]").value'), 'Direito Constitucional.mom'); const [okx, oky] = await ctr('[data-mc-saveas] button[data-act=ok]'); tapCss(okx, oky);
+    await waitFor(async () => (await ev('window.__r')) === true, 10000); const p = await ev('filePath'); ok(/^\/docs\/.+\.mom$/.test(p), p); await wait(400);
     await launch(); await watchErrors();
     ok(await ev(`window.__mcHost.fs.existsSync(${JSON.stringify(p)})`), 'arquivo sobreviveu ao force-stop');
     await ev(`closeHome(); dirty = false; openPath(${JSON.stringify(p)}); true`); await waitFor(() => ev(`filePath === ${JSON.stringify(p)}`), 6000); eq(await ev('map.root.title'), 'Direito Constitucional');
@@ -159,6 +162,9 @@ const fresh = () => ev(`closeHome(); closeModal && closeModal(); dirty = false; 
   await t('compartilhar: exportar o pacote .mcpack abre o compartilhamento do Android com o arquivo gerado', async () => {
     await ev(`closeHome(); openLibraryModal(); true`); await waitFor(() => ev(`!!document.querySelector('#libExpPack')`)); const [x, y] = await ctr('#libExpPack'); tapCss(x, y);
     const errsAntes = PAGE_ERRORS.length;
+    // agora exportar pergunta o nome e o destino: escolhe "Compartilhar ou enviar…" (a outra opção é o seletor de arquivos do sistema, testado em "SALVAR COMO")
+    await waitFor(() => ev('!!document.querySelector("[data-mc-saveas]")'), 10000); eq(await ev('[...document.querySelectorAll("[data-mc-saveas] input[type=radio]")].map((r) => r.value)'), ['device', 'share']);
+    await ev('document.querySelector("[data-mc-saveas] input[value=share]").click(); true'); const [sx, sy] = await ctr('[data-mc-saveas] button[data-act=ok]'); tapCss(sx, sy);
     await waitFor(() => /ChooserActivity|ResolverActivity|intentresolver/i.test(topActivity()), 20000, 700); shot('05-android-compartilhar');
     const files = sh('shell', 'run-as', PKG, 'find', 'cache', '-name', '*.mcpack').stdout.trim(); ok(/\.mcpack/.test(files), 'arquivo no cache: ' + files);
     shell('input', 'keyevent', '4'); await waitFor(() => appOnTop(), 20000, 700); await wait(1200);
@@ -221,7 +227,7 @@ const fresh = () => ev(`closeHome(); closeModal && closeModal(); dirty = false; 
       await waitFor(() => ev(`graphOpen === true && !document.querySelector('#graph').hidden`), 4000); await wait(1500);
     };
     const circle = (title) => ev(`(() => { const i = gLast.nodes.findIndex((n) => n.title === ${JSON.stringify(title)}); if (i < 0) return null; const r = document.querySelector('.gn[data-i="' + i + '"] circle').getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2), Math.round(r.width)]; })()`);
-    step('abrir a rede'); await openGraph(); shot('11-android-rede'); let [x, y, d] = await circle('Tópico 1'); ok(d < 20, 'ponto pequeno (' + d + ' px)'); step('tocar perto do ponto');
+    step('abrir a rede'); await openGraph(); shot('11-android-rede'); const c1 = await circle('Tópico 1'); let x = c1[0], y = c1[1]; const d = c1[2]; ok(d < 20, 'ponto pequeno (' + d + ' px)'); step('tocar perto do ponto');
     tapCss(x + 14, y + 12); await waitFor(() => ev(`document.querySelector('#gSide').textContent.includes('Tópico 1')`), 6000);                // perto do ponto, não exatamente nele
     step('tocar no ponto de Tópico 2'); await wait(800); [x, y] = await circle('Tópico 2'); tapCss(x, y); await waitFor(() => ev(`document.querySelector('#gSide').textContent.includes('Tópico 2')`), 6000);
     step('duplo toque em Tópico 3'); await wait(800); [x, y] = await circle('Tópico 3'); { const [dx, dy] = dev(x, y); shell('input tap ' + dx + ' ' + dy + '; input tap ' + dx + ' ' + dy); }                     // duplo toque real
@@ -281,6 +287,36 @@ await t('ÁREA SEGURA: o app NÃO fica sob a barra de status, a de navegação (
     }
   } finally { nav('gestural'); cutout(null); sh('shell', 'settings', 'put', 'system', 'user_rotation', '0'); sh('shell', 'settings', 'put', 'system', 'accelerometer_rotation', '1'); await wait(1500); fs.writeFileSync(path.join(SHOTS, 'area-segura.json'), JSON.stringify(seen, null, 1)); }
   ok(checks.length === 6, 'configurações testadas: ' + checks.join(' | '));
+});
+
+await t('SALVAR COMO no Android: janela do app (nome editável) + seletor REAL do sistema (editar nome e pasta); o arquivo aparece em Downloads; Salvar de novo atualiza o MESMO arquivo sem perguntar; cancelar não salva', async () => {
+  const ui = () => { sh('shell', 'uiautomator', 'dump', '/sdcard/ui.xml'); return shell('cat', '/sdcard/ui.xml'); };
+  const nodes = () => [...ui().matchAll(/<node [^>]*?text="([^"]*)"[^>]*?resource-id="([^"]*)"[^>]*?class="([^"]*)"[^>]*?bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/g)].map((m) => ({ text: m[1], id: m[2], cls: m[3], cx: Math.round((+m[4] + +m[6]) / 2), cy: Math.round((+m[5] + +m[7]) / 2) }));
+  const tapNode = (pred) => { const n = nodes().find(pred); if (!n) return false; shell('input', 'tap', String(n.cx), String(n.cy)); return true; };
+  const inPicker = () => /documentsui/i.test(topActivity());
+  const FILE = 'X_teste salvar como.mom', DIR = '/sdcard/Download/';
+  const rmq = () => sh('shell', 'sh', '-c', "'rm -f /sdcard/Download/*teste\\ salvar\\ como*.mom /sdcard/Download/*cancelar*'"); rmq();
+  await ev(`closeHome(); closeModal && closeModal(); dirty = false; filePath = null; newMap(); map.root.title = 'teste salvar como'; map.addChild(map.root.id, 'Tópico A'); dirty = true; window.__r = undefined; save(false).then((v) => { window.__r = v === undefined ? 'undef' : v; }); true`);
+  await waitFor(() => ev('!!document.querySelector("[data-mc-saveas]")'), 10000);
+  eq(await ev('document.querySelector("[data-mc-saveas] input[type=text]").value'), 'teste salvar como.mom', 'nome sugerido');
+  eq(await ev('[...document.querySelectorAll("[data-mc-saveas] input[type=radio]")].map((r) => r.value)'), ['docs', 'device']); shot('41-salvar-como-janela');
+  await ev('document.querySelector("[data-mc-saveas] input[value=device]").click(); true'); const [bx, by] = await ctr('[data-mc-saveas] button[data-act=ok]'); tapCss(bx, by);       // toque real em "Salvar"
+  await waitFor(() => inPicker(), 15000); await wait(1500); shot('42-salvar-como-seletor-do-sistema');
+  const field = nodes().find((n) => /EditText/.test(n.cls) && /teste salvar como/.test(n.text)); ok(field, 'o seletor do sistema abriu com o nome sugerido: ' + nodes().filter((n) => /EditText/.test(n.cls)).map((n) => n.text).join('|'));
+  shell('input', 'tap', String(field.cx), String(field.cy)); await wait(500); shell('input', 'keyevent', 'KEYCODE_MOVE_HOME'); shell('input', 'text', 'X_'); await wait(600);   // EDITA o nome dentro do seletor
+  eq(nodes().find((n) => /EditText/.test(n.cls)).text, FILE, 'nome editado no seletor'); shot('43-salvar-como-nome-editado');
+  ok(tapNode((n) => /^(save|salvar)$/i.test(n.text) && /Button|TextView/.test(n.cls)), 'botão Salvar do seletor');
+  await waitFor(() => appOnTop(), 15000); await waitFor(async () => (await ev('window.__r')) !== undefined, 15000); eq(await ev('window.__r'), true); await wait(1500);
+  const head = shell('sh', '-c', "'head -c 2 \"" + DIR + FILE + "\"'"); eq(head, 'PK', 'o arquivo existe em Downloads com o nome editado e é um .mom (zip)'); const size1 = +shell('sh', '-c', "'wc -c < \"" + DIR + FILE + "\"'");
+  eq(await ev('filePath.split("/").pop()'), FILE, 'o mapa passou a se chamar como o arquivo escolhido');
+  await ev(`map.addChild(map.root.id, 'Tópico B com mais texto para mudar o tamanho do arquivo'); dirty = true; window.__r = undefined; save(false).then((v) => { window.__r = v; }); true`);
+  await waitFor(async () => (await ev('window.__r')) === true, 10000); await wait(1800); eq(await ev('!!document.querySelector("[data-mc-saveas]")'), false, 'Salvar não pergunta de novo'); ok(!inPicker(), 'o seletor não reabriu');
+  const size2 = +shell('sh', '-c', "'wc -c < \"" + DIR + FILE + "\"'"); ok(size2 !== size1 && size2 > 0, 'o MESMO arquivo foi atualizado: ' + size1 + ' → ' + size2); shot('44-salvar-atualizou');
+  await ev(`closeModal && closeModal(); dirty = false; filePath = null; newMap(); map.root.title = 'cancelar isto'; dirty = true; window.__r = undefined; save(false).then((v) => { window.__r = v === undefined ? 'undef' : v; }); true`);
+  await waitFor(() => ev('!!document.querySelector("[data-mc-saveas]")'), 10000); await ev('document.querySelector("[data-mc-saveas] input[value=device]").click(); true'); const [cx2, cy2] = await ctr('[data-mc-saveas] button[data-act=ok]'); tapCss(cx2, cy2);
+  await waitFor(() => inPicker(), 15000); await wait(1200); shell('input', 'keyevent', 'KEYCODE_BACK'); await waitFor(() => appOnTop(), 10000); await waitFor(async () => (await ev('window.__r')) !== undefined, 10000);
+  eq(await ev('window.__r'), false, 'cancelar o seletor = não salvou'); eq(await ev('filePath'), null); eq(shell('sh', '-c', "'ls /sdcard/Download | grep -c cancelar'"), '0', 'nenhum arquivo criado');
+  rmq();
 });
 
 await t('ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal', async () => {

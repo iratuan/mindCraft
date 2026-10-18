@@ -27,7 +27,8 @@ async function boot() {
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch { /* o navegador decide */ }
   window.addEventListener('mc:storage-error', (e) => dialogs.toast('Não consegui gravar no armazenamento do aparelho (' + e.detail.message + '). Vou tentar de novo; não feche o app ainda.'));
 
-  const ipc = createIpc({ fs, path, MindCore: MC });
+  const host = { nat: null };
+  const ipc = createIpc({ fs, path, MindCore: MC, host });
   window.__dirname = '/app/renderer';
   window.require = function require(name) {
     if (name === 'electron') return { ipcRenderer: ipc.ipcRenderer, webUtils: { getPathForFile: (f) => (f && f.__mcPath) || '' } };
@@ -39,13 +40,26 @@ async function boot() {
 
   // Android (.apk): arquivos entregues pelo compartilhamento do sistema, notificações agendadas, botão Voltar
   const nat = native.installNative({ ipc, fs, store, dialogs, emitMenu: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), readCfg: () => JSON.parse(fs.readFileSync('/userdata/config.json', 'utf8')) });
+  host.nat = nat;
   const deliver = nat ? nat.deliver : files.deliver;
 
   // exportações (tudo que a interface grava em /exports) viram download quando a gravação termina
   const timers = new Map();
   fs.vfs.onChange(({ op, path: p }) => {
-    if (op !== 'write' || !p.startsWith('/exports/') || /\.tmp-/.test(p)) return;
-    clearTimeout(timers.get(p)); timers.set(p, setTimeout(() => { timers.delete(p); try { const bytes = new Uint8Array(fs.readFileSync(p)); deliver(path.basename(p), bytes); fs.rmSync(p, { force: true }); } catch (e) { dialogs.errorBox('Não consegui entregar o arquivo: ' + e.message); } }, 120));
+    if (op !== 'write' || /\.tmp-/.test(p)) return;
+    const tgt = ipc.targets.get(p);                                   // arquivo escolhido em "Salvar como" (seletor do Android): grava lá também
+    if (!tgt && !p.startsWith('/exports/')) return;
+    clearTimeout(timers.get(p)); timers.set(p, setTimeout(async () => {
+      timers.delete(p);
+      try {
+        const bytes = new Uint8Array(fs.readFileSync(p));
+        if (tgt && host.nat) {
+          try { await host.nat.writeTarget(tgt.uri, bytes); dialogs.toast('Salvo em "' + (tgt.name || 'arquivo escolhido') + '" (' + Math.max(1, Math.round(bytes.length / 1024)) + ' KB).', 3500, 'ok'); }
+          catch (e) { dialogs.errorBox('Não consegui gravar em "' + (tgt.name || 'arquivo escolhido') + '": ' + (e && e.message || e) + '\nUse Salvar como… para escolher outro local. A cópia no app está segura.'); return; }
+          if (tgt.mode === 'once') { ipc.targets.del(p); fs.rmSync(p, { force: true }); }
+        } else { deliver(path.basename(p), bytes); fs.rmSync(p, { force: true }); }
+      } catch (e) { dialogs.errorBox('Não consegui entregar o arquivo: ' + e.message); }
+    }, 120));
   });
 
   // arrastar arquivos para a janela
@@ -57,7 +71,7 @@ async function boot() {
     if (window.MC && window.MC.handleDroppedPaths) window.MC.handleDroppedPaths(paths);
   }, true);
 
-  window.__mcHost = { store, ipc, fs, path, restored, native: nat, http: webHttp, idle: () => store.idle(), version: 1 };
+  window.__mcHost = { store, ipc, fs, path, restored, native: nat, hostRef: host, http: webHttp, idle: () => store.idle(), version: 1 };
   installMenu({ emit: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), css: tabletCss });
   touch.install(); editorFit.install();
   // No desktop o evento "load" só acontece depois de TODOS os scripts da interface (renderer.js espera por ele antes de escolher a tela inicial).

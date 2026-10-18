@@ -1,0 +1,10 @@
+
+MindCraft — testes no Android (tablet virtual)
+
+  aparelho: {"model":"sdk_gphone64_x86_64","android":"16","size":"Physical size: 2560x1600"}
+  ok   SALVAR COMO no Android: janela do app (nome editável) + seletor REAL do sistema (editar nome e pasta); o arquivo aparece em Downloads; Salvar de novo atualiza o MESMO arquivo sem perguntar; cancelar não salva
+  ok   ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal
+  ok   nenhum erro fatal nem ANR do app no log do sistema durante toda a bateria
+
+17/17 passaram
+

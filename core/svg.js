@@ -2,7 +2,7 @@
 const { layoutMap, edgePoints } = require('./layout');
 const { MARKERS } = require('./markers');
 
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const { escapeHtml: esc } = require('./text');
 const REL_COLOR = '#e5484d';
 
 function edgePath(e, curve) {
@@ -89,4 +89,4 @@ function toSVG(map, opts = {}) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w)}" height="${Math.ceil(h)}" viewBox="${x} ${y} ${w} ${h}" font-family="${esc(L.theme.font)}">\n<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${L.theme.background}"/>\n${renderGroup(L)}\n</svg>`;
 }
 
-module.exports = { toSVG, renderGroup, edgePath, REL_COLOR };
+module.exports = { toSVG, renderGroup };

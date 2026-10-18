@@ -6,7 +6,7 @@ const ime = () => /mInputShown=true/.test(shell('dumpsys', 'input_method'));
 (async () => {
   const c = await connect(); const ev = (x) => c.ev(x); const dpr = await ev('devicePixelRatio');
   await ev(`window.__pd = []; window.addEventListener('pointerdown', (e) => window.__pd.push([e.clientX, e.clientY]), true); true`); shell('input', 'tap', '1000', '1000'); await wait(300);
-  const [cx, cy] = await ev('window.__pd[window.__pd.length - 1]'); const offY = 1000 - cy * dpr;
+  const [, cy] = await ev('window.__pd[window.__pd.length - 1]'); const offY = 1000 - cy * dpr;
   const dev = (x, y) => [Math.round(x * dpr), Math.round(y * dpr + offY)];
   await ev(`closeHome(); closeModal(); dirty = false; newMap(); (() => { const p = map.root.children[2]; for (let i = 0; i < 7; i++) map.addChild(p.id, 'Item ' + i); })(); fit(); true`); await wait(800);
   const low = await ev(`(() => { let best = null, by = -1; map.walk((n) => { const el = document.querySelector('[data-id="' + n.id + '"]'); if (el) { const r = el.getBoundingClientRect(); if (r.bottom > by) { by = r.bottom; best = n.title; } } }); return best; })()`);

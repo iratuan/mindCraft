@@ -135,3 +135,14 @@ test('path web: join/resolve/dirname/basename/extname iguais ao path posix do No
   for (const x of ['/a/b/c.mom', '/a/b/', '/a', '/', '/a/./b/../c']) { assert.equal(w.dirname(x), p.dirname(x), 'dirname ' + x); assert.equal(w.basename(x), p.basename(x), 'basename ' + x); assert.equal(w.extname(x), p.extname(x), 'extname ' + x); assert.equal(w.resolve(x), p.resolve(x), 'resolve ' + x); }
   assert.equal(w.basename('/a/mapa.mom', '.mom'), 'mapa'); assert.equal(w.resolve('rel/x'), '/rel/x');
 });
+
+test('fs virtual: copyFileSync e utimesSync (o backup antes de sobrescrever precisa deles)', () => {
+  const vfsMod = require('../platform/web/fs.js');
+  vfsMod.mkdirSync('/docs', { recursive: true }); vfsMod.mkdirSync('/userdata/backups', { recursive: true });
+  vfsMod.writeFileSync('/docs/a.mom', new Uint8Array([1, 2, 3, 4]));
+  vfsMod.copyFileSync('/docs/a.mom', '/docs/b.mom'); assert.deepStrictEqual([...vfsMod.readFileSync('/docs/b.mom')], [1, 2, 3, 4]);
+  vfsMod.writeFileSync('/docs/a.mom', new Uint8Array([9])); assert.deepStrictEqual([...vfsMod.readFileSync('/docs/b.mom')], [1, 2, 3, 4], 'a cópia é independente');
+  assert.throws(() => vfsMod.copyFileSync('/docs/nao-existe', '/docs/c.mom'), /ENOENT/); assert.throws(() => vfsMod.copyFileSync('/docs/a.mom', '/pasta-que-nao-existe/c.mom'), /ENOENT/);
+  vfsMod.utimesSync('/docs/b.mom', new Date(2020, 0, 1), new Date(2020, 0, 2)); assert.strictEqual(vfsMod.statSync('/docs/b.mom').mtimeMs, new Date(2020, 0, 2).getTime());
+  assert.throws(() => vfsMod.utimesSync('/docs/nao-existe', new Date(), new Date()), /ENOENT/);
+});
