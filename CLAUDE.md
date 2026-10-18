@@ -15,11 +15,11 @@ App de **mapas mentais + gestão de estudos para concursos**. Desktop (Electron)
 | Rodar o app | `npm start` |
 | Qualidade rápida (lint + unitários desktop + paridade web) | `npm run check` |
 | Unitários / paridade com o núcleo do tablet | `npm test` / `npm run test:web` |
-| Ponta a ponta (35 etapas, ~15 min, **desligue o emulador Android antes**) | `npm run e2e` |
+| Ponta a ponta (39 etapas, ~15 min, **desligue o emulador Android antes**) | `npm run e2e` |
 | QA com mouse/teclado reais (82 casos) | `npm run qa` |
 | Gerar capturas de evidência | `npm run evidence` |
 | Montar o app web / tablet | `npm run build:web-app` · `cd tablet && npm run sync` |
-| Bateria no Android (emulador, 17 testes) | `cd tablet && node scripts/emulator.js && node scripts/test-android.js` |
+| Bateria no Android (emulador, 19 testes) | `cd tablet && node scripts/emulator.js && node scripts/test-android.js` |
 | Instalador Windows | `CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --win --publish never` |
 | APK assinado | `node tablet/scripts/release.js` |
 
@@ -29,7 +29,7 @@ Detalhes: `docs/TESTING.md`. Receitas passo a passo: `.claude/skills/` (release,
 ```
 core/        Regras de negócio PURAS (CommonJS, sem Electron/DOM). Roda no Node E no navegador.   ← onde a lógica nova deve nascer
 electron/    Processo principal do desktop (janela, menus, diálogos, notificações) — fino.
-renderer/    Interface: scripts clássicos (escopo global compartilhado) + React por "fatias" (renderer/react).
+renderer/    Interface: scripts clássicos (escopo global compartilhado) + React por "fatias" (renderer/react). layout-ui.js = painel lateral recolhível e divisores.
 platform/web Emula o Electron/Node na web: fs virtual (IndexedDB), SQLite (sql.js), zip, ipc, toque, notificações nativas.
 tablet/      Projeto Capacitor (Android) + scripts de build/teste do APK.
 tools/       Montadores (bundle React, núcleo web, app web).
@@ -46,6 +46,8 @@ Dependências só **para baixo**: `renderer → core`, `platform → core`, `ele
 - `hashOf` (sincronização) usa a forma NORMALIZADA `readMom(writeMom(mapa))`: a 1ª ida e volta pelo `.mom` acrescenta campos internos.
 - `viewport-fit=cover` faz o Capacitor deixar o app **sob** as barras do Android: não use. Responsividade da rede usa **container query** (largura da própria rede), não a da janela.
 - PowerShell: sleeps longos são bloqueados (use laços de espera com limite); em scripts geradores evite crases aninhadas (use arquivos); `adb input text` depende do Gboard.
+- **Divisores/Pointer Events**: sendInputEvent de mouse nos testes precisa de `modifiers: ['leftButtonDown']` em mouseDown/mouseMove, senão o Chromium não considera o botão apertado. O botão ‹ › fica no MEIO do divisor do painel: nos testes clique/arraste mais embaixo (`cy + 90`).
+- Esc com uma janela aberta sobre o Painel de estudos é da janela (study-ui.js confere `#modal`).
 - Select nativo (`#qBanca`) não aceita texto arbitrário: use `setQBanca('…')` em testes.
 
 ## Convenções
@@ -56,7 +58,7 @@ Dependências só **para baixo**: `renderer → core`, `platform → core`, `ele
 
 ## Estrutura-alvo e próximas tarefas
 - **Estrutura-alvo** (definida pelo dono): `src/main` (index, ipc-handlers, preload, services) · `src/renderer` (components, features/*, layouts, pages, routes, store) · `src/shared` (types, constants) · TypeScript + Vite. **Ainda NÃO migrado**; plano em 6 fases em `docs/ARCHITECTURE.md` §7 (ADR 016). Código novo deve já ser escrito pensando nela (lógica pura em módulos independentes; nada de estado global novo; canais IPC/constantes centralizados).
-- **Próximas funcionalidades pedidas** (tarefa separada): (1) botões para **recolher o painel direito** direto; (2) com a tela dividida entre **PDF e mapa**, permitir **redimensionar as áreas**.
+- **Já feito na v0.4.0**: manual de uso (Ajuda; `core/manual.js` — toda funcionalidade nova ganha seção, o teste de cobertura exige), painel lateral recolhível + divisores arrastáveis (`renderer/layout-ui.js`), lembrete de cópia de segurança e "Seu estudo" na tela inicial (`core/backup-reminder.js`, `core/glance.js`).
 
 ## Onde está cada decisão
 `docs/DECISIONS.md` (ADRs curtas). Roadmap/ideias: `SUGESTOES.md` (parte já feita; releia antes de propor).

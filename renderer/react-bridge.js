@@ -20,7 +20,7 @@ Object.assign(window.MC, {
   removeSimulado: (id) => { change(() => map.removeSimulado(id)); },
   simuladoStats: (list) => require(path.join(core, 'simulados')).simuladoStats(list),
   mdToHtml: (t) => require(path.join(core, 'markdown')).mdToHtml(t),
-  actions: { openSimulado: () => act.simulado(), openReview: () => act.review(), exportIcs: () => exportIcs(), exportReport: (k) => exportReport(k), openImportModal: () => openImportModal(), openCsvModal: () => openCsvModal(), openPlanModal: () => openPlanModal(), openLibraryModal: () => openLibraryModal(), newStudyTemplate: () => newStudyTemplate(), closeDash: () => closeDash() },
+  actions: { openSimulado: () => act.simulado(), openReview: () => act.review(), exportIcs: () => exportIcs(), exportReport: (k) => exportReport(k), openImportModal: () => openImportModal(), openCsvModal: () => openCsvModal(), openPlanModal: () => openPlanModal(), openLibraryModal: () => openLibraryModal(), newStudyTemplate: () => newStudyTemplate(), closeDash: () => closeDash(), openDash: () => { if (!dashOpen) act.dash(); } },
 });
 
 /** Modelo de dados do painel Conexões (links, retrolinks, menções) — a apresentação é do React. */
@@ -76,6 +76,7 @@ function pdfCapture({ source, page, text, rects, mode }) {
   return { id: target, title };
 }
 Object.assign(window.MC, {
+  manual: require(path.join(core, 'manual')),
   rev: () => rev, pdfCapture, baseName: (p) => path.basename(p).replace(/\.pdf$/i, ''), logError: (m) => logOnly(m),
   relinkPdf: (id, p) => { change(() => map.relinkPdf(id, p)); },
   removeRef: (nodeId, i) => { change(() => map.removeRef(nodeId, i)); },
@@ -83,23 +84,15 @@ Object.assign(window.MC, {
 });
 act.pdf = () => (window.MCReact ? window.MCReact.togglePdf() : setStatus('O leitor de PDF precisa da interface React (reactUi não pode ser false).'));
 
-// divisor arrastável entre o leitor e o mapa
-(() => {
-  const split = $('#pdfsplit'), pane = $('#pdfpane'); if (!split) return;
-  let drag = null;
-  split.addEventListener('mousedown', (e) => { drag = { x: e.clientX, w: pane.getBoundingClientRect().width }; document.body.classList.add('pdf-dragging'); e.preventDefault(); });
-  window.addEventListener('mousemove', (e) => {
-    if (!drag) return;
-    const max = Math.floor($('#work').getBoundingClientRect().width * 0.7);
-    pane.style.width = Math.max(280, Math.min(max, drag.w + e.clientX - drag.x)) + 'px';
-    window.dispatchEvent(new Event('resize'));
-  });
-  window.addEventListener('mouseup', () => { if (!drag) return; drag = null; document.body.classList.remove('pdf-dragging'); saveCfg({ pdfWidth: Math.round(pane.getBoundingClientRect().width) }); });
-})();
+// (o divisor arrastável entre o leitor e o mapa mora em layout-ui.js: mouse, toque e teclado)
 
 act.review = () => { closeDash(); return window.MCReact ? window.MCReact.openReview() : setStatus('A revisão do dia precisa da interface React (reactUi não pode ser false).'); };
 act.simulado = () => { closeDash(); if (typeof closeHome === 'function') closeHome(); return window.MCReact ? window.MCReact.openSimulado() : setStatus('O registro de simulados precisa da interface React.'); };
 act.help = () => (window.MCReact ? window.MCReact.openShortcuts() : setStatus('A ajuda de atalhos precisa da interface React.'));
+/** Manual de uso (Ajuda → Manual de uso); `section` abre direto numa seção (ver core/manual.js). */
+act.manual = (section) => (window.MCReact ? window.MCReact.openManual(typeof section === 'string' ? section : undefined) : setStatus('O manual precisa da interface React.'));
+// qualquer botão com data-manual="<seção>" ("? Como usar") abre o manual naquela seção; vale para telas clássicas e React
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-manual]'); if (b) { e.preventDefault(); e.stopPropagation(); act.manual(b.dataset.manual); } }, true);
 
 // ---------- tela inicial ----------
 function closeHome() { if (window.MCReact) window.MCReact.closeHome(); }
@@ -133,7 +126,30 @@ function homeData() {
   }
   let dueHere = 0; try { dueHere = map && map.root.children.length ? S.summary(map, { today }).due.length : 0; } catch { /* sem resumo */ }
   let openErrors = 0; try { openErrors = lib ? lib.openErrors(5000).length : 0; } catch { /* sem contagem */ }
-  return { today, recent, last, exams, dueHere, library: { openErrors, total: maps.length, recent: maps.slice(0, 6), dueTotal: dueMaps.reduce((a, m) => a + m.due, 0), dueMaps } };
+  const backup = { ...BACKUP.evaluate({ today, lastBackup: cfg.lastBackup, snoozeUntil: cfg.backupSnoozeUntil, everyDays: cfg.backupEveryDays, maps: maps.length }), maps: maps.length };
+  backup.text = BACKUP.message(backup);
+  let glance = null;
+  try {
+    const from = S.addDays(today, -6), summary = map && map.root.children.length ? S.summary(map, { today }) : null;
+    glance = GLANCE.buildGlance({ today, summary, library: lib && maps.length ? { minutesByDay: lib.minutesByDay(from, today), questionsByDay: lib.questionsByDay(from, today), dueMaps } : null });
+  } catch (e) { logOnly('resumo "Seu estudo": ' + e.message); }
+  return { today, recent, last, exams, dueHere, backup, glance, library: { openErrors, total: maps.length, recent: maps.slice(0, 6), dueTotal: dueMaps.reduce((a, m) => a + m.due, 0), dueMaps } };
+}
+const BACKUP = require(path.join(core, 'backup-reminder')), GLANCE = require(path.join(core, 'glance'));
+/** Registra que acabou de ser feita uma cópia de segurança (some o lembrete). Fica só neste aparelho (config.json), nunca no pacote. */
+function markBackup() { saveCfg({ lastBackup: nowStr(), backupSnoozeUntil: null }); }
+/** Exporta o pacote .mcpack (todos os mapas + configurações) perguntando nome e local. Devolve o resumo ou null (cancelou / sem biblioteca). */
+async function exportPackQuick() {
+  if (!libraryExists()) { setStatus('Ainda não há biblioteca: guarde seus mapas nela (Arquivo → Biblioteca de mapas) para exportar um pacote.'); return null; }
+  const t = await ipcRenderer.invoke('dialog:save', 'mcpack', 'meus-estudos.mcpack'); if (!t) return null;
+  const r = getLibrary().exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: portableSettings() });
+  markBackup(); return r;
+}
+/** Restaura de um pacote .mcpack: NUNCA sobrescreve (conflito vira cópia). Devolve o resultado ou null (cancelou). */
+async function importPackQuick() {
+  const p = await ipcRenderer.invoke('dialog:open-pack'); if (!p) return null;
+  const r = getLibrary().importPackage(p, { onConflict: 'copy' });
+  return { ...r, nset: r.settings ? applyPortableSettings(r.settings) : 0 };
 }
 const homeGo = async (fn) => { if (!(await confirmDiscard())) return false; await fn(); return true; };
 const homeActions = {
@@ -150,8 +166,15 @@ const homeActions = {
   openLib: async (id, review = false) => { if (!(await confirmDiscard())) return false; const okk = await openFromLibrary(id, { confirm: false }); if (okk && review) act.review(); return okk; },
   openLast: async () => { const l = homeData().last; if (!l) return false; return l.kind === 'lib' ? homeActions.openLib(l.id) : homeActions.openRecent({ path: l.path, exists: true }); },
   removeRecent: (p) => ipcRenderer.invoke('recent:remove', p), clearRecent: () => ipcRenderer.invoke('recent:clear'),
+  backupNow: async () => { const r = await exportPackQuick(); if (r) setStatus(`Cópia de segurança salva: ${r.maps} mapa(s) e as configurações. Guarde o arquivo fora deste aparelho (nuvem, pendrive ou outro computador).`); return !!r; },
+  restorePack: async () => {
+    const r = await importPackQuick(); if (!r) return false;
+    setStatus(`Pacote restaurado: ${r.imported} novo(s), ${r.copied} cópia(s), ${r.skipped} igual(is)/mantido(s)${r.nset ? `; ${r.nset} configuração(ões)` : ''}. Nada foi sobrescrito.`); return true;
+  },
+  backupSnooze: () => { saveCfg({ backupSnoozeUntil: BACKUP.snoozeDate(nowStr()) }); setStatus('Tudo bem: o lembrete volta em ' + BACKUP.SNOOZE_DAYS + ' dias.'); },
+  backupEvery: (v) => { saveCfg({ backupEveryDays: BACKUP.normalizeEvery(v), backupSnoozeUntil: null }); },
 };
-Object.assign(window.MC, { homeData, homeActions });
+Object.assign(window.MC, { homeData, homeActions, markBackup, exportPackQuick, importPackQuick });
 
 // ---------- aviso diário de revisões ----------
 const NOTIFY = require(path.join(core, 'notify'));

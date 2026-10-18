@@ -62,13 +62,12 @@ export function LibraryModal({ initialTab, onClose }) {
     setReport(r.items.map((i) => `${i.title} — ${i.status}`)); refresh();
   });
   const onExpPack = guard(async () => {
-    const t = await save('mcpack', 'meus-estudos.mcpack'); if (!t) return;
-    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: h.portableSettings() });
+    const r = await h.exportPackQuick(); if (!r) return;
     say(`Pacote salvo com ${r.maps} mapa(s) e as configurações. Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
   });
   const onBackup = guard(async () => {
     const t = await save('db', 'biblioteca-backup.db'); if (!t) return;
-    lib.backupTo(t); say('Cópia do banco salva em ' + t, 'ok');
+    lib.backupTo(t); h.markBackup(); say('Cópia do banco salva em ' + t, 'ok');
   });
 
   const rowActions = (mp) => (tab === 'maps' ? (

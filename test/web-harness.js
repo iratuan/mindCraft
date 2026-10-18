@@ -83,7 +83,11 @@ module.exports = async function start(title, { width = 1280, height = 800 } = {}
   ctx.pickNext = (files) => ctx.js(`window.__pickQueue.push(${JSON.stringify(files)}.map((f) => ({ name: f.name, bytes: Uint8Array.from(atob(f.b64), (c) => c.charCodeAt(0)) }))); true`);
   ctx.downloads = () => ctx.js('window.__downloads');
   ctx.idle = () => ctx.js('window.__mcHost.idle()');
-  ctx.shot = async (file) => { await wait(350); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, (await ctx.win.webContents.capturePage()).toPNG()); };
+  ctx.shot = async (file) => {   // capturePage às vezes falha no Chromium ("UnknownVizError": leitura do quadro da GPU) — é do ambiente, não do app: tenta de novo
+  await wait(350); fs.mkdirSync(path.dirname(file), { recursive: true });
+  let last; for (let i = 0; i < 4; i++) { try { fs.writeFileSync(file, (await ctx.win.webContents.capturePage()).toPNG()); return; } catch (e) { last = e; await wait(400); } }
+  throw last;
+};
   ctx.finish = async () => {
     const failed = results.filter((r) => !r[1]);
     console.log(`\n${results.length - failed.length}/${results.length} passaram${failed.length ? ' — FALHAS: ' + failed.map((f) => f[0]).join('; ') : ''}`);

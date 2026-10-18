@@ -132,6 +132,11 @@ O app abre **dentro da área segura**: não fica sob a barra de status, a de nav
 - **Tablet**: "Salvar" de um mapa novo e "Salvar como…" abrem uma janela com o **nome editável** e o **destino**: *Documentos do MindCraft* (reabre pela tela inicial), *Escolher pasta e nome no aparelho…* (o seletor de documentos do Android: Downloads, Google Drive, cartão SD — lá também dá para editar o nome e a pasta) ou, para exportações, *Compartilhar*. Depois de escolher um arquivo do aparelho, **cada Salvar o atualiza** (também depois de fechar e reabrir o app). Se a gravação no local escolhido falhar, a cópia no app continua segura e a mensagem diz como escolher outro local.
 - Corrigido junto: no tablet o **backup antes de sobrescrever** nunca funcionava (faltava `copyFileSync` no sistema de arquivos virtual).
 
+## Manual de uso, painel recolhível e tela inicial (v0.4.0)
+- **Manual** (Ajuda → Manual de uso; no tablet ☰ → Manual de uso): índice por assunto, busca sem acento e instruções diferentes para computador e tablet. Botões **? Como usar** abrem a seção da tela em que você está. O conteúdo é dado puro em `core/manual.js`; o teste `test/manual.test.js` exige uma seção para cada funcionalidade.
+- **Painel lateral**: o botão **‹ ›** na borda (ou **Ctrl+\\**, ou Exibir → Painel lateral) recolhe/expande; arraste o divisor para mudar a largura (220–560 px); duplo clique restaura; com o divisor em foco, ← → ajustam. O **leitor de PDF | mapa** tem o mesmo tipo de divisor (mouse, dedo, teclado), e o mapa nunca fica com menos de ~260 px. Tudo é lembrado.
+- **Tela inicial**: **Seu estudo** (sequência de dias, tempo hoje e em 7 dias, acerto, metas, disciplina mais atrasada), aviso de **cópia de segurança** (a cada 7/14/30 dias ou nunca; só some quando o pacote é gerado) e os atalhos **Cópia de segurança** / **Restaurar cópia** (um pacote `.mcpack`; **nunca sobrescreve** — conflito vira cópia).
+
 ## Para quem vai evoluir o projeto
 - **`CLAUDE.md`** — regras de ouro, comandos, armadilhas e convenções (comece por aqui, pessoa ou IA).
 - **`docs/ARCHITECTURE.md`** — camadas, módulos, fluxos, formatos e dívidas técnicas · **`docs/DECISIONS.md`** — por que é assim (ADRs).

@@ -138,8 +138,12 @@ function makePdf(file, pages) {
     eq(await js(`document.querySelector('#pdfpane').textContent`), '', 'raiz React desmontada'); eq(await js(`document.body.classList.contains('pdf-open')`), false);
     await js(`window.__dlg.pdf = ${JSON.stringify(pdfA)}; act.pdf()`); await c.waitFor(() => js(`!!document.querySelector('#pdfOpen')`));
     const w0 = await js(`document.querySelector('#pdfpane').getBoundingClientRect().width`);
-    await js(`(() => { const s = document.querySelector('#pdfsplit'), r = s.getBoundingClientRect(); s.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: r.left + 2, clientY: r.top + 40 })); window.dispatchEvent(new MouseEvent('mousemove', { clientX: r.left + 122, clientY: r.top + 40 })); window.dispatchEvent(new MouseEvent('mouseup', { clientX: r.left + 122, clientY: r.top + 40 })); })()`);
-    await wait(200); const w1 = await js(`document.querySelector('#pdfpane').getBoundingClientRect().width`); ok(Math.abs(w1 - (w0 + 120)) < 4, `largura ${w0} → ${w1}`);
+    // arrasto REAL do mouse (antes eram eventos sintéticos): o divisor agora usa Pointer Events e também aceita dedo e teclado (ver e2e-split.js)
+    const sp = await js(`(() => { const r = document.querySelector('#pdfsplit').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 + 90 }; })()`), wcx = c.win.webContents, L = ['leftButtonDown'];
+    wcx.sendInputEvent({ type: 'mouseMove', x: Math.round(sp.x), y: Math.round(sp.y) }); wcx.sendInputEvent({ type: 'mouseDown', x: Math.round(sp.x), y: Math.round(sp.y), button: 'left', clickCount: 1, modifiers: L });
+    for (let k = 1; k <= 6; k++) { wcx.sendInputEvent({ type: 'mouseMove', x: Math.round(sp.x + 7 * k), y: Math.round(sp.y), button: 'left', modifiers: L }); await wait(20); }
+    wcx.sendInputEvent({ type: 'mouseUp', x: Math.round(sp.x + 42), y: Math.round(sp.y), button: 'left', clickCount: 1 });
+    await wait(200); const w1 = await js(`document.querySelector('#pdfpane').getBoundingClientRect().width`); ok(Math.abs(w1 - (w0 + 42)) < 4, `largura ${w0} → ${w1}`);
     eq(JSON.parse(fs.readFileSync(path.join(USERDATA, 'config.json'), 'utf8')).pdfWidth, Math.round(w1));
     await js('act.pdf()');
   });

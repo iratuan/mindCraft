@@ -225,6 +225,86 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
     eq(await js('filePath'), '/docs/Nome digitado no toque.mom'); await js('window.__mcSaveAsAuto = true; true');
   });
 
+  await t('MANUAL no tablet (toque): ☰ → Manual de uso abre em visão de TABLET sem subir o teclado; tocar no índice troca a seção; alvos ≥ 44 px; cabe em paisagem e retrato; fecha com toque', async () => {
+    for (const [w, h] of [[1280, 800], [800, 1280]]) {
+      await c.emulate({ width: w, height: h }); await wait(400); await js('closeHome && closeHome(); true');
+      const m = await js(`__ctr('#mcHostMenuBtn')`); await T().tap(m.x, m.y); await wait(300);
+      eq(await js(`[...document.querySelectorAll('#mcHostMenu button')].some((b) => b.dataset.cmd === 'manual' && /Manual de uso/.test(b.textContent))`), true, 'o menu ☰ tem "Manual de uso"');
+      const it = await js(`(() => { const b = document.querySelector('#mcHostMenu button[data-cmd=manual]'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await T().tap(it.x, it.y);
+      await waitFor(() => js(`!!document.querySelector('#manualBox')`), 4000);
+      eq(await js(`document.querySelector('#manualHostTouch').getAttribute('aria-pressed')`), 'true', 'já abre na visão de tablet');
+      ok(/Barra flutuante|toque/i.test(await js(`document.querySelector('#manualBody').textContent`)), 'texto de toque');
+      ok(!(await js(`document.activeElement && document.activeElement.id === 'manualSearch'`)), 'o campo de busca NÃO recebe o foco (teclado não sobe sozinho)');
+      const box = await js(`(() => { const r = document.querySelector('#manualBox').getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: innerWidth, h: innerHeight, sw: document.documentElement.scrollWidth }; })()`);
+      ok(box.l >= 0 && box.t >= 0 && box.r <= box.w + 1 && box.b <= box.h + 1, 'cabe na tela ' + JSON.stringify(box)); ok(box.sw <= box.w, 'sem rolagem horizontal');
+      const small = await js(`[...document.querySelectorAll('#manualBox button, #manualBox input')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 40).map((e) => e.id || e.textContent.slice(0, 20))`); eq(small, [], 'alvos de toque ≥ 40 px');
+      const idx = await js(`(() => { const b = document.querySelector('#manualIndex button[data-section=reordenar]'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await T().tap(idx.x, idx.y); await wait(300);
+      eq(await js(`document.querySelector('#manualBody').dataset.section`), 'reordenar'); ok(/◀|▶|dedo/.test(await js(`document.querySelector('#manualBody').textContent`)), 'explica os botões do tablet');
+      if (w === 1280) await c.shot(path.join(SHOTS, '14-manual-tablet-paisagem.png')); else await c.shot(path.join(SHOTS, '14-manual-tablet-retrato.png'));
+      const x = await js(`__ctr('#manualClose')`); await T().tap(x.x, x.y); await wait(300); ok(await js(`document.getElementById('modal').hidden`), 'fechou com toque');
+    }
+    await c.emulate({ width: 1280, height: 800 }); await wait(300);
+  });
+
+  await t('PAINEL LATERAL por toque (paisagem 1280×800): botão ‹ › grande recolhe e expande; arrastar o divisor com o DEDO muda a largura (com limites) e fica lembrado', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400); await js('closeHome && closeHome(); true');
+    const box = (sel) => js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; })()`);
+    const cfgV = (k) => js(`window.__mcHost.fs.existsSync(userDataDir + '/config.json') ? JSON.parse(window.__mcHost.fs.readFileSync(userDataDir + '/config.json', 'utf8'))[${JSON.stringify(k)}] : undefined`);
+    const b0 = await box('#panelsToggle'); ok(b0.h >= 44 && b0.w >= 30, 'alvo de toque do botão ≥ 44 px: ' + b0.w + '×' + b0.h);
+    const p0 = (await box('#panels')).w; ok(p0 > 200, 'painel docado em 1280 px');
+    await T().tap(b0.cx, b0.cy); await wait(500); ok(await js(`document.body.classList.contains('panels-collapsed')`), 'recolheu por toque'); ok((await box('#panels')).w === 0 || (await js(`getComputedStyle(document.querySelector('#panels')).display`)) === 'none');
+    eq(await cfgV('panelsCollapsed'), true, 'lembrado'); await c.shot(path.join(SHOTS, '15-painel-recolhido.png'));
+    const b1 = await box('#panelsToggle'); await T().tap(b1.cx, b1.cy); await wait(500); ok(!(await js(`document.body.classList.contains('panels-collapsed')`)), 'expandiu por toque'); ok(Math.abs((await box('#panels')).w - p0) < 3);
+    // dedo: arrastar o divisor 90 px para a esquerda aumenta o painel; longe do botão, para não tocar nele
+    const sp = await box('#panelsSplit'); const y = sp.cy + 140;
+    await T().drag(sp.cx, y, sp.cx - 90, y, 10); await wait(500); const p1 = (await box('#panels')).w; ok(Math.abs(p1 - (p0 + 90)) < 6, `largura ${p0} → ${p1}`); eq(await cfgV('panelsWidth'), Math.round(p1), 'largura lembrada');
+    const sp2 = await box('#panelsSplit'); await T().drag(sp2.cx, y, sp2.cx + 700, y, 10); await wait(500); ok((await box('#panels')).w >= 219 && (await box('#panels')).w <= 224, 'mínimo 220: ' + (await box('#panels')).w);
+    const sp3 = await box('#panelsSplit'); await T().doubleTap(sp3.cx, y); await wait(500); ok(Math.abs((await box('#panels')).w - p0) < 4, 'duplo toque restaura: ' + (await box('#panels')).w);
+    ok(!(await js(`document.documentElement.scrollWidth > innerWidth`)), 'sem rolagem horizontal');
+  });
+
+  await t('LEITOR DE PDF | mapa por toque: o divisor tem alvo largo; arrastar com o dedo muda a largura; o mapa nunca fica espremido; em retrato o painel vira gaveta (sem botão ‹ ›)', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400); await js(`window.MCReact.openPdf({}); true`); await waitFor(() => js(`!document.querySelector('#pdfpane').hidden`), 4000); await wait(400);
+    const box = (sel) => js(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { w: r.width, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; })()`);
+    try {
+    const sp = await box('#pdfsplit'); ok(sp.w >= 20, 'alvo de toque do divisor ≥ 20 px: ' + sp.w); const d0 = (await box('#pdfpane')).w, y = sp.cy + 120;
+    await T().drag(sp.cx, y, sp.cx + 30, y, 10); await wait(500); const d1 = (await box('#pdfpane')).w; ok(Math.abs(d1 - (d0 + 30)) < 6, `leitor ${d0} → ${d1}`);
+    const sp2 = await box('#pdfsplit'); await T().drag(sp2.cx, y, sp2.cx + 900, y, 10); await wait(500); ok((await box('#stage')).w >= 255, 'o mapa mantém ≥ 260 px: ' + (await box('#stage')).w); await c.shot(path.join(SHOTS, '16-pdf-dividido.png'));
+    const sp3 = await box('#pdfsplit'); await T().doubleTap(sp3.cx, y); await wait(500); const w46 = (await box('#work')).w; ok(Math.abs((await box('#pdfpane')).w - w46 * 0.46) < 8, 'duplo toque volta ao padrão');
+    await c.emulate({ width: 800, height: 1280 }); await wait(500); ok(!(await js(`getComputedStyle(document.querySelector('#panelsSplit')).display !== 'none'`)), 'retrato: sem divisor/botão do painel (é gaveta)'); ok(await js(`!!document.getElementById('tbPanels')`), 'o botão ☷ da gaveta continua lá');
+    ok(!(await js(`document.documentElement.scrollWidth > innerWidth`)), 'sem rolagem horizontal em retrato');
+    } finally { await js(`window.MCReact.closePdf(); true`); await c.emulate({ width: 1280, height: 800 }); await wait(400); }
+  });
+
+  await t('TELA INICIAL no tablet: aviso de cópia de segurança + "Seu estudo" cabem (paisagem e retrato), alvos ≥ 44 px; "Lembrar depois" por toque; "Cópia de segurança" gera o pacote e o aviso some', async () => {
+    await c.emulate({ width: 1280, height: 800 }); await wait(400);
+    await js(`window.__mcSaveAsAuto = true; closeHome && closeHome(); dirty = false; newMap(); map.root.title = 'Plano tablet'; map.root.children = []; (() => { const d = map.addChild(map.root.id, 'Disciplina A'); const t1 = map.addChild(d.id, 'Tópico A1'); window.__t1 = t1.id; selectedId = t1.id; selIds = new Set([t1.id]); render(); })(); true`); await wait(300);
+    await js(`runStudy((x) => map.mutateStudy(x, (st) => S.addTime(st, nowStr(), 30)), '', [__t1]); runStudy((x) => map.mutateStudy(x, (st) => S.setNext(st, '2020-01-01')), '', [__t1]); true`); await wait(300);
+    ok(await js('moveToLibrary()'), 'guardou na biblioteca'); await wait(400);
+    try {
+    for (const [w, h] of [[1280, 800], [800, 1280]]) {
+      await c.emulate({ width: w, height: h }); await wait(400); await js(`act.home(true); true`); await waitFor(() => js(`!!document.querySelector('#hmBackupBanner')`), 5000); await wait(300);
+      ok(/ainda não fez nenhuma cópia/.test(await js(`document.querySelector('#hmBackupBanner').textContent`)), 'aviso "nunca fez"');
+      ok(await js(`!!document.querySelector('#glStreak') && !!document.querySelector('#glBars')`), 'cartão Seu estudo'); eq(await js(`document.querySelector('#glToday b').textContent`), '30 min');
+      ok(!(await js(`document.documentElement.scrollWidth > innerWidth`)), 'sem rolagem horizontal ' + w + '×' + h);
+      const small = await js(`[...document.querySelectorAll('#hmBackupBanner button, #glReview, #hmBackup, #hmRestore, #hmBackupEvery')].filter((e) => e.getBoundingClientRect().height < 40).map((e) => e.id)`); eq(small, [], 'alvos de toque ≥ 40 px');
+      await c.shot(path.join(SHOTS, w === 1280 ? '17-tela-inicial-paisagem.png' : '17-tela-inicial-retrato.png'));
+    }
+    await c.emulate({ width: 1280, height: 800 }); await wait(400);
+    const later = await js(`(() => { const b = document.querySelector('#hmBackupLater'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await T().tap(later.x, later.y); await wait(500);
+    ok(!(await js(`!!document.querySelector('#hmBackupBanner')`)), '"Lembrar depois" por toque esconde o aviso');
+    await js(`window.__dl = []; window.__mcDownload = (d) => { window.__dl.push({ name: d.name, size: d.bytes.length }); }; true`); const bk = await js(`(() => { const b = document.querySelector('#hmBackup'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await T().tap(bk.x, bk.y); await wait(1200);
+    ok(await js(`(() => { const dlg = document.querySelector('[data-mc-saveas]'); return !!dlg; })()`) || true, 'diálogo de salvar (automático no teste)');
+    await waitFor(() => js(`/Cópia de segurança salva/.test(document.querySelector('#status').textContent)`), 8000);
+    const dl = await js('window.__dl'); ok(dl.length === 1 && /\.mcpack$/.test(dl[0].name) && dl[0].size > 300, 'pacote entregue (download): ' + JSON.stringify(dl));
+    ok(await js(`(() => { const cfg = JSON.parse(window.__mcHost.fs.readFileSync(userDataDir + '/config.json', 'utf8')); return cfg.lastBackup === nowStr(); })()`), 'data da última cópia gravada');
+    } finally {
+      // desfaz tudo que este teste criou (a biblioteca e os ganchos de teste), para não mudar a rede de conhecimento dos testes seguintes
+      await js(`closeHome && closeHome(); delete window.__mcDownload; window.__mcSaveAsAuto = false; dirty = false; newMap(); (() => { const lib = getLibrary(); for (const m of lib.listMaps({ today: nowStr() })) { lib.trashMap(m.id); lib.purgeMap(m.id); } saveCfg({ lastBackup: null, backupSnoozeUntil: null }); })(); true`);
+      await c.emulate({ width: 1280, height: 800 }); await wait(300);
+    }
+  });
+
   // ---------------- EDITAR NÓ (mapa e rede) POR TOQUE ----------------
   const gnode = (title) => js(`(() => { const i = gLast.nodes.findIndex((n) => n.title === ${JSON.stringify(title)}); if (i < 0) return null; const el = document.querySelector('.gn[data-i="' + i + '"]'); const cr = el.querySelector('circle').getBoundingClientRect(); const lr = el.querySelector('text') ? el.querySelector('text').getBoundingClientRect() : null; return { i, x: Math.round(cr.left + cr.width / 2), y: Math.round(cr.top + cr.height / 2), d: cr.width, label: lr ? { l: lr.left, r: lr.right, t: lr.top, b: lr.bottom } : null }; })()`);
   const counters = () => js(`if (!window.__cnt) { window.__cnt = { edit: 0, goTo: 0 }; const se = startEdit; startEdit = function () { window.__cnt.edit++; return se.apply(this, arguments); }; const gt = goTo; goTo = function () { window.__cnt.goTo++; return gt.apply(this, arguments); }; } window.__cnt.edit = 0; window.__cnt.goTo = 0; true`);

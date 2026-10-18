@@ -45,7 +45,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   const wheel = async (x, y, dy) => { focusWin(); mv(x, y); ev({ type: 'mouseWheel', x, y, deltaX: 0, deltaY: dy }); await wait(120); };
   /** Gira a roda até `cond()` ficar verdadeira (até 3 tentativas): o evento é assíncrono. */
   const wheelUntil = async (x, y, dy, cond) => { for (let i = 0; i < 3; i++) { await wheel(x, y, dy); try { await c.waitFor(cond, 1200, 60); return true; } catch { /* tenta de novo */ } } return false; };
-  const rectOf = (sel) => js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width, h: b.height }; })()`);
+  const rectOf = (sel) => js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; if (e.scrollIntoView && e.closest('#home')) e.scrollIntoView({ block: 'nearest' }); const b = e.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2, w: b.width, h: b.height }; })()`);
   const clickSel = async (sel, o) => { const r = await rectOf(sel); if (!r) throw new Error('elemento não encontrado: ' + sel); await click(r.x, r.y, o); };
   const P = (title) => js(`__pt(__id(${JSON.stringify(title)}))`);
   const clickNode = async (title, o) => { const p = await P(title); await click(p.x, p.y, o); };

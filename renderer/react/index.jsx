@@ -11,6 +11,7 @@ import { Connections, Outline, RefsBox } from './Panels.jsx';
 import { PdfPane } from './PdfPane.jsx';
 import { ReviewMode } from './ReviewMode.jsx';
 import { ShortcutsModal } from './ShortcutsModal.jsx';
+import { ManualModal } from './ManualModal.jsx';
 import { Home } from './Home.jsx';
 import { SimuladoModal } from './SimuladoModal.jsx';
 
@@ -143,6 +144,7 @@ window.MCReact = {
   openReview: () => mount(ReviewMode, {}),
   openSimulado: () => mount(SimuladoModal, {}),
   openShortcuts: () => mount(ShortcutsModal, {}),
+  openManual: (section) => mount(ManualModal, { initialSection: section }),
   openPlan: () => mount(PlanModal, {}),
   openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash, openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot, renderRefs,
   renderLinks: (model) => renderPanel('linksBody', <Connections model={model} />), unmountLinks: () => unmountPanel('linksBody'),

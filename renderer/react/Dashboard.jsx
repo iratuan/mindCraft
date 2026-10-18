@@ -227,7 +227,7 @@ export function Dashboard() {
       <div className="dash-head">
         <div>
           <h2>{`Painel de estudos — ${map.root.title}`}</h2>
-          <div className="sub">{`Hoje: ${h.fmtDate(today)}`}</div>
+          <div className="sub">{`Hoje: ${h.fmtDate(today)}`} <button className="link" id="dashHelp" data-manual="painel-estudos" title="Manual: como usar o painel de estudos">? Como usar</button></div>
           <div className="dash-opts">
             <label className="opt"><input type="checkbox" id="optReopen" checked={start === 'last'} onChange={(e) => { h.saveCfg({ reopenLast: e.target.checked, startScreen: e.target.checked ? 'last' : (start === 'last' ? 'home' : start) }); refresh(); }} />Reabrir o último mapa ao iniciar</label>
             <Option id="optDashStart" label="Abrir este painel ao iniciar" keyName="dashOnStart" on={!!cfg.dashOnStart} refresh={refresh} />

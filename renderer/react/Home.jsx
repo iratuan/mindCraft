@@ -4,9 +4,43 @@ import { H } from './hooks.js';
 const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 const WEEK = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const ago = (ms) => { if (!ms) return ''; const d = Math.floor((Date.now() - ms) / 86400000); return d <= 0 ? 'hoje' : d === 1 ? 'ontem' : d < 30 ? `há ${d} dias` : new Date(ms).toLocaleDateString('pt-BR'); };
+const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min` : `${m} min`);
+const DOW = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const daysTxt = (n) => (n === 0 ? 'é hoje!' : n === 1 ? 'amanhã' : `em ${n} dias`);
 
 /** Tela inicial: atalhos, continuar de onde parou, arquivos recentes, biblioteca, próximas provas e o resumo de hoje. */
+/** "Seu estudo": sequência, hoje, 7 dias (barras), acerto, metas e o que está mais atrasado. */
+function Glance({ g, onReview, onDash }) {
+  if (!g || g.scope === 'none') return null;
+  const max = Math.max(30, ...g.week.map((w) => w.minutes));
+  const acc = g.questions.accuracy;
+  return (
+    <div className="hm-sec hm-glance" id="hmGlance">
+      <h3><span>Seu estudo <span className="muted">· {g.scope === 'library' ? 'em toda a biblioteca' : 'neste mapa'}</span></span> <button className="link" id="hmGlanceDash" onClick={onDash}>painel completo</button></h3>
+      {!g.hasData && <div className="empty">Ainda sem estudo registrado nos últimos dias. Registre o tempo ou as questões no painel <b>Estudo</b> e o resumo aparece aqui.</div>}
+      {g.hasData && <>
+        <div className="gl-tiles">
+          <div className="gl-tile" id="glStreak"><b>{g.streak}</b><span>{g.streak === 1 ? 'dia seguido' : 'dias seguidos'}</span></div>
+          <div className="gl-tile" id="glToday"><b>{hm(g.minutesToday)}</b><span>hoje</span></div>
+          <div className="gl-tile" id="glWeek"><b>{hm(g.weekMinutes)}</b><span>nos últimos 7 dias</span></div>
+          <div className="gl-tile" id="glAcc"><b>{acc == null ? '—' : Math.round(acc * 100) + '%'}</b><span>{acc == null ? 'sem questões na semana' : `de acerto (${g.questions.correct}/${g.questions.done})`}</span></div>
+        </div>
+        <div className="gl-bars" id="glBars" role="img" aria-label={'Minutos estudados por dia: ' + g.week.map((w) => `${w.date.slice(8)}/${w.date.slice(5, 7)} ${w.minutes} min`).join(', ')}>
+          {g.week.map((w) => <div className="gl-col" key={w.date} title={`${w.date.slice(8)}/${w.date.slice(5, 7)}: ${w.minutes} min${w.done ? ` · ${w.correct}/${w.done} questões` : ''}`}><i style={{ height: Math.max(w.minutes ? 4 : 1, Math.round((w.minutes / max) * 100)) + '%' }} className={w.minutes ? 'on' : ''} /><small>{DOW[new Date(w.date + 'T12:00:00').getDay()]}</small></div>)}
+        </div>
+      </>}
+      {g.goals && (g.goals.minutes || g.goals.questions) && <div className="gl-goals" id="glGoals">
+        {g.goals.minutes && <div title="Meta de horas da semana"><span>Meta de estudo</span><div className="gl-bar"><i style={{ width: g.goals.minutes.pct + '%' }} /></div><small>{g.goals.minutes.pct}% · faltam {hm(g.goals.minutes.left)}</small></div>}
+        {g.goals.questions && <div title="Meta de questões da semana"><span>Meta de questões</span><div className="gl-bar"><i style={{ width: g.goals.questions.pct + '%' }} /></div><small>{g.goals.questions.pct}% · faltam {g.goals.questions.left}</small></div>}
+      </div>}
+      {g.laggard && <div className="gl-lag" id="glLag">
+        <span>🎯 {g.laggard.kind === 'discipline' ? 'Disciplina que mais precisa de você: ' : 'Mapa mais atrasado: '}<b>{g.laggard.title}</b> — {g.laggard.due} revisão(ões) vencida(s){g.laggard.progress != null ? ` · ${Math.round(g.laggard.progress)}% concluído` : ''}</span>
+        <button className="btn small" id="glReview" onClick={onReview}>Revisar agora</button>
+      </div>}
+    </div>
+  );
+}
+
 export function Home({ onClose }) {
   const h = H();
   const [d, setD] = useState(() => h.homeData());
@@ -28,8 +62,17 @@ export function Home({ onClose }) {
     <div className="hm" data-ui="react">
       <div className="hm-head">
         <div><h1>{`${greet()}!`}</h1><div className="sub">{`${WEEK[today.getDay()].replace(/^./, (c) => c.toUpperCase())}, ${today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`}</div></div>
-        <button className="btn" id="hmClose" onClick={onClose}>Fechar (Esc)</button>
+        <span className="hm-headbtns"><button className="btn" id="hmManual" data-manual="primeiros-passos" title="Manual de uso: como usar cada funcionalidade">📘 Manual</button><button className="btn" id="hmClose" onClick={onClose}>Fechar (Esc)</button></span>
       </div>
+
+      {d.backup && d.backup.show && (
+        <div className="hm-backup" id="hmBackupBanner" role="alert">
+          <span className="hm-ico">🛡</span>
+          <div className="grow"><b>Faça uma cópia de segurança</b><div>{d.backup.text} Guarde o arquivo <b>fora deste aparelho</b> (nuvem, pendrive ou outro computador).</div></div>
+          <button className="btn primary" id="hmBackupNow" onClick={act(async () => { if (await A.backupNow()) refresh(); })}>Fazer cópia agora</button>
+          <button className="btn" id="hmBackupLater" title="Lembrar de novo em 3 dias" onClick={() => { A.backupSnooze(); refresh(); }}>Lembrar depois</button>
+        </div>
+      )}
 
       {d.last && (
         <button className="hm-continue" id="hmContinue" onClick={act(A.openLast)} title="Abrir de onde você parou">
@@ -38,6 +81,8 @@ export function Home({ onClose }) {
           <span className="muted">{[d.last.kind === 'lib' ? 'Biblioteca' : d.last.dir, d.last.topics ? `${d.last.topics} tópicos` : null, d.last.progress != null ? `${Math.round(d.last.progress)}% concluído` : null, d.last.due ? `${d.last.due} revisão(ões) vencida(s)` : null, d.last.examDays != null && d.last.examDays >= 0 ? `prova ${daysTxt(d.last.examDays)}` : null].filter(Boolean).join(' · ')}</span>
         </button>
       )}
+
+      <Glance g={d.glance} onReview={act(A.review)} onDash={act(async () => { onClose(); h.actions.openDash && h.actions.openDash(); })} />
 
       <div className="hm-actions">
         <Big id="hmNew" icon="＋" title="Novo mapa" sub="em branco" onClick={act(A.newBlank)} primary={!d.last} />
@@ -49,6 +94,8 @@ export function Home({ onClose }) {
         <Big id="hmPdf" icon="📖" title="Ler um PDF" sub="ao lado do mapa" onClick={act(A.openPdf)} />
         <Big id="hmSim" icon="📝" title="Registrar simulado" sub="nota por disciplina" onClick={act(A.simulado)} />
         <Big id="hmReview" icon="🧠" title="Revisão do dia" sub={d.dueHere ? `${d.dueHere} vencida(s) neste mapa` : 'recordação ativa'} onClick={act(A.review)} />
+        <Big id="hmBackup" icon="🛡" title="Cópia de segurança" sub="pacote .mcpack com tudo" onClick={act(async () => { if (await A.backupNow()) refresh(); })} />
+        <Big id="hmRestore" icon="♻" title="Restaurar cópia" sub="de um pacote .mcpack" onClick={act(async () => { if (await A.restorePack()) refresh(); })} />
       </div>
 
       <div className="hm-cols">
@@ -94,6 +141,12 @@ export function Home({ onClose }) {
             <option value="blank">começar com um mapa em branco</option>
           </select>
         </label>
+        <label>Lembrar da cópia de segurança:{' '}
+          <select id="hmBackupEvery" value={d.backup ? d.backup.every : 14} onChange={(e) => { A.backupEvery(+e.target.value); refresh(); }}>
+            <option value={7}>a cada 7 dias</option><option value={14}>a cada 14 dias</option><option value={30}>a cada 30 dias</option><option value={0}>nunca</option>
+          </select>
+        </label>
+        <span className="muted" id="hmLastBackup">{d.backup && d.backup.lastBackup ? `Última cópia: ${new Date(d.backup.lastBackup + 'T12:00:00').toLocaleDateString('pt-BR')}` : 'Nenhuma cópia feita ainda.'}</span>
         <span className="muted">Dica: você também pode arrastar um arquivo .mom, .md, .opml ou .pdf para a janela.</span>
       </div>
     </div>

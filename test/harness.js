@@ -55,7 +55,11 @@ process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de ve
   await ctx.js(`(async () => { for (let i = 0; i < 300 && !(typeof map !== 'undefined' && document.querySelector('.node')); i++) await new Promise((r) => setTimeout(r, 50)); return true; })()`);   // espera o 1º desenho (disco frio)
 
       ctx.menu = (id) => Menu.getApplicationMenu().getMenuItemById(id).click(undefined, win, win.webContents);
-      ctx.shot = async (file) => { await wait(350); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, (await win.webContents.capturePage()).toPNG()); };
+      ctx.shot = async (file) => {   // capturePage às vezes falha no Chromium ("UnknownVizError": leitura do quadro da GPU) — é do ambiente, não do app: tenta de novo
+  await wait(350); fs.mkdirSync(path.dirname(file), { recursive: true });
+  let last; for (let i = 0; i < 4; i++) { try { fs.writeFileSync(file, (await win.webContents.capturePage()).toPNG()); return; } catch (e) { last = e; await wait(400); } }
+  throw last;
+};
       // dublês dos diálogos nativos; exportação, caminhos e "recentes" passam para o processo principal de verdade
       await ctx.js(`window.__dlg = { save: null, open: null, csv: null, pack: null, pdf: null, openAt: null, folder: null, discard: 1, confirm: 0, errors: [], confirms: [] };
         const realInvoke = ipcRenderer.invoke.bind(ipcRenderer);

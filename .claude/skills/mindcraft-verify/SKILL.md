@@ -27,8 +27,8 @@ Falhou em `architecture.test.js`? A mensagem diz a regra quebrada (módulo fora 
 | Android (insets, notificação, toque, rede nativa) | bateria Android (skill `mindcraft-android-test`) |
 
 ## 3. Antes de entregar
-1. **Desligue o emulador Android** (`adb emu kill`) → `npm run e2e` (35 etapas, ~15 min; rode em segundo plano e acompanhe o log) → `npm run qa`.
-2. Ligue o emulador → bateria Android completa (17 testes) — **sem nada em paralelo**.
+1. **Desligue o emulador Android** (`adb emu kill`) → `npm run e2e` (39 etapas, ~17 min; rode em segundo plano e acompanhe o log) → `npm run qa`.
+2. Ligue o emulador → bateria Android completa (19 testes) — **sem nada em paralelo**.
 3. Atualize `evidencias/RESULTADOS.md` (números reais) e os docs.
 
 ## 4. Sabotagem (teste do teste)

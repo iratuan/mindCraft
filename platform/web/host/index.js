@@ -71,6 +71,7 @@ async function boot() {
     if (window.MC && window.MC.handleDroppedPaths) window.MC.handleDroppedPaths(paths);
   }, true);
 
+  window.__mcDurable = () => store.idle();          // o renderer só marca "salvo" depois da gravação no aparelho (ver durable() em renderer.js)
   window.__mcHost = { store, ipc, fs, path, restored, native: nat, hostRef: host, http: webHttp, idle: () => store.idle(), version: 1 };
   installMenu({ emit: (cmd) => ipc.ipcRenderer.emit('menu', {}, cmd), css: tabletCss });
   touch.install(); editorFit.install();

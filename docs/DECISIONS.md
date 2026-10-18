@@ -28,6 +28,12 @@ Formato: **Decisão** · Por quê · Consequências/como reverter.
 
 **013 — Fachada `window.MCView`.** A plataforma não lê variáveis globais da interface. · Desacopla toque/teclado virtual de `renderer.js`. · Ampliar a fachada em vez de ler globais.
 
+**017 — Manual dentro do app como DADOS (`core/manual.js`), não como página.** Desktop e tablet usam o mesmo conteúdo (blocos marcados por aparelho) e a busca é função pura testável; um teste de cobertura obriga a documentar funcionalidade nova. · Alternativa descartada: HTML/Markdown solto (não filtra por aparelho, não é testável, fica velho em silêncio).
+
+**018 — Divisores com Pointer Events e ouvintes na JANELA durante o arrasto.** Mouse, dedo e caneta num só caminho; o arrasto não depende de "captura do ponteiro" (que falhava com entrada sintética e quando o divisor muda de lugar a cada passo). Teclado e duplo clique/toque restauram: acessível por padrão. O mapa nunca fica com menos de ~260 px.
+
+**019 — Lembrete de cópia de segurança só some quando o arquivo é GERADO.** Cancelar o diálogo não conta; "Lembrar depois" adia 3 dias; intervalo 7/14/30/nunca. Só neste aparelho (não vai no pacote). Restaurar nunca sobrescreve (conflito = cópia).
+
 **016 — Estrutura-alvo `src/{main,renderer,shared}` em TypeScript (decidida em 17/10/2026).** O dono do projeto definiu a organização final (ver ARCHITECTURE §7). · Padrão conhecido do ecossistema Electron+React, separa processo principal, interface e domínio compartilhado, e viabiliza `window.api` tipada com contextIsolation. · A migração é FASEADA (6 fases) e nunca "big bang"; o tablet continua reaproveitando `shared`. Não iniciada: depende de priorização (próximas tarefas: recolher painel direito e redimensionar a divisão PDF/mapa vêm antes).
 
 **015 — "Salvar como" do tablet com o seletor de documentos do Android (SAF).** Plugin nativo mínimo `SaveFilePlugin` (`pick` = ACTION_CREATE_DOCUMENT; `write` = grava no URI, modo `wt`, permissão persistente). O app grava SEMPRE uma cópia no armazenamento do app e, para destino externo, **espelha** os bytes a cada gravação (`targets.json`: `mirror` para `.mom`, `once` para exportações). · O usuário escolhe nome e pasta no seletor do sistema (inclusive Drive) sem o app pedir permissão ampla de armazenamento; falha de gravação nunca perde dados (a cópia no app fica). · Só Android; no navegador vale "Documentos" e "Baixar".

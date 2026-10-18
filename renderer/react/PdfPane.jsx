@@ -163,6 +163,7 @@ export function PdfPane({ initial, onClose }) {
           {src && !reg && <option value={src.path}>{src.name || h.baseName(src.path)}</option>}
           {pdfs.map((p) => <option key={p.id} value={p.path}>{p.name}</option>)}
         </select>
+        <button className="btn small" id="pdfHelp" data-manual="pdf" title="Manual: como usar o leitor de PDF" aria-label="Ajuda do leitor de PDF">?</button>
         <button className="btn small" id="pdfOpen" onClick={onOpen}>Abrir PDF…</button>
         <button className="btn small" id="pdfClose" onClick={onClose} title="Fechar o leitor (Ctrl+Shift+P)">✕</button>
       </div>

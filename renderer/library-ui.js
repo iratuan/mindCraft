@@ -31,9 +31,10 @@ async function saveToLibrary() {
   commitNotes();
   const lib = getLibrary();
   if (!lib) { libFail('A biblioteca não está disponível: ' + _libErr + '\nSeu mapa continua aberto; use "Salvar como…" para guardar um arquivo .mom.'); return false; }
+  const r0 = rev;
   try { map.meta.name = map.root.title; lib.saveMap(map, { verify: true }); }
   catch (e) { libFail('Falha ao salvar na biblioteca (suas alterações continuam abertas): ' + e.message); return false; }
-  filePath = null; dirty = false; saveCfg({ lastKind: 'lib', lastLib: map.meta.libId }); render();
+  await durable(); filePath = null; if (rev === r0) dirty = false; saveCfg({ lastKind: 'lib', lastLib: map.meta.libId }); render();
   return true;
 }
 /** "Salvar como…" de um mapa da biblioteca: exporta uma CÓPIA .mom; o mapa continua na biblioteca. */
@@ -51,10 +52,10 @@ async function moveToLibrary() {
   commitNotes();
   const lib = getLibrary();
   if (!lib) { libFail('A biblioteca não está disponível: ' + _libErr); return false; }
-  const from = filePath;
+  const from = filePath, r0 = rev;
   try { map.meta.name = map.root.title; lib.saveMap(map, { source: from ? path.resolve(from) : null, verify: true }); }
   catch (e) { libFail('Não consegui guardar na biblioteca (nada foi alterado): ' + e.message); return false; }
-  filePath = null; dirty = false; saveCfg({ lastKind: 'lib', lastLib: map.meta.libId }); render();
+  await durable(); filePath = null; if (rev === r0) dirty = false; saveCfg({ lastKind: 'lib', lastLib: map.meta.libId }); render();
   setStatus(from ? 'Mapa guardado na biblioteca. O arquivo original não foi alterado: ' + from : 'Mapa guardado na biblioteca.');
   return true;
 }
@@ -175,7 +176,7 @@ function openLibraryModalClassic(tab = 'maps') {
   });
   bExp.onclick = () => guard(async () => {
     const t = await ipcRenderer.invoke('dialog:save', 'mcpack', 'meus-estudos.mcpack'); if (!t) return;
-    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: portableSettings() }); say(`Pacote salvo com ${r.maps} mapa(s) e as configurações. Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
+    const r = lib.exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: portableSettings() }); if (typeof markBackup === 'function') markBackup(); say(`Pacote salvo com ${r.maps} mapa(s) e as configurações. Leve esse arquivo para o outro computador e use "Importar pacote…".`, 'ok');
   });
   bBk.onclick = () => guard(async () => {
     const t = await ipcRenderer.invoke('dialog:save', 'db', 'biblioteca-backup.db'); if (!t) return;

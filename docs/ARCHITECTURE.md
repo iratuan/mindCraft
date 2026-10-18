@@ -72,6 +72,11 @@ Módulos "mais dependidos" (mudar com cuidado): `study`, `model`, `links`, `mark
 ## 6. Estratégia de teste (resumo; ver `TESTING.md`)
 Unitários do núcleo (rápidos, rodam também contra o núcleo web = **paridade**) → e2e no Electron real → QA com entrada real → bateria no Android. Defeitos pegos na prática: ver `docs/DECISIONS.md` e `evidencias/RESULTADOS.md`.
 
+## 6.1 Novidades da v0.4.0 (onde mora cada coisa)
+- **Manual** — `core/manual.js` (conteúdo em dados puros + busca; texto por aparelho: `only: 'desktop'|'touch'`) · `renderer/react/ManualModal.jsx` (janela) · `act.manual(secao)` e o clique global em `[data-manual]` ("? Como usar") em `react-bridge.js`. Regra de manutenção: **funcionalidade nova ⇒ seção no manual** (`test/manual.test.js` confere a cobertura e se todo `data-manual` aponta para uma seção).
+- **Layout** — `renderer/layout-ui.js`: recolher o painel lateral (botão ‹ ›, Ctrl+\\, menu Exibir) e divisores arrastáveis (Pointer Events: mouse, dedo, caneta; teclado; duplo clique restaura). Estado em `config.json` (`panelsCollapsed`, `panelsWidth`, `pdfWidth`; locais, não vão no pacote). A largura do painel é a variável CSS `--panels-w` (as regras por tamanho de janela continuam sendo o padrão). Em modo gaveta (tablet < 1000 px) o recolher/divisor não existe.
+- **Tela inicial** — `core/backup-reminder.js` (regra do lembrete: nunca fez / passou de 7·14·30 dias / adiado 3 dias) e `core/glance.js` ("Seu estudo": sequência, 7 dias, acerto, metas, disciplina mais atrasada; fonte = biblioteca inteira ou, sem ela, o mapa aberto). `homeData()`/`homeActions` em `react-bridge.js` ligam as regras à tela (`Home.jsx`). `exportPackQuick`/`importPackQuick` são a ÚNICA implementação de exportar/restaurar pacote (a janela da biblioteca também as usa). Restaurar nunca sobrescreve (conflito vira cópia).
+
 ## 7. ESTRUTURA-ALVO (definida pelo dono do projeto — 17/10/2026)
 
 O projeto deve convergir para a organização padrão Electron + React + TypeScript abaixo. **Hoje** ele ainda está na estrutura anterior (`core/`, `electron/`, `renderer/`, `platform/`); a migração é **faseada e guiada por testes** (nunca "big bang": regra de ouro = nunca perder dados, só mudanças seguras).

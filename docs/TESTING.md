@@ -8,7 +8,7 @@
 | Arquitetura | `test/architecture.test.js` | `npm test` | sempre — falha com a regra quebrada e como corrigir |
 | Unitários do núcleo | `test/*.test.js` (≈240) | `npm test` | sempre; < 10 s |
 | Paridade com o núcleo web | mesmos unitários contra `core-browser` | `npm run test:web` | sempre que mexer em `core/` ou `platform/web/` |
-| Ponta a ponta (Electron real) | `test/e2e-*.js` | `electron test/e2e-x.js [--classic]` | ao mexer na interface; `npm run e2e` roda tudo (35 etapas, ~15 min) |
+| Ponta a ponta (Electron real) | `test/e2e-*.js` | `electron test/e2e-x.js [--classic]` | ao mexer na interface; `npm run e2e` roda tudo (39 etapas, ~17 min) |
 | Web/tablet (Chromium sem Node) | `e2e-web`, `e2e-tablet`, `e2e-sync-web` | `npm run build:web-app` antes | ao mexer em `platform/web`, CSS do tablet, toque |
 | QA com entrada real | `test/qa-tour.js` | `npm run qa` | antes de entregar (82 casos, mouse/teclado reais) |
 | Evidências | `test/evidence.js` | `npm run evidence` | antes de entregar (capturas em `evidencias/`) |

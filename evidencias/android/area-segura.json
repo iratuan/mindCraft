@@ -1,8 +1,8 @@
 [
- "gestural rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1536},\"bars\":[\"statusBars:0,0,2560,48\",\"navigationBars:0,1536,2560,1600\"]}",
- "threebutton rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1488},\"bars\":[\"statusBars:0,0,2560,48\",\"navigationBars:0,1488,2560,1600\"]}",
- "threebutton rot1 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":1600,\"y2\":2448},\"bars\":[\"statusBars:0,0,1600,48\",\"navigationBars:0,2448,1600,2560\"]}",
- "gestural+tall rot0 {\"w\":{\"x1\":0,\"y1\":96,\"x2\":2560,\"y2\":1536},\"bars\":[\"statusBars:0,0,2560,96\",\"displayCutout:0,0,2560,96\",\"navigationBars:0,1536,2560,1600\"]}",
- "gestural+double rot1 {\"w\":{\"x1\":64,\"y1\":48,\"x2\":1536,\"y2\":2496},\"bars\":[\"statusBars:0,0,1600,48\",\"displayCutout:0,0,64,2560\",\"displayCutout:1536,0,1600,2560\",\"navigationBars:0,2496,1600,2560\"]}",
- "gestural rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1536},\"bars\":[\"statusBars:0,0,2560,48\",\"navigationBars:0,1536,2560,1600\"]}"
+ "gestural rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1536},\"bars\":[\"navigationBars:0,1536,2560,1600\",\"statusBars:0,0,2560,48\"]}",
+ "threebutton rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1488},\"bars\":[\"navigationBars:0,1488,2560,1600\",\"statusBars:0,0,2560,48\"]}",
+ "threebutton rot1 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":1600,\"y2\":2448},\"bars\":[\"navigationBars:0,2448,1600,2560\",\"statusBars:0,0,1600,48\"]}",
+ "gestural+tall rot0 {\"w\":{\"x1\":0,\"y1\":96,\"x2\":2560,\"y2\":1536},\"bars\":[\"navigationBars:0,1536,2560,1600\",\"displayCutout:0,0,2560,96\",\"statusBars:0,0,2560,96\"]}",
+ "gestural+double rot1 {\"w\":{\"x1\":64,\"y1\":48,\"x2\":1536,\"y2\":2496},\"bars\":[\"navigationBars:0,2496,1600,2560\",\"displayCutout:0,0,64,2560\",\"displayCutout:1536,0,1600,2560\",\"statusBars:0,0,1600,48\"]}",
+ "gestural rot0 {\"w\":{\"x1\":0,\"y1\":48,\"x2\":2560,\"y2\":1536},\"bars\":[\"navigationBars:0,1536,2560,1600\",\"statusBars:0,0,2560,48\"]}"
 ]

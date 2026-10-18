@@ -15,7 +15,7 @@ const W = (f) => path.join(root, 'platform', 'web', f);
 const out = path.join(root, 'build', 'web');
 
 /** Módulos do núcleo que fazem parte da versão web (os que dependem de pastas do sistema ficam de fora). */
-const MODULES = ['study', 'model', 'mom', 'library', 'graph', 'markdown', 'csv', 'planner', 'simulados', 'report', 'layout', 'svg', 'notify', 'settings', 'pdfrefs', 'ics', 'links', 'mentions', 'markers', 'themes', 'forcelayout', 'import', 'edital', 'export', 'vault', 'obsidian', 'errorlog', 'backup', 'sync', 'sync-folder', 'sync-drive', 'oauth-device', 'bancas', 'mindomo', 'text', 'graph-labels'];
+const MODULES = ['study', 'model', 'mom', 'library', 'graph', 'markdown', 'csv', 'planner', 'simulados', 'report', 'layout', 'svg', 'notify', 'settings', 'pdfrefs', 'ics', 'links', 'mentions', 'markers', 'themes', 'forcelayout', 'import', 'edital', 'export', 'vault', 'obsidian', 'errorlog', 'backup', 'manual', 'backup-reminder', 'glance', 'sync', 'sync-folder', 'sync-drive', 'oauth-device', 'bancas', 'mindomo', 'text', 'graph-labels'];
 
 const entry = (extra = '') => MODULES.map((m) => `${JSON.stringify(m)}: require(${JSON.stringify(path.join(root, 'core', m + '.js'))})`).join(',\n  ') + extra;
 

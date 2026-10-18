@@ -92,6 +92,7 @@ function buildMenu() {
       { label: 'Ajustar à tela', accelerator: 'CmdOrCtrl+0', click: send('fit') },
       { label: 'Apresentar', accelerator: 'F5', click: send('present') },
       { label: 'Painel de estudos', accelerator: 'CmdOrCtrl+E', click: send('dash') },
+      { label: 'Painel lateral (recolher/expandir)', accelerator: 'CmdOrCtrl+\\', click: send('panelsToggle') },
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
       { label: 'Revisão do dia', accelerator: 'CmdOrCtrl+Shift+R', click: send('review') },
       { label: 'Leitor de PDF (dividir a tela)', accelerator: 'CmdOrCtrl+Shift+P', click: send('pdf') },
@@ -100,6 +101,7 @@ function buildMenu() {
       { role: 'toggleDevTools', label: 'Ferramentas de desenvolvedor' },
     ] },
     { label: 'Ajuda', submenu: [
+      { label: 'Manual de uso', click: send('manual') },
       { label: 'Atalhos do teclado', accelerator: 'F1', click: send('help') },
     ] },
   ];

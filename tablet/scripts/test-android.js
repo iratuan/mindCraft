@@ -319,6 +319,41 @@ await t('SALVAR COMO no Android: janela do app (nome editável) + seletor REAL d
   rmq();
 });
 
+await t('MANUAL e PAINEL LATERAL no Android (toque real): ☰ → Manual de uso abre em visão de tablet SEM subir o teclado; tocar no índice troca a seção; botão ‹ › recolhe/expande o painel e o divisor muda a largura com o dedo', async () => {
+  await fresh(); await ev('window.__mcSaveAsAuto = false; true'); step('menu');
+  const [mx, my] = await ctr('#mcHostMenuBtn'); tapCss(mx, my); await waitFor(() => ev("!document.querySelector('#mcHostMenu').hidden"), 5000);
+  const [ix, iy] = await ev("(() => { const b = document.querySelector('#mcHostMenu button[data-cmd=manual]'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()"); tapCss(ix, iy);
+  await waitFor(() => ev("!!document.querySelector('#manualBox')"), 8000); await wait(500); step('manual');
+  eq(await ev("document.querySelector('#manualHostTouch').getAttribute('aria-pressed')"), 'true', 'visão de tablet'); ok(!imeShown(), 'o teclado NÃO subiu sozinho'); shot('06-android-manual');
+  const [sx, sy] = await ev("(() => { const b = document.querySelector('#manualIndex button[data-section=layout]'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()"); tapCss(sx, sy); await wait(500);
+  eq(await ev("document.querySelector('#manualBody').dataset.section"), 'layout'); ok(/dedo/.test(await ev("document.querySelector('#manualBody').textContent")), 'texto de toque');
+  const [cx, cy] = await ctr('#manualClose'); tapCss(cx, cy); await waitFor(() => ev("document.getElementById('modal').hidden"), 5000);
+  step('painel'); const w0 = await ev("document.querySelector('#panels').getBoundingClientRect().width"); ok(w0 > 200, 'painel docado: ' + w0);
+  const [bx, by] = await ctr('#panelsToggle'); tapCss(bx, by); await wait(700); ok(await ev("document.body.classList.contains('panels-collapsed')"), 'recolheu por toque real'); shot('07-android-painel-recolhido');
+  const [b2x, b2y] = await ctr('#panelsToggle'); tapCss(b2x, b2y); await wait(700); ok(!(await ev("document.body.classList.contains('panels-collapsed')")), 'expandiu'); ok(Math.abs((await ev("document.querySelector('#panels').getBoundingClientRect().width")) - w0) < 3);
+  const [dx, dy] = await ctr('#panelsSplit'); swipeCss(dx, dy + 160, dx - 90, dy + 160, 500); await wait(800);
+  const w1 = await ev("document.querySelector('#panels').getBoundingClientRect().width"); ok(w1 > w0 + 60, `o dedo alargou o painel: ${w0} → ${w1}`); shot('08-android-painel-largo');
+  const [rx, ry] = await ctr('#panelsSplit'); tapCss(rx, ry + 160); await wait(120); tapCss(rx, ry + 160); await wait(800);
+  ok(Math.abs((await ev("document.querySelector('#panels').getBoundingClientRect().width")) - w0) < 6, 'duplo toque restaura');
+});
+
+await t('TELA INICIAL no Android (toque real): aviso de cópia de segurança e "Seu estudo"; "Lembrar depois" esconde o aviso; "Cópia de segurança" abre a janela de salvar com o nome editável', async () => {
+  await fresh(); step('preparar');
+  await ev("map.root.title = 'Plano Android'; map.root.children = []; (() => { const d = map.addChild(map.root.id, 'Disciplina A'); const t1 = map.addChild(d.id, 'Tópico A1'); window.__t1 = t1.id; selectedId = t1.id; selIds = new Set([t1.id]); render(); })(); true");
+  await ev("runStudy((x) => map.mutateStudy(x, (st) => S.addTime(st, nowStr(), 30)), '', [__t1]); runStudy((x) => map.mutateStudy(x, (st) => S.setNext(st, '2020-01-01')), '', [__t1]); true");
+  ok(await ev('moveToLibrary()'), 'guardou na biblioteca'); await ev("saveCfg({ lastBackup: null, backupSnoozeUntil: null, backupEveryDays: 14 }); act.home(true); true");
+  await waitFor(() => ev("!!document.querySelector('#hmBackupBanner')"), 8000); await wait(500); step('home'); shot('09-android-tela-inicial');
+  ok(/ainda não fez nenhuma cópia/.test(await ev("document.querySelector('#hmBackupBanner').textContent"))); eq(await ev("document.querySelector('#glToday b').textContent"), '30 min'); ok(await ev("!!document.querySelector('#glBars')"));
+  ok(!(await ev('document.documentElement.scrollWidth > innerWidth')), 'sem rolagem horizontal');
+  const [lx, ly] = await ev("(() => { const b = document.querySelector('#hmBackupLater'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()"); tapCss(lx, ly);
+  await waitFor(() => ev("!document.querySelector('#hmBackupBanner')"), 5000); step('lembrar depois');
+  const [kx, ky] = await ev("(() => { const b = document.querySelector('#hmBackup'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()"); tapCss(kx, ky);
+  await waitFor(() => ev("!!document.querySelector('[data-mc-saveas]')"), 8000); ok(/\.mcpack$/.test(await ev("document.querySelector('[data-mc-saveas] input[type=text]').value")), 'nome sugerido .mcpack'); shot('10-android-copia-seguranca');
+  const [ex, ey] = await ctr('[data-mc-saveas] button[data-act=cancel]'); tapCss(ex, ey); await waitFor(() => ev("!document.querySelector('[data-mc-saveas]')"), 5000); await wait(400);
+  eq(await ev("(() => { try { return JSON.parse(window.__mcHost.fs.readFileSync(userDataDir + '/config.json', 'utf8')).lastBackup || null; } catch { return null; } })()"), null, 'cancelar NÃO conta como cópia feita');
+  await ev("closeHome(); dirty = false; newMap(); (() => { const lib = getLibrary(); for (const m of lib.listMaps({ today: nowStr() })) { lib.trashMap(m.id); lib.purgeMap(m.id); } saveCfg({ backupSnoozeUntil: null }); })(); true");
+});
+
 await t('ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal', async () => {
     await launch(); await watchErrors();
     const r = sh('shell', 'monkey', '-p', PKG, '--throttle', '60', '--pct-syskeys', '0', '--pct-nav', '0', '--pct-majornav', '0', '--pct-appswitch', '0', '--pct-anyevent', '0', '-s', '20261017', '--ignore-security-exceptions', '-v', '3000'); const out = r.stdout + r.stderr;

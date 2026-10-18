@@ -181,6 +181,7 @@ $('#outline').addEventListener('click', (e) => {
 });
 /** Mostra um painel lateral por vez (abas). Lembra a última aba usada. */
 function showPanel(name) {
+  if (typeof expandPanels === 'function') expandPanels();          // quem pede uma aba precisa ver o painel (layout-ui.js)
   if (!document.querySelector('.panel[data-panel="' + name + '"]')) name = 'props';
   document.querySelectorAll('#panels .panel').forEach((p) => { p.hidden = p.dataset.panel !== name; });
   document.querySelectorAll('#ptabs .ptab').forEach((b) => { const on = b.dataset.tab === name; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -276,6 +277,12 @@ function saveDefaultPath(name) {
   return name;
 }
 const rememberSaveDir = (target) => { try { if (typeof target === 'string' && target) saveCfg({ lastSaveDir: path.dirname(target) }); } catch { /* preferência é opcional */ } };
+/**
+ * Só considera "salvo" depois que o armazenamento do aparelho confirmou a gravação. No desktop o arquivo já está no disco quando a escrita
+ * volta (nada a esperar); no tablet o navegador grava no IndexedDB de forma assíncrona e, se o app fosse encerrado nessa janela, o último
+ * Salvar se perderia: o host (platform/web) define window.__mcDurable para esperar essa gravação.
+ */
+async function durable() { if (typeof window.__mcDurable === 'function') { try { await window.__mcDurable(); } catch { /* a falha de armazenamento já foi avisada (mc:storage-error) */ } } }
 async function save(as) {
   commitNotes();
   if (inLibrary()) return as ? exportCopyMom() : saveToLibrary();            // casa = biblioteca (SQLite); "Salvar como" exporta uma cópia .mom
@@ -286,12 +293,13 @@ async function save(as) {
     if (!target) return false;
     if (!/\.mom$/i.test(target)) target += '.mom';
   }
+  const r0 = rev;                                          // se o mapa mudar enquanto espera a gravação, continua "alterado"
   try {
     map.meta.name = map.root.title;
     if (userDataDir) { try { backupBefore(target, path.join(userDataDir, 'backups')); } catch (e) { report('Backup falhou (o salvamento continua): ' + e.message); } }   // guarda a versão anterior
     writeMom(map, target);
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
-  filePath = target; dirty = false; render(); rememberSaveDir(target);
+  filePath = target; await durable(); if (rev === r0) dirty = false; render(); rememberSaveDir(target);
   ipcRenderer.invoke('recent:add', target).catch(() => {});
   saveCfg({ lastKind: 'file' });
   return true;
