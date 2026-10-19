@@ -305,6 +305,26 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
     }
   });
 
+  await t('COLAR CSV no tablet (toque): janela do CSV tem a caixa de colar e o botão; texto colado mostra a prévia; "Criar o mapa" por toque; cabe em paisagem e retrato com alvos ≥ 44 px; o teclado não sobe sozinho', async () => {
+    const CSV = 'concurso,disciplina,item,topico,peso\nPlano colado,Penal,1,Crimes,3\n,Penal,1.1,Dolo,2\n,Civil,1,Contratos,4';
+    const FENCE = '```';
+    try {
+      for (const [w, h] of [[1280, 800], [800, 1280]]) {
+        await c.emulate({ width: w, height: h }); await wait(400); await js(`closeHome && closeHome(); dirty = false; act.csv(); true`); await waitFor(() => js(`!!document.querySelector('#csvPaste')`), 5000); await wait(300);
+        ok(!(await js(`document.activeElement && document.activeElement.id === 'csvPaste'`)), 'a caixa de colar NÃO recebe o foco sozinha (teclado não sobe)');
+        const small = await js(`[...document.querySelectorAll('#csvBox button, #csvPaste')].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 40).map((e) => e.id)`); eq(small, [], 'alvos de toque ≥ 40 px');
+        const box = await js(`(() => { const r = document.querySelector('#csvBox').getBoundingClientRect(); return { l: r.left, t: r.top, r: r.right, b: r.bottom, w: innerWidth, h: innerHeight, sw: document.documentElement.scrollWidth }; })()`);
+        ok(box.l >= 0 && box.t >= 0 && box.r <= box.w + 1 && box.b <= box.h + 1 && box.sw <= box.w, 'cabe na tela ' + JSON.stringify(box));
+        await js(`(() => { const e = document.querySelector('#csvPaste'); const dt = new DataTransfer(); dt.setData('text/plain', ${JSON.stringify('Aqui está:\n' + FENCE + 'csv\n' + CSV + '\n' + FENCE)}); e.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); })()`); await wait(600);
+        ok(/3 tópicos em 2 disciplina/.test(await js(`document.querySelector('#csvPreview').textContent`)), 'prévia do texto colado'); await c.shot(path.join(SHOTS, w === 1280 ? '18-colar-csv-paisagem.png' : '18-colar-csv-retrato.png'));
+        if (w === 800) {
+          const ok1 = await js(`(() => { const b = document.querySelector('#csvOk'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`); await T().tap(ok1.x, ok1.y); await waitFor(() => js(`document.querySelector('#modal').hidden`), 5000); await wait(300);
+          eq(await js(`map.root.title`), 'Plano colado'); eq(await js(`map.root.children.map((d) => d.title)`), ['Penal', 'Civil'], 'o mapa foi criado pelo toque');
+        } else { const cx = await js(`__ctr('#csvCancel')`); await T().tap(cx.x, cx.y); await wait(300); }
+      }
+    } finally { await js(`closeModal && closeModal(); dirty = false; newMap(); true`); await c.emulate({ width: 1280, height: 800 }); await wait(300); }
+  });
+
   // ---------------- EDITAR NÓ (mapa e rede) POR TOQUE ----------------
   const gnode = (title) => js(`(() => { const i = gLast.nodes.findIndex((n) => n.title === ${JSON.stringify(title)}); if (i < 0) return null; const el = document.querySelector('.gn[data-i="' + i + '"]'); const cr = el.querySelector('circle').getBoundingClientRect(); const lr = el.querySelector('text') ? el.querySelector('text').getBoundingClientRect() : null; return { i, x: Math.round(cr.left + cr.width / 2), y: Math.round(cr.top + cr.height / 2), d: cr.width, label: lr ? { l: lr.left, r: lr.right, t: lr.top, b: lr.bottom } : null }; })()`);
   const counters = () => js(`if (!window.__cnt) { window.__cnt = { edit: 0, goTo: 0 }; const se = startEdit; startEdit = function () { window.__cnt.edit++; return se.apply(this, arguments); }; const gt = goTo; goTo = function () { window.__cnt.goTo++; return gt.apply(this, arguments); }; } window.__cnt.edit = 0; window.__cnt.goTo = 0; true`);

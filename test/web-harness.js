@@ -12,6 +12,10 @@ const { buildApp } = require('../tools/build-web-app');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.wasm': 'application/wasm', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 module.exports = async function start(title, { width = 1280, height = 800 } = {}) {
+  // O Chromium pausa janelas ocultas/cobertas por outras (detecção de oclusão do Windows): toques e quadros deixam de ser processados e o teste fica
+  // esperando para sempre. Nos testes a janela precisa continuar "viva" mesmo que o usuário esteja usando outro programa por cima.
+  for (const s of ['disable-backgrounding-occluded-windows', 'disable-renderer-backgrounding', 'disable-background-timer-throttling']) app.commandLine.appendSwitch(s);
+  app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
   if (process.env.CI) app.commandLine.appendSwitch('no-sandbox');
   app.on('window-all-closed', () => { /* reabrir a janela (simular fechar/abrir o app) não pode encerrar o processo de teste */ });
   const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mc web çãé-'));

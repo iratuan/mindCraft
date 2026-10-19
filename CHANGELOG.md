@@ -2,6 +2,11 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.4.2
+- **CSV colado ou importado**: a janela "Importar CSV de edital" ganhou a caixa **"cole aqui"** e o botão **Colar da área de transferência** (além de escolher arquivo), com a mesma prévia. O texto colado é limpo sozinho: resposta da IA com frases e bloco de código (```csv) ou **tabela** do chat. A **planilha de planejamento** também aceita texto colado.
+- **Painéis redimensionáveis mais fáceis de achar**: alças dos divisores (painel lateral e leitor de PDF | mapa) maiores e sempre visíveis; no tablet com área de toque grande.
+- Testes: 41 etapas e2e (novo e2e-paste), 21 no Android (digitar CSV com o teclado real), +9 unitários.
+
 ## 0.4.1
 - **Cópia de segurança no tablet com destino lembrado**: depois da 1ª cópia (seletor do Android) as seguintes gravam direto no mesmo arquivo, sem janela; a Tela inicial mostra "Cópias vão para: …" com "trocar local"; falha de gravação (permissão perdida, gravação incompleta) avisa, esquece o destino e pergunta de novo.
 - **Corrigido no tablet**: "Restaurar cópia" / abrir arquivos pelo seletor do Android — arquivos .mcpack/.mom/.opml apareciam APAGADOS (impossíveis de escolher). Agora o seletor mostra tudo e a extensão é conferida depois. O pacote criado deixou de ficar com nome "x.mcpack.zip".

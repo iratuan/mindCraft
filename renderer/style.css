@@ -549,3 +549,11 @@ body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit, body.pres
 .hm-glance.mini { padding: 8px 14px; } .hm-glance.mini h3 { margin: 0; } .hm-links { display: inline-flex; gap: 12px; }
 .hm-glance.mini { align-self: stretch; width: 100%; box-sizing: border-box; } .gl-mini { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; }
 .hm-glance { flex: none; }
+
+/* ---------- colar CSV/planilha ---------- */
+.csv-paste { width: 100%; box-sizing: border-box; min-height: 84px; max-height: 180px; padding: 8px 10px; resize: vertical; font: 12px Consolas, "SF Mono", monospace; color: var(--text); background: var(--bg-field); border: 1px dashed var(--line); border-radius: 8px; }
+.csv-paste:focus { border-style: solid; border-color: var(--accent); outline: none; }
+/* alças dos divisores mais visíveis (painéis redimensionáveis) */
+#pdfsplit, #panelsSplit { width: 12px; } #pdfsplit { margin-left: -6px; } #panelsSplit { margin-right: -5px; }
+#pdfsplit::after, #panelsSplit::after { width: 4px; height: 52px; margin: -26px 0 0 -2px; background: var(--text-dim); opacity: .55; }
+@media (pointer: coarse) { #panelsSplit { width: 18px; margin-right: -8px; } #pdfsplit { width: 22px; margin-left: -11px; } #pdfsplit::after, #panelsSplit::after { height: 64px; margin-top: -32px; } }

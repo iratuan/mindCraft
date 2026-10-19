@@ -1,10 +1,10 @@
 # Relatório de QA por funcionalidade
 
-Gerado por `npm run qa` em 18/10/2026, 21:05:27 — entrada real (mouse/teclado via Chromium), app executando de verdade.
+Gerado por `npm run qa` em 19/10/2026, 00:42:50 — entrada real (mouse/teclado via Chromium), app executando de verdade.
 
-**80 de 82 funcionalidades OK**, 2 ignorada(s) por limitação do ambiente (veja abaixo).
+**82 de 82 funcionalidades OK**.
 
-**Medições:** Mapa de 1001 tópicos: render 19 ms, render+ajuste 59 ms
+**Medições:** Mapa de 1001 tópicos: render 17 ms, render+ajuste 54 ms
 
 | # | Grupo | Funcionalidade | Como foi exercitada | Resultado | Captura |
 |---|---|---|---|---|---|
@@ -34,8 +34,8 @@ Gerado por `npm run qa` em 18/10/2026, 21:05:27 — entrada real (mouse/teclado 
 | 24 | Mapa | Editor inline cresce com títulos longos (não corta a 1ª linha) | Tab + texto de 3 linhas em zoom alto | ✅ OK | [24_digitando_editor-inline-cresce-com-titulos-longos-nao-cort](24_digitando_editor-inline-cresce-com-titulos-longos-nao-cort.png) |
 | 25 | Lote | Seleção múltipla: Ctrl+clique e retângulo (Shift) | Ctrl+clique real; Shift+arrasto real no fundo | ✅ OK | [25_retangulo_selecao-multipla-ctrl-clique-e-retangulo-shift](25_retangulo_selecao-multipla-ctrl-clique-e-retangulo-shift.png) |
 | 26 | Lote | Formatar vários de uma vez e desfazer em 1 passo | Chips e botão B com vários selecionados; Ctrl+Z (botão) | ✅ OK | [26_formatar-varios-de-uma-vez-e-desfazer-em-1-passo](26_formatar-varios-de-uma-vez-e-desfazer-em-1-passo.png) |
-| 27 | Lote | Copiar, colar e recortar tópicos (menu) | Itens Copiar/Colar/Recortar do menu nativo | ⏭ IGNORADO — ignorado: a área de transferência do sistema está indisponível neste ambiente (não é falha do app) | [27_copiar-colar-e-recortar-topicos-menu](27_copiar-colar-e-recortar-topicos-menu.png) |
-| 28 | Lote | Colar um texto externo como ramos | Área de transferência com lista numerada → Colar | ⏭ IGNORADO — ignorado: a área de transferência do sistema está indisponível neste ambiente (não é falha do app) | [28_colar-um-texto-externo-como-ramos](28_colar-um-texto-externo-como-ramos.png) |
+| 27 | Lote | Copiar, colar e recortar tópicos (menu) | Itens Copiar/Colar/Recortar do menu nativo | ✅ OK | [27_copiar-colar-e-recortar-topicos-menu](27_copiar-colar-e-recortar-topicos-menu.png) |
+| 28 | Lote | Colar um texto externo como ramos | Área de transferência com lista numerada → Colar | ✅ OK | [28_colar-um-texto-externo-como-ramos](28_colar-um-texto-externo-como-ramos.png) |
 | 29 | Estudos | CSV da IA: importar o modelo e receber o esqueleto do mapa | Menu → Escolher arquivo (clique real) → prévia → Criar o mapa | ✅ OK | [29_previa_csv-da-ia-importar-o-modelo-e-receber-o-esquelet](29_previa_csv-da-ia-importar-o-modelo-e-receber-o-esquelet.png)<br>[29_mapa_csv-da-ia-importar-o-modelo-e-receber-o-esquelet](29_mapa_csv-da-ia-importar-o-modelo-e-receber-o-esquelet.png) |
 | 30 | Estudos | CSV da IA: arquivo com problemas mostra erros e avisos antes de importar | CSV com linhas sem disciplina/tópico, peso e data inválidos | ✅ OK | [30_previa-com-erros_csv-da-ia-arquivo-com-problemas-mostra-erros-e-a](30_previa-com-erros_csv-da-ia-arquivo-com-problemas-mostra-erros-e-a.png) |
 | 31 | Estudos | CSV da IA: copiar as instruções e salvar o modelo de exemplo | Botões da janela de importação | ✅ OK | [31_csv-da-ia-copiar-as-instrucoes-e-salvar-o-modelo](31_csv-da-ia-copiar-as-instrucoes-e-salvar-o-modelo.png) |
@@ -87,7 +87,7 @@ Gerado por `npm run qa` em 18/10/2026, 21:05:27 — entrada real (mouse/teclado 
 | 77 | Dados | Autosave e recuperação de sessão | Alteração → rascunho em disco → "queda" → Restaurar | ✅ OK — rascunho de 10155 bytes | [77_autosave-e-recuperacao-de-sessao](77_autosave-e-recuperacao-de-sessao.png) |
 | 78 | Dados | Arquivo corrompido não derruba o app nem o mapa atual | Abrir .mom inválido | ✅ OK — Não foi possível abrir: ADM-ZIP: Invalid or unsupported zip format. No END header found | [78_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-](78_arquivo-corrompido-nao-derruba-o-app-nem-o-mapa-.png) |
 | 79 | Extremos | Título enorme, HTML, emoji e caracteres especiais | Textos hostis e longos no mapa | ✅ OK | [79_titulo-enorme-html-emoji-e-caracteres-especiais](79_titulo-enorme-html-emoji-e-caracteres-especiais.png) |
-| 80 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 19 ms · nível 1: 26 visíveis | [80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
+| 80 | Extremos | Mapa grande (1 000 tópicos): desempenho e legibilidade | Gera 1 000 tópicos e mede layout/desenho | ✅ OK — 1001 tópicos · render 17 ms · nível 1: 26 visíveis | [80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid](80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)<br>[80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid](80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png) |
 | 81 | Extremos | Janela pequena (1000×640): a interface continua utilizável | Redimensiona a janela | ✅ OK | [81_pequena_janela-pequena-1000-640-a-interface-continua-uti](81_pequena_janela-pequena-1000-640-a-interface-continua-uti.png)<br>[81_painel_janela-pequena-1000-640-a-interface-continua-uti](81_painel_janela-pequena-1000-640-a-interface-continua-uti.png) |
 | 82 | Extremos | Estados vazios: painel, conexões e grafo sem dados | Mapa novo sem estudos nem links | ✅ OK | [82_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](82_painel-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png)<br>[82_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados](82_grafo-vazio_estados-vazios-painel-conexoes-e-grafo-sem-dados.png) |
 
@@ -237,12 +237,12 @@ Gerado por `npm run qa` em 18/10/2026, 21:05:27 — entrada real (mouse/teclado 
 ![26_formatar-varios-de-uma-vez-e-desfazer-em-1-passo.png](26_formatar-varios-de-uma-vez-e-desfazer-em-1-passo.png)
 
 ### 27 · Lote › Copiar, colar e recortar tópicos (menu)
-⏭ Itens Copiar/Colar/Recortar do menu nativo — _ignorado: a área de transferência do sistema está indisponível neste ambiente (não é falha do app)_
+✅ Itens Copiar/Colar/Recortar do menu nativo
 
 ![27_copiar-colar-e-recortar-topicos-menu.png](27_copiar-colar-e-recortar-topicos-menu.png)
 
 ### 28 · Lote › Colar um texto externo como ramos
-⏭ Área de transferência com lista numerada → Colar — _ignorado: a área de transferência do sistema está indisponível neste ambiente (não é falha do app)_
+✅ Área de transferência com lista numerada → Colar
 
 ![28_colar-um-texto-externo-como-ramos.png](28_colar-um-texto-externo-como-ramos.png)
 
@@ -527,7 +527,7 @@ Gerado por `npm run qa` em 18/10/2026, 21:05:27 — entrada real (mouse/teclado 
 ![79_titulo-enorme-html-emoji-e-caracteres-especiais.png](79_titulo-enorme-html-emoji-e-caracteres-especiais.png)
 
 ### 80 · Extremos › Mapa grande (1 000 tópicos): desempenho e legibilidade
-✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 19 ms · nível 1: 26 visíveis_
+✅ Gera 1 000 tópicos e mede layout/desenho — _1001 tópicos · render 17 ms · nível 1: 26 visíveis_
 
 ![80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](80_ajustado_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)
 ![80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png](80_nivel-1_mapa-grande-1-000-topicos-desempenho-e-legibilid.png)

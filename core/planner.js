@@ -4,7 +4,7 @@
 // Regras de segurança: nunca apaga tópicos; célula em branco = "não mexer"; totais de tempo/questões só
 // ACRESCENTAM a diferença ao dia de hoje (reimportar a mesma planilha não duplica nada); tudo vale ou nada (1 desfazer).
 const study = require('./study');
-const { parseCsv, decodeCsvBuffer } = require('./csv');
+const { parseCsv, decodeCsvBuffer, cleanPasted } = require('./csv');
 
 const COLUMNS = ['id', 'disciplina', 'item', 'topico', 'peso', 'progresso', 'proxima_revisao', 'revisou_hoje', 'tempo_total_min', 'questoes_total', 'acertos_total', 'ultima_revisao', 'notas', 'data_prova'];
 const ALIASES = {
@@ -76,9 +76,10 @@ function exportPlan(map, { today = study.todayStr(), rootId = null } = {}) {
  *   warnings:string[], stats:{rows:number, matched:number, changedTopics:number, created:number}, ops:Function[] }}
  */
 function diffPlan(map, input, { today = study.todayStr() } = {}) {
-  const text = Buffer.isBuffer(input) ? decodeCsvBuffer(input) : String(input ?? '');
+  let text = Buffer.isBuffer(input) ? decodeCsvBuffer(input) : String(input ?? ''), pasteNotes = [];
+  if (!Buffer.isBuffer(input)) ({ text, notes: pasteNotes } = cleanPasted(text, { hints: ['topico'] }));       // texto colado (ver cleanPasted)
   const { rows: raw } = parseCsv(text);
-  const R = { changes: [], errors: [], warnings: [], stats: { rows: 0, matched: 0, changedTopics: 0, created: 0 }, ops: [] };
+  const R = { changes: [], errors: [], warnings: [...pasteNotes], stats: { rows: 0, matched: 0, changedTopics: 0, created: 0 }, ops: [] };
   if (!raw.length) { R.errors.push({ line: 0, msg: 'O arquivo está vazio.' }); return R; }
   const header = raw[0].map((h) => canon[norm(h)] || null);
   const ix = (k) => header.indexOf(k);

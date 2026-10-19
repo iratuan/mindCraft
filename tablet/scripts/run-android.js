@@ -7,8 +7,8 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const TOTAL = 20;                                                  // quantidade de testes de test-android.js (mantenha igual ao arquivo; conferido no fim)
-const BLOCKS = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14], [15, 16, 17, 18], [19, 20]];
+const TOTAL = 21;                                                  // quantidade de testes de test-android.js (mantenha igual ao arquivo; conferido no fim)
+const BLOCKS = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14], [15, 16, 17, 18], [19, 20, 21]];
 const wanted = process.argv[2] ? process.argv[2].split(',').map(Number) : null;
 const LOGS = path.join(__dirname, '..', '..', 'evidencias', 'logs', 'android'); fs.mkdirSync(LOGS, { recursive: true });
 

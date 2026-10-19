@@ -7,6 +7,10 @@ const os = require('os');
 const path = require('path');
 
 module.exports = async function start(title) {
+  // O Chromium pausa janelas ocultas/cobertas por outras (detecção de oclusão do Windows): toques e quadros deixam de ser processados e o teste fica
+  // esperando para sempre. Nos testes a janela precisa continuar "viva" mesmo que o usuário esteja usando outro programa por cima.
+  for (const s of ['disable-backgrounding-occluded-windows', 'disable-renderer-backgrounding', 'disable-background-timer-throttling']) app.commandLine.appendSwitch(s);
+  app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
   if (process.env.CI) app.commandLine.appendSwitch('no-sandbox'); // runners Linux não têm o sandbox SUID do Chromium
   process.env.MINDCRAFT_START = 'blank';   // os testes começam num mapa em branco (a tela inicial tem testes próprios)
 process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de verdade

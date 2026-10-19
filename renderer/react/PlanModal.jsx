@@ -26,6 +26,12 @@ export function PlanModal({ onClose }) {
     let buf; try { buf = h.fs.readFileSync(p); } catch (e) { say('Não consegui ler o arquivo: ' + e.message, 'err'); return; }
     setDiff(h.planner.diffPlan(map, buf, { today: h.nowStr() })); say('');
   };
+  const analyze = (text) => { if (!String(text || '').trim()) { setDiff(null); return; } setDiff(h.planner.diffPlan(map, String(text), { today: h.nowStr() })); say(''); };
+  const onPasteBtn = async () => {
+    let t = ''; try { t = await h.ipc('clip:read'); } catch { /* sem acesso */ }
+    if (!t) { say('A área de transferência está vazia (ou o sistema não deixou ler). Cole o texto na caixa abaixo.', 'err'); return; }
+    document.getElementById('planPaste').value = t; analyze(t);
+  };
   const onApply = () => { if (can) h.applyPlanDiff(diff, onClose); };
 
   return (
@@ -39,7 +45,10 @@ export function PlanModal({ onClose }) {
       <div className="btnrow">
         <button className="btn" id="planExport" onClick={onExport}>Salvar planilha…</button>
         <button className="btn primary" id="planPick" onClick={onPick}>Importar planilha editada…</button>
+        <button className="btn primary" id="planClip" title="Cola o que você copiou da planilha e já mostra as mudanças" onClick={onPasteBtn}>Colar da área de transferência</button>
       </div>
+      <textarea id="planPaste" className="csv-paste" rows={4} spellCheck={false} placeholder="…ou cole aqui as linhas copiadas da planilha (inclua o cabeçalho)."
+        onPaste={(e) => { const t = e.clipboardData && e.clipboardData.getData('text'); if (t) { e.preventDefault(); e.target.value = t; analyze(t); } }} />
       <div className={'msg' + (msg.kind ? ' ' + msg.kind : '')} id="planMsg">{msg.text}</div>
       <div className="csv-prev" id="planPreview" hidden={!diff}>
         {diff && <>

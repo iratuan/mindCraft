@@ -15,11 +15,11 @@ App de **mapas mentais + gestão de estudos para concursos**. Desktop (Electron)
 | Rodar o app | `npm start` |
 | Qualidade rápida (lint + unitários desktop + paridade web) | `npm run check` |
 | Unitários / paridade com o núcleo do tablet | `npm test` / `npm run test:web` |
-| Ponta a ponta (40 etapas, ~10 min, **desligue o emulador Android antes**; logs por etapa em `evidencias/logs/e2e/`) | `npm run e2e` |
+| Ponta a ponta (41 etapas, ~10 min, **desligue o emulador Android antes**; logs por etapa em `evidencias/logs/e2e/`) | `npm run e2e` |
 | QA com mouse/teclado reais (82 casos) | `npm run qa` |
 | Gerar capturas de evidência | `npm run evidence` |
 | Montar o app web / tablet | `npm run build:web-app` · `cd tablet && npm run sync` |
-| Bateria no Android (emulador, 20 testes, em blocos, ~10 min) | `cd tablet && node scripts/emulator.js` e depois `npm run android` (na raiz) |
+| Bateria no Android (emulador, 21 testes, em blocos, ~12 min) | `cd tablet && node scripts/emulator.js` e depois `npm run android` (na raiz) |
 | Instalador Windows | `CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --win --publish never` |
 | APK assinado | `node tablet/scripts/release.js` |
 

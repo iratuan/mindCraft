@@ -113,7 +113,7 @@ const SECTIONS = [
       ['ul', [
         '**Botão ‹ ›** na borda entre o mapa e o painel: **›** recolhe, **‹** expande. O estado fica **lembrado** na próxima vez que abrir o app.',
         '**Ctrl+\\** ou **Exibir → Painel lateral (recolher/expandir)** fazem o mesmo. Pedir uma aba (por exemplo **Alt+2**) com o painel recolhido o **expande** sozinho.',
-        '**Largura**: arraste o divisor (a alça ┃ ao lado do botão). O painel vai de 220 a 560 px; **duplo clique** no divisor volta ao tamanho padrão.',
+        '**Largura**: arraste o divisor (a **alça** cinza ┃ ao lado do botão; ela fica azul quando o mouse passa). O painel vai de 220 a 560 px; **duplo clique** no divisor volta ao tamanho padrão.',
         '**Teclado**: com o divisor em foco (clique nele ou use **Tab**), **← →** ajustam de 24 em 24 px (com **Shift**, 96 px), **Home**/**End** vão ao menor/maior tamanho e **Enter** restaura o padrão.',
       ], { only: 'desktop' }],
       ['ul', [
@@ -180,9 +180,10 @@ const SECTIONS = [
       ['ul', [
         '**Colar o edital**: cole o conteúdo programático (numeração `1`, `1.1`, itens `a)`, disciplinas em MAIÚSCULAS) e ele vira tópicos.',
         '**Novo mapa de concurso**: modelo pronto com disciplinas.',
-        '**Importar CSV de edital (gerado por IA)**: copie as instruções para a IA junto com o texto do edital, salve a resposta como `.csv` e escolha o arquivo. A **prévia** mostra quantos tópicos entram e as linhas com problema; nada é gravado até você confirmar.',
+        '**Importar CSV de edital (gerado por IA)**: copie as instruções para a IA junto com o texto do edital. Depois você pode **colar a resposta direto na janela** (Ctrl+V, ou toque longo → Colar no tablet, ou o botão **Colar da área de transferência**) **ou** salvar como `.csv` e escolher o arquivo — os dois caminhos mostram a mesma **prévia** (quantos tópicos entram, linhas com problema, avisos); nada é gravado até você confirmar.',
+        '**Texto colado é limpo sozinho**: a resposta da IA pode vir com frases antes/depois, dentro de um bloco de código (```csv) ou como **tabela** do chat — o app extrai só o CSV e avisa o que ajustou. Se o texto não servir, a prévia explica o que falta (as colunas **disciplina** e **topico** são obrigatórias).',
       ]],
-      ['p', '**Planilha de planejamento**: salve o mapa (ou uma disciplina) como CSV, edite no Excel — peso, progresso, próxima revisão, tempo, questões, notas — e **importe de volta**. Você vê a prévia das mudanças e só então clica em **Aplicar** (uma única operação, desfazível). A planilha **nunca apaga tópicos**.'],
+      ['p', '**Planilha de planejamento**: salve o mapa (ou uma disciplina) como CSV, edite no Excel — peso, progresso, próxima revisão, tempo, questões, notas — e **importe de volta** (escolhendo o arquivo **ou colando** as linhas copiadas da planilha, com o cabeçalho). Você vê a prévia das mudanças e só então clica em **Aplicar** (uma única operação, desfazível). A planilha **nunca apaga tópicos**.'],
     ] },
 
   // ------------------------------------------------------------------ estudo

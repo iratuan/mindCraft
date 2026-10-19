@@ -394,6 +394,17 @@ await t('CÓPIA DE SEGURANÇA no Android (seletor REAL): a 1ª vez abre o seleto
   rmAll(); await ev("ipcRenderer.invoke('backup:clear'); closeHome(); dirty = false; newMap(); (() => { const lib2 = getLibrary(); for (const m of lib2.listMaps({ today: nowStr() })) { lib2.trashMap(m.id); lib2.purgeMap(m.id); } })(); true");
 });
 
+await t('COLAR/DIGITAR CSV no Android (toque e teclado reais): a janela do CSV abre SEM subir o teclado; tocar na caixa abre o teclado; o texto digitado vira prévia; "Criar o mapa" por toque cria o mapa', async () => {
+  await fresh(); step('abrir csv'); await ev("act.csv(); true"); await waitFor(() => ev("!!document.querySelector('#csvPaste')"), 8000); await wait(600);
+  ok(!imeShown(), 'o teclado NÃO subiu sozinho'); shot('15-android-csv-janela');
+  const [px, py] = await ctr('#csvPaste'); tapCss(px, py); await waitFor(() => imeShown(), 8000, 400); step('digitar');
+  shell('input', 'text', 'disciplina,topico,item'); shell('input', 'keyevent', '66'); shell('input', 'text', 'Penal,Dolo,1'); shell('input', 'keyevent', '66'); shell('input', 'text', 'Civil,Contratos,1'); await wait(1500);
+  await waitFor(() => ev("/2 tópicos em 2 disciplina/.test(document.querySelector('#csvPreview').textContent)"), 10000, 400); shot('16-android-csv-previa');
+  shell('input', 'keyevent', '4'); await wait(800);                              // fecha o teclado
+  const [ox, oy] = await ev("(() => { const b = document.querySelector('#csvOk'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)]; })()"); tapCss(ox, oy);
+  await waitFor(() => ev("document.querySelector('#modal').hidden"), 8000); eq(await ev("map.root.children.map((d) => d.title)"), ['Penal', 'Civil'], 'mapa criado pelo toque');
+});
+
 await t('ESTRESSE: 3000 eventos aleatórios do Android (monkey) sem travar, sem ANR e sem erro fatal', async () => {
     await launch(); await watchErrors();
     const r = sh('shell', 'monkey', '-p', PKG, '--throttle', '60', '--pct-syskeys', '0', '--pct-nav', '0', '--pct-majornav', '0', '--pct-appswitch', '0', '--pct-anyevent', '0', '-s', '20261017', '--ignore-security-exceptions', '-v', '3000'); const out = r.stdout + r.stderr;

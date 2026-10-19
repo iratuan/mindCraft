@@ -12,17 +12,21 @@ const STEPS = [
   'e2e.js', 'e2e.js --classic', 'e2e-study.js', 'e2e-study.js --classic', 'e2e-network.js', 'e2e-network.js --classic', 'e2e-assistant.js', 'e2e-assistant.js --classic',
   'e2e-notes.js', 'e2e-library.js', 'e2e-library.js --classic', 'e2e-pdf.js', 'e2e-review.js', 'e2e-errors.js', 'e2e-perf.js', 'e2e-monkey.js', 'e2e-home.js', 'e2e-simulados.js',
   'e2e-hostile.js', 'e2e-failures.js', 'e2e-layout.js', 'e2e-a11y.js', 'e2e-deep.js', 'e2e-deep.js --classic', 'e2e-questions.js', 'e2e-questions.js --classic', 'e2e-notify.js',
-  'e2e-web.js', 'e2e-edit.js', 'e2e-tablet.js', 'e2e-sync.js', 'e2e-sync-web.js', 'e2e-mindomo.js', 'e2e-graph.js', 'e2e-reorder.js', 'e2e-saveas.js', 'e2e-manual.js', 'e2e-split.js', 'e2e-homecards.js', 'e2e-backupdest.js',
+  'e2e-web.js', 'e2e-edit.js', 'e2e-tablet.js', 'e2e-sync.js', 'e2e-sync-web.js', 'e2e-mindomo.js', 'e2e-graph.js', 'e2e-reorder.js', 'e2e-saveas.js', 'e2e-manual.js', 'e2e-split.js', 'e2e-homecards.js', 'e2e-backupdest.js', 'e2e-paste.js',
 ];
 const only = process.argv[2] ? new RegExp(process.argv[2]) : null;
 const electron = require('electron');
 const LOGS = path.join(__dirname, '..', 'evidencias', 'logs', 'e2e'); fs.mkdirSync(LOGS, { recursive: true });
 const TIMEOUT = 8 * 60 * 1000;
 
+// Testes de TOQUE (web-harness: toques reais via Input.dispatchTouchEvent) travam de vez em quando se a janela estiver escondida (o Chromium não
+// processa a entrada de uma janela oculta); eles rodam com a janela VISÍVEL. Os demais rodam escondidos para não atrapalhar quem está usando o computador.
+const needsWindow = (file) => { try { return /web-harness/.test(fs.readFileSync(path.join(__dirname, '..', 'test', file), 'utf8')); } catch { return false; } };
+
 const run = (step, attempt) => {
   const [file, ...flags] = step.split(' ');
   const log = path.join(LOGS, step.replace(/[^a-z0-9.-]+/gi, '_') + (attempt > 1 ? '.2' : '') + '.log'), fd = fs.openSync(log, 'w');
-  let r; try { r = spawnSync(electron, [path.join(__dirname, '..', 'test', file), ...flags], { stdio: ['ignore', fd, fd], windowsHide: true, timeout: TIMEOUT, killSignal: 'SIGKILL', env: { ...process.env, E2E_TRACE: '1' } }); } finally { fs.closeSync(fd); }
+  let r; try { r = spawnSync(electron, [path.join(__dirname, '..', 'test', file), ...flags], { stdio: ['ignore', fd, fd], windowsHide: !needsWindow(file), timeout: TIMEOUT, killSignal: 'SIGKILL', env: { ...process.env, E2E_TRACE: '1' } }); } finally { fs.closeSync(fd); }
   const out = fs.readFileSync(log, 'utf8');
   const m = [...out.matchAll(/(\d+)\/(\d+) passaram/g)].pop(), timedOut = !!(r.error && r.error.code === 'ETIMEDOUT');
   return { ok: r.status === 0 && !!m && m[1] === m[2], out, log, summary: m ? `${m[1]}/${m[2]}` : (timedOut ? 'TRAVOU (passou de 8 min)' : 'sem resultado (código ' + r.status + ')') };

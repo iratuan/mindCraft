@@ -44,6 +44,31 @@ function decodeCsvBuffer(buf) {
   return utf8.includes('�') ? new TextDecoder('windows-1252').decode(b) : utf8;
 }
 
+/**
+ * Limpa um texto COLADO (de uma IA/chat, de uma planilha ou de um e-mail) antes de ler como CSV. Casos reais:
+ *  - a IA devolve o CSV dentro de um bloco ```csv … ``` e com frases antes/depois;
+ *  - a IA devolve uma TABELA em Markdown (| a | b |, com linha de traços);
+ *  - frases antes do cabeçalho ("Aqui está o CSV:"); espaços especiais (não separáveis) e BOM.
+ * @param hints trechos (sem acento) que o cabeçalho deve conter, para achar onde o CSV começa
+ * @returns {{ text: string, notes: string[] }} notes = o que foi ajustado (mostrado como aviso na prévia)
+ */
+function cleanPasted(input, { hints = ['disciplina', 'topico'] } = {}) {
+  let t = String(input ?? '').replace(/^\uFEFF/, '').replace(/[\u00a0\u200b]/g, ' ').replace(/\r\n?/g, '\n');
+  const notes = [];
+  const fence = /^[ \t]*```[^\n]*\n([\s\S]*?)(?:\n[ \t]*```|(?![\s\S]))/m.exec(t);   // (?![\s\S]) = fim do TEXTO (com a flag m, $ casaria no fim de cada linha)
+  if (fence) { t = fence[1]; notes.push('Removi as marcações de código (```) e o texto fora delas.'); }
+  let lines = t.split('\n');
+  if (lines.filter((l) => /^\s*\|.*\|\s*$/.test(l)).length >= 2) {                   // tabela Markdown → CSV
+    const cells = (l) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map((c) => c.replace(/\\\|/g, '|').trim());
+    const q = (c) => (/[",;\n\t]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c);
+    lines = lines.filter((l) => /^\s*\|/.test(l) && !/^\s*\|?[\s:|-]*-{3,}[\s:|-]*\|?\s*$/.test(l)).map((l) => cells(l).map(q).join(','));
+    notes.push('Converti a tabela em CSV.');
+  }
+  const hdr = lines.findIndex((l) => hints.every((h) => norm(l).includes(h)));
+  if (hdr > 0) { lines = lines.slice(hdr); notes.push('Ignorei o texto que vinha antes do cabeçalho.'); }
+  return { text: lines.join('\n').replace(/\s+$/, ''), notes };
+}
+
 /** Leitor CSV (RFC 4180): aspas, aspas duplicadas, quebras de linha dentro de células, delimitador automático (, ; tab). */
 function parseCsv(text) {
   const src = String(text).replace(/^\uFEFF/, '');
@@ -84,9 +109,10 @@ function parseDate(s) {
  *   errors:{line:number,msg:string}[], warnings:string[], delimiter:string, columns:string[] } }}
  */
 function fromCsv(input, { title = 'Edital' } = {}) {
-  const text = Buffer.isBuffer(input) ? decodeCsvBuffer(input) : String(input ?? '');
+  let text = Buffer.isBuffer(input) ? decodeCsvBuffer(input) : String(input ?? ''), pasteNotes = [];
+  if (!Buffer.isBuffer(input)) ({ text, notes: pasteNotes } = cleanPasted(text));          // texto colado: tira cercas de código, tabela Markdown e frases soltas
   const { rows, delimiter } = parseCsv(text);
-  const report = { rows: 0, imported: 0, disciplines: 0, skipped: 0, errors: [], warnings: [], delimiter, columns: [] };
+  const report = { rows: 0, imported: 0, disciplines: 0, skipped: 0, errors: [], warnings: [...pasteNotes], delimiter, columns: [] };
   if (!rows.length) { report.errors.push({ line: 0, msg: 'O arquivo está vazio.' }); return { map: null, report }; }
 
   const header = rows[0].map((h) => canon[norm(h).replace(/\s+/g, '_')] || null);
@@ -218,4 +244,4 @@ EDITAL (cole abaixo o conteúdo programático):
 `;
 }
 
-module.exports = { fromCsv, parseCsv, decodeCsvBuffer, csvTemplate, aiPrompt, ALIASES };
+module.exports = { fromCsv, parseCsv, cleanPasted, decodeCsvBuffer, csvTemplate, aiPrompt, ALIASES };

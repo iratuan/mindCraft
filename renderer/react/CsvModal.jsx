@@ -11,7 +11,7 @@ export function CsvModal({ onClose }) {
   const h = H();
   const [msg, say] = useMessage();
   const [loaded, setLoaded] = useState(null);       // { map, report } de fromCsv
-  const titleRef = useRef(null);
+  const titleRef = useRef(null), pasteRef = useRef(null);
   useEscape(onClose);
   useEffect(() => { if (loaded && loaded.map && titleRef.current) titleRef.current.value = loaded.map.root.title; }, [loaded]);
 
@@ -31,6 +31,16 @@ export function CsvModal({ onClose }) {
     let buf; try { buf = h.fs.readFileSync(p); } catch (e) { say('Não consegui ler o arquivo: ' + e.message, 'err'); return; }
     setLoaded(h.csv.fromCsv(buf, { title: h.path.basename(p, h.path.extname(p)) })); say('');
   };
+  /** Texto colado (de uma IA, e-mail ou planilha): a mesma prévia do arquivo. */
+  const analyze = (text) => {
+    if (!String(text || '').trim()) { setLoaded(null); say(''); return; }
+    setLoaded(h.csv.fromCsv(String(text), { title: 'Edital' })); say('');
+  };
+  const onPasteBtn = async () => {
+    let t = ''; try { t = await h.ipc('clip:read'); } catch { /* sem acesso */ }
+    if (!t) { say('A área de transferência está vazia (ou o sistema não deixou ler). Cole o texto na caixa abaixo (Ctrl+V ou toque longo → Colar).', 'err'); pasteRef.current && pasteRef.current.focus(); return; }
+    pasteRef.current.value = t; analyze(t);
+  };
   const onOk = async () => {
     if (!cm) return;
     const mode = h.modalEl().querySelector('input[name=csvMode]:checked').value;
@@ -40,12 +50,16 @@ export function CsvModal({ onClose }) {
   return (
     <div className="modal-box" id="csvBox" data-ui="react">
       <h2>Importar CSV de edital (gerado por IA)</h2>
-      <div className="muted">1) Copie as instruções e cole numa IA junto com o texto do edital.  2) Salve a resposta como .csv.  3) Escolha o arquivo: o app monta o esqueleto do mapa (disciplinas, hierarquia, pesos, prova) e você completa tópicos, notas e links.</div>
+      <div className="muted">1) Copie as instruções e cole numa IA junto com o texto do edital.  2) Salve a resposta como .csv.  3) Escolha o arquivo OU cole o texto aqui mesmo: o app monta o esqueleto do mapa (disciplinas, hierarquia, pesos, prova) e você completa tópicos, notas e links.</div>
       <div className="btnrow">
         <button className="btn" id="csvPrompt" onClick={onPrompt}>Copiar instruções para a IA</button>
         <button className="btn" id="csvTemplate" onClick={onTemplate}>Salvar CSV de exemplo…</button>
         <button className="btn primary" id="csvPick" onClick={onPick}>Escolher arquivo CSV…</button>
+        <button className="btn primary" id="csvClip" title="Cola o que você copiou (a resposta da IA, um e-mail, uma planilha) e já mostra a prévia" onClick={onPasteBtn}>Colar da área de transferência</button>
       </div>
+      <textarea id="csvPaste" ref={pasteRef} className="csv-paste" rows={5} spellCheck={false} placeholder="…ou cole o CSV aqui (Ctrl+V / toque longo → Colar). Aceita a resposta da IA com ou sem marcações de código e até tabelas do chat."
+        onPaste={(e) => { const t = e.clipboardData && e.clipboardData.getData('text'); if (t) { e.preventDefault(); e.target.value = t; analyze(t); } }}
+        onChange={(e) => { clearTimeout(pasteRef.timer); const v = e.target.value; pasteRef.timer = setTimeout(() => analyze(v), 350); }} />
       <div className={'msg' + (msg.kind ? ' ' + msg.kind : '')} id="csvMsg">{msg.text}</div>
       <div className="csv-prev" id="csvPreview" hidden={!loaded}>
         {loaded && !cm && <><div className="csv-sum err">O arquivo não pôde ser importado.</div><List cls="csv-err" items={rep.errors.map((e) => (e.line ? `Linha ${e.line}: ` : '') + e.msg)} /></>}
