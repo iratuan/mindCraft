@@ -546,3 +546,6 @@ body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit, body.pres
 .gl-bar { height: 8px; border-radius: 8px; background: var(--line-soft); overflow: hidden; margin: 3px 0; } .gl-bar i { display: block; height: 100%; background: var(--accent); }
 .gl-lag { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding: 9px 12px; border-radius: 10px; background: var(--accent-soft); }
 @media (pointer: coarse) { .hm-backup .btn, .gl-lag .btn { min-height: 44px; } }
+.hm-glance.mini { padding: 8px 14px; } .hm-glance.mini h3 { margin: 0; } .hm-links { display: inline-flex; gap: 12px; }
+.hm-glance.mini { align-self: stretch; width: 100%; box-sizing: border-box; } .gl-mini { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 13px; }
+.hm-glance { flex: none; }

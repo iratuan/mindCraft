@@ -15,11 +15,11 @@ App de **mapas mentais + gestão de estudos para concursos**. Desktop (Electron)
 | Rodar o app | `npm start` |
 | Qualidade rápida (lint + unitários desktop + paridade web) | `npm run check` |
 | Unitários / paridade com o núcleo do tablet | `npm test` / `npm run test:web` |
-| Ponta a ponta (39 etapas, ~15 min, **desligue o emulador Android antes**) | `npm run e2e` |
+| Ponta a ponta (40 etapas, ~10 min, **desligue o emulador Android antes**; logs por etapa em `evidencias/logs/e2e/`) | `npm run e2e` |
 | QA com mouse/teclado reais (82 casos) | `npm run qa` |
 | Gerar capturas de evidência | `npm run evidence` |
 | Montar o app web / tablet | `npm run build:web-app` · `cd tablet && npm run sync` |
-| Bateria no Android (emulador, 19 testes) | `cd tablet && node scripts/emulator.js && node scripts/test-android.js` |
+| Bateria no Android (emulador, 20 testes, em blocos, ~10 min) | `cd tablet && node scripts/emulator.js` e depois `npm run android` (na raiz) |
 | Instalador Windows | `CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --win --publish never` |
 | APK assinado | `node tablet/scripts/release.js` |
 
@@ -48,6 +48,9 @@ Dependências só **para baixo**: `renderer → core`, `platform → core`, `ele
 - PowerShell: sleeps longos são bloqueados (use laços de espera com limite); em scripts geradores evite crases aninhadas (use arquivos); `adb input text` depende do Gboard.
 - **Divisores/Pointer Events**: sendInputEvent de mouse nos testes precisa de `modifiers: ['leftButtonDown']` em mouseDown/mouseMove, senão o Chromium não considera o botão apertado. O botão ‹ › fica no MEIO do divisor do painel: nos testes clique/arraste mais embaixo (`cy + 90`).
 - Esc com uma janela aberta sobre o Painel de estudos é da janela (study-ui.js confere `#modal`).
+- **Executores** (`tools/run-e2e.js`, `tablet/scripts/run-android.js`): saída em ARQUIVO, nunca em pipe (um pipe preso por processo-filho travava a bateria para sempre), 1 repetição que fica registrada como INSTÁVEL, limite de tempo por etapa. Processo iniciado numa chamada de ferramenta pode morrer quando ela termina: rode em segundo plano com `Start-Process` e consulte o log.
+- **Seletor de arquivos do Android**: `accept` com extensão desconhecida (.mcpack, .mom) deixa o arquivo APAGADO (impossível escolher). No aparelho nativo o seletor mostra tudo e a extensão é conferida depois (`chooseInto` em `platform/web/host/ipc.js`). Para CRIAR arquivo (`pick`), MIME `application/zip` faz o Android acrescentar `.zip` ao nome: use `application/octet-stream`.
+- **Nunca** apague uma pasta que contenha junction/symlink para `node_modules` (ver memória `junction-delete-danger`).
 - Select nativo (`#qBanca`) não aceita texto arbitrário: use `setQBanca('…')` em testes.
 
 ## Convenções

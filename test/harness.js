@@ -20,6 +20,7 @@ process.env.MINDCRAFT_NO_LAUNCH = '1'; // os testes nunca abrem o Obsidian de ve
   const eq = (a, b, msg) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg || 'valor'}: esperado ${JSON.stringify(b)}, obtido ${JSON.stringify(a)}`); };
   const ok = (c, msg) => { if (!c) throw new Error(msg); };
   async function t(name, fn) {
+    if (process.env.E2E_TRACE) console.log('  → ' + name);          // com E2E_TRACE o log mostra qual teste está rodando (para achar travamentos)
     try { await fn(); results.push([name, true]); console.log('  ok   ' + name); }
     catch (e) {
       if (e && e.skip) { results.push([name, true, 'skip']); console.log('  SKIP ' + name + '\n       ' + e.message); }

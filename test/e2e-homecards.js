@@ -80,6 +80,13 @@ const start = require('./harness');
     await js(`window.__dlg.pack = null; true`); await click('#hmRestore'); await wait(400); eq(await js(`getLibrary().listMaps({ today: nowStr() }).length`), 1, 'cancelar não muda nada');
   });
 
+  await t('"Seu estudo" recolhe numa linha só (botão recolher/mostrar), a escolha é lembrada e o cartão volta ao expandir', async () => {
+    await js(`closeHome(); true`); await openHome(); ok(await exists('#glBars'), 'expandido por padrão'); eq(await js(`document.querySelector('#hmGlanceToggle').getAttribute('aria-expanded')`), 'true');
+    await click('#hmGlanceToggle'); ok(!(await exists('#glBars')), 'sem barras'); ok(/dia seguido|dias seguidos/.test(await text('#hmGlance')) && /hoje 25 min/.test(await text('#hmGlance')), await text('#hmGlance')); eq(cfg().glanceCollapsed, true);
+    await c.shot(path.join(SHOTS, '04-seu-estudo-recolhido.png')); await js(`closeHome(); true`); await openHome(); ok(!(await exists('#glBars')), 'continua recolhido ao reabrir');
+    await click('#hmGlanceToggle'); await wait(400); const st = await js(`JSON.stringify({ home: !document.getElementById('home').hidden, glance: !!document.querySelector('#hmGlance'), toggle: (document.querySelector('#hmGlanceToggle') || {}).textContent, bars: !!document.querySelector('#glBars'), scroll: document.getElementById('home').scrollTop })`); ok(await exists('#glBars'), 'voltou: ' + st + ' cfg=' + JSON.stringify(cfg().glanceCollapsed)); eq(cfg().glanceCollapsed, false);
+  });
+
   await t('o lembrete e o cartão não alteram o mapa aberto; nenhum erro de console', async () => {
     eq(c.errors, [], 'erros de console');
   });

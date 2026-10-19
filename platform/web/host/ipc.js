@@ -34,9 +34,32 @@ function createIpc({ fs, path, MindCore, host = {} }) {
   const uniqueIn = (dir, name) => { const ext = path.extname(name), stem = ext ? name.slice(0, -ext.length) : name; for (let i = 1; i < 1000; i++) { const n = i === 1 ? name : `${stem} (${i})${ext}`; if (!fs.existsSync(path.join(dir, n))) return n; } return name; };
 
   /** Escolhe um arquivo e o guarda no app; devolve o caminho virtual (ou null se cancelou). */
-  const chooseInto = async (dir, accept) => { const r = await files.pick({ accept }); return r && r[0] ? files.place(fs, path, dir, r[0].name, r[0].bytes) : null; };
+  /**
+   * No Android a lista `accept` vira tipos MIME e arquivos de tipo desconhecido (.mcpack, .mom, .opml = "octet-stream") ficam APAGADOS no seletor, sem
+   * dar para escolhê-los. Por isso no aparelho nativo o seletor mostra tudo e a extensão é conferida DEPOIS (com mensagem clara).
+   */
+  const chooseInto = async (dir, accept, extRe = null, msg = '') => {
+    const r = await files.pick({ accept: host.nat ? '' : accept }); if (!r || !r[0]) return null;
+    if (host.nat && extRe && !extRe.test(r[0].name)) { dialogs.errorBox(msg || 'Este tipo de arquivo não serve aqui.'); return null; }
+    return files.place(fs, path, dir, r[0].name, r[0].bytes);
+  };
+
+  /**
+   * Cópia de segurança com destino lembrado (tablet): o 1º pacote .mcpack salvo pelo seletor do Android vira o destino das cópias seguintes, que
+   * gravam direto nele (sem janela). O arquivo é substituído por inteiro (modo "wt"); a conferência é pelo total de bytes que o Android confirma.
+   */
+  const BACKUP_KEY = '__backup__';
+  const backupDirect = async (localPath) => {
+    const t = targets.get(BACKUP_KEY); if (!t || !host.nat) throw new Error('Nenhum local de cópia escolhido.');
+    const bytes = new Uint8Array(fs.readFileSync(localPath));
+    const r = await host.nat.writeTarget(t.uri, bytes);
+    if (r && typeof r.bytes === 'number' && r.bytes !== bytes.length) throw new Error(`o Android gravou ${r.bytes} de ${bytes.length} bytes`);
+    return { name: (r && r.name) || t.name, bytes: bytes.length };
+  };
 
   const handlers = {
+    'backup:write-direct': (p) => backupDirect(p),
+    'backup:clear': () => { targets.del(BACKUP_KEY); return true; },
     'app:path': (name) => ({ userData: DIRS.userData, documents: DIRS.docs, temp: '/tmp', home: '/', downloads: DIRS.exports }[name] || '/'),
     'app:start-override': () => null,
     'dialog:confirm-discard': () => dialogs.confirmBox({ message: 'Há alterações não salvas.', detail: 'Deseja salvar antes de continuar?', buttons: ['Salvar', 'Descartar', 'Cancelar'], defaultId: 0, cancelId: 2 }),
@@ -45,7 +68,7 @@ function createIpc({ fs, path, MindCore, host = {} }) {
     // "Salvar como": a pessoa edita o nome e escolhe o destino. .mom: documentos do app (editável, reabre pelos recentes) e/ou um arquivo do aparelho
     // escolhido no seletor do Android (mantido atualizado a cada salvar); demais formatos: arquivo do aparelho, compartilhar ou baixar.
     'dialog:save': async (kind, defaultName) => {
-      kind = kind || 'mom'; const nat = host.nat, mime = files.MIME ? files.MIME[kind] : undefined;
+      kind = kind || 'mom'; const nat = host.nat, mime = kind === 'mcpack' ? 'application/octet-stream' : (files.MIME ? files.MIME[kind] : undefined);   // pacote: com 'application/zip' o Android acrescenta '.zip' ao nome ('x.mcpack.zip')
       const opts = [];
       if (kind === 'mom') opts.push({ id: 'docs', label: 'Documentos do MindCraft', detail: 'Guardado neste app: reabre pela tela inicial e pelos recentes.' });
       if (nat) opts.push({ id: 'device', label: 'Escolher pasta e nome no aparelho…', detail: 'Downloads, Google Drive, cartão SD… A cada Salvar o arquivo escolhido é atualizado.' });
@@ -58,16 +81,18 @@ function createIpc({ fs, path, MindCore, host = {} }) {
         const shown = withExt(t.name || name, kind);
         const dir = kind === 'mom' ? DIRS.docs : DIRS.exports; fs.mkdirSync(dir, { recursive: true });
         const local = path.join(dir, kind === 'mom' ? uniqueIn(dir, shown) : shown);
-        targets.set(local, { uri: t.uri, name: t.name || shown, mode: kind === 'mom' ? 'mirror' : 'once' }); return local;
+        targets.set(local, { uri: t.uri, name: t.name || shown, mode: kind === 'mom' ? 'mirror' : 'once' });
+        if (kind === 'mcpack') targets.set(BACKUP_KEY, { uri: t.uri, name: t.name || shown });          // a próxima cópia de segurança vai direto para este arquivo (sem perguntar)
+        return local;
       }
       const dir = r.dest === 'docs' ? DIRS.docs : DIRS.exports, target = path.join(dir, name);
       if (kind === 'mom' && fs.existsSync(target)) { const c = await dialogs.confirmBox({ message: `Já existe "${name}" nos documentos do app.`, detail: 'Substituir?', buttons: ['Substituir', 'Cancelar'], defaultId: 1, cancelId: 1 }); if (c !== 0) return null; }
       fs.mkdirSync(dir, { recursive: true }); targets.del(target); return target;
     },
-    'dialog:open': () => chooseInto(DIRS.docs, OPEN_ACCEPT),
-    'dialog:open-csv': () => chooseInto(DIRS.imports, '.csv,.txt'),
-    'dialog:open-pdf': () => chooseInto(DIRS.pdfs, '.pdf,application/pdf'),
-    'dialog:open-pack': () => chooseInto(DIRS.imports, '.mcpack,.zip'),
+    'dialog:open': () => chooseInto(DIRS.docs, OPEN_ACCEPT, /\.(mom|md|opml|txt)$/i, 'Escolha um mapa (.mom), Markdown (.md), OPML (.opml) ou texto (.txt).'),
+    'dialog:open-csv': () => chooseInto(DIRS.imports, '.csv,.txt', /\.(csv|txt)$/i, 'Escolha um arquivo .csv (ou .txt).'),
+    'dialog:open-pdf': () => chooseInto(DIRS.pdfs, '.pdf,application/pdf', /\.pdf$/i, 'Escolha um arquivo PDF.'),
+    'dialog:open-pack': () => chooseInto(DIRS.imports, '.mcpack,.zip', /\.(mcpack|zip)$/i, 'Escolha um pacote do MindCraft (.mcpack).'),
     'dialog:open-at': () => null,                       // "versões anteriores" por pasta de backup: não existe na versão tablet (a biblioteca guarda versões)
     'dialog:folder': () => null,                        // pasta do Obsidian/vault: sem equivalente no tablet
     'obsidian:open': () => ({ ok: false, error: 'O Obsidian não está disponível na versão tablet.' }),

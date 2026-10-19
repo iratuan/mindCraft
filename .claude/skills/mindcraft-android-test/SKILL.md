@@ -5,7 +5,7 @@ description: Roda, depura e estende os testes do MindCraft no Android (emulador,
 
 # Testes no Android (emulador)
 
-> A bateria tem **19 testes** (16 = manual + painel lateral por toque real; 17 = tela inicial com aviso de cópia de segurança) (o 15 é o "Salvar como" com o seletor REAL de documentos: `uiautomator` acha o campo de nome e o botão Salvar do `com.google.android.documentsui`).
+> Rode com `npm run android` (na raiz; blocos de testes, 1 repetição registrada como instável, logs em `evidencias/logs/android/`; `node tablet/scripts/run-android.js 18,19` roda só alguns). A bateria tem **20 testes** (18 = cópia de segurança com o seletor REAL + restaurar pelo seletor de arquivos) (16 = manual + painel lateral por toque real; 17 = tela inicial com aviso de cópia de segurança) (o 15 é o "Salvar como" com o seletor REAL de documentos: `uiautomator` acha o campo de nome e o botão Salvar do `com.google.android.documentsui`).
 
 ## Ambiente
 - SDK: `%LOCALAPPDATA%\Android\Sdk` (platform-tools, emulator, build-tools 36.1.0, android-36, imagem `google_apis_playstore x86_64`). AVD tablet 2560×1600.

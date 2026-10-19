@@ -2,6 +2,12 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.4.1
+- **Cópia de segurança no tablet com destino lembrado**: depois da 1ª cópia (seletor do Android) as seguintes gravam direto no mesmo arquivo, sem janela; a Tela inicial mostra "Cópias vão para: …" com "trocar local"; falha de gravação (permissão perdida, gravação incompleta) avisa, esquece o destino e pergunta de novo.
+- **Corrigido no tablet**: "Restaurar cópia" / abrir arquivos pelo seletor do Android — arquivos .mcpack/.mom/.opml apareciam APAGADOS (impossíveis de escolher). Agora o seletor mostra tudo e a extensão é conferida depois. O pacote criado deixou de ficar com nome "x.mcpack.zip".
+- "Seu estudo" na Tela inicial pode ser recolhido numa linha (lembrado).
+- Ferramentas de teste: executores `tools/run-e2e.js` (saída em arquivo; antes um pipe preso travava a bateria) e `tablet/scripts/run-android.js` (`npm run android`, em blocos); captura de tela com nova tentativa; testes: 40 etapas e2e, 20 no Android.
+
 ## 0.4.0
 - **Manual de uso** em **Ajuda → Manual de uso** (☰ → Manual no tablet): 25 seções com índice, busca (sem acento) e texto específico para computador/tablet; botões "? Como usar" nas telas (Estudo, Notas, Conexões, Painel de estudos, Leitor de PDF, Tela inicial).
 - **Painel lateral recolhível** (botão ‹ ›, Ctrl+\\, menu Exibir) e **divisores redimensionáveis** (painel e leitor de PDF | mapa) com mouse, dedo e teclado; duplo clique/toque restaura; o mapa nunca fica espremido; tamanhos lembrados.

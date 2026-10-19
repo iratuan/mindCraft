@@ -146,6 +146,9 @@ const FILTERS = {
   mcpack: [{ name: 'Pacote MindCraft (.mcpack)', extensions: ['mcpack'] }], db: [{ name: 'Banco SQLite (.db)', extensions: ['db'] }],
   md: [{ name: 'Markdown', extensions: ['md'] }], opml: [{ name: 'OPML', extensions: ['opml'] }],
 };
+// cópia de segurança com destino lembrado: só existe no tablet (no desktop o diálogo do sistema já começa na última pasta); canais presentes para a interface não falhar
+ipcMain.handle('backup:write-direct', () => { throw new Error('Destino lembrado só existe no tablet.'); });
+ipcMain.handle('backup:clear', () => true);
 ipcMain.handle('dialog:open', async () => {
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [
     { name: 'Mapas e outlines', extensions: ['mom', 'md', 'opml'] }, ...FILTERS.mom, ...FILTERS.md, ...FILTERS.opml] });

@@ -21,6 +21,7 @@ module.exports = async function start(title, { width = 1280, height = 800 } = {}
   const eq = (a, b, msg) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${msg || 'valor'}: esperado ${JSON.stringify(b)}, obtido ${JSON.stringify(a)}`); };
   const ok = (c, msg) => { if (!c) throw new Error(msg); };
   async function t(name, fn) {
+    if (process.env.E2E_TRACE) console.log('  → ' + name);          // com E2E_TRACE o log mostra qual teste está rodando (para achar travamentos)
     try { await fn(); results.push([name, true]); console.log('  ok   ' + name); }
     catch (e) { results.push([name, false, e.message]); console.log('  FAIL ' + name + '\n       ' + e.message); }
   }

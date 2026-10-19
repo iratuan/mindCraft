@@ -37,6 +37,7 @@ const SECTIONS = [
     blocks: [
       ['p', 'Abre ao iniciar o app. Mostra **Continuar de onde parou** (último mapa, com tópicos, progresso, revisões vencidas e dias para a prova), os **atalhos** (novo mapa, modelo de concurso, importar edital, abrir, biblioteca, PDF, simulado, revisão do dia), os **arquivos recentes**, o resumo de **Hoje** e as **Próximas provas**.'],
       ['ul', ['**Seu estudo**: sequência de dias, tempo de hoje e dos últimos 7 dias (com um gráfico de barras), acerto em questões, metas da semana e a **disciplina que mais precisa de você** (a com mais revisões vencidas), com o botão **Revisar agora**. Com biblioteca, os números somam **todos os mapas**; sem ela, valem para o mapa aberto. A sequência conta os dias com **tempo de estudo ou questões registrados**.',
+        '**Recolher**: o cartão tem o botão **recolher/mostrar** (vira uma linha só e a escolha fica lembrada), para quem prefere os atalhos e os arquivos recentes no topo.',
         '**Aviso de cópia de segurança**: aparece quando você ainda não fez uma cópia ou já passou o intervalo (padrão: 14 dias). Veja a seção **Segurança dos seus dados**.',
         '**✕** ao lado de um recente só tira o item da lista — o arquivo nunca é apagado.', 'Arquivo que mudou de lugar aparece esmaecido ("não encontrado").', '**Ao iniciar o MindCraft** (rodapé): escolha entre mostrar esta tela, reabrir o último mapa ou começar em branco.']],
       ['tip', 'Arraste um arquivo `.mom`, `.md`, `.opml` ou `.pdf` para a janela para abri-lo.', { only: 'desktop' }],
@@ -311,6 +312,10 @@ const SECTIONS = [
       ]],
       ['p', '**Aviso de cópia de segurança**: na **Tela inicial** aparece o aviso "Faça uma cópia de segurança" quando você ainda não fez nenhuma ou já passou o intervalo. **Fazer cópia agora** gera o pacote `.mcpack` (todos os mapas e as configurações) e pergunta onde salvar; **Lembrar depois** esconde o aviso por 3 dias. No rodapé da Tela inicial escolha o intervalo (**7, 14 ou 30 dias, ou nunca**) e veja a data da última cópia.'],
       ['p', '**Restaurar cópia** (Tela inicial): escolha um pacote `.mcpack` e os mapas voltam para a biblioteca. **Nunca sobrescreve**: se um mapa já existir e for diferente, o do pacote entra como **cópia**; o que já está igual é ignorado. As configurações do pacote também são restauradas.'],
+      ['p', '**Tablet — destino lembrado**: na primeira cópia o Android abre o seletor de arquivos (você escolhe a pasta e o nome, por exemplo no Google Drive ou no cartão SD). '
+        + 'Depois disso, **Fazer cópia agora** grava **direto nesse arquivo**, sem perguntar, e a Tela inicial mostra **"Cópias vão para: …"** com **trocar local**. '
+        + 'Se o Android recusar a gravação (permissão perdida), o app avisa, esquece o destino e pergunta de novo — o aviso de cópia só some quando uma cópia é concluída. '
+        + 'O arquivo é substituído a cada cópia: se quiser guardar versões, troque o local de vez em quando.', { only: 'touch' }],
       ['warn', 'Guarde o pacote **fora do aparelho** (nuvem, pendrive, outro computador): é o que protege você se o aparelho quebrar ou for formatado. O aviso só some quando a cópia é gerada — **cancelar** o diálogo não conta.'],
     ] },
 ];

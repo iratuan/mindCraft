@@ -127,7 +127,7 @@ function homeData() {
   let dueHere = 0; try { dueHere = map && map.root.children.length ? S.summary(map, { today }).due.length : 0; } catch { /* sem resumo */ }
   let openErrors = 0; try { openErrors = lib ? lib.openErrors(5000).length : 0; } catch { /* sem contagem */ }
   const backup = { ...BACKUP.evaluate({ today, lastBackup: cfg.lastBackup, snoozeUntil: cfg.backupSnoozeUntil, everyDays: cfg.backupEveryDays, maps: maps.length }), maps: maps.length };
-  backup.text = BACKUP.message(backup);
+  backup.text = BACKUP.message(backup); backup.dest = backupDestName();
   let glance = null;
   try {
     const from = S.addDays(today, -6), summary = map && map.root.children.length ? S.summary(map, { today }) : null;
@@ -139,8 +139,28 @@ const BACKUP = require(path.join(core, 'backup-reminder')), GLANCE = require(pat
 /** Registra que acabou de ser feita uma cópia de segurança (some o lembrete). Fica só neste aparelho (config.json), nunca no pacote. */
 function markBackup() { saveCfg({ lastBackup: nowStr(), backupSnoozeUntil: null }); }
 /** Exporta o pacote .mcpack (todos os mapas + configurações) perguntando nome e local. Devolve o resumo ou null (cancelou / sem biblioteca). */
-async function exportPackQuick() {
+/** Nome do arquivo lembrado como destino da cópia de segurança (só no tablet; no desktop sempre há o diálogo do sistema). */
+function backupDestName() {
+  try { const t = JSON.parse(fs.readFileSync(path.join(userDataDir, 'targets.json'), 'utf8')).__backup__; return t && typeof t.name === 'string' ? t.name : null; } catch { return null; }
+}
+/**
+ * Exporta o pacote .mcpack (todos os mapas + configurações). Com destino lembrado (tablet) grava DIRETO nele; se isso falhar, avisa, esquece o destino e
+ * cai no diálogo (nada se perde: o pacote é gerado antes). `ask` força o diálogo (para trocar o local). Devolve { maps, direct?, name? } ou null.
+ */
+async function exportPackQuick({ ask = false } = {}) {
   if (!libraryExists()) { setStatus('Ainda não há biblioteca: guarde seus mapas nela (Arquivo → Biblioteca de mapas) para exportar um pacote.'); return null; }
+  if (!ask && backupDestName()) {
+    const tmp = '/tmp/mindcraft-copia-' + Date.now() + '.mcpack';
+    try {
+      fs.mkdirSync(path.dirname(tmp), { recursive: true });
+      const r = getLibrary().exportPackage(tmp, { settings: portableSettings() });
+      const w = await ipcRenderer.invoke('backup:write-direct', tmp);
+      markBackup(); return { ...r, direct: true, name: w.name };
+    } catch (e) {
+      ipcRenderer.invoke('dialog:error', 'Não consegui gravar a cópia em "' + backupDestName() + '": ' + e.message + '\nEscolha outro local agora; o aviso de cópia continua até você concluir.');
+      await ipcRenderer.invoke('backup:clear');
+    } finally { try { fs.rmSync(tmp, { force: true }); } catch { /* temporário */ } }
+  }
   const t = await ipcRenderer.invoke('dialog:save', 'mcpack', 'meus-estudos.mcpack'); if (!t) return null;
   const r = getLibrary().exportPackage(/\.mcpack$/i.test(t) ? t : t + '.mcpack', { settings: portableSettings() });
   markBackup(); return r;
@@ -166,7 +186,8 @@ const homeActions = {
   openLib: async (id, review = false) => { if (!(await confirmDiscard())) return false; const okk = await openFromLibrary(id, { confirm: false }); if (okk && review) act.review(); return okk; },
   openLast: async () => { const l = homeData().last; if (!l) return false; return l.kind === 'lib' ? homeActions.openLib(l.id) : homeActions.openRecent({ path: l.path, exists: true }); },
   removeRecent: (p) => ipcRenderer.invoke('recent:remove', p), clearRecent: () => ipcRenderer.invoke('recent:clear'),
-  backupNow: async () => { const r = await exportPackQuick(); if (r) setStatus(`Cópia de segurança salva: ${r.maps} mapa(s) e as configurações. Guarde o arquivo fora deste aparelho (nuvem, pendrive ou outro computador).`); return !!r; },
+  backupNow: async (opts) => { const r = await exportPackQuick(opts); if (r) setStatus(r.direct ? `Cópia de segurança atualizada em "${r.name}": ${r.maps} mapa(s) e as configurações.` : `Cópia de segurança salva: ${r.maps} mapa(s) e as configurações. Guarde o arquivo fora deste aparelho (nuvem, pendrive ou outro computador).`); return !!r; },
+  backupDest: () => backupDestName(),
   restorePack: async () => {
     const r = await importPackQuick(); if (!r) return false;
     setStatus(`Pacote restaurado: ${r.imported} novo(s), ${r.copied} cópia(s), ${r.skipped} igual(is)/mantido(s)${r.nset ? `; ${r.nset} configuração(ões)` : ''}. Nada foi sobrescrito.`); return true;
@@ -174,7 +195,7 @@ const homeActions = {
   backupSnooze: () => { saveCfg({ backupSnoozeUntil: BACKUP.snoozeDate(nowStr()) }); setStatus('Tudo bem: o lembrete volta em ' + BACKUP.SNOOZE_DAYS + ' dias.'); },
   backupEvery: (v) => { saveCfg({ backupEveryDays: BACKUP.normalizeEvery(v), backupSnoozeUntil: null }); },
 };
-Object.assign(window.MC, { homeData, homeActions, markBackup, exportPackQuick, importPackQuick });
+Object.assign(window.MC, { homeData, homeActions, markBackup, exportPackQuick, importPackQuick, backupDestName });
 
 // ---------- aviso diário de revisões ----------
 const NOTIFY = require(path.join(core, 'notify'));

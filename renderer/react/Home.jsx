@@ -10,17 +10,24 @@ const daysTxt = (n) => (n === 0 ? 'é hoje!' : n === 1 ? 'amanhã' : `em ${n} di
 
 /** Tela inicial: atalhos, continuar de onde parou, arquivos recentes, biblioteca, próximas provas e o resumo de hoje. */
 /** "Seu estudo": sequência, hoje, 7 dias (barras), acerto, metas e o que está mais atrasado. */
-function Glance({ g, onReview, onDash }) {
+function Glance({ g, onReview, onDash, collapsed, onToggle }) {
   if (!g || g.scope === 'none') return null;
+  if (collapsed) {                                    // uma linha só: quem prefere os atalhos e os recentes no topo recolhe o cartão (a escolha é lembrada)
+    return (
+      <div className="hm-sec hm-glance mini" id="hmGlance">
+        <div className="gl-mini"><span><b>Seu estudo</b> <span className="muted">· {g.streak} {g.streak === 1 ? 'dia seguido' : 'dias seguidos'} · hoje {hm(g.minutesToday)} · 7 dias {hm(g.weekMinutes)}{g.laggard ? ` · atrasado: ${g.laggard.title}` : ''}</span></span> <button className="link" id="hmGlanceToggle" aria-expanded="false" onClick={onToggle}>mostrar</button></div>
+      </div>
+    );
+  }
   const max = Math.max(30, ...g.week.map((w) => w.minutes));
   const acc = g.questions.accuracy;
   return (
     <div className="hm-sec hm-glance" id="hmGlance">
-      <h3><span>Seu estudo <span className="muted">· {g.scope === 'library' ? 'em toda a biblioteca' : 'neste mapa'}</span></span> <button className="link" id="hmGlanceDash" onClick={onDash}>painel completo</button></h3>
+      <h3><span>Seu estudo <span className="muted">· {g.scope === 'library' ? 'em toda a biblioteca' : 'neste mapa'}</span></span> <span className="hm-links"><button className="link" id="hmGlanceDash" onClick={onDash}>painel completo</button> <button className="link" id="hmGlanceToggle" aria-expanded="true" onClick={onToggle}>recolher</button></span></h3>
       {!g.hasData && <div className="empty">Ainda sem estudo registrado nos últimos dias. Registre o tempo ou as questões no painel <b>Estudo</b> e o resumo aparece aqui.</div>}
       {g.hasData && <>
         <div className="gl-tiles">
-          <div className="gl-tile" id="glStreak"><b>{g.streak}</b><span>{g.streak === 1 ? 'dia seguido' : 'dias seguidos'}</span></div>
+          <div className="gl-tile" id="glStreak" title="Dias seguidos com tempo de estudo ou questões registrados (o painel de estudos do mapa conta também as revisões)"><b>{g.streak}</b><span>{g.streak === 1 ? 'dia seguido' : 'dias seguidos'}</span></div>
           <div className="gl-tile" id="glToday"><b>{hm(g.minutesToday)}</b><span>hoje</span></div>
           <div className="gl-tile" id="glWeek"><b>{hm(g.weekMinutes)}</b><span>nos últimos 7 dias</span></div>
           <div className="gl-tile" id="glAcc"><b>{acc == null ? '—' : Math.round(acc * 100) + '%'}</b><span>{acc == null ? 'sem questões na semana' : `de acerto (${g.questions.correct}/${g.questions.done})`}</span></div>
@@ -82,7 +89,7 @@ export function Home({ onClose }) {
         </button>
       )}
 
-      <Glance g={d.glance} onReview={act(A.review)} onDash={act(async () => { onClose(); h.actions.openDash && h.actions.openDash(); })} />
+      <Glance g={d.glance} collapsed={cfg.glanceCollapsed === true} onToggle={() => { h.saveCfg({ glanceCollapsed: cfg.glanceCollapsed !== true }); refresh(); }} onReview={act(A.review)} onDash={act(async () => { onClose(); h.actions.openDash && h.actions.openDash(); })} />
 
       <div className="hm-actions">
         <Big id="hmNew" icon="＋" title="Novo mapa" sub="em branco" onClick={act(A.newBlank)} primary={!d.last} />
@@ -146,6 +153,7 @@ export function Home({ onClose }) {
             <option value={7}>a cada 7 dias</option><option value={14}>a cada 14 dias</option><option value={30}>a cada 30 dias</option><option value={0}>nunca</option>
           </select>
         </label>
+        {d.backup && d.backup.dest && <span className="muted" id="hmBackupDest">Cópias vão para: <b>{d.backup.dest}</b> <button className="link" id="hmBackupChange" onClick={act(async () => { if (await A.backupNow({ ask: true })) refresh(); })}>trocar local</button></span>}
         <span className="muted" id="hmLastBackup">{d.backup && d.backup.lastBackup ? `Última cópia: ${new Date(d.backup.lastBackup + 'T12:00:00').toLocaleDateString('pt-BR')}` : 'Nenhuma cópia feita ainda.'}</span>
         <span className="muted">Dica: você também pode arrastar um arquivo .mom, .md, .opml ou .pdf para a janela.</span>
       </div>
