@@ -2,6 +2,9 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.4.5
+- **Correção no botão de fechar mapa**: o botão de fechar mapa atual (`#closeMapBtn`) agora garante a desocupação completa da memória (redefinindo o canvas com mapa limpo e redefinindo título), remove rascunhos de recuperação de sessão pendentes do disco, fecha divisões de mídia ativas (PDF, vídeo, navegador), e possui área de toque touch responsiva (36px em telas touch) e proteção contra encolhimento flex (`flex-shrink: 0`).
+
 ## 0.4.4
 - **Revisão ortográfica e pontuação**: correção do posicionamento dos pontos de interrogação na interface, padronizando botões de ajuda e auxílio para `Como usar?` (ao invés de `? Como usar`), respeitando as normas gramaticais da língua portuguesa em todos os painéis (Estudo, Notas, Conexões, Painel de Estudos e Mídia).
 

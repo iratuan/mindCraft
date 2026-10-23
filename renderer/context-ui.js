@@ -97,42 +97,85 @@ function syncContextUI() {
   }
 }
 
+let closingMap = false;
 async function closeCurrentMap() {
-  if (typeof commitNotes === 'function') commitNotes();
-  if (typeof dirty !== 'undefined' && dirty) {
-    if (typeof confirmDiscard === 'function') {
-      const okk = await confirmDiscard();
-      if (!okk) return false;
+  if (closingMap) return false;
+  closingMap = true;
+  try {
+    if (typeof commitNotes === 'function') commitNotes();
+    if (typeof dirty !== 'undefined' && dirty) {
+      if (typeof confirmDiscard === 'function') {
+        try {
+          const okk = await confirmDiscard();
+          if (!okk) return false;
+        } catch (err) {
+          console.warn('Erro ao confirmar descarte:', err);
+        }
+      }
     }
+
+    // Se havia rascunho anterior recuperado ou pendente, remove do disco
+    if (typeof removeDraft === 'function') {
+      try { removeDraft(); } catch { /* ignora */ }
+    }
+
+    // Fecha painéis divididos de estudo (PDF, Vídeo, Navegador)
+    if (window.MCReact && typeof window.MCReact.closeMedia === 'function') {
+      try { window.MCReact.closeMedia(); } catch { /* ignora */ }
+    } else if (typeof closePdf === 'function') {
+      try { closePdf(); } catch { /* ignora */ }
+    }
+
+    // Fecha painéis auxiliares
+    if (typeof closeDash === 'function') closeDash();
+    if (typeof closeGraph === 'function') closeGraph();
+
+    // Descarrega o mapa atual da memória criando um estado limpo
+    if (typeof newMap === 'function') {
+      newMap();
+    }
+
+    dirty = false;
+    filePath = null;
+    selectedId = null;
+    selIds = new Set();
+    selectedRel = null;
+    hits = null;
+
+    const opt = $('#options');
+    if (opt) opt.setAttribute('data-context', 'none');
+    const dot = $('#dirtyDot');
+    if (dot) dot.hidden = true;
+    const docTitle = $('#docTitle');
+    if (docTitle) docTitle.textContent = 'Sem título';
+
+    if (window.MCReact && typeof window.MCReact.openHome === 'function') {
+      window.MCReact.openHome();
+    } else if (typeof act !== 'undefined' && typeof act.home === 'function') {
+      act.home(true);
+    }
+    if (typeof setStatus === 'function') setStatus('Mapa fechado · Tela inicial');
+    return true;
+  } finally {
+    closingMap = false;
   }
-  dirty = false;
-  filePath = null;
-  selectedId = null;
-  selIds = new Set();
-  selectedRel = null;
-  hits = null;
-  const opt = $('#options');
-  if (opt) opt.setAttribute('data-context', 'none');
-  const dot = $('#dirtyDot');
-  if (dot) dot.hidden = true;
-  if (window.MCReact && typeof window.MCReact.openHome === 'function') {
-    window.MCReact.openHome();
-  } else if (typeof act !== 'undefined' && typeof act.home === 'function') {
-    act.home(true);
-  }
-  if (typeof setStatus === 'function') setStatus('Mapa fechado · Tela inicial');
-  return true;
 }
 window.closeCurrentMap = closeCurrentMap;
+if (typeof act !== 'undefined') {
+  act.closeMap = closeCurrentMap;
+}
 
 // Inicializa controles interativos da relação na barra de opções
 function initContextUIEvents() {
   const closeMapBtn = $('#closeMapBtn');
   if (closeMapBtn) {
-    closeMapBtn.addEventListener('click', (e) => {
+    const handleClose = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       closeCurrentMap();
-    });
+    };
+    closeMapBtn.addEventListener('click', handleClose);
+    closeMapBtn.addEventListener('touchend', handleClose);
   }
 
   const relLabelIn = $('#optRelLabel');

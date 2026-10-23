@@ -377,6 +377,7 @@ const act = {
     change(() => map.updateMany(ids, { collapsed: v }));
     setStatus(v ? `Ramo recolhido: ${hidden} subtópico(s) escondido(s). Toque de novo para expandir.` : 'Ramo expandido.');
   },
+  closeMap() { if (typeof closeCurrentMap === 'function') return closeCurrentMap(); },
 };
 /** Reordena/muda o nível do tópico selecionado (um por vez; uma ação desfazível). */
 function reshape(method, arg, failMsg) {
@@ -825,6 +826,7 @@ ipcRenderer.on('menu', async (_e, c) => {
   else if (c === 'restore') restoreVersion();
   else if (c === 'save') save(false);
   else if (c === 'saveAs') save(true);
+  else if (c === 'closeMap') { if (typeof closeCurrentMap === 'function') closeCurrentMap(); }
   else if (c.startsWith('export:')) doExport(c.slice(7));
   else if (c === 'present') act.present();
   else act[c]?.();
@@ -903,7 +905,10 @@ function writeDraft() {
 function removeDraft() {
   clearTimeout(draftTimer); draftTimer = null;
   const p = draftPath();
-  if (p && draftExists) { try { fs.rmSync(p, { force: true }); draftExists = false; } catch { /* será tentado de novo */ } }
+  if (p) {
+    try { if (fs.existsSync(p)) fs.rmSync(p, { force: true }); } catch { /* será tentado de novo */ }
+    draftExists = false;
+  }
 }
 function autosaveTick() {
   if (!userDataDir) return;

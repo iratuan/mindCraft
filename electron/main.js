@@ -50,6 +50,7 @@ function buildMenu() {
       { label: 'Tela inicial', accelerator: 'CmdOrCtrl+Shift+H', click: send('home') },
       { label: 'Novo', accelerator: 'CmdOrCtrl+N', click: send('new') },
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: send('open') },
+      { label: 'Fechar mapa', accelerator: 'CmdOrCtrl+Shift+M', click: send('closeMap') },
       { label: 'Restaurar versão anterior…', click: send('restore') },
       { label: 'Abrir pasta de backups', click: () => openUserSub('backups') },
       { label: 'Abrir pasta de registros de erro', click: () => openUserSub('logs') },

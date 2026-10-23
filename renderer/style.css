@@ -30,8 +30,8 @@ button { cursor: pointer; }
 /* Barra do aplicativo */
 #appbar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; background: var(--bg-bar); border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; }
-#docinfo { display: flex; align-items: center; gap: 7px; font-weight: 600; color: var(--text-strong); max-width: 38vw; }
-#docTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#docinfo { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-strong); max-width: 44vw; min-width: 0; flex-shrink: 1; }
+#docTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 0 1 auto; }
 #dirtyDot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
 .searchbox { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 9px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 14px; color: var(--text-dim); }
 .searchbox:focus-within { border-color: var(--accent); color: var(--text); }
@@ -43,8 +43,12 @@ button { cursor: pointer; }
 .icon-btn { display: grid; place-items: center; width: 28px; height: 28px; background: none; border: 0; border-radius: 6px; color: var(--text); }
 .icon-btn:hover { background: var(--bg-hover); }
 .icon-btn.sm { width: 22px; height: 22px; font-size: 15px; line-height: 1; }
-.close-map-btn { margin-left: 4px; color: var(--text-dim); transition: color 0.15s, background 0.15s; }
-.close-map-btn:hover { color: #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; }
+.close-map-btn { flex-shrink: 0 !important; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; border: 0; background: transparent; color: var(--text-dim); cursor: pointer; padding: 0; margin-left: 2px; transition: color 0.15s, background 0.15s; }
+.close-map-btn:hover { color: #ef4444 !important; background: rgba(239, 68, 68, 0.18) !important; }
+.close-map-btn svg { pointer-events: none; }
+@media (pointer: coarse) {
+  .close-map-btn { width: 36px; height: 36px; }
+}
 
 /* Barra de opções (contextual e estritamente exclusiva) */
 #options { display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 12px; background: var(--bg-panel); border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; white-space: nowrap; scrollbar-width: none; }
