@@ -163,7 +163,7 @@ window.MCReact = {
   openShortcuts: () => mount(ShortcutsModal, {}),
   openManual: (section) => mount(ManualModal, { initialSection: section }),
   openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash,
-  openPdf, closePdf, closeMedia, togglePdf: () => (mediaRoot && activeMediaTab === 'pdf' ? closeMedia() : openPdf({})), pdfIsOpen: () => !!mediaRoot && activeMediaTab === 'pdf',
+  openMedia, openPdf, closePdf, closeMedia, togglePdf: () => (mediaRoot && activeMediaTab === 'pdf' ? closeMedia() : openPdf({})), pdfIsOpen: () => !!mediaRoot && activeMediaTab === 'pdf',
   openVideo, toggleVideo: () => (mediaRoot && activeMediaTab === 'video' ? closeMedia() : openVideo({})), videoIsOpen: () => !!mediaRoot && activeMediaTab === 'video',
   openBrowser, toggleBrowser: () => (mediaRoot && activeMediaTab === 'browser' ? closeMedia() : openBrowser({})), browserIsOpen: () => !!mediaRoot && activeMediaTab === 'browser',
   renderRefs,

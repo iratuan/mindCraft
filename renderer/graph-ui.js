@@ -241,7 +241,7 @@ function fitText(s, max) {
 }
 
 function buildGraphUI() {
-  const root = $('#graph'); root.textContent = ''; root.tabIndex = -1;
+  const root = $('#graph'); if (!root) return; root.textContent = ''; root.tabIndex = -1;
   const v = gView(); if (['compact', 'normal', 'detailed'].includes(v.density)) gOpt.density = v.density; if (['auto', 'all', 'relevant', 'none'].includes(v.labels)) gOpt.labels = v.labels; gOpt.group = !!v.group; gOpt.focus = !!v.focus;
   const bar = el('div', 'g-bar');
   const sc = el('select'); sc.id = 'gScope'; sc.title = 'De onde vêm os tópicos'; sc.append(new Option('Este mapa', 'map'), new Option('Vault (pasta)', 'vault'));
