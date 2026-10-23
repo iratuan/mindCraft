@@ -1,17 +1,32 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { H, useMcRender } from './hooks.js';
 
-const QUICK_BOOKMARKS = [
-  { name: 'Gran Cursos', url: 'https://www.grancursosonline.com.br' },
-  { name: 'Gran Questões', url: 'https://questoes.grancursosonline.com.br' },
-  { name: 'QConcursos', url: 'https://www.qconcursos.com' },
-  { name: 'Tec Concursos', url: 'https://www.tecconcursos.com.br' },
-  { name: 'Estratégia Concursos', url: 'https://www.estrategiaconcursos.com.br' },
-  { name: 'Dizer o Direito', url: 'https://www.dizerodireito.com.br' },
-  { name: 'Constituição (CF/88)', url: 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm' },
-  { name: 'Código Civil', url: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm' },
-  { name: 'Código Penal', url: 'https://www.planalto.gov.br/ccivil_03/decreto-lei/del2848compilado.htm' },
-  { name: 'Planalto Legislação', url: 'https://www.planalto.gov.br/ccivil_03/leis/leis_2024.htm' },
+const BOOKMARK_CATEGORIES = [
+  {
+    label: 'Cursos & Questões',
+    items: [
+      { name: 'Gran Cursos Online', url: 'https://www.grancursosonline.com.br' },
+      { name: 'Gran Questões', url: 'https://questoes.grancursosonline.com.br' },
+      { name: 'QConcursos', url: 'https://www.qconcursos.com' },
+      { name: 'Tec Concursos', url: 'https://www.tecconcursos.com.br' },
+      { name: 'Estratégia Concursos', url: 'https://www.estrategiaconcursos.com.br' },
+    ],
+  },
+  {
+    label: 'Legislação & Normas',
+    items: [
+      { name: 'Constituição Federal (CF/88)', url: 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm' },
+      { name: 'Código Civil (CC)', url: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm' },
+      { name: 'Código Penal (CP)', url: 'https://www.planalto.gov.br/ccivil_03/decreto-lei/del2848compilado.htm' },
+      { name: 'Planalto — Legislação', url: 'https://www.planalto.gov.br/ccivil_03/leis/leis_2024.htm' },
+    ],
+  },
+  {
+    label: 'Jurisprudência & Informativos',
+    items: [
+      { name: 'Dizer o Direito', url: 'https://www.dizerodireito.com.br' },
+    ],
+  },
 ];
 
 export function BrowserPane({ initialUrl, onClose }) {
@@ -163,11 +178,48 @@ export function BrowserPane({ initialUrl, onClose }) {
   return (
     <div className="browser-pane" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-panel)' }}>
       {/* Barra de Navegação */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: 'var(--bg-bar)', borderBottom: '1px solid var(--line)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: 'var(--bg-bar)', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
         <button className="icon-btn sm" onClick={goBack} disabled={!canGoBack} title="Voltar página">◀</button>
         <button className="icon-btn sm" onClick={goForward} disabled={!canGoForward} title="Avançar página">▶</button>
         <button className="icon-btn sm" onClick={reload} title="Recarregar página">{isLoading ? '⏳' : '↻'}</button>
         <button className="icon-btn sm" onClick={() => navigateTo('https://www.google.com')} title="Página inicial">🏠</button>
+
+        {/* Menu Suspenso de Favoritos por Categoria */}
+        <select
+          id="browserBookmarks"
+          value=""
+          onChange={(e) => {
+            if (e.target.value) {
+              navigateTo(e.target.value);
+              e.target.value = '';
+            }
+          }}
+          title="Sites favoritos de concursos, questões e legislação"
+          aria-label="Sites favoritos"
+          style={{
+            height: '26px',
+            padding: '0 6px',
+            fontSize: '11.5px',
+            background: 'var(--bg-field)',
+            border: '1px solid var(--line-soft)',
+            borderRadius: '4px',
+            color: 'var(--text)',
+            cursor: 'pointer',
+            maxWidth: '130px',
+            flexShrink: 0,
+          }}
+        >
+          <option value="">⭐ Favoritos…</option>
+          {BOOKMARK_CATEGORIES.map((cat) => (
+            <optgroup key={cat.label} label={cat.label}>
+              {cat.items.map((it) => (
+                <option key={it.name} value={it.url}>
+                  {it.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
 
         {/* Input de endereço */}
         <input
@@ -180,7 +232,7 @@ export function BrowserPane({ initialUrl, onClose }) {
             else if (e.key === 'Escape') setAddressBar(currentUrl);
           }}
           placeholder="Digite a URL ou pesquise na web…"
-          style={{ flex: 1, height: '26px', padding: '0 8px', fontSize: '12px', background: 'var(--bg-field)', border: '1px solid var(--line-soft)', borderRadius: '4px', color: 'var(--text)' }}
+          style={{ flex: 1, minWidth: '140px', height: '26px', padding: '0 8px', fontSize: '12px', background: 'var(--bg-field)', border: '1px solid var(--line-soft)', borderRadius: '4px', color: 'var(--text)' }}
         />
         <button className="btn small primary" onClick={() => navigateTo(addressBar)}>Ir</button>
         <button
@@ -208,22 +260,6 @@ export function BrowserPane({ initialUrl, onClose }) {
         >
           ✕ Fechar Aba
         </button>
-      </div>
-
-      {/* Linha de Favoritos Rápidos */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: 'var(--bg-hover)', borderBottom: '1px solid var(--line)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-dim)' }}>Favoritos:</span>
-        {QUICK_BOOKMARKS.map((bm) => (
-          <button
-            key={bm.name}
-            className="chip"
-            style={{ fontSize: '11px', padding: '2px 8px', height: '22px', flexShrink: 0, whiteSpace: 'nowrap', cursor: 'pointer' }}
-            onClick={() => navigateTo(bm.url)}
-            title={bm.url}
-          >
-            {bm.name}
-          </button>
-        ))}
       </div>
 
       {/* Aviso de fallback para CSP/X-Frame-Options quando em iframe */}
