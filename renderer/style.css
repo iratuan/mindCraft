@@ -88,7 +88,102 @@ body.light #stage { background-image: radial-gradient(circle, rgba(0,0,0,.07) 1p
 body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 #editor { position: absolute; resize: none; background: #fff; color: #111; border: 2px solid var(--accent); border-radius: 6px; padding: 4px 8px; font: inherit; text-align: center; outline: none; overflow: hidden; z-index: 5; box-shadow: var(--shadow); }
 #marquee { position: absolute; border: 1px solid var(--accent); background: var(--accent-soft); pointer-events: none; z-index: 4; }
-#hud { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); background: rgba(0,0,0,.72); color: #fff; padding: 5px 14px; border-radius: 14px; font-size: 12px; pointer-events: none; }
+.present-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(18, 22, 28, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 6px 12px;
+  border-radius: 30px;
+  color: #fff;
+  z-index: 50;
+  max-width: min(92vw, 680px);
+  pointer-events: auto;
+  user-select: none;
+}
+.present-hud-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.present-hud-btn:hover:not(:disabled) {
+  background: var(--accent, #2563eb);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+.present-hud-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.present-hud-btn.exit {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  margin-left: 6px;
+}
+.present-hud-btn.exit:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: transparent;
+}
+.present-hud-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #e2e8f0;
+  min-width: 0;
+  overflow: hidden;
+}
+.present-hud-count {
+  font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+.present-hud-count b {
+  color: #fff;
+}
+.present-hud-title {
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+@media (pointer: coarse) {
+  .present-hud {
+    bottom: 20px;
+    padding: 8px 14px;
+    gap: 8px;
+  }
+  .present-hud-btn {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+}
 
 /* Painéis */
 #panels { display: flex; flex-direction: column; width: var(--panels-w, 304px); background: var(--bg-panel); border-left: 1px solid var(--line); overflow: hidden; }

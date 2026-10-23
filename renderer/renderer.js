@@ -353,7 +353,10 @@ const act = {
     relateFrom = selectedId; document.body.classList.add('relating');
     setStatus('Relação: clique no tópico de destino (Esc cancela).');
   },
-  present() { present ? stopPresent() : startPresent(); },
+  present() {
+    if (!map || (window.MCReact && window.MCReact.homeIsOpen())) return setStatus('Abra um mapa mental para apresentar.');
+    present ? stopPresent() : startPresent();
+  },
   delete() {
     if (selectedRel) { const id = selectedRel; selectedRel = null; return change(() => map.removeRelation(id)); }
     const s = sel(); if (!s) return;
@@ -422,7 +425,7 @@ $('#search').addEventListener('keydown', (e) => {
   selectedId = hitList[hitIdx]; selectedRel = null; render(); centerOn(selectedId);
 });
 
-// ---------- apresentação ----------
+// ---------- navegação ----------
 function centerOn(id, k) {
   const b = L.boxes.get(id); if (!b) return;
   const r = svg.getBoundingClientRect();
@@ -430,29 +433,6 @@ function centerOn(id, k) {
   pan.x = r.width / 2 - (b.x + b.w / 2) * pan.k; pan.y = r.height / 2 - (b.y + b.h / 2) * pan.k;
   render();
 }
-function presentStep(d) {
-  if (!present) return;                       // saiu da apresentação antes do 1º passo agendado (150 ms)
-  const i = Math.min(present.order.length - 1, Math.max(0, present.i + d));
-  present.i = i;
-  const hud = $('#hud'); hud.hidden = false; hud.textContent = `${i + 1} / ${present.order.length}  ·  ← → navega · Esc sai`;
-  render(); centerOn(present.order[i], 1.5);
-}
-function startPresent() {
-  render(); // garante L atual; DFS em ordem de leitura (boxes é inserido em pré-ordem)
-  present = { order: [...L.boxes.keys()], i: 0 };
-  document.body.classList.add('presenting');
-  document.documentElement.requestFullscreen?.().catch(() => {});
-  setTimeout(() => presentStep(0), 150);
-}
-function stopPresent() {
-  if (!present) return;
-  present = null; $('#hud').hidden = true;
-  document.body.classList.remove('presenting');
-  if (document.fullscreenElement) document.exitFullscreen();
-  render();                                   // o editor volta na hora (antes ficava ~100 ms com o desenho da apresentação, sem tópicos clicáveis)
-  setTimeout(() => { if (!present) { render(); fit(); } }, 100);   // e reajusta depois que a tela cheia terminar de sair
-}
-document.addEventListener('fullscreenchange', () => { if (present && !document.fullscreenElement) stopPresent(); });
 
 for (const [id, t] of Object.entries(THEMES)) {
   $('#theme').add(new Option(t.name, id));

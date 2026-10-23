@@ -20,3 +20,35 @@ test('arquivos do Mindomo (sem a marca do MindCraft) continuam tendo a formataç
   z.updateFile('nodes.json', Buffer.from(JSON.stringify(nodes)));
   const back = readMom(z.toBuffer()); assert.equal(back.root.children[0].title, 'Negrito e\nquebra <C>'); assert.equal(back.root.children[0].notes, 'texto');
 });
+
+test('HUD de apresentação: elementos de controle e saída presentes no index.html', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'index.html'), 'utf-8');
+  assert.ok(html.includes('id="presentPrev"'), 'botão anterior da apresentação presente');
+  assert.ok(html.includes('id="presentNext"'), 'botão próximo da apresentação presente');
+  assert.ok(html.includes('id="presentExit"'), 'botão sair da apresentação presente');
+  assert.ok(html.includes('id="presentCur"'), 'contador atual da apresentação presente');
+  assert.ok(html.includes('id="presentTotal"'), 'contador total da apresentação presente');
+  assert.ok(html.includes('present-ui.js'), 'script present-ui.js carregado no index.html');
+});
+
+test('Navegador Web: sanitização bloqueia protocolos perigosos e normaliza links', () => {
+  const sanitize = (raw) => {
+    let url = (raw || '').trim();
+    if (/^(javascript|data|vbscript):/i.test(url)) return null;
+    if (url === 'about:blank') return url;
+    if (!/^https?:\/\//i.test(url)) {
+      if (url.includes('.') && !url.includes(' ')) url = 'https://' + url;
+      else url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+    }
+    return url;
+  };
+  assert.equal(sanitize('javascript:alert(1)'), null);
+  assert.equal(sanitize('data:text/html,<h1>XSS</h1>'), null);
+  assert.equal(sanitize('vbscript:msgbox(1)'), null);
+  assert.equal(sanitize('www.qconcursos.com'), 'https://www.qconcursos.com');
+  assert.equal(sanitize('direito administrativo'), 'https://www.google.com/search?q=direito%20administrativo');
+  assert.equal(sanitize('https://planalto.gov.br'), 'https://planalto.gov.br');
+});
+

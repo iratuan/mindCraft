@@ -9,14 +9,14 @@ import {
   getNodeVideoRef,
 } from '../../core/videorefs.js';
 
-export function VideoPane({ onClose }) {
+export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
   const h = H();
   useMcRender();
   const map = h.map();
   const selNode = h.selected();
 
-  const [videoSrc, setVideoSrc] = useState(() => (h.loadCfg().lastVideoSrc || ''));
-  const [videoName, setVideoName] = useState(() => (h.loadCfg().lastVideoName || 'Videoaula'));
+  const [videoSrc, setVideoSrc] = useState(() => initialSrc || (h.loadCfg().lastVideoSrc || ''));
+  const [videoName, setVideoName] = useState(() => initialName || (h.loadCfg().lastVideoName || 'Videoaula'));
   const [urlInput, setUrlInput] = useState('');
   const [showUrlDialog, setShowUrlDialog] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -25,6 +25,12 @@ export function VideoPane({ onClose }) {
   const [feedback, setFeedback] = useState('');
 
   const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (initialTime != null && videoRef.current) {
+      videoRef.current.currentTime = initialTime;
+    }
+  }, [initialTime]);
 
   // Lembra a última fonte aberta
   useEffect(() => {

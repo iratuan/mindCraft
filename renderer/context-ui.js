@@ -52,6 +52,21 @@ function syncContextUI() {
   setToolBtn($('[data-act="undo"]'), map._undo && map._undo.length > 0, 'Desfazer (Ctrl+Z)');
   setToolBtn($('[data-act="redo"]'), map._redo && map._redo.length > 0, 'Refazer (Ctrl+Y)');
 
+  const hasActiveMap = !!(map && map.root && (!window.MCReact || !window.MCReact.homeIsOpen?.()));
+  const presentBtn = $('[data-act="present"]');
+  setToolBtn(presentBtn, hasActiveMap, hasActiveMap ? 'Apresentar mapa (F5)' : 'Abra um mapa mental para apresentar');
+  if (presentBtn) {
+    if (!hasActiveMap) {
+      presentBtn.classList.add('disabled');
+      presentBtn.style.opacity = '0.35';
+      presentBtn.style.pointerEvents = 'none';
+    } else {
+      presentBtn.classList.remove('disabled');
+      presentBtn.style.opacity = '';
+      presentBtn.style.pointerEvents = '';
+    }
+  }
+
   // 2. Alternância contextual da barra superior (#options) com garantia de exclusão mútua
   const options = $('#options');
   const optTopic = $('#optTopic');

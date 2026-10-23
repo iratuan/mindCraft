@@ -10,13 +10,13 @@ const QUICK_BOOKMARKS = [
   { name: 'Dizer o Direito', url: 'https://www.dizerodireito.com.br' },
 ];
 
-export function BrowserPane({ onClose }) {
+export function BrowserPane({ initialUrl, onClose }) {
   const h = H();
   useMcRender();
   const map = h.map();
   const selNode = h.selected();
 
-  const [currentUrl, setCurrentUrl] = useState(() => (h.loadCfg().lastBrowserUrl || 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm'));
+  const [currentUrl, setCurrentUrl] = useState(() => (initialUrl || h.loadCfg().lastBrowserUrl || 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm'));
   const [addressBar, setAddressBar] = useState(currentUrl);
   const [pageTitle, setPageTitle] = useState('Navegador de Estudo');
   const [canGoBack, setCanGoBack] = useState(false);
@@ -33,8 +33,20 @@ export function BrowserPane({ onClose }) {
   }, []);
 
   const navigateTo = useCallback((targetUrl) => {
-    let url = targetUrl.trim();
+    let url = (targetUrl || '').trim();
     if (!url) return;
+
+    // Sanitização e segurança de URLs
+    if (/^(javascript|data|vbscript):/i.test(url)) {
+      say('Protocolo não permitido por segurança.');
+      return;
+    }
+    if (url === 'about:blank') {
+      setCurrentUrl('about:blank');
+      setAddressBar('');
+      setPageTitle('Aba em branco');
+      return;
+    }
     if (!/^https?:\/\//i.test(url)) {
       if (url.includes('.') && !url.includes(' ')) {
         url = 'https://' + url;
@@ -46,7 +58,22 @@ export function BrowserPane({ onClose }) {
     setAddressBar(url);
     h.saveCfg({ lastBrowserUrl: url });
     setIsLoading(true);
-  }, [h]);
+  }, [h, say]);
+
+  const openExternal = useCallback(() => {
+    if (!currentUrl || currentUrl === 'about:blank') return;
+    try {
+      if (window.require) {
+        const { shell } = window.require('electron');
+        shell.openExternal(currentUrl);
+      } else {
+        window.open(currentUrl, '_blank', 'noopener,noreferrer');
+      }
+      say('Página aberta no navegador externo.');
+    } catch (e) {
+      say('Erro ao abrir externamente: ' + e.message);
+    }
+  }, [currentUrl, say]);
 
   // Eventos do Webview (Electron)
   useEffect(() => {
@@ -150,14 +177,25 @@ export function BrowserPane({ onClose }) {
         <button className="btn small primary" onClick={() => navigateTo(addressBar)}>Ir</button>
         <button
           className="btn small"
+          onClick={openExternal}
+          title="Abrir esta página no navegador padrão do sistema"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          ↗ Abrir fora
+        </button>
+        <button
+          className="btn small"
           id="browserCloseTabBtn"
           onClick={() => {
-            setCurrentUrl('about:blank');
-            setAddressBar('');
-            setPageTitle('Aba Encerrada');
-            say('Aba do navegador fechada.');
+            if (onClose) onClose();
+            else {
+              setCurrentUrl('about:blank');
+              setAddressBar('');
+              setPageTitle('Aba Encerrada');
+              say('Aba do navegador fechada.');
+            }
           }}
-          title="Fechar aba/página ativa do navegador"
+          title="Fechar esta aba do navegador"
           style={{ color: '#ef4444' }}
         >
           ✕ Fechar Aba
@@ -179,6 +217,14 @@ export function BrowserPane({ onClose }) {
           </button>
         ))}
       </div>
+
+      {/* Aviso de fallback para CSP/X-Frame-Options quando em iframe */}
+      {!isElectron && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 10px', background: 'rgba(234, 179, 8, 0.12)', borderBottom: '1px solid rgba(234, 179, 8, 0.25)', fontSize: '11px', color: 'var(--text)' }}>
+          <span>ℹ Se o site bloquear exibição integrada (CSP/X-Frame-Options), use <b>↗ Abrir fora</b>.</span>
+          <button className="link" onClick={openExternal} style={{ fontSize: '11px', cursor: 'pointer' }}>Abrir no navegador</button>
+        </div>
+      )}
 
       {/* Área da Página Web */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#fff' }}>

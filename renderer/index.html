@@ -138,8 +138,15 @@
       <div id="marquee" hidden></div>
       <div id="home" hidden role="dialog" aria-label="Tela inicial"></div>
       <div id="dash" hidden role="dialog" aria-label="Painel de estudos"></div>
-      <div id="graph" hidden role="dialog" aria-label="Rede de conhecimento"></div>
-      <div id="hud" hidden></div>
+      <div id="hud" class="present-hud" hidden role="region" aria-label="Controles de apresentação">
+        <button id="presentPrev" type="button" class="present-hud-btn" title="Tópico anterior (← ou Shift+Espaço)" aria-label="Tópico anterior">◀ Anterior</button>
+        <div class="present-hud-info">
+          <span class="present-hud-count"><b id="presentCur">1</b> / <span id="presentTotal">1</span></span>
+          <span id="presentTitle" class="present-hud-title"></span>
+        </div>
+        <button id="presentNext" type="button" class="present-hud-btn" title="Próximo tópico (→ ou Espaço)" aria-label="Próximo tópico">Próximo ▶</button>
+        <button id="presentExit" type="button" class="present-hud-btn exit" title="Sair da apresentação (Esc)" aria-label="Sair da apresentação">✕ Sair</button>
+      </div>
     </main>
 
     <!-- Divisor do painel lateral (arrastar = largura) + botão para recolher/expandir -->
@@ -242,6 +249,7 @@
 </div>
 <script src="icons.js"></script>
 <script src="renderer.js"></script>
+<script src="present-ui.js"></script>
 <script src="study-ui.js"></script>
 <script src="graph-ui.js"></script>
 <script src="notes-ui.js"></script>
