@@ -2,12 +2,16 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { H, useMcRender } from './hooks.js';
 
 const QUICK_BOOKMARKS = [
+  { name: 'Gran Cursos', url: 'https://www.grancursosonline.com.br' },
+  { name: 'Gran Questões', url: 'https://questoes.grancursosonline.com.br' },
+  { name: 'QConcursos', url: 'https://www.qconcursos.com' },
+  { name: 'Tec Concursos', url: 'https://www.tecconcursos.com.br' },
+  { name: 'Estratégia Concursos', url: 'https://www.estrategiaconcursos.com.br' },
+  { name: 'Dizer o Direito', url: 'https://www.dizerodireito.com.br' },
   { name: 'Constituição (CF/88)', url: 'https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm' },
   { name: 'Código Civil', url: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm' },
   { name: 'Código Penal', url: 'https://www.planalto.gov.br/ccivil_03/decreto-lei/del2848compilado.htm' },
-  { name: 'QConcursos', url: 'https://www.qconcursos.com' },
-  { name: 'Tec Concursos', url: 'https://www.tecconcursos.com.br' },
-  { name: 'Dizer o Direito', url: 'https://www.dizerodireito.com.br' },
+  { name: 'Planalto Legislação', url: 'https://www.planalto.gov.br/ccivil_03/leis/leis_2024.htm' },
 ];
 
 export function BrowserPane({ initialUrl, onClose }) {
@@ -213,7 +217,7 @@ export function BrowserPane({ initialUrl, onClose }) {
           <button
             key={bm.name}
             className="chip"
-            style={{ fontSize: '11px', padding: '2px 8px', height: '22px' }}
+            style={{ fontSize: '11px', padding: '2px 8px', height: '22px', flexShrink: 0, whiteSpace: 'nowrap', cursor: 'pointer' }}
             onClick={() => navigateTo(bm.url)}
             title={bm.url}
           >
