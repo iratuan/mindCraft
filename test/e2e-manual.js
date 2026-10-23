@@ -1,5 +1,5 @@
 'use strict';
-// Manual de uso no app REAL (Electron, mouse e teclado reais): menu Ajuda, índice, busca, navegação, "? Como usar" em cada tela,
+// Manual de uso no app REAL (Electron, mouse e teclado reais): menu Ajuda, índice, busca, navegação, "Como usar?" em cada tela,
 // Esc devolve ao app, a tela inicial tem o botão, e o texto muda entre Computador e Tablet.
 const path = require('path');
 const { Menu } = require('electron');
@@ -54,7 +54,7 @@ const start = require('./harness');
     ok(await js(`document.getElementById('modal').hidden`));
   });
 
-  await t('"? Como usar" em cada tela abre o manual na seção certa (Estudo, Notas, Painel de estudos, Leitor de PDF, Tela inicial)', async () => {
+  await t('"Como usar?" em cada tela abre o manual na seção certa (Estudo, Notas, Painel de estudos, Leitor de PDF, Tela inicial)', async () => {
     await js(`closeHome && closeHome(); showPanel('study'); newMap(); true`); await wait(300);
     await js(`document.querySelector('.help-q[data-manual="estudo-topico"]').click(); true`); await waitFor(open, 3000); eq(await current(), 'estudo-topico'); await key('Escape'); await wait(200);
     await js(`showPanel('notes'); true`); await wait(150); await js(`document.querySelector('#notesHelp').click(); true`); await waitFor(open, 3000); eq(await current(), 'notas'); await key('Escape'); await wait(200);

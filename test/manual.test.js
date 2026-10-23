@@ -43,7 +43,7 @@ test('cobertura: cada funcionalidade do app tem uma seção', () => {
   for (const id of need) assert.ok(M.find(id), 'falta a seção: ' + id);
 });
 
-test('todo "? Como usar" da interface (data-manual / openManual) aponta para uma seção existente', () => {
+test('todo "Como usar?" da interface (data-manual / openManual) aponta para uma seção existente', () => {
   const files = [path.join(ROOT, 'renderer', 'index.html'), ...fs.readdirSync(path.join(ROOT, 'renderer', 'react')).filter((f) => /\.jsx$/.test(f)).map((f) => path.join(ROOT, 'renderer', 'react', f))];
   const refs = [];
   for (const f of files) { const t = fs.readFileSync(f, 'utf8'); for (const m of t.matchAll(/data-manual=\\?"([a-z0-9-]+)\\?"/g)) refs.push([path.basename(f), m[1]]); }

@@ -51,7 +51,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
           title="Manual de uso"
           style={{ fontSize: '11px', marginRight: '6px' }}
         >
-          ? Como usar
+          Como usar?
         </button>
 
         <button

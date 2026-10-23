@@ -2,6 +2,9 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.4.4
+- **Revisão ortográfica e pontuação**: correção do posicionamento dos pontos de interrogação na interface, padronizando botões de ajuda e auxílio para `Como usar?` (ao invés de `? Como usar`), respeitando as normas gramaticais da língua portuguesa em todos os painéis (Estudo, Notas, Conexões, Painel de Estudos e Mídia).
+
 ## 0.4.3
 - **Barra de ferramentas contextual sem sobreposição**: sistema de visibilidade estrita por atributo `data-context="topic|relation|canvas|none"` com exclusão mútua garantida, rolagem horizontal cinética e proteção anti-estouro em telas de qualquer proporção (incluindo tablet Samsung Galaxy Tab S10 FE+).
 - **Tela de Splash (Splash Screen)**: inicialização com logotipo vetorial pulsante, barra de progresso animada, status dinâmico do boot e versão do app. Transição com fade-out suave e integração nativa com o Capacitor no Android.

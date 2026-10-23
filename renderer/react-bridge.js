@@ -93,7 +93,7 @@ act.simulado = () => { closeDash(); if (typeof closeHome === 'function') closeHo
 act.help = () => (window.MCReact ? window.MCReact.openShortcuts() : setStatus('A ajuda de atalhos precisa da interface React.'));
 /** Manual de uso (Ajuda → Manual de uso); `section` abre direto numa seção (ver core/manual.js). */
 act.manual = (section) => (window.MCReact ? window.MCReact.openManual(typeof section === 'string' ? section : undefined) : setStatus('O manual precisa da interface React.'));
-// qualquer botão com data-manual="<seção>" ("? Como usar") abre o manual naquela seção; vale para telas clássicas e React
+// qualquer botão com data-manual="<seção>" ("Como usar?") abre o manual naquela seção; vale para telas clássicas e React
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-manual]'); if (b) { e.preventDefault(); e.stopPropagation(); act.manual(b.dataset.manual); } }, true);
 
 // ---------- tela inicial ----------
