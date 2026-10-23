@@ -744,6 +744,8 @@ window.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) presentStep(1);
     else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) presentStep(-1);
+    else if (e.key === 'Home') presentStep(-9999);
+    else if (e.key === 'End') presentStep(9999);
     else if (e.key === 'Escape' || e.key === 'F5') stopPresent();
     return;
   }

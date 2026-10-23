@@ -201,26 +201,29 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
                   {t.title}
                 </span>
                 <button
+                  className="media-tab-close"
                   onClick={(e) => closeTab(t.id, e)}
-                  title="Fechar esta aba"
-                  aria-label="Fechar aba"
+                  title={`Fechar aba ${t.title}`}
+                  aria-label={`Fechar aba ${t.title}`}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '16px',
-                    height: '16px',
+                    width: '20px',
+                    height: '20px',
                     borderRadius: '50%',
                     border: 'none',
                     background: 'transparent',
                     color: 'inherit',
-                    opacity: 0.65,
+                    opacity: 0.7,
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     padding: 0,
+                    marginLeft: '2px',
+                    transition: 'all 0.15s ease',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.color = '#ef4444'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.65'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'inherit'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'inherit'; }}
                 >
                   ✕
                 </button>
@@ -360,13 +363,13 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
 
             {/* Ações Rápidas */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button className="btn small primary" onClick={() => addTab('pdf')}>
+              <button className="btn small primary" onClick={() => addTab('pdf')} title="Abrir PDF (Ctrl+Shift+P)">
                 📄 Abrir PDF
               </button>
-              <button className="btn small primary" onClick={() => addTab('video')}>
+              <button className="btn small primary" onClick={() => addTab('video')} title="Abrir Videoaula (Ctrl+Shift+V)">
                 🎬 Abrir Vídeo
               </button>
-              <button className="btn small primary" onClick={() => addTab('browser')}>
+              <button className="btn small primary" onClick={() => addTab('browser')} title="Abrir Navegador Web (Ctrl+Shift+W)">
                 🌐 Navegador Web
               </button>
             </div>

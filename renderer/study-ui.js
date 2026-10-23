@@ -14,7 +14,7 @@ const pctTxt = (v) => (v == null ? '—' : `${Math.round(v * 10) / 10}%`.replace
 function msg(text, kind) {
   const m = $('#studyMsg'); if (!m) return;
   m.textContent = text || ''; m.className = 'msg' + (kind ? ' ' + kind : '');
-  if (text && kind === 'err') setStatus(text);
+  if (text) setStatus(text);
 }
 
 // ---------- executa uma ação de estudo (uma única ação desfazível; erro de validação não altera nada) ----------

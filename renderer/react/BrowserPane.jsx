@@ -170,7 +170,11 @@ export function BrowserPane({ initialUrl, onClose }) {
           type="text"
           value={addressBar}
           onChange={(e) => setAddressBar(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') navigateTo(addressBar); }}
+          onFocus={(e) => e.target.select()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') navigateTo(addressBar);
+            else if (e.key === 'Escape') setAddressBar(currentUrl);
+          }}
           placeholder="Digite a URL ou pesquise na web…"
           style={{ flex: 1, height: '26px', padding: '0 8px', fontSize: '12px', background: 'var(--bg-field)', border: '1px solid var(--line-soft)', borderRadius: '4px', color: 'var(--text)' }}
         />
