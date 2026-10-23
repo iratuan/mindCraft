@@ -14,7 +14,7 @@ const run = (cmd, args, opts = {}) => { const r = spawnSync(cmd, args, { stdio: 
 
 // JDK íntegro (mesma regra do gradle.js)
 function pickJdk() {
-  const cands = [process.env.MINDCRAFT_JAVA_HOME, process.env.JAVA_HOME, 'C:\\Ambiente\\Android Studio\\jbr', 'C:\\Program Files\\Android\\Android Studio\\jbr'].filter(Boolean);
+  const cands = [process.env.MINDCRAFT_JAVA_HOME, process.env.JAVA_HOME, 'C:\\Ambiente\\Android Studio\\jbr', 'C:\\Program Files\\Android\\Android Studio\\jbr', 'C:\\Ambiente\\jdk21'].filter(Boolean);
   const j = cands.find((h) => fs.existsSync(path.join(h, 'lib', 'tzdb.dat')) && fs.existsSync(path.join(h, 'bin')));
   if (!j) { console.error('Nenhum JDK íntegro encontrado. Instale o Android Studio ou defina MINDCRAFT_JAVA_HOME.'); process.exit(2); } return j;
 }
