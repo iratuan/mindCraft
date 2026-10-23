@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { H, useMcRender } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 
 const BOOKMARK_CATEGORIES = [
   {
@@ -179,10 +180,18 @@ export function BrowserPane({ initialUrl, onClose }) {
     <div className="browser-pane" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-panel)' }}>
       {/* Barra de Navegação */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', background: 'var(--bg-bar)', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
-        <button className="icon-btn sm" onClick={goBack} disabled={!canGoBack} title="Voltar página">◀</button>
-        <button className="icon-btn sm" onClick={goForward} disabled={!canGoForward} title="Avançar página">▶</button>
-        <button className="icon-btn sm" onClick={reload} title="Recarregar página">{isLoading ? '⏳' : '↻'}</button>
-        <button className="icon-btn sm" onClick={() => navigateTo('https://www.google.com')} title="Página inicial">🏠</button>
+        <button className="icon-btn sm" onClick={goBack} disabled={!canGoBack} title="Voltar página">
+          <FlatIcon name="arrowLeft" size={13} />
+        </button>
+        <button className="icon-btn sm" onClick={goForward} disabled={!canGoForward} title="Avançar página">
+          <FlatIcon name="arrowRight" size={13} />
+        </button>
+        <button className="icon-btn sm" onClick={reload} title="Recarregar página">
+          <FlatIcon name="refresh" size={13} />
+        </button>
+        <button className="icon-btn sm" onClick={() => navigateTo('https://www.google.com')} title="Página inicial">
+          <FlatIcon name="home" size={14} />
+        </button>
 
         {/* Menu Suspenso de Favoritos por Categoria */}
         <select
@@ -209,7 +218,7 @@ export function BrowserPane({ initialUrl, onClose }) {
             flexShrink: 0,
           }}
         >
-          <option value="">⭐ Favoritos…</option>
+          <option value="">Favoritos…</option>
           {BOOKMARK_CATEGORIES.map((cat) => (
             <optgroup key={cat.label} label={cat.label}>
               {cat.items.map((it) => (
@@ -239,9 +248,9 @@ export function BrowserPane({ initialUrl, onClose }) {
           className="btn small"
           onClick={openExternal}
           title="Abrir esta página no navegador padrão do sistema"
-          style={{ whiteSpace: 'nowrap' }}
+          style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}
         >
-          ↗ Abrir fora
+          <FlatIcon name="external" size={13} style={{ marginRight: '5px' }} /> Abrir fora
         </button>
         <button
           className="btn small"
@@ -256,16 +265,16 @@ export function BrowserPane({ initialUrl, onClose }) {
             }
           }}
           title="Fechar esta aba do navegador"
-          style={{ color: '#ef4444' }}
+          style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}
         >
-          ✕ Fechar Aba
+          <FlatIcon name="close" size={12} style={{ marginRight: '4px' }} /> Fechar Aba
         </button>
       </div>
 
       {/* Aviso de fallback para CSP/X-Frame-Options quando em iframe */}
       {!isElectron && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 10px', background: 'rgba(234, 179, 8, 0.12)', borderBottom: '1px solid rgba(234, 179, 8, 0.25)', fontSize: '11px', color: 'var(--text)' }}>
-          <span>ℹ Se o site bloquear exibição integrada (CSP/X-Frame-Options), use <b>↗ Abrir fora</b>.</span>
+          <span>ℹ Se o site bloquear exibição integrada (CSP/X-Frame-Options), use <b>Abrir fora</b>.</span>
           <button className="link" onClick={openExternal} style={{ fontSize: '11px', cursor: 'pointer' }}>Abrir no navegador</button>
         </div>
       )}
@@ -298,15 +307,17 @@ export function BrowserPane({ initialUrl, onClose }) {
             className="btn small primary"
             onClick={createTopicFromPage}
             title="Cria um subtópico com o título e endereço desta página"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
           >
-            ＋ Criar subtópico desta página
+            <FlatIcon name="plus" size={13} style={{ marginRight: '5px' }} /> Criar subtópico desta página
           </button>
           <button
             className="btn small"
             onClick={linkUrlToSelected}
             title="Adiciona o link da página atual nas notas do tópico selecionado"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
           >
-            📌 Vincular URL ao tópico
+            <FlatIcon name="pin" size={13} style={{ marginRight: '5px' }} /> Vincular URL ao tópico
           </button>
           {selNode && (
             <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>

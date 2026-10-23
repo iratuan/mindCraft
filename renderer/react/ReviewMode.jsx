@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { H, useEscape } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 
 /**
  * Revisão do dia — recordação ativa: mostra só o TÓPICO (a "pergunta"); você tenta lembrar e só então revela as anotações.
@@ -62,7 +63,17 @@ export function ReviewMode({ onClose }) {
             {!hasDetail && <div className="muted">Este tópico não tem anotações.</div>}
             {node && (node.notes || '').trim() && <div className="md" dangerouslySetInnerHTML={{ __html: h.mdToHtml(node.notes) }} />}
             {errs.length > 0 && <div className="rv-errs" id="rvErrs"><b>{`Seus erros neste tópico (${errs.length})`}</b>{errs.slice(-5).reverse().map((e, k) => <div key={k}>{`• ${h.S.ERR_REASONS[e.why]}${e.note ? ' — ' + e.note : ''}`}</div>)}</div>}
-            {refs.map((r, k) => { const p = pdfs.find((x) => x.id === r.pdf); return <button className="ref-open" key={k} onClick={() => h.pdfOpenRef(r)}><b>{`📖 ${p ? p.name : 'PDF'}, p. ${r.page}`}</b></button>; })}
+            {refs.map((r, k) => {
+              const p = pdfs.find((x) => x.id === r.pdf);
+              return (
+                <button className="ref-open" key={k} onClick={() => h.pdfOpenRef(r)}>
+                  <b style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <FlatIcon name="pdf" size={12} style={{ marginRight: '5px' }} />
+                    {`${p ? p.name : 'PDF'}, p. ${r.page}`}
+                  </b>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

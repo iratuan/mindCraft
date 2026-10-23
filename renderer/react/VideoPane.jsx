@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { H, useMcRender } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 import {
   parseTimestamp,
   formatTimestamp,
@@ -173,11 +174,11 @@ export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
     <div className="video-pane" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-panel)' }}>
       {/* Barra de Ferramentas do Vídeo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', background: 'var(--bg-bar)', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
-        <button className="btn small" onClick={openLocalVideo} title="Abrir arquivo de vídeo do computador">
-          📂 Abrir Vídeo…
+        <button className="btn small" onClick={openLocalVideo} title="Abrir arquivo de vídeo do computador" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <FlatIcon name="folder" size={13} style={{ marginRight: '5px' }} /> Abrir Vídeo…
         </button>
-        <button className="btn small" onClick={() => setShowUrlDialog((v) => !v)} title="Assistir vídeo do YouTube ou link web">
-          🔗 YouTube / URL
+        <button className="btn small" onClick={() => setShowUrlDialog((v) => !v)} title="Assistir vídeo do YouTube ou link web" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <FlatIcon name="link" size={13} style={{ marginRight: '5px' }} /> YouTube / URL
         </button>
         {videoSrc && (
           <button
@@ -190,9 +191,9 @@ export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
               say('Vídeo fechado.');
             }}
             title="Fechar vídeo atual e descarregar reprodução"
-            style={{ color: '#ef4444' }}
+            style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}
           >
-            ✕ Fechar Vídeo
+            <FlatIcon name="close" size={12} style={{ marginRight: '4px' }} /> Fechar Vídeo
           </button>
         )}
 
@@ -233,7 +234,9 @@ export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
             style={{ flex: 1, height: '26px', padding: '0 8px', fontSize: '12px', background: 'var(--bg-field)', border: '1px solid var(--line-soft)', color: 'var(--text)', borderRadius: '4px' }}
           />
           <button className="btn small primary" onClick={confirmUrl}>Carregar</button>
-          <button className="btn small" onClick={() => setShowUrlDialog(false)}>✕</button>
+          <button className="btn small" onClick={() => setShowUrlDialog(false)} aria-label="Fechar" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="close" size={12} />
+          </button>
         </div>
       )}
 
@@ -241,14 +244,31 @@ export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
       <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {!videoSrc ? (
           <div style={{ textAlign: 'center', color: '#aaa', padding: '20px' }}>
-            <div style={{ fontSize: '38px', marginBottom: '8px' }}>🎬</div>
+            <div
+              style={{
+                display: 'grid',
+                placeItems: 'center',
+                width: '56px',
+                height: '56px',
+                borderRadius: '14px',
+                background: 'rgba(255,255,255,0.06)',
+                color: 'var(--accent)',
+                margin: '0 auto 12px auto',
+              }}
+            >
+              <FlatIcon name="video" size={30} />
+            </div>
             <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px' }}>Player de Videoaulas</div>
             <div style={{ fontSize: '12px', maxWidth: '300px', lineHeight: 1.4, color: '#888' }}>
               Abra um vídeo local ou cole um link do YouTube para estudar acompanhando o mapa mental.
             </div>
             <div style={{ marginTop: '14px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-              <button className="btn small primary" onClick={openLocalVideo}>📂 Abrir do disco</button>
-              <button className="btn small" onClick={() => setShowUrlDialog(true)}>🔗 YouTube / Link</button>
+              <button className="btn small primary" onClick={openLocalVideo} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <FlatIcon name="folder" size={13} style={{ marginRight: '5px' }} /> Abrir do disco
+              </button>
+              <button className="btn small" onClick={() => setShowUrlDialog(true)} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <FlatIcon name="link" size={13} style={{ marginRight: '5px' }} /> YouTube / Link
+              </button>
             </div>
           </div>
         ) : isYt ? (
@@ -278,15 +298,17 @@ export function VideoPane({ initialSrc, initialName, initialTime, onClose }) {
             className="btn small primary"
             onClick={captureInstantAsChild}
             title="Cria um novo tópico filho do selecionado gravando este minuto exato do vídeo"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
           >
-            ＋ Tópico em {formatTimestamp(currentTime)}
+            <FlatIcon name="plus" size={13} style={{ marginRight: '5px' }} /> Tópico em {formatTimestamp(currentTime)}
           </button>
           <button
             className="btn small"
             onClick={linkInstantToSelected}
             title="Vincula este instante ao tópico já selecionado no mapa"
+            style={{ display: 'inline-flex', alignItems: 'center' }}
           >
-            📌 Vincular ao tópico
+            <FlatIcon name="pin" size={13} style={{ marginRight: '5px' }} /> Vincular ao tópico
           </button>
           {currentRef && (
             <span style={{ fontSize: '11px', color: 'var(--accent)', marginLeft: '4px' }}>

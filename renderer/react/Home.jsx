@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { H } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 
 const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 const WEEK = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
@@ -63,18 +64,31 @@ export function Home({ onClose }) {
     window.addEventListener('keydown', f); return () => window.removeEventListener('keydown', f);
   }, [onClose]);
 
-  const Big = ({ id, icon, title, sub, onClick, primary }) => <button className={'hm-big' + (primary ? ' primary' : '')} id={id} onClick={onClick}><span className="hm-ico">{icon}</span><b>{title}</b><small>{sub}</small></button>;
+  const Big = ({ id, icon, title, sub, onClick, primary }) => (
+    <button className={'hm-big' + (primary ? ' primary' : '')} id={id} onClick={onClick}>
+      <span className="hm-ico">
+        {typeof icon === 'string' && icon.length > 2 ? <FlatIcon name={icon} size={24} /> : icon}
+      </span>
+      <b>{title}</b>
+      <small>{sub}</small>
+    </button>
+  );
 
   return (
     <div className="hm" data-ui="react">
       <div className="hm-head">
         <div><h1>{`${greet()}!`}</h1><div className="sub">{`${WEEK[today.getDay()].replace(/^./, (c) => c.toUpperCase())}, ${today.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`}</div></div>
-        <span className="hm-headbtns"><button className="btn" id="hmManual" data-manual="primeiros-passos" title="Manual de uso: como usar cada funcionalidade">📘 Manual</button><button className="btn" id="hmClose" onClick={onClose}>Fechar (Esc)</button></span>
+        <span className="hm-headbtns">
+          <button className="btn" id="hmManual" data-manual="primeiros-passos" title="Manual de uso: como usar cada funcionalidade" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="book" size={13} style={{ marginRight: '5px' }} /> Manual
+          </button>
+          <button className="btn" id="hmClose" onClick={onClose}>Fechar (Esc)</button>
+        </span>
       </div>
 
       {d.backup && d.backup.show && (
         <div className="hm-backup" id="hmBackupBanner" role="alert">
-          <span className="hm-ico">🛡</span>
+          <span className="hm-ico"><FlatIcon name="shield" size={24} /></span>
           <div className="grow"><b>Faça uma cópia de segurança</b><div>{d.backup.text} Guarde o arquivo <b>fora deste aparelho</b> (nuvem, pendrive ou outro computador).</div></div>
           <button className="btn primary" id="hmBackupNow" onClick={act(async () => { if (await A.backupNow()) refresh(); })}>Fazer cópia agora</button>
           <button className="btn" id="hmBackupLater" title="Lembrar de novo em 3 dias" onClick={() => { A.backupSnooze(); refresh(); }}>Lembrar depois</button>
@@ -92,17 +106,17 @@ export function Home({ onClose }) {
       <Glance g={d.glance} collapsed={cfg.glanceCollapsed === true} onToggle={() => { h.saveCfg({ glanceCollapsed: cfg.glanceCollapsed !== true }); refresh(); }} onReview={act(A.review)} onDash={act(async () => { onClose(); h.actions.openDash && h.actions.openDash(); })} />
 
       <div className="hm-actions">
-        <Big id="hmNew" icon="＋" title="Novo mapa" sub="em branco" onClick={act(A.newBlank)} primary={!d.last} />
-        <Big id="hmTemplate" icon="🎯" title="Novo mapa de concurso" sub="modelo com disciplinas" onClick={act(A.newTemplate)} />
-        <Big id="hmCsv" icon="🤖" title="Importar edital (CSV da IA)" sub="esqueleto pronto" onClick={act(A.openCsv)} />
-        <Big id="hmEdital" icon="📋" title="Colar o edital" sub="texto vira tópicos" onClick={act(A.openEdital)} />
-        <Big id="hmOpen" icon="📂" title="Abrir arquivo…" sub=".mom, .md, .opml" onClick={act(A.openFile)} />
-        <Big id="hmLib" icon="🗄" title="Biblioteca de mapas" sub="todos os seus mapas" onClick={act(A.openLibrary)} />
-        <Big id="hmPdf" icon="📖" title="Ler um PDF" sub="ao lado do mapa" onClick={act(A.openPdf)} />
-        <Big id="hmSim" icon="📝" title="Registrar simulado" sub="nota por disciplina" onClick={act(A.simulado)} />
-        <Big id="hmReview" icon="🧠" title="Revisão do dia" sub={d.dueHere ? `${d.dueHere} vencida(s) neste mapa` : 'recordação ativa'} onClick={act(A.review)} />
-        <Big id="hmBackup" icon="🛡" title="Cópia de segurança" sub="pacote .mcpack com tudo" onClick={act(async () => { if (await A.backupNow()) refresh(); })} />
-        <Big id="hmRestore" icon="♻" title="Restaurar cópia" sub="de um pacote .mcpack" onClick={act(async () => { if (await A.restorePack()) refresh(); })} />
+        <Big id="hmNew" icon="plus" title="Novo mapa" sub="em branco" onClick={act(A.newBlank)} primary={!d.last} />
+        <Big id="hmTemplate" icon="target" title="Novo mapa de concurso" sub="modelo com disciplinas" onClick={act(A.newTemplate)} />
+        <Big id="hmCsv" icon="robot" title="Importar edital (CSV da IA)" sub="esqueleto pronto" onClick={act(A.openCsv)} />
+        <Big id="hmEdital" icon="clipboard" title="Colar o edital" sub="texto vira tópicos" onClick={act(A.openEdital)} />
+        <Big id="hmOpen" icon="folder" title="Abrir arquivo…" sub=".mom, .md, .opml" onClick={act(A.openFile)} />
+        <Big id="hmLib" icon="archive" title="Biblioteca de mapas" sub="todos os seus mapas" onClick={act(A.openLibrary)} />
+        <Big id="hmPdf" icon="book" title="Ler um PDF" sub="ao lado do mapa" onClick={act(A.openPdf)} />
+        <Big id="hmSim" icon="edit" title="Registrar simulado" sub="nota por disciplina" onClick={act(A.simulado)} />
+        <Big id="hmReview" icon="brain" title="Revisão do dia" sub={d.dueHere ? `${d.dueHere} vencida(s) neste mapa` : 'recordação ativa'} onClick={act(A.review)} />
+        <Big id="hmBackup" icon="shield" title="Cópia de segurança" sub="pacote .mcpack com tudo" onClick={act(async () => { if (await A.backupNow()) refresh(); })} />
+        <Big id="hmRestore" icon="restore" title="Restaurar cópia" sub="de um pacote .mcpack" onClick={act(async () => { if (await A.restorePack()) refresh(); })} />
       </div>
 
       <div className="hm-cols">

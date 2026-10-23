@@ -1,4 +1,5 @@
 import { H } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 
 /** Linha de conexão (mesma estrutura de lkRow na versão clássica). */
 function Row({ r, onClick, children }) {
@@ -75,10 +76,15 @@ export function RefsBox() {
         return (
           <div className="ref-row" key={i} data-ref={i}>
             <button className="ref-open" title="Abrir o PDF nesta página" onClick={() => h.pdfOpenRef(r)}>
-              <b>{`📖 ${p ? p.name : 'PDF não vinculado'}, p. ${r.page}`}</b>
+              <b style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <FlatIcon name="pdf" size={12} style={{ marginRight: '5px' }} />
+                {`${p ? p.name : 'PDF não vinculado'}, p. ${r.page}`}
+              </b>
               {r.quote ? <span>{`“${r.quote.length > 140 ? r.quote.slice(0, 139) + '…' : r.quote}”`}</span> : null}
             </button>
-            <button className="ref-del" title="Remover esta fonte" onClick={() => h.removeRef(sel.node.id, i)}>✕</button>
+            <button className="ref-del" title="Remover esta fonte" onClick={() => h.removeRef(sel.node.id, i)} aria-label="Remover fonte" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FlatIcon name="close" size={11} />
+            </button>
           </div>
         );
       })}

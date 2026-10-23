@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { H, useMcRender } from './hooks.js';
 import { loadPdf, pageText, norm } from './pdfEngine.js';
 import { PdfPage } from './PdfPage.jsx';
+import { FlatIcon } from './FlatIcon.jsx';
 
 const STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 const shorten = (s, n = 110) => (s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…');
@@ -164,7 +165,9 @@ export function PdfPane({ initial, onClose }) {
           {pdfs.map((p) => <option key={p.id} value={p.path}>{p.name}</option>)}
         </select>
         <button className="btn small" id="pdfHelp" data-manual="pdf" title="Manual: como usar o leitor de PDF" aria-label="Ajuda do leitor de PDF">?</button>
-        <button className="btn small" id="pdfOpen" onClick={onOpen}>Abrir PDF…</button>
+        <button className="btn small" id="pdfOpen" onClick={onOpen} style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <FlatIcon name="pdf" size={13} style={{ marginRight: '5px' }} /> Abrir PDF…
+        </button>
         {(doc || src) && (
           <button
             className="btn small"
@@ -176,23 +179,29 @@ export function PdfPane({ initial, onClose }) {
               setMsg('PDF fechado.');
             }}
             title="Fechar PDF atual e descarregar da memória"
-            style={{ color: '#ef4444' }}
+            style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center' }}
           >
-            ✕ Fechar PDF
+            <FlatIcon name="close" size={12} style={{ marginRight: '4px' }} /> Fechar PDF
           </button>
         )}
-        <button className="btn small" id="pdfClose" onClick={onClose} title="Fechar o leitor (Ctrl+Shift+P)">✕</button>
+        <button className="btn small" id="pdfClose" onClick={onClose} title="Fechar o leitor (Ctrl+Shift+P)" aria-label="Fechar leitor" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          <FlatIcon name="close" size={12} />
+        </button>
       </div>
       {doc && (
         <div className="pdf-bar">
-          <button className="btn small" id="pdfPrev" disabled={page <= 1} onClick={() => { goPage(page - 1, true); }}>‹</button>
+          <button className="btn small" id="pdfPrev" disabled={page <= 1} onClick={() => { goPage(page - 1, true); }} aria-label="Página anterior" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="arrowLeft" size={11} />
+          </button>
           <input id="pdfPageNum" type="text" inputMode="numeric" value={pageIn} onChange={(e) => setPageIn(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { const n = Math.max(1, Math.min(doc.numPages, parseInt(pageIn, 10) || 1)); goPage(n); setPage(n); setPageIn(String(n)); } }} aria-label="Página" />
           <span className="muted" id="pdfPageCount">{`/ ${doc.numPages}`}</span>
-          <button className="btn small" id="pdfNext" disabled={page >= doc.numPages} onClick={() => { goPage(page + 1, true); }}>›</button>
+          <button className="btn small" id="pdfNext" disabled={page >= doc.numPages} onClick={() => { goPage(page + 1, true); }} aria-label="Próxima página" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="arrowRight" size={11} />
+          </button>
           <span className="sep" />
-          <button className="btn small" id="pdfZoomOut" onClick={() => zoom(-1)} title="Diminuir">−</button>
+          <button className="btn small" id="pdfZoomOut" onClick={() => zoom(-1)} title="Diminuir" style={{ fontWeight: 600 }}>−</button>
           <button className={'btn small' + (mode === 'fit' ? ' primary' : '')} id="pdfFit" onClick={() => { setMode('fit'); h.saveCfg({ pdfScale: 'fit' }); }} title="Ajustar à largura">{`${Math.round(scale * 100)}%`}</button>
-          <button className="btn small" id="pdfZoomIn" onClick={() => zoom(1)} title="Aumentar">+</button>
+          <button className="btn small" id="pdfZoomIn" onClick={() => zoom(1)} title="Aumentar" style={{ fontWeight: 600 }}>+</button>
           <span className="sep" />
           <input id="pdfFind" type="search" placeholder="Buscar no PDF…" value={query} onChange={(e) => { setQuery(e.target.value); findFrom.current = 0; }} onKeyDown={(e) => { if (e.key === 'Enter') find(false); }} />
         </div>
@@ -201,14 +210,25 @@ export function PdfPane({ initial, onClose }) {
         <div className="pdf-chips" id="pdfChips"><span className="muted">Tópicos nesta página:</span>{chips.map((n) => <button key={n.id} className="chip2" data-node={n.id} onClick={() => h.goTo(n.id)} title="Ir ao tópico no mapa">{shorten(n.title, 36)}</button>)}</div>
       )}
       {err && <div className="pdf-err" id="pdfErr"><div>{err}</div>{src && /não encontrado/i.test(err) && <button className="btn small primary" id="pdfRelink" onClick={onRelink}>Localizar o PDF…</button>}</div>}
-      {!src && !err && <div className="pdf-empty" id="pdfEmpty">Abra um PDF para ler ao lado do mapa. Selecione um trecho para criar um tópico ou anotar, com a página e o destaque.<br /><button className="btn primary" id="pdfOpen2" onClick={onOpen}>Abrir PDF…</button></div>}
+      {!src && !err && (
+        <div className="pdf-empty" id="pdfEmpty">
+          Abra um PDF para ler ao lado do mapa. Selecione um trecho para criar um tópico ou anotar, com a página e o destaque.<br />
+          <button className="btn primary" id="pdfOpen2" onClick={onOpen} style={{ display: 'inline-flex', alignItems: 'center', marginTop: '10px' }}>
+            <FlatIcon name="pdf" size={14} style={{ marginRight: '6px' }} /> Abrir PDF…
+          </button>
+        </div>
+      )}
       <div className="pdf-scroll" id="pdfScroll" ref={scroller} onScroll={onScroll} onMouseUp={onMouseUp} onMouseDown={() => setSel(null)} onClick={onClickPage}>
         {doc && pageList.map((n) => <PdfPage key={n} doc={doc} num={n} scale={scale} base={base} root={scroller} hl={highlights.get(n) || []} />)}
       </div>
       {sel && (
         <div className="pdf-sel" id="pdfSel2" style={{ left: sel.x, top: sel.y }} onMouseDown={(e) => e.preventDefault()}>
-          <button className="btn small primary" id="pdfMkTopic" onClick={() => capture('topic')} title="Cria um tópico filho do selecionado com este trecho">＋ Tópico</button>
-          <button className="btn small" id="pdfMkNote" onClick={() => capture('note')} title="Acrescenta o trecho às notas do tópico selecionado">＋ Nota</button>
+          <button className="btn small primary" id="pdfMkTopic" onClick={() => capture('topic')} title="Cria um tópico filho do selecionado com este trecho" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="plus" size={12} style={{ marginRight: '4px' }} /> Tópico
+          </button>
+          <button className="btn small" id="pdfMkNote" onClick={() => capture('note')} title="Acrescenta o trecho às notas do tópico selecionado" style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="plus" size={12} style={{ marginRight: '4px' }} /> Nota
+          </button>
         </div>
       )}
       <div className="pdf-msg" id="pdfMsg" role="status">{msg}</div>

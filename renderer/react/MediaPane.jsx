@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { H, useMcRender } from './hooks.js';
+import { FlatIcon } from './FlatIcon.jsx';
 import { PdfPane } from './PdfPane.jsx';
 import { VideoPane } from './VideoPane.jsx';
 import { BrowserPane } from './BrowserPane.jsx';
@@ -171,7 +172,6 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1, minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {tabs.map((t) => {
             const isActive = t.id === activeTabId;
-            const icon = t.type === 'pdf' ? '📄' : t.type === 'video' ? '🎬' : '🌐';
             return (
               <div
                 key={t.id}
@@ -196,7 +196,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
                   userSelect: 'none',
                 }}
               >
-                <span>{icon}</span>
+                <FlatIcon name={t.type} size={14} style={{ color: isActive ? 'var(--accent)' : 'inherit' }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {t.title}
                 </span>
@@ -217,7 +217,6 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
                     color: 'inherit',
                     opacity: 0.7,
                     cursor: 'pointer',
-                    fontSize: '12px',
                     padding: 0,
                     marginLeft: '2px',
                     transition: 'all 0.15s ease',
@@ -225,7 +224,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
                   onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.color = '#ef4444'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'inherit'; }}
                 >
-                  ✕
+                  <FlatIcon name="close" size={11} />
                 </button>
               </div>
             );
@@ -239,9 +238,9 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
             onClick={() => setShowAddMenu((v) => !v)}
             title="Abrir nova aba de estudo"
             aria-label="Nova aba"
-            style={{ width: '26px', height: '26px', fontWeight: 700 }}
+            style={{ width: '26px', height: '26px' }}
           >
-            ＋
+            <FlatIcon name="plus" size={14} />
           </button>
           {showAddMenu && (
             <div
@@ -263,24 +262,24 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
             >
               <button
                 className="btn small"
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                style={{ textAlign: 'left', justifyContent: 'flex-start', display: 'flex', alignItems: 'center' }}
                 onClick={() => addTab('pdf')}
               >
-                📄 Novo PDF
+                <FlatIcon name="pdf" size={14} style={{ marginRight: '6px' }} /> Novo PDF
               </button>
               <button
                 className="btn small"
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                style={{ textAlign: 'left', justifyContent: 'flex-start', display: 'flex', alignItems: 'center' }}
                 onClick={() => addTab('video')}
               >
-                🎬 Nova Videoaula
+                <FlatIcon name="video" size={14} style={{ marginRight: '6px' }} /> Nova Videoaula
               </button>
               <button
                 className="btn small"
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
+                style={{ textAlign: 'left', justifyContent: 'flex-start', display: 'flex', alignItems: 'center' }}
                 onClick={() => addTab('browser')}
               >
-                🌐 Nova Aba Web
+                <FlatIcon name="browser" size={14} style={{ marginRight: '6px' }} /> Nova Aba Web
               </button>
             </div>
           )}
@@ -303,7 +302,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
           aria-label="Fechar bancada"
           style={{ width: '26px', height: '26px' }}
         >
-          ✕
+          <FlatIcon name="close" size={13} />
         </button>
       </div>
 
@@ -353,7 +352,19 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
               gap: '16px',
             }}
           >
-            <div style={{ fontSize: '42px', opacity: 0.85 }}>📚</div>
+            <div
+              style={{
+                display: 'grid',
+                placeItems: 'center',
+                width: '56px',
+                height: '56px',
+                borderRadius: '14px',
+                background: 'var(--accent-soft)',
+                color: 'var(--accent)',
+              }}
+            >
+              <FlatIcon name="study" size={30} />
+            </div>
             <div>
               <h3 style={{ margin: '0 0 6px 0', fontSize: '16px', fontWeight: 600 }}>Bancada de Estudos Integrada</h3>
               <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-dim)', maxWidth: '340px' }}>
@@ -364,13 +375,13 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
             {/* Ações Rápidas */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button className="btn small primary" onClick={() => addTab('pdf')} title="Abrir PDF (Ctrl+Shift+P)">
-                📄 Abrir PDF
+                <FlatIcon name="pdf" size={14} style={{ marginRight: '6px' }} /> Abrir PDF
               </button>
               <button className="btn small primary" onClick={() => addTab('video')} title="Abrir Videoaula (Ctrl+Shift+V)">
-                🎬 Abrir Vídeo
+                <FlatIcon name="video" size={14} style={{ marginRight: '6px' }} /> Abrir Vídeo
               </button>
               <button className="btn small primary" onClick={() => addTab('browser')} title="Abrir Navegador Web (Ctrl+Shift+W)">
-                🌐 Navegador Web
+                <FlatIcon name="browser" size={14} style={{ marginRight: '6px' }} /> Navegador Web
               </button>
             </div>
 
@@ -388,15 +399,15 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
                       style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '6px 10px' }}
                       onClick={() => addTab('pdf', { path: p.path, name: p.name })}
                     >
-                      📖 {p.name}
+                      <FlatIcon name="pdf" size={13} style={{ marginRight: '6px', color: 'var(--accent)' }} /> {p.name}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <button className="link" onClick={onClose} style={{ fontSize: '12px', marginTop: '8px' }}>
-              ✕ Fechar painel lateral
+            <button className="link" onClick={onClose} style={{ fontSize: '12px', marginTop: '8px', display: 'inline-flex', alignItems: 'center' }}>
+              <FlatIcon name="close" size={11} style={{ marginRight: '5px' }} /> Fechar painel lateral
             </button>
           </div>
         )}
