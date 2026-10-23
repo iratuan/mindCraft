@@ -267,6 +267,31 @@ const SECTIONS = [
         'PDF com senha ou só com imagem abre com aviso (sem texto não há o que selecionar).',
       ]],
     ] },
+  { id: 'video', group: 'Estudo', title: 'Player de videoaulas ao lado do mapa', summary: 'Assista a aulas locais ou do YouTube com marcação de tempo nos tópicos.',
+    keywords: 'video videoaula aula player youtube mp4 assistir timestamp tempo instante',
+    blocks: [
+      ['p', 'Abra com **Ctrl+Shift+V** ou pelo botão de vídeo na barra de ferramentas. O player divide a tela com o mapa mental para você estudar sem trocar de janela.', { only: 'desktop' }],
+      ['p', 'Abra pelo botão de vídeo na barra ou pelo menu. O player divide a tela com o mapa mental.', { only: 'touch' }],
+      ['ul', [
+        'Abra vídeos locais do computador (**MP4, WebM, MKV**) ou cole links do **YouTube** e endereços web.',
+        '**Controle de velocidade**: assista em 1.0x, 1.25x, 1.5x, 1.75x ou 2.0x para acelerar o estudo.',
+        '**＋ Tópico no instante**: cria um novo tópico filho com o carimbo exato de minutos e segundos (ex.: `[12:30]`), facilitando revisões futuras.',
+        '**📌 Vincular ao tópico**: associa o instante do vídeo ao tópico já selecionado no mapa.',
+        'Ao clicar no carimbo de tempo ou marcador do vídeo em um tópico, o player salta diretamente para aquele segundo da aula.',
+      ]],
+    ] },
+  { id: 'navegador', group: 'Estudo', title: 'Navegador web para estudo e questões', summary: 'Acesse sites de questões, lei seca e doutrina sem sair do mapa.',
+    keywords: 'navegador browser web internet questoes qconcursos tec planalto lei seca site link',
+    blocks: [
+      ['p', 'Abra com **Ctrl+Shift+W** ou pelo botão de navegador na barra de ferramentas. Permite resolver questões e consultar leis diretamente ao lado do mapa.', { only: 'desktop' }],
+      ['p', 'Abra pelo botão de navegador na barra de ferramentas. Permite consultar materiais e leis online.', { only: 'touch' }],
+      ['ul', [
+        '**Favoritos rápidos**: acesse diretamente a Constituição Federal, Códigos no Planalto e plataformas de questões com um clique.',
+        '**Sessão persistente**: mantém seus logins ativos para resolver questões sem precisar entrar novamente a cada abertura.',
+        '**＋ Criar subtópico desta página**: insere a página e sua URL como anexo do nó selecionado.',
+        '**📌 Vincular URL ao tópico**: grava o link da internet diretamente nas notas do tópico ativo.',
+      ]],
+    ] },
 
   // ------------------------------------------------------------------ sincronização / tablet
   { id: 'sincronizacao', group: 'Arquivos e dados', title: 'Sincronização opcional', summary: 'Mesma biblioteca no computador e no tablet.',

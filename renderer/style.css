@@ -43,17 +43,25 @@ button { cursor: pointer; }
 .icon-btn { display: grid; place-items: center; width: 28px; height: 28px; background: none; border: 0; border-radius: 6px; color: var(--text); }
 .icon-btn:hover { background: var(--bg-hover); }
 .icon-btn.sm { width: 22px; height: 22px; font-size: 15px; line-height: 1; }
+.close-map-btn { margin-left: 4px; color: var(--text-dim); transition: color 0.15s, background 0.15s; }
+.close-map-btn:hover { color: #ef4444 !important; background: rgba(239, 68, 68, 0.15) !important; }
 
-/* Barra de opções */
-#options { display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 12px; background: var(--bg-panel); border-bottom: 1px solid var(--line); }
-.opt-label { font-weight: 700; color: var(--text-strong); }
-.opt { display: flex; align-items: center; gap: 6px; color: var(--text-dim); }
-.opt select, #options input[type=color] { height: 24px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 4px; padding: 0 6px; color: var(--text); }
+/* Barra de opções (contextual e estritamente exclusiva) */
+#options { display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 12px; background: var(--bg-panel); border-bottom: 1px solid var(--line); overflow-x: auto; overflow-y: hidden; white-space: nowrap; scrollbar-width: none; }
+#options::-webkit-scrollbar { display: none; }
+#options[data-context="none"] { display: none !important; }
+.opt-group { display: none !important; align-items: center; gap: 10px; min-width: 0; flex-shrink: 0; }
+#options[data-context="topic"] #optTopic { display: flex !important; }
+#options[data-context="relation"] #optRel { display: flex !important; }
+#options[data-context="canvas"] #optCanvas { display: flex !important; }
+.opt-label { font-weight: 700; color: var(--text-strong); flex-shrink: 0; }
+.opt { display: flex; align-items: center; gap: 6px; color: var(--text-dim); flex-shrink: 0; }
+.opt select, #options input[type=color] { height: 24px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 4px; padding: 0 6px; color: var(--text); flex-shrink: 0; }
 #options input[type=color] { width: 32px; padding: 1px 2px; cursor: pointer; }
-.txt-btn { width: 26px; height: 24px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 4px; }
+.txt-btn { width: 26px; height: 24px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 4px; flex-shrink: 0; }
 .txt-btn:hover { background: var(--bg-hover); }
-.vsep { width: 1px; height: 18px; background: var(--line-soft); }
-.opt-hint { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vsep { width: 1px; height: 18px; background: var(--line-soft); flex-shrink: 0; }
+.opt-hint { color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 0; }
 
 /* Área central */
 #work { flex: 1; display: flex; min-height: 0; }
@@ -62,6 +70,7 @@ button { cursor: pointer; }
 .tool svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .tool:hover { background: var(--bg-hover); color: var(--text-strong); }
 .tool:active, body.relating .tool[data-act=relate] { background: var(--accent-soft); color: var(--accent-hover); box-shadow: inset 0 0 0 1px var(--accent); }
+.tool:disabled, .tool[aria-disabled="true"] { opacity: 0.28 !important; cursor: not-allowed !important; pointer-events: none !important; }
 .hsep { width: 24px; height: 1px; margin: 5px 0; background: var(--line-soft); }
 
 #stage { position: relative; flex: 1; overflow: hidden; background: var(--bg-stage); outline: none;
@@ -557,3 +566,87 @@ body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit, body.pres
 #pdfsplit, #panelsSplit { width: 12px; } #pdfsplit { margin-left: -6px; } #panelsSplit { margin-right: -5px; }
 #pdfsplit::after, #panelsSplit::after { width: 4px; height: 52px; margin: -26px 0 0 -2px; background: var(--text-dim); opacity: .55; }
 @media (pointer: coarse) { #panelsSplit { width: 18px; margin-right: -8px; } #pdfsplit { width: 22px; margin-left: -11px; } #pdfsplit::after, #panelsSplit::after { height: 64px; margin-top: -32px; } }
+
+/* ---------- Tela de Splash (Splash Screen) ---------- */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #1b2230 0%, #0d1117 100%);
+  color: #fff;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+  user-select: none;
+}
+.splash-screen.splash-hide {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.splash-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 380px;
+  padding: 30px;
+}
+.splash-logo {
+  filter: drop-shadow(0 8px 24px rgba(38, 128, 235, 0.45));
+  animation: splashPulse 2s ease-in-out infinite;
+}
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 8px 24px rgba(38, 128, 235, 0.45)); }
+  50% { transform: scale(1.04); filter: drop-shadow(0 12px 32px rgba(38, 128, 235, 0.7)); }
+}
+.splash-title {
+  margin-top: 18px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #f1f5f9;
+}
+.splash-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.splash-track {
+  width: 220px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  margin-top: 24px;
+  overflow: hidden;
+  position: relative;
+}
+.splash-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 45%;
+  background: linear-gradient(90deg, #2680eb, #38bdf8);
+  border-radius: 2px;
+  animation: splashIndeterminate 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes splashIndeterminate {
+  0% { left: -45%; width: 45%; }
+  50% { left: 30%; width: 60%; }
+  100% { left: 100%; width: 45%; }
+}
+.splash-status {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #64748b;
+  min-height: 18px;
+}
+.splash-foot {
+  margin-top: 28px;
+  font-size: 11px;
+  color: #475569;
+  letter-spacing: 0.5px;
+}

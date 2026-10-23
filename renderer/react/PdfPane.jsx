@@ -165,6 +165,22 @@ export function PdfPane({ initial, onClose }) {
         </select>
         <button className="btn small" id="pdfHelp" data-manual="pdf" title="Manual: como usar o leitor de PDF" aria-label="Ajuda do leitor de PDF">?</button>
         <button className="btn small" id="pdfOpen" onClick={onOpen}>Abrir PDF…</button>
+        {(doc || src) && (
+          <button
+            className="btn small"
+            id="pdfCloseDoc"
+            onClick={() => {
+              if (doc) doc.destroy();
+              setDoc(null);
+              setSrc(null);
+              setMsg('PDF fechado.');
+            }}
+            title="Fechar PDF atual e descarregar da memória"
+            style={{ color: '#ef4444' }}
+          >
+            ✕ Fechar PDF
+          </button>
+        )}
         <button className="btn small" id="pdfClose" onClick={onClose} title="Fechar o leitor (Ctrl+Shift+P)">✕</button>
       </div>
       {doc && (

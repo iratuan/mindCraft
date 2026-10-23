@@ -96,6 +96,8 @@ function buildMenu() {
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
       { label: 'Revisão do dia', accelerator: 'CmdOrCtrl+Shift+R', click: send('review') },
       { label: 'Leitor de PDF (dividir a tela)', accelerator: 'CmdOrCtrl+Shift+P', click: send('pdf') },
+      { label: 'Player de vídeo (videoaulas)', accelerator: 'CmdOrCtrl+Shift+V', click: send('video') },
+      { label: 'Navegador web (questões e leis)', accelerator: 'CmdOrCtrl+Shift+W', click: send('browser') },
       { type: 'separator' },
       { role: 'togglefullscreen', label: 'Tela cheia' },
       { role: 'toggleDevTools', label: 'Ferramentas de desenvolvedor' },
@@ -112,7 +114,7 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1280, height: 800, minWidth: 720, minHeight: 480, title: 'MindCraft', backgroundColor: '#f3f7ff',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
-    webPreferences: { nodeIntegration: true, contextIsolation: false },
+    webPreferences: { nodeIntegration: true, contextIsolation: false, webviewTag: true },
   });
   // a janela só mostra o app: soltar um arquivo ou clicar num link nunca a leva para outra página (perderia o trabalho aberto)
   win.webContents.on('will-navigate', (e) => e.preventDefault());

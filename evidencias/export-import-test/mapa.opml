@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head><title>Direito Constitucional — Controle de Constitucionalidade</title></head>
+  <body>
+    <outline text="Direito Constitucional — Controle de Constitucionalidade" _note="Visão geral do controle de constitucionalidade no direito brasileiro.">
+      <outline text="Controle Difuso (Concreto)" _note="# Regras Fundamentais
+- Qualquer juiz ou tribunal competente
+- Cláusula de reserva de plenário (Art. 97 CF)
+- Efeitos inter partes (com exceção de suspensão pelo Senado)">
+        <outline text="Cláusula de Reserva de Plenário" _note="Súmula Vinculante 10: Viola a cláusula a decisão de órgão fracionário que afasta a incidência da lei sem declarar expressamente a inconstitucionalidade."/>
+      </outline>
+      <outline text="Controle Concentrado (Abstrato)">
+        <outline text="Ação Direta de Inconstitucionalidade (ADI)"/>
+        <outline text="Arguição de Descumprimento de Preceito Fundamental (ADPF)" _note="Princípio da subsidiariedade: só cabe se não houver outro meio eficaz de sanar a lesividade."/>
+      </outline>
+    </outline>
+  </body>
+</opml>

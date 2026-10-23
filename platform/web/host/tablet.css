@@ -67,5 +67,10 @@ html[data-host="web"] body:has(#graph:not([hidden])) #mcTouchBar { display: none
 /* reordenar: no tablet vale a barra flutuante (▲ ▼ ◀ ▶); a barra lateral já está no limite de altura */
 html[data-host="web"] #rail .tool-reorder { display: none; }
 
-/* botões da barra flutuante desativados (ex.: recolher sem subtópicos) ficam apagados e não respondem */
+/* mídias de estudo no tablet: acessíveis nas abas do painel lateral e no menu ☰; esconde do #rail para não estourar altura em 720/744dp */
+html[data-host="web"] #rail [data-act="video"],
+html[data-host="web"] #rail [data-act="browser"] { display: none; }
+
+/* botões da barra flutuante com ícones flat vetoriais e estado desativado nítido */
+#mcTouchBar button svg { display: block; width: 22px; height: 22px; stroke: currentColor; pointer-events: none; }
 html[data-host="web"] #mcTouchBar button:disabled { opacity: .35; }

@@ -115,6 +115,7 @@ function syncChrome(sel) {
   buildOutline();
   if (typeof syncStudy === 'function') syncStudy(sel); // study-ui.js (carregado depois)
   if (typeof syncLinks === 'function') syncLinks();    // graph-ui.js
+  if (typeof syncContextUI === 'function') syncContextUI(); // context-ui.js (barra de opções e rail)
   document.dispatchEvent(new Event('mc:render'));     // painéis React (leitor de PDF, fontes) se atualizam
 }
 
@@ -581,6 +582,8 @@ function refitEditorToViewport() {
  */
 window.MCView = {
   zoomAt: zoomMapAt, panBy(dx, dy) { pan.x += dx; pan.y += dy; render(); }, refitEditor: refitEditorToViewport,
+  hasSelection() { return !!sel(); },
+  isRoot() { const s = sel(); return !!(s && s.node.id === map.root.id); },
   /** Estado do ramo do tópico selecionado, para o botão recolher/expandir: { can, collapsed, count }. */
   branchState() { const s = sel(); return s && s.node.children.length ? { can: true, collapsed: !!s.node.collapsed, count: descendantCount(s.node) } : { can: false, collapsed: false, count: 0 }; },
 };
@@ -931,25 +934,53 @@ async function recoverSession() {
   }
 }
 
+function setSplashStatus(txt) {
+  const el = document.getElementById('splashStatus');
+  if (el) el.textContent = txt;
+}
+
+function hideSplash(delay = 180) {
+  setTimeout(() => {
+    const s = document.getElementById('splash');
+    if (!s) return;
+    s.classList.add('splash-hide');
+    setTimeout(() => {
+      s.hidden = true;
+      s.style.display = 'none';
+      try {
+        if (window.Capacitor?.Plugins?.SplashScreen?.hide) {
+          window.Capacitor.Plugins.SplashScreen.hide();
+        }
+      } catch { /* plugin não disponível */ }
+    }, 380);
+  }, delay);
+}
+window.hideSplash = hideSplash;
+window.setSplashStatus = setSplashStatus;
+
 let today0 = nowStr();
 setInterval(() => { if (nowStr() !== today0) { today0 = nowStr(); render(); } }, 30000); // virou o dia: atualiza selos de revisão
 window.addEventListener('focus', () => { if (map && nowStr() !== today0) { today0 = nowStr(); render(); } });
 
 let firstInit = true;
 async function init() {
+  setSplashStatus('Carregando preferências…');
   let forced; if (firstInit) { try { forced = await ipcRenderer.invoke('app:start-override'); } catch { forced = null; } } firstInit = false;   // só a 1ª inicialização (testes)
   try { userDataDir = await ipcRenderer.invoke('app:path', 'userData'); } catch { userDataDir = null; }
+  setSplashStatus('Recuperando sessão anterior…');
   await recoverSession();
-  if (dirty) return;                                    // um rascunho foi restaurado: não mexe
+  if (dirty) { hideSplash(); return; }                                    // um rascunho foi restaurado: não mexe
   await new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));   // espera os demais scripts
   const cfg = loadCfg();
+  setSplashStatus('Iniciando biblioteca e mapas…');
   const start = forced || cfg.startScreen || (cfg.reopenLast === true ? 'last' : cfg.reopenLast === false ? 'blank' : 'home');   // padrão: tela inicial
-  if (start === 'home' && window.MCReact && typeof act.home === 'function') { act.home(true); return; }
+  if (start === 'home' && window.MCReact && typeof act.home === 'function') { act.home(true); hideSplash(); return; }
   if (start === 'last') {
     if (cfg.lastKind === 'lib' && cfg.lastLib && libraryExists()) { if (!(await openFromLibrary(cfg.lastLib, { confirm: false, silent: true }))) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); } }
     else { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
   }   // app de estudo diário: volta de onde parou
   if (cfg.dashOnStart && typeof act.dash === 'function') act.dash();
+  hideSplash();
 }
 newMap();
 const ready = init(); // aberturas por linha de comando esperam a restauração (ver 'open-path')

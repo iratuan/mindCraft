@@ -2,6 +2,17 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.4.3
+- **Barra de ferramentas contextual sem sobreposição**: sistema de visibilidade estrita por atributo `data-context="topic|relation|canvas|none"` com exclusão mútua garantida, rolagem horizontal cinética e proteção anti-estouro em telas de qualquer proporção (incluindo tablet Samsung Galaxy Tab S10 FE+).
+- **Tela de Splash (Splash Screen)**: inicialização com logotipo vetorial pulsante, barra de progresso animada, status dinâmico do boot e versão do app. Transição com fade-out suave e integração nativa com o Capacitor no Android.
+- **Botões dedicados para fechar recursos ativos**:
+  - **Fechar Mapa Atual** (`✕` no cabeçalho): fecha o documento atual com confirmação segura de alterações não salvas e retorna à Tela Inicial.
+  - **Fechar PDF** (`✕ Fechar PDF`): descarrega o arquivo da memória e limpa a visualização.
+  - **Fechar Vídeo** (`✕ Fechar Vídeo`): pausa a reprodução e reseta o player de videoaulas.
+  - **Fechar Aba de Navegador** (`✕ Fechar Aba`): encerra a navegação web ativa e retorna à página limpa.
+- **Recursos Multimídia**: Painel dividido de Videoaulas locais e YouTube com sincronização de timestamps em nós do mapa, e Navegador Web integrado com favoritos de concursos públicos e leis.
+- **Qualidade e Testes**: 276 testes automatizados passando com 100% de paridade web (`npm run check`) e 8 novas evidências visuais no tablet.
+
 ## 0.4.2
 - **CSV colado ou importado**: a janela "Importar CSV de edital" ganhou a caixa **"cole aqui"** e o botão **Colar da área de transferência** (além de escolher arquivo), com a mesma prévia. O texto colado é limpo sozinho: resposta da IA com frases e bloco de código (```csv) ou **tabela** do chat. A **planilha de planejamento** também aceita texto colado.
 - **Painéis redimensionáveis mais fáceis de achar**: alças dos divisores (painel lateral e leitor de PDF | mapa) maiores e sempre visíveis; no tablet com área de toque grande.

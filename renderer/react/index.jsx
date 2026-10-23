@@ -92,25 +92,41 @@ function unmountPanel(id) {
   delete panels[id]; const box = document.getElementById(id); if (box) { box.textContent = ''; delete box.dataset.ui; }
 }
 
-// Leitor de PDF dividido: uma raiz em #pdfpane enquanto estiver aberto (fechar descarta o documento e libera memória).
-let pdfRoot = null;
+import { MediaPane } from './MediaPane.jsx';
+
+// Painel de estudo dividido (PDF / Vídeo / Navegador): uma raiz em #pdfpane enquanto estiver aberto.
+let mediaRoot = null;
+let activeMediaTab = 'pdf';
 const resizeSoon = () => setTimeout(() => window.dispatchEvent(new Event('resize')), 0);   // o mapa se ajusta à nova largura
-function openPdf(opts = {}) {
+
+function openMedia(tab = 'pdf', opts = {}) {
   const pane = document.getElementById('pdfpane'), split = document.getElementById('pdfsplit');
-  if (pdfRoot) { document.dispatchEvent(new CustomEvent('mc:pdf-open', { detail: opts })); return; }
+  activeMediaTab = tab;
+  if (mediaRoot) {
+    document.dispatchEvent(new CustomEvent('mc:media-switch', { detail: { tab, pdfOpts: opts } }));
+    if (opts.path || opts.page) document.dispatchEvent(new CustomEvent('mc:pdf-open', { detail: opts }));
+    return;
+  }
   pane.hidden = false; split.hidden = false; pane.textContent = '';
-  const w = window.MC.loadCfg().pdfWidth; if (w) pane.style.width = w + 'px';
-  pdfRoot = createRoot(pane);
-  flushSync(() => pdfRoot.render(<PdfPane initial={opts} onClose={closePdf} />));
+  const cfg = (window.MC && typeof window.MC.loadCfg === 'function') ? window.MC.loadCfg() : {};
+  const w = cfg.pdfWidth; if (w) pane.style.width = w + 'px';
+  mediaRoot = createRoot(pane);
+  flushSync(() => mediaRoot.render(<MediaPane initialTab={tab} pdfOpts={opts} onClose={closeMedia} />));
   document.body.classList.add('pdf-open'); resizeSoon();
 }
-function closePdf() {
-  if (!pdfRoot) return;
-  try { pdfRoot.unmount(); } catch { /* nó já removido */ }
-  pdfRoot = null;
+
+function closeMedia() {
+  if (!mediaRoot) return;
+  try { mediaRoot.unmount(); } catch { /* nó já removido */ }
+  mediaRoot = null;
   const pane = document.getElementById('pdfpane'); pane.textContent = ''; pane.hidden = true; document.getElementById('pdfsplit').hidden = true;
   document.body.classList.remove('pdf-open'); resizeSoon();
 }
+
+function openPdf(opts = {}) { openMedia('pdf', opts); }
+function closePdf() { closeMedia(); }
+function openVideo(opts = {}) { openMedia('video', opts); }
+function openBrowser(opts = {}) { openMedia('browser', opts); }
 const refsRoot = { r: null };
 function renderRefs() {
   const box = document.getElementById('refsBox'); if (!box) return;
@@ -141,12 +157,16 @@ window.MCReact = {
   openLibrary: (tab = 'maps') => mount(LibraryModal, { initialTab: tab }),
   openVersions: (id, opts = {}) => mount(VersionsModal, { mapId: id, back: opts.back !== false }),
   openCsv: () => mount(CsvModal, {}),
+  openPlan: () => mount(PlanModal, {}),
   openReview: () => mount(ReviewMode, {}),
   openSimulado: () => mount(SimuladoModal, {}),
   openShortcuts: () => mount(ShortcutsModal, {}),
   openManual: (section) => mount(ManualModal, { initialSection: section }),
-  openPlan: () => mount(PlanModal, {}),
-  openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash, openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot, renderRefs,
+  openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash,
+  openPdf, closePdf, togglePdf: () => (mediaRoot && activeMediaTab === 'pdf' ? closeMedia() : openPdf({})), pdfIsOpen: () => !!mediaRoot && activeMediaTab === 'pdf',
+  openVideo, toggleVideo: () => (mediaRoot && activeMediaTab === 'video' ? closeMedia() : openVideo({})), videoIsOpen: () => !!mediaRoot && activeMediaTab === 'video',
+  openBrowser, toggleBrowser: () => (mediaRoot && activeMediaTab === 'browser' ? closeMedia() : openBrowser({})), browserIsOpen: () => !!mediaRoot && activeMediaTab === 'browser',
+  renderRefs,
   renderLinks: (model) => renderPanel('linksBody', <Connections model={model} />), unmountLinks: () => unmountPanel('linksBody'),
   renderOutline: (rows) => renderPanel('outline', <Outline rows={rows} />), unmountOutline: () => unmountPanel('outline'),
   unmount,

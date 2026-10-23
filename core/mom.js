@@ -65,6 +65,7 @@ function readMom(source) {
         collapsed: m.collapsed === true,
         ...(m.study ? { study: normalizeStudy(m.study) } : {}),
         ...(Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {}),
+        ...(m.videoRef && typeof m.videoRef.time === 'number' ? { mcVideoRef: { videoId: String(m.videoRef.videoId || ''), time: m.videoRef.time, title: String(m.videoRef.title || '') } } : {}),
       }),
       parentId: typeof parentId === 'string' ? mapId(parentId) : null, index: Number.isFinite(index) ? index : 0, raw: { ...raw },
     });
@@ -110,11 +111,23 @@ function readMom(source) {
   if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
   { const sims = sanitizeSimulados(doc.mcSimulados, newId); if (sims.length) map.meta.simulados = sims; }
   if (Array.isArray(doc.mcPdfs) && sanitizePdfs(doc.mcPdfs).length) map.meta.pdfs = sanitizePdfs(doc.mcPdfs);
+  if (Array.isArray(doc.mcVideos)) {
+    map.meta.videos = doc.mcVideos
+      .filter((v) => v && typeof v === 'object' && (v.url || v.path))
+      .map((v) => ({
+        id: String(v.id || ''),
+        name: String(v.name || v.title || 'Vídeo').slice(0, 150),
+        ...(typeof v.path === 'string' && v.path ? { path: v.path } : {}),
+        ...(typeof v.url === 'string' && v.url ? { url: v.url } : {}),
+        ...(typeof v.dur === 'number' && v.dur >= 0 ? { dur: Math.floor(v.dur) } : {})
+      }));
+  }
   if (Array.isArray(doc.mcRelations)) {
     map.meta.relations = doc.mcRelations
       .filter((r) => r && typeof r.from === 'string' && typeof r.to === 'string' && seen.has(mapId(r.from)) && seen.has(mapId(r.to)) && mapId(r.from) !== mapId(r.to))
       .map((r) => ({ id: typeof r.id === 'string' && SAFE_ID.test(r.id) ? r.id : newId(), from: mapId(r.from), to: mapId(r.to), label: String(r.label ?? '').slice(0, 200),
-        ...(typeof r.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(r.color) ? { color: r.color } : {}) }));
+        ...(typeof r.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(r.color) ? { color: r.color } : {}),
+        ...(typeof r.style === 'string' && ['solid', 'dashed', 'dotted'].includes(r.style) ? { style: r.style } : {}) }));
   }
   return map;
 }
@@ -126,7 +139,7 @@ function writeMom(map, target) {
   const visit = (node, parentId, previousId, index) => {
     const raw = node._mom || {};
     const hasStyle = node.style && Object.keys(node.style).length;
-    const hasMc = (node.markers || []).length || node.progress != null || node.study || hasStyle || node.collapsed || (node.refs && node.refs.length);
+    const hasMc = (node.markers || []).length || node.progress != null || node.study || hasStyle || node.collapsed || (node.refs && node.refs.length) || node.mcVideoRef;
     list.push({
       version: 40, ...raw, id: node.id, originalId: node.id,
       ...(parentId ? { parentId } : {}), ...(previousId ? { previousId } : {}),
@@ -141,6 +154,7 @@ function writeMom(map, target) {
         ...(hasStyle ? { style: node.style } : {}), ...(node.collapsed ? { collapsed: true } : {}),
         ...(node.study ? { study: node.study } : {}),
         ...(node.refs && node.refs.length ? { refs: node.refs } : {}),
+        ...(node.mcVideoRef && typeof node.mcVideoRef.time === 'number' ? { videoRef: { videoId: String(node.mcVideoRef.videoId || ''), time: node.mcVideoRef.time, title: String(node.mcVideoRef.title || '') } } : {}),
       } } : {}),
     });
     let prev = null;
@@ -163,6 +177,7 @@ function writeMom(map, target) {
   if (map.meta.customTheme) doc.mcCustomTheme = map.meta.customTheme; else delete doc.mcCustomTheme;
   if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
+  if (map.meta.videos && map.meta.videos.length) doc.mcVideos = map.meta.videos; else delete doc.mcVideos;
   if (map.meta.goals) doc.mcGoals = map.meta.goals; else delete doc.mcGoals;
   if (map.meta.simulados && map.meta.simulados.length) doc.mcSimulados = map.meta.simulados; else delete doc.mcSimulados;
   doc.mapInfo.name = map.meta.name || map.root.title;
