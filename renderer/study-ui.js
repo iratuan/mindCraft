@@ -564,6 +564,6 @@ act.plan = () => openPlanModal();
 
 // atalho: Esc fecha o painel de estudos
 // Esc fecha o painel — mas, com uma janela aberta por cima dele (ex.: o manual), o Esc é da janela
-window.addEventListener('keydown', (e) => { if (dashOpen && e.key === 'Escape' && !present && $('#modal').hidden) { e.stopPropagation(); closeDash(); } }, true);
+window.addEventListener('keydown', (e) => { if (dashOpen && e.key === 'Escape' && $('#modal').hidden) { e.stopPropagation(); closeDash(); } }, true);
 
 render(); // primeira renderização com o painel de estudo montado

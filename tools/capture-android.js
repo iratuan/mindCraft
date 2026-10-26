@@ -70,23 +70,6 @@ async function captureAndroid({ andConn, shotAndroid, wait, AND_OUT, fPdf }) {
   await wait(700);
   shotAndroid(path.join(AND_OUT, '03-mapa-mental-editor.png'));
 
-  // 4. Modo de Apresentação com HUD Interativo
-  console.log('4. [Android] Modo de Apresentação com HUD...');
-  await andConn.ev(`(() => {
-    startPresent();
-    return true;
-  })()`);
-  await wait(500);
-  await andConn.ev(`(() => {
-    presentStep(1);
-    return true;
-  })()`);
-  await wait(600);
-  shotAndroid(path.join(AND_OUT, '04-modo-apresentacao-hud.png'));
-  await andConn.ev(`(() => {
-    stopPresent();
-    return true;
-  })()`);
   await wait(600);
 
   // 5. Bancada de Estudos - Launchpad

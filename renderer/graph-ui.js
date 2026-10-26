@@ -623,7 +623,7 @@ async function openInObsidian() {
 }
 
 window.addEventListener('keydown', (e) => {
-  if (!graphOpen || present) return;
+  if (!graphOpen) return;
   if (e.key === 'Escape') { const open = document.querySelector('#graph .g-bar details[open]'); if (open) { e.stopPropagation(); open.open = false; return; } e.stopPropagation(); if (gNarrow() && $('#gSide').classList.contains('open')) toggleSide(false); else closeGraph(); return; }
   const tag = (document.activeElement && document.activeElement.tagName) || '';
   if (/^(INPUT|SELECT|TEXTAREA)$/.test(tag) || e.ctrlKey || e.metaKey || e.altKey) return;      // digitando num campo: as teclas são dele

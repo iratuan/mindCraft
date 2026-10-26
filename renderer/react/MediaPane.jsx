@@ -298,7 +298,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
         <button
           className="icon-btn sm"
           onClick={onClose}
-          title="Fechar bancada de estudos (Esc)"
+          title="Fechar bancada de estudos (fecha todas as abas)"
           aria-label="Fechar bancada"
           style={{ width: '26px', height: '26px' }}
         >
@@ -320,7 +320,7 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
               height: '100%',
             }}
           >
-            {t.type === 'pdf' && <PdfPane initial={t.pdfOpts || {}} onClose={() => closeTab(t.id)} />}
+            {t.type === 'pdf' && <PdfPane initial={t.pdfOpts || {}} />}
             {t.type === 'video' && (
               <VideoPane
                 initialSrc={t.videoOpts?.src}
@@ -406,9 +406,6 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
               </div>
             )}
 
-            <button className="link" onClick={onClose} style={{ fontSize: '12px', marginTop: '8px', display: 'inline-flex', alignItems: 'center' }}>
-              <FlatIcon name="close" size={11} style={{ marginRight: '5px' }} /> Fechar painel lateral
-            </button>
           </div>
         )}
       </div>

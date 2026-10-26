@@ -38,7 +38,7 @@ test('computador e tablet: nenhuma seção fica vazia; atalhos de teclado só no
 });
 
 test('cobertura: cada funcionalidade do app tem uma seção', () => {
-  const need = ['primeiros-passos', 'tela-inicial', 'topicos', 'reordenar', 'selecao', 'estilo', 'notas', 'relacoes', 'busca-apresentar', 'salvar', 'biblioteca', 'exportar', 'edital',
+  const need = ['primeiros-passos', 'tela-inicial', 'topicos', 'reordenar', 'selecao', 'estilo', 'notas', 'relacoes', 'busca-ajustar','salvar', 'biblioteca', 'exportar', 'edital',
     'layout', 'estudo-topico', 'caderno-erros', 'painel-estudos', 'revisao', 'simulados', 'rede', 'pdf', 'sincronizacao', 'tablet', 'atalhos', 'seguranca-dados'];
   for (const id of need) assert.ok(M.find(id), 'falta a seção: ' + id);
 });

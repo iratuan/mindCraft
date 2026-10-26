@@ -46,13 +46,13 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
       return out;
     };
     window.__modalOpen = () => !document.querySelector('#modal').hidden;
-    window.__closeAll = () => { const m = document.querySelector('#modal'); if (!m.hidden) m.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); if (!m.hidden) closeModal(); if (typeof closeDash === 'function') closeDash(); if (window.MCReact && MCReact.homeIsOpen()) closeHome(); if (typeof closeGraph === 'function') closeGraph(); if (present) { __key('Escape'); } };
+    window.__closeAll = () => { const m = document.querySelector('#modal'); if (!m.hidden) m.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); if (!m.hidden) closeModal(); if (typeof closeDash === 'function') closeDash(); if (window.MCReact && MCReact.homeIsOpen()) closeHome(); if (typeof closeGraph === 'function') closeGraph(); };
     true`);
 
   const saveTargets = [path.join(TMP, 'm1.mom'), path.join(TMP, 'm2.mom')];
   const actions = [
-    ['selecionar', (r) => `{ if (present) return; const v = __vis(); __md(v[${Math.floor(r() * 1000)} % v.length]); }`],
-    ['multisselecionar', (r) => `{ if (present) return; const v = __vis(); __md(v[${Math.floor(r() * 1000)} % v.length], { ctrlKey: true }); }`],
+    ['selecionar', (r) => `{ const v = __vis(); __md(v[${Math.floor(r() * 1000)} % v.length]); }`],
+    ['multisselecionar', (r) => `{ const v = __vis(); __md(v[${Math.floor(r() * 1000)} % v.length], { ctrlKey: true }); }`],
     ['filho+texto', (r) => `{ act.child(); if (!editor.hidden) { editor.value = ${JSON.stringify('T' + Math.floor(r() * 99) + (r() < 0.2 ? ' <b>&"' : ''))}; __key('Enter', editor); } }`],
     ['filho+esc', () => `{ act.child(); if (!editor.hidden) __key('Escape', editor); }`],
     ['irmão', (r) => `{ act.sibling(); if (!editor.hidden) { editor.value = 'S${Math.floor(r() * 99)}'; __key('Enter', editor); } }`],
@@ -90,7 +90,7 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
     ['níveis', (r) => `{ const s = document.querySelector('#levelSel'); s.value = ${JSON.stringify(String(1 + Math.floor(r() * 3)))}; s.dispatchEvent(new Event('change', { bubbles: true })); }`],
     ['estrutura: clicar', (r) => `{ const rows = [...document.querySelectorAll('#outline .ol-row')]; if (rows.length) rows[${Math.floor(r() * 999)} % rows.length].click(); }`],
     ['estrutura: ▶', (r) => `{ const t = [...document.querySelectorAll('#outline [data-ol-tog]')]; if (t.length) t[${Math.floor(r() * 999)} % t.length].click(); }`],
-    ['relação', (r) => `{ if (present) return; __key('r'); const v = __vis(); if (v.length > 1) __md(v[${Math.floor(r() * 1000)} % v.length]); __key('Escape'); }`],
+    ['relação', (r) => `{ __key('r'); const v = __vis(); if (v.length > 1) __md(v[${Math.floor(r() * 1000)} % v.length]); __key('Escape'); }`],
     ['conexões', () => `{ showPanel('links'); renderLinks(); }`],
     ['salvar', (r) => `{ window.__dlg.save = ${JSON.stringify(saveTargets[Math.floor(r() * 2)])}; return save(false); }`],
     ['salvar como', (r) => `{ window.__dlg.save = ${JSON.stringify(saveTargets[Math.floor(r() * 2)])}; return save(true); }`],
@@ -99,7 +99,6 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
     ['abrir arquivo', (r) => `{ window.__dlg.discard = ${Math.floor(r() * 3)}; window.__dlg.save = ${JSON.stringify(saveTargets[1])}; return confirmDiscard().then((okk) => okk && openPath(${JSON.stringify(r() < 0.5 || !fs.existsSync(saveTargets[0]) ? seedMap : saveTargets[0])})); }`],
     ['abrir da biblioteca', (r) => `{ window.__dlg.discard = ${Math.floor(r() * 3)}; window.__dlg.save = ${JSON.stringify(saveTargets[1])}; const l = getLibrary(); const ms = l ? l.listMaps() : []; if (!ms.length) return; return openFromLibrary(ms[${Math.floor(r() * 99)} % ms.length].id); }`],
     ['exportar md', () => `{ window.__dlg.save = ${JSON.stringify(path.join(TMP, 'x.md'))}; return doExport('md'); }`],
-    ['apresentar', () => `act.present()`],
     ['fechar tudo', () => `__closeAll()`],
   ];
 
@@ -112,7 +111,7 @@ const SEEDS = (process.env.MONKEY_SEEDS || '1,2,3').split(',').map(Number), STEP
         const [name, mk] = actions[Math.floor(r() * actions.length)]; const code = mk(r); log.push(`${step}:${name}`);
         const errs0 = c.errors.length;
         try { await js(`(async () => { await (async () => { ${code.startsWith('{') ? code : 'return ' + code} })(); })()`); }
-        catch (e) { const diag = await js(`JSON.stringify({ present: !!present, boxes: L.boxes.size, dom: document.querySelectorAll('[data-id]').length, dashOpen, selectedId: !!selectedId, modal: __modalOpen(), graphHidden: document.querySelector('#graph').hidden, hits: !!hits, editorHidden: editor.hidden })`).catch(() => '?'); throw new Error(`ação "${name}" lançou exceção na página (semente ${seed}, passo ${step}): ${e.message} ${diag}\n   últimas ações: ${log.slice(-10).join(' → ')}`); }
+        catch (e) { const diag = await js(`JSON.stringify({ boxes: L.boxes.size, dom: document.querySelectorAll('[data-id]').length, dashOpen, selectedId: !!selectedId, modal: __modalOpen(), graphHidden: document.querySelector('#graph').hidden, hits: !!hits, editorHidden: editor.hidden })`).catch(() => '?'); throw new Error(`ação "${name}" lançou exceção na página (semente ${seed}, passo ${step}): ${e.message} ${diag}\n   últimas ações: ${log.slice(-10).join(' → ')}`); }
         await wait(r() < 0.3 ? 120 : 35);
         if (r() < 0.45) await js('__closeAll(); true');
         const problems = await js('__problems()'), dlgErr = await js('window.__dlg.errors.length');

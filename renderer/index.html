@@ -19,7 +19,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando ambiente de estudos…</div>
-    <div class="splash-foot">v0.4.6 · Concursos</div>
+    <div class="splash-foot">v0.5.0 · Concursos</div>
   </div>
 </div>
 
@@ -56,7 +56,7 @@
         <select id="levelSel"><option value="">escolher…</option><option value="1">Mostrar até o nível 1</option><option value="2">Mostrar até o nível 2</option><option value="3">Mostrar até o nível 3</option><option value="4">Mostrar até o nível 4</option><option value="all">Expandir tudo</option></select>
       </label>
       <span class="vsep"></span>
-      <span id="optHint" class="opt-hint">Tab: filho · Enter: irmão · F2: editar · Espaço: recolher · R: relação · F5: apresentar</span>
+      <span id="optHint" class="opt-hint">Tab: filho · Enter: irmão · F2: editar · Espaço: recolher · R: relação</span>
     </div>
 
     <!-- Modo Relação (quando uma seta/relação está selecionada) -->
@@ -78,7 +78,7 @@
     <div id="optCanvas" class="opt-group" hidden>
       <span class="opt-label">Mapa</span>
       <label class="opt" title="Recolhe ou expande o mapa todo por profundidade">Níveis
-        <select id="levelSelCanvas" onchange="$('#levelSel').value=this.value;$('#levelSel').dispatchEvent(new Event('change'))">
+        <select id="levelSelCanvas">
           <option value="">escolher…</option><option value="1">Até nível 1</option><option value="2">Até nível 2</option><option value="3">Até nível 3</option><option value="4">Até nível 4</option><option value="all">Expandir tudo</option>
         </select>
       </label>
@@ -91,7 +91,7 @@
     <!-- Barra de ferramentas (agrupada por cluster contextual) -->
     <nav id="rail" aria-label="Ferramentas">
       <!-- Bloco 1: Telas Principais -->
-      <button data-act="home" class="tool" title="Tela inicial (Ctrl+Shift+H)" aria-label="Tela inicial"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg></button>
+      <button data-act="home" class="tool has-cap" title="Tela inicial (Ctrl+Shift+H)" aria-label="Tela inicial"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg><span class="tool-cap">Início</span></button>
 
       <span class="hsep"></span>
 
@@ -116,17 +116,16 @@
       <span class="hsep"></span>
 
       <!-- Bloco 5: Mídias de Estudo Integradas -->
-      <button data-act="pdf" class="tool" title="Leitor de PDF ao lado do mapa (Ctrl+Shift+P)" aria-label="Leitor de PDF"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></svg></button>
-      <button data-act="video" class="tool" title="Player de Vídeo para videoaulas (Ctrl+Shift+V)" aria-label="Player de Vídeo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="14" rx="2"/><polygon points="21 7 18 10 18 14 21 17"/><polygon points="9 9 14 12 9 15" fill="currentColor"/></svg></button>
+      <button data-act="pdf" class="tool has-cap" title="Leitor de PDF ao lado do mapa (Ctrl+Shift+P)" aria-label="Leitor de PDF"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></svg><span class="tool-cap">PDF</span></button>
+      <button data-act="video" class="tool has-cap" title="Player de Vídeo para videoaulas (Ctrl+Shift+V)" aria-label="Player de Vídeo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="14" rx="2"/><polygon points="21 7 18 10 18 14 21 17"/><polygon points="9 9 14 12 9 15" fill="currentColor"/></svg><span class="tool-cap">Vídeo</span></button>
       <button data-act="browser" class="tool" title="Navegador Web para questões e leis (Ctrl+Shift+W)" aria-label="Navegador Web"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg></button>
-      <button data-act="dash" class="tool" title="Painel de estudos (Ctrl+E)" aria-label="Painel de estudos"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+      <button data-act="dash" class="tool has-cap" title="Painel de estudos (Ctrl+E)" aria-label="Painel de estudos"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tool-cap">Painel</span></button>
 
       <span class="hsep"></span>
 
-      <!-- Bloco 6: Modos de Visualização & Apresentação -->
-      <button data-act="graph" class="tool" title="Rede de conhecimento (Ctrl+G)" aria-label="Rede de conhecimento"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="19" cy="15" r="1.6"/><path d="M8 8l8-1.5M7.2 9 11 16M13.6 16.7l4.4-1M17.4 8l1.2 5.4"/></svg></button>
+      <!-- Bloco 6: Modos de Visualização -->
+      <button data-act="graph" class="tool has-cap" title="Rede de conhecimento (Ctrl+G)" aria-label="Rede de conhecimento"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="19" cy="15" r="1.6"/><path d="M8 8l8-1.5M7.2 9 11 16M13.6 16.7l4.4-1M17.4 8l1.2 5.4"/></svg><span class="tool-cap">Rede</span></button>
       <button data-act="fit" class="tool" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-      <button data-act="present" class="tool" title="Apresentar (F5)" aria-label="Apresentar"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg></button>
     </nav>
 
     <!-- Área de trabalho -->
@@ -139,15 +138,6 @@
       <div id="home" hidden role="dialog" aria-label="Tela inicial"></div>
       <div id="dash" hidden role="dialog" aria-label="Painel de estudos"></div>
       <div id="graph" hidden role="dialog" aria-label="Rede de conhecimento"></div>
-      <div id="hud" class="present-hud" hidden role="region" aria-label="Controles de apresentação">
-        <button id="presentPrev" type="button" class="present-hud-btn" title="Tópico anterior (← ou Shift+Espaço)" aria-label="Tópico anterior">◀ Anterior</button>
-        <div class="present-hud-info">
-          <span class="present-hud-count"><b id="presentCur">1</b> / <span id="presentTotal">1</span></span>
-          <span id="presentTitle" class="present-hud-title"></span>
-        </div>
-        <button id="presentNext" type="button" class="present-hud-btn" title="Próximo tópico (→ ou Espaço)" aria-label="Próximo tópico">Próximo ▶</button>
-        <button id="presentExit" type="button" class="present-hud-btn exit" title="Sair da apresentação (Esc)" aria-label="Sair da apresentação">✕ Sair</button>
-      </div>
     </main>
 
     <!-- Divisor do painel lateral (arrastar = largura) + botão para recolher/expandir -->
@@ -250,7 +240,6 @@
 </div>
 <script src="icons.js"></script>
 <script src="renderer.js"></script>
-<script src="present-ui.js"></script>
 <script src="study-ui.js"></script>
 <script src="graph-ui.js"></script>
 <script src="notes-ui.js"></script>

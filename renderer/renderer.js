@@ -30,7 +30,6 @@ let dashOpen = false;       // painel de estudos aberto (ver study-ui.js)
 let graphOpen = false;      // rede de conhecimento aberta (ver graph-ui.js)
 let relateFrom = null;      // modo "criar relação": id do tópico de origem
 let hits = null;            // Set de ids encontrados pela busca
-let present = null;         // { order: [ids], i } durante a apresentação
 let pan = { x: 0, y: 0, k: 1 };
 let notesOwner = null;      // { rel: bool, id } — a quem pertence o texto exibido no painel lateral
 
@@ -66,13 +65,11 @@ function render() {
   if (!selectedId) selIds = new Set(); else if (!selIds.has(selectedId)) selIds = new Set([selectedId]);
   for (const id of [...selIds]) if (!map.find(id)) selIds.delete(id);
   svg.setAttribute('font-family', L.theme.font);
-  const visible = present ? new Set(present.order.slice(0, present.i + 1)) : null;
-  // No editor o mapa fica numa "prancheta" sobre a mesa escura; na apresentação o fundo do tema ocupa a tela toda.
-  stage.style.background = present ? L.theme.background : '';
+  // O mapa fica numa "prancheta" sobre a mesa escura.
   const bb = L.bounds;
-  const board = present ? '' : `<defs><filter id="abs" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="3" stdDeviation="9" flood-color="#000" flood-opacity=".5"/></filter></defs>`
+  const board = `<defs><filter id="abs" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="3" stdDeviation="9" flood-color="#000" flood-opacity=".5"/></filter></defs>`
     + `<rect x="${bb.x}" y="${bb.y}" width="${bb.w}" height="${bb.h}" rx="3" fill="${L.theme.background}" filter="url(#abs)"/>`;
-  view.innerHTML = board + renderGroup(L, { selectedId: present ? null : selectedId, selectedIds: present ? null : selIds, selectedRel, interactive: !present, visible, hits });
+  view.innerHTML = board + renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits });
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
   syncCustomTheme();
   $('#theme').value = map.meta.theme;
@@ -353,10 +350,6 @@ const act = {
     relateFrom = selectedId; document.body.classList.add('relating');
     setStatus('Relação: clique no tópico de destino (Esc cancela).');
   },
-  present() {
-    if (!map || (window.MCReact && window.MCReact.homeIsOpen())) return setStatus('Abra um mapa mental para apresentar.');
-    present ? stopPresent() : startPresent();
-  },
   delete() {
     if (selectedRel) { const id = selectedRel; selectedRel = null; return change(() => map.removeRelation(id)); }
     const s = sel(); if (!s) return;
@@ -587,7 +580,6 @@ editor.addEventListener('blur', () => endEdit(true));
 const nodeAt = (el) => el && el.closest && el.closest('.node');
 let drag = null;
 svg.addEventListener('mousedown', (e) => {
-  if (present) return;
   if (document.activeElement === notes) commitNotes(); // o blur só ocorre depois do mousedown; grava antes de trocar a seleção
   const n = nodeAt(e.target);
   if (relateFrom) { // segundo clique do modo relação
@@ -740,22 +732,12 @@ async function pasteSelection() {
 
 // ---------- teclado ----------
 window.addEventListener('keydown', (e) => {
-  if (present) {
-    e.preventDefault();
-    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) presentStep(1);
-    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) presentStep(-1);
-    else if (e.key === 'Home') presentStep(-9999);
-    else if (e.key === 'End') presentStep(9999);
-    else if (e.key === 'Escape' || e.key === 'F5') stopPresent();
-    return;
-  }
   if (dashOpen || graphOpen) return; // com um painel em tela cheia aberto, os atalhos do mapa ficam desligados (Esc fecha: study-ui.js)
   // O teclado é de quem está na frente: com uma janela ou a tela inicial abertas, e dentro dos painéis/leitor/barras, Tab, Delete, Enter e setas
   // pertencem ao controle focado (antes, Tab numa janela criava tópicos no mapa de baixo e Delete podia apagar o selecionado).
   if (!$('#modal').hidden || (window.MCReact && window.MCReact.homeIsOpen())) return;
   if (!(e.ctrlKey || e.metaKey || e.altKey) && e.target.closest && e.target.closest('#pdfpane, #panels, #ptabs, #appbar')) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') { e.preventDefault(); $('#search').focus(); return; }
-  if (e.key === 'F5') { e.preventDefault(); return startPresent(); }
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || !editor.hidden) return;
   if (e.target.tagName === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return; // deixa o botão focado agir
   if (e.key === 'Escape') {
@@ -791,7 +773,7 @@ window.addEventListener('keydown', (e) => {
 async function editCommand(c) {
   const ae = document.activeElement;
   if (ae && ['TEXTAREA', 'INPUT'].includes(ae.tagName)) { document.execCommand(c === 'paste' ? 'paste' : c); return; }
-  if (present || !editor.hidden) return;
+  if (!editor.hidden) return;
   if (c === 'selectAll') { selIds = new Set(L.boxes.keys()); selectedId = selectedId || map.root.id; render(); setStatus(`${selIds.size} tópicos selecionados`); }
   else if (c === 'copy') await copySelection();
   else if (c === 'cut') { if (await copySelection()) act.delete(); }
@@ -810,7 +792,6 @@ ipcRenderer.on('menu', async (_e, c) => {
   else if (c === 'saveAs') save(true);
   else if (c === 'closeMap') { if (typeof closeCurrentMap === 'function') closeCurrentMap(); }
   else if (c.startsWith('export:')) doExport(c.slice(7));
-  else if (c === 'present') act.present();
   else act[c]?.();
 });
 ipcRenderer.on('open-path', async (_e, p) => { await ready; if (await confirmDiscard()) openPath(p); });

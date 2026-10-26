@@ -113,13 +113,13 @@ assets/ · release/ · .erb/ (build) · package.json · tsconfig.json · vite.co
 2. **Ferramentas** — TypeScript + Vite (renderer) e tsc (main); migrar `tools/` para o novo build; manter `npm run check`.
 3. **`src/shared`** — mover o núcleo puro para `src/shared` (módulo a módulo, com seu teste) e convertê-lo para `.ts`; `MODULES` do tablet passa a ler a pasta.
 4. **`window.api` (preload + contextBridge)** — a UI deixa de usar `require`/nodeIntegration; tablet implementa a mesma API. Maior risco de segurança/compatibilidade: exige paridade completa (`e2e-web`, `e2e-tablet`, Android).
-5. **Features em React** — migrar o que resta do clássico (canvas do mapa, painéis, busca, apresentação) para `features/*`, uma por vez; ao final remover `renderer/*.js`.
+5. **Features em React** — migrar o que resta do clássico (canvas do mapa, painéis, busca) para `features/*`, uma por vez; ao final remover `renderer/*.js`.
 6. **`src/main/services`** — mover `library/sync/backup` e reorganizar `electron/`.
 
 O teste de arquitetura (`test/architecture.test.js`) deve ser **atualizado a cada fase** para vigiar o novo layout (camadas, ciclos, orçamento de tamanho, pacote do tablet). Ver ADR 016.
 
 ## 8. Dívidas técnicas conhecidas (priorizadas)
-1. **`renderer/renderer.js` (~900 linhas) concentra estado global** (`map`, `pan`, `selectedId`, `dirty`…). Caminho já em curso: migrar por fatias para React (ver `react-bridge.js`) e expor a plataforma só por `window.MCView`. Próximos candidatos: barra de ferramentas/opções, busca, apresentação.
+1. **`renderer/renderer.js` (~900 linhas) concentra estado global** (`map`, `pan`, `selectedId`, `dirty`…). Caminho já em curso: migrar por fatias para React (ver `react-bridge.js`) e expor a plataforma só por `window.MCView`. Próximos candidatos: barra de ferramentas/opções, busca. (O modo apresentação foi retirado na 0.5.0.)
 2. **Interface clássica sem módulos** (scripts em sequência): a ordem em `index.html` importa; o teste de arquitetura vigia o básico. Migrar para módulos ES quando o último trecho clássico sair.
 3. **`study-ui.js` e `graph-ui.js` misturam desenho, eventos e estado.** `graph-labels.js` foi o primeiro pedaço puro extraído; próximos: visibilidade de nós (`nodeVisible`) e navegação por setas (`stepSelection`) → `core/graph-view.js`.
 4. **Duplicação nos testes e2e**: cada arquivo redefine `click/setVal/type`. Extrair `test/helpers.js` (sem mexer nos existentes de uma vez).

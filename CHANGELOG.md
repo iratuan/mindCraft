@@ -2,6 +2,11 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.5.0
+- **Modo apresentação retirado** (botão ▶, tecla F5, barra flutuante, item do menu Exibir e da barra do tablet). Para simplificar o produto e reduzir riscos. Nada que o usuário já tem é apagado: mapas, notas, revisões e pacotes continuam iguais.
+- **Botões que dependem de mapa aberto** só ficam habilitados com um mapa na tela. Antes, ao abrir o app (tela inicial por cima), botões como Ajustar à tela, Desfazer, Novo tópico e Relação apareciam habilitados. Vale também para o menu do desktop (Salvar, Exportar, Editar, Ajustar…) e o menu do tablet.
+- Versão Android: código 500.
+
 ## 0.4.5
 - **Correção no botão de fechar mapa**: o botão de fechar mapa atual (`#closeMapBtn`) agora garante a desocupação completa da memória (redefinindo o canvas com mapa limpo e redefinindo título), remove rascunhos de recuperação de sessão pendentes do disco, fecha divisões de mídia ativas (PDF, vídeo, navegador), e possui área de toque touch responsiva (36px em telas touch) e proteção contra encolhimento flex (`flex-shrink: 0`).
 

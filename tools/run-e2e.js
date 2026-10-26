@@ -1,6 +1,6 @@
 'use strict';
 // Executor da bateria ponta a ponta (npm run e2e). Fonte ÚNICA da lista de etapas.
-// Cada etapa é um script Electron (test/e2e-*.js [--classic]) e grava a saída em evidencias/logs/e2e/<etapa>.log (aparece mesmo se a etapa travar).
+// Cada etapa é um script Electron (test/e2e-*.js) e grava a saída em evidencias/logs/e2e/<etapa>.log (aparece mesmo se a etapa travar).
 // Uma etapa que falha é repetida UMA vez: se passar na 2ª, fica registrada como INSTÁVEL (aparece no resumo — nada é escondido);
 // se falhar de novo, reprova (e mostra as últimas linhas do log, que dizem em que teste parou). Uma etapa que passa de 8 min é encerrada.
 // Uso: node tools/run-e2e.js [regex das etapas]   ·   E2E_TRACE=1 mostra o teste em andamento no log   ·   E2E_PROGRESS=1 imprime a hora de cada etapa
@@ -9,9 +9,9 @@ const fs = require('fs');
 const path = require('path');
 
 const STEPS = [
-  'e2e.js', 'e2e.js --classic', 'e2e-study.js', 'e2e-study.js --classic', 'e2e-network.js', 'e2e-network.js --classic', 'e2e-assistant.js', 'e2e-assistant.js --classic',
-  'e2e-notes.js', 'e2e-library.js', 'e2e-library.js --classic', 'e2e-pdf.js', 'e2e-review.js', 'e2e-errors.js', 'e2e-perf.js', 'e2e-monkey.js', 'e2e-home.js', 'e2e-simulados.js',
-  'e2e-hostile.js', 'e2e-failures.js', 'e2e-layout.js', 'e2e-a11y.js', 'e2e-deep.js', 'e2e-deep.js --classic', 'e2e-questions.js', 'e2e-questions.js --classic', 'e2e-notify.js',
+  'e2e.js', 'e2e-study.js', 'e2e-network.js', 'e2e-assistant.js', 
+  'e2e-notes.js', 'e2e-library.js', 'e2e-pdf.js', 'e2e-review.js', 'e2e-errors.js', 'e2e-perf.js', 'e2e-monkey.js', 'e2e-home.js', 'e2e-simulados.js',
+  'e2e-hostile.js', 'e2e-failures.js', 'e2e-layout.js', 'e2e-a11y.js', 'e2e-deep.js', 'e2e-questions.js', 'e2e-notify.js',
   'e2e-web.js', 'e2e-edit.js', 'e2e-tablet.js', 'e2e-sync.js', 'e2e-sync-web.js', 'e2e-mindomo.js', 'e2e-graph.js', 'e2e-reorder.js', 'e2e-saveas.js', 'e2e-manual.js', 'e2e-split.js', 'e2e-homecards.js', 'e2e-backupdest.js', 'e2e-paste.js',
 ];
 const only = process.argv[2] ? new RegExp(process.argv[2]) : null;

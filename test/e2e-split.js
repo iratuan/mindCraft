@@ -79,7 +79,7 @@ const start = require('./harness');
     await js(`window.MCReact.closePdf(); true`); await wait(200); ok(await js(`document.querySelector('#pdfpane').hidden`));
   });
 
-  await t('recolhido é lembrado ao recarregar o app; presentation (F5) esconde o botão; nenhum erro de console', async () => {
+  await t('recolhido é lembrado ao recarregar o app; nenhum erro de console', async () => {
     await click('#panelsToggle'); ok(await collapsed()); eq(cfg().panelsCollapsed, true);
     wc().reload(); await waitFor(() => js(`typeof map !== 'undefined' && !!document.querySelector('#panelsToggle')`).catch(() => false), 15000, 300); await waitFor(() => collapsed(), 8000, 300).catch(() => {});
     ok(await collapsed(), 'continua recolhido depois de recarregar: ' + JSON.stringify(cfg())); eq(await js(`document.querySelector('#panelsToggle').textContent`), '‹');

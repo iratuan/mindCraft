@@ -144,12 +144,14 @@ function openHome() {
   document.querySelector('[data-act="home"]')?.classList.add('on');
   flushSync(() => homeRoot.render(<Home onClose={closeHome} />));
   const target = box.querySelector('#hmContinue') || box.querySelector('#hmNew'); if (target) target.focus();   // teclado: Enter já age no atalho principal
+  window.dispatchEvent(new Event('mc:render'));   // a tela cobriu o mapa: a barra de ferramentas e o menu se atualizam (context-ui.js)
 }
 function closeHome() {
   if (!homeRoot) return;
   try { homeRoot.unmount(); } catch { /* nó já removido */ }
   homeRoot = null; const box = document.getElementById('home'); box.hidden = true; box.textContent = ''; delete box.dataset.ui;
   document.querySelector('[data-act="home"]')?.classList.remove('on');
+  window.dispatchEvent(new Event('mc:render'));   // o mapa voltou a ficar visível: os botões que dependem dele se atualizam (context-ui.js)
 }
 
 window.MCReact = {

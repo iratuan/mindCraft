@@ -25,7 +25,7 @@ Object.assign(window.MC, {
   actions: { openSimulado: () => act.simulado(), openReview: () => act.review(), exportIcs: () => exportIcs(), exportReport: (k) => exportReport(k), openImportModal: () => openImportModal(), openCsvModal: () => openCsvModal(), openPlanModal: () => openPlanModal(), openLibraryModal: () => openLibraryModal(), newStudyTemplate: () => newStudyTemplate(), closeDash: () => closeDash(), openDash: () => { if (!dashOpen) act.dash(); } },
 });
 
-/** Modelo de dados do painel Conexões (links, retrolinks, menções) — a apresentação é do React. */
+/** Modelo de dados do painel Conexões (links, retrolinks, menções). */
 function linksModel() {
   const sel = primary();
   if (!sel) return { empty: true };

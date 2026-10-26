@@ -226,10 +226,6 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await clickSel('#ptabs [data-tab="props"]');
     await clickSel('#lightToggle'); ok(await js(`document.body.classList.contains('light')`)); await wait(150); await shot('claro'); await clickSel('#lightToggle');
   });
-  await feature('Mapa', 'Modo apresentação', 'Botão ▶, setas do teclado, Esc', async ({ shot }) => {
-    await clickSel('[data-act="present"]'); await wait(500); ok(await js('!!present'), 'entrou'); await key('Right'); await key('Right'); await key('Right'); eq(await js('present.i'), 3); await wait(250); await shot('passo-3');
-    await key('Left'); eq(await js('present.i'), 2); await key('Escape'); await c.waitFor(() => js('present === null')); ok(await js(`!document.body.classList.contains('presenting')`));
-  });
 
   await feature('Mapa', 'Tópico sublinhado é clicável em toda a caixa (não só nas letras)', 'Cliques reais no canto esquerdo e no canto direito da caixa de um tópico de nível 3', async ({ shot }) => {
     await openMain(); await clickSel('[data-act="fit"]');
@@ -563,7 +559,8 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     eq(await js("map.find(__id('Licitação')).node.refs[0].page"), 1); eq(await js("map.meta.pdfs[0].name"), 'Lei de Licitações'); await wait(500); await shot('topico-criado');
     ok(await js("document.querySelectorAll('.pdf-hl').length >= 1"), 'destaque desenhado'); ok(await js("!!document.querySelector('#pdfChips .chip2')"), 'chip do tópico nesta página');
     await clickSel('#ptabs [data-tab="notes"]'); await c.waitFor(() => js("!!document.querySelector('#refsList')")); await shot('fontes-nas-notas');
-    await clickSel('#pdfClose'); await c.waitFor(() => js("document.querySelector('#pdfpane').hidden"));
+    // fechar a última aba deixa a bancada aberta no launchpad (de propósito); o ✕ do cabeçalho é que fecha a bancada
+    await clickSel('#pdfpane .media-tab-close'); await c.waitFor(() => js("document.querySelectorAll('#pdfpane .media-tab-close').length === 0"));
   });
   await feature('Estudos', 'Revisão do dia (recordação ativa) e tela de atalhos (F1)', 'Cliques reais: Mostrar anotações → Lembrei / Errei; atalho de teclado Espaço', async ({ shot }) => {
     await js("dirty = false; ipcRenderer.emit('menu', {}, 'review'); true"); await c.waitFor(() => js("!!document.querySelector('#rvTitle')")); await shot('pergunta');

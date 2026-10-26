@@ -54,7 +54,7 @@ const { TODAY, d, concurso } = require('./fixtures');
     await open(); await js(`(() => { let n; map.walk((x) => { if (x.title === 'Regência') n = x; }); const p = map.addPdf({ path: ${JSON.stringify(path.join(TMP, 'x.pdf'))}, name: 'Gramática' }); map.addRef(n.id, { pdf: p.id, page: 33, quote: 'q', rects: [] }); return true; })()`);
     await js('act.review()'); await c.waitFor(() => js(`!!document.querySelector('#rvTitle')`));
     for (let k = 0; k < 3 && (await txt('#rvTitle')) !== 'Regência'; k++) await click('#rvSkip');
-    await click('#rvShow'); await c.waitFor(() => js(`!!document.querySelector('#rvDetail .ref-open')`)); ok((await txt('#rvDetail')).includes('📖 Gramática, p. 33'));
+    await click('#rvShow'); await c.waitFor(() => js(`!!document.querySelector('#rvDetail .ref-open')`)); ok((await txt('#rvDetail')).includes('Gramática, p. 33'), 'fonte do PDF na revisão: ' + (await txt('#rvDetail')));
     await click('#rvGo'); await wait(200); eq(await js('map.find(selectedId).node.title'), 'Regência'); eq(await js(`document.querySelector('#modal').hidden`), true);
   });
 

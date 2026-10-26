@@ -18,24 +18,22 @@ function edgePath(e, curve) {
 /**
  * Desenha o miolo do mapa. Opções:
  *  selectedId / selectedRel — destaque; interactive — adiciona data-id/data-rel para o editor;
- *  visible — Set de ids (modo apresentação): os demais ficam esmaecidos; hits — Set de ids achados na busca.
+ *  hits — Set de ids achados na busca.
  */
-function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, visible, hits } = {}) {
+function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hits } = {}) {
   const { theme } = L;
   const out = [];
-  const dim = (id) => (visible && !visible.has(id) ? ' opacity="0.07"' : '');
 
   for (const e of L.edges) {
     const w = e.to.style.edgeWidth || theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
-    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${e.to.style.edge || e.to.branch}" stroke-width="${w}" stroke-linecap="round"${dim(e.to.id)}/>`);
+    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${e.to.style.edge || e.to.branch}" stroke-width="${w}" stroke-linecap="round"/>`);
   }
 
   for (const { rel, geo } of L.relations) {
     const col = /^#[0-9a-fA-F]{6}$/.test(rel.color || '') ? rel.color : REL_COLOR, sel = selectedRel === rel.id;
     const d = `M${geo.a.x},${geo.a.y} Q${geo.c.x},${geo.c.y} ${geo.b.x},${geo.b.y}`;
     const ar = geo.arrow.map((p) => `${p.x},${p.y}`).join(' ');
-    const hide = visible && !(visible.has(rel.from) && visible.has(rel.to)) ? ' opacity="0.05"' : '';
-    out.push(`<g${interactive ? ` data-rel="${esc(rel.id)}" class="rel"` : ''}${hide}>`
+    out.push(`<g${interactive ? ` data-rel="${esc(rel.id)}" class="rel"` : ''}>`
       + (interactive ? `<path d="${d}" fill="none" stroke="transparent" stroke-width="14"/>` : '')
       + `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sel ? 3.5 : 2}" stroke-dasharray="7 5" stroke-linecap="round"/>`
       + `<polygon points="${ar}" fill="${col}"/>`
@@ -77,7 +75,7 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, vis
     const fold = n.children.length && n.collapsed
       ? `<circle cx="${fx}" cy="${b.y + b.h / 2}" r="9" fill="${b.branch}"/><text x="${fx}" y="${b.y + b.h / 2}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="11" font-weight="700">${n.children.length}</text>` : '';
     const note = n.notes ? `<g class="note-icon" transform="translate(${b.x + b.w - 8} ${b.y - 13})"><rect width="9" height="11" rx="1.7" fill="${theme.background}" stroke="${s.branch}" stroke-width="1.3"/><path d="M2.3 3.5h4.4M2.3 5.6h4.4M2.3 7.7h2.7" stroke="${s.branch}" stroke-width="1" stroke-linecap="round" fill="none"/></g>` : '';
-    out.push(`<g${interactive ? ` data-id="${esc(b.id)}" class="node"` : ''}${dim(b.id)}>${hit}${shape}<g pointer-events="none">${progress}${markers}${text}${sel}${fold}${note}${due}</g>${interactive ? `<rect class="hitarea" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="transparent" pointer-events="all"/>` : ''}</g>`);
+    out.push(`<g${interactive ? ` data-id="${esc(b.id)}" class="node"` : ''}>${hit}${shape}<g pointer-events="none">${progress}${markers}${text}${sel}${fold}${note}${due}</g>${interactive ? `<rect class="hitarea" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="transparent" pointer-events="all"/>` : ''}</g>`);
   }
   return out.join('\n');
 }

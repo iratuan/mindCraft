@@ -140,7 +140,10 @@ const { TODAY, d, concurso } = require('./fixtures');
   await t('rascunho de sessão preserva o vínculo com a biblioteca; "reabrir o último" abre pelo banco; mapa que sumiu cai no arquivo recente', async () => {
     const id = await js('map.meta.libId'); await js(`map.root.title = 'Rascunho lib'; dirty = true; rev++; render(); writeDraft()`);
     const d0 = JSON.parse(fs.readFileSync(path.join(USERDATA, 'drafts', 'session.json'), 'utf8')); eq(d0.map.meta.libId, id);
-    await js(`window.__dlg.confirm = 0; draftExists = false; dirty = false; newMap()`); await js('recoverSession()'); await c.waitFor(() => js(`map.root.title === 'Rascunho lib'`)); eq(await js('map.meta.libId'), id); eq(await js('dirty'), true);
+    await js(`window.__dlg.confirm = 0; draftExists = false; dirty = false; newMap()`);
+    // o autosave remove o rascunho quando a sessão está limpa (correto): o teste grava de volta o rascunho que acabou de ler
+    fs.mkdirSync(path.join(USERDATA, 'drafts'), { recursive: true }); fs.writeFileSync(path.join(USERDATA, 'drafts', 'session.json'), JSON.stringify(d0));
+    await js('recoverSession()'); await c.waitFor(() => js(`map.root.title === 'Rascunho lib'`)); eq(await js('map.meta.libId'), id); eq(await js('dirty'), true);
     ok(await js('save(false)')); const lib = openLibrary(dbFile); eq(lib.loadMap(id).root.title, 'Rascunho lib'); lib.close();
     await js(`removeDraft(); dirty = false; newMap(); saveCfg({ reopenLast: true, startScreen: 'last', lastKind: 'lib', lastLib: ${JSON.stringify(id)} })`); await js('init()'); await c.waitFor(() => js(`map.meta.libId === ${JSON.stringify(id)}`)); eq(await js('map.root.title'), 'Rascunho lib');
     await js(`dirty = false; newMap(); saveCfg({ lastKind: 'lib', lastLib: 'nao-existe' })`); fs.writeFileSync(path.join(USERDATA, 'recent.json'), JSON.stringify([fileMap])); await js('init()'); await wait(500);

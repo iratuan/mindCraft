@@ -244,7 +244,7 @@ const libraryHasMaps = () => { if (!libraryExists()) return false; const lib = g
 // ---------- ponte com a interface React (renderer/react → renderer/bundle/react-ui.js) ----------
 // Despachantes: usam a versão React quando o pacote foi carregado; a clássica continua disponível (reactUi:false na configuração)
 // como reserva e como referência de equivalência nos testes.
-const useReactUi = () => !!window.MCReact && loadCfg().reactUi !== false;
+const useReactUi = () => !!window.MCReact;   // a interface é sempre a React (a chave reactUi foi retirada na 0.5.0)
 function openLibraryModal(tab = 'maps') { if (useReactUi()) { closeDash(); return window.MCReact.openLibrary(tab); } return openLibraryModalClassic(tab); }
 function openVersionsModal(id, opts = {}) { if (useReactUi()) return window.MCReact.openVersions(id, opts); return openVersionsModalClassic(id, opts); }
 function openCsvModal() { if (useReactUi()) { closeDash(); return window.MCReact.openCsv(); } return openCsvModalClassic(); }

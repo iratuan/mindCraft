@@ -82,6 +82,10 @@ button { cursor: pointer; }
 #rail { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 46px; padding: 8px 0; background: var(--bg-bar); border-right: 1px solid var(--line); }
 .tool { display: grid; place-items: center; width: 34px; height: 34px; background: none; border: 0; border-radius: 6px; color: var(--text); }
 .tool svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+/* botões principais da barra ganham legenda curta: o aluno lê o nome sem precisar passar o mouse */
+.tool.has-cap { height: auto; min-height: 44px; padding: 4px 0 3px; gap: 2px; align-content: center; }
+.tool-cap { display: block; font-size: 9px; line-height: 1; color: var(--text-dim); white-space: nowrap; }
+.tool.has-cap:hover .tool-cap, .tool.on .tool-cap { color: var(--text-strong); }
 .tool:hover { background: var(--bg-hover); color: var(--text-strong); }
 .tool:active, body.relating .tool[data-act=relate] { background: var(--accent-soft); color: var(--accent-hover); box-shadow: inset 0 0 0 1px var(--accent); }
 .tool:disabled, .tool[aria-disabled="true"] { opacity: 0.28 !important; cursor: not-allowed !important; pointer-events: none !important; }
@@ -98,103 +102,6 @@ body.light #stage { background-image: radial-gradient(circle, rgba(0,0,0,.07) 1p
 body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 #editor { position: absolute; resize: none; background: #fff; color: #111; border: 2px solid var(--accent); border-radius: 6px; padding: 4px 8px; font: inherit; text-align: center; outline: none; overflow: hidden; z-index: 5; box-shadow: var(--shadow); }
 #marquee { position: absolute; border: 1px solid var(--accent); background: var(--accent-soft); pointer-events: none; z-index: 4; }
-.present-hud {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(18, 22, 28, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  padding: 6px 12px;
-  border-radius: 30px;
-  color: #fff;
-  z-index: 50;
-  max-width: min(92vw, 680px);
-  pointer-events: auto;
-  user-select: none;
-}
-.present-hud-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-.present-hud-btn:hover:not(:disabled) {
-  background: var(--accent, #2563eb);
-  border-color: transparent;
-  transform: translateY(-1px);
-}
-.present-hud-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-.present-hud-btn.exit {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
-  margin-left: 6px;
-}
-.present-hud-btn.exit:hover {
-  background: #ef4444;
-  color: #fff;
-  border-color: transparent;
-}
-.present-hud-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  font-size: 13px;
-  color: #e2e8f0;
-  min-width: 0;
-  overflow: hidden;
-}
-.present-hud-count {
-  font-weight: 500;
-  color: #94a3b8;
-  white-space: nowrap;
-}
-.present-hud-count b {
-  color: #fff;
-}
-.present-hud-title {
-  font-weight: 600;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 220px;
-}
-@media (pointer: coarse) {
-  .present-hud {
-    bottom: 20px;
-    padding: 8px 14px;
-    gap: 8px;
-  }
-  .present-hud-btn {
-    height: 40px;
-    padding: 0 16px;
-    font-size: 14px;
-  }
-}
-
 /* Painéis */
 #panels { display: flex; flex-direction: column; width: var(--panels-w, 304px); background: var(--bg-panel); border-left: 1px solid var(--line); overflow: hidden; }
 .panel { border-bottom: 1px solid var(--line); }
@@ -252,10 +159,6 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 #zoomVal { min-width: 40px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 #zoom { width: 130px; accent-color: var(--accent); }
 
-/* Modo apresentação: some toda a interface */
-body.presenting #appbar, body.presenting #options, body.presenting #rail, body.presenting #panels, body.presenting #statusbar { display: none; }
-body.presenting #stage { background: #000; background-image: none; }
-body.presenting #svg { cursor: none; }
 
 @media (max-width: 1000px) { .opt-hint { display: none; } #panels { width: var(--panels-w, 240px); } #search { width: 130px; } }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -335,7 +238,6 @@ body.timing #timerBtn { background: var(--danger); border-color: var(--danger); 
 .modal-box .opts label { display: flex; align-items: center; gap: 5px; }
 .modal-box .foot { display: flex; align-items: center; gap: 8px; }
 .modal-box input[type=text] { width: 100%; }
-body.presenting #dash { display: none; }
 .tool.on { background: var(--accent-soft); color: var(--accent-hover); box-shadow: inset 0 0 0 1px var(--accent); }
 
 /* ---------- Rede de conhecimento ---------- */
@@ -414,8 +316,6 @@ body.light #gsvg text { stroke: #efefef; }
   .g-legend { max-width: 46%; max-height: 32%; }
   .g-zoom { bottom: 12px; }
 }
-}
-body.presenting #graph { display: none; }
 
 /* elementos com display próprio precisam respeitar o atributo hidden */
 #graph[hidden], #dash[hidden], #modal[hidden], #marquee[hidden], #linkSuggest[hidden] { display: none !important; }
@@ -645,7 +545,7 @@ body.panels-collapsed #panels { display: none; }
 body.panels-collapsed #panelsSplit { cursor: default; width: 6px; margin-right: 0; }
 body.panels-collapsed #panelsSplit::after { display: none; }
 body.panels-collapsed #panelsToggle { left: -17px; }
-body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit, body.presenting #panelsSplit { display: none; }
+body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit { display: none; }
 @media (pointer: coarse) { #panelsSplit { width: 18px; margin-right: -8px; } #panelsToggle { width: 34px; height: 64px; margin-top: -32px; left: -20px; font-size: 20px; } body.panels-collapsed #panelsToggle { left: -26px; } #pdfsplit { width: 22px; margin-left: -11px; } }
 
 /* ---------- Tela inicial: lembrete de cópia de segurança e "Seu estudo" ---------- */

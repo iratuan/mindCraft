@@ -46,16 +46,6 @@ async function captureWindows({ safeJs, wait, shotWin, WIN_OUT, fMain, fPdf, TOD
   await wait(600);
   await shotWin(path.join(WIN_OUT, '03-mapa-mental-editor.png'));
 
-  // 4. Modo de Apresentação com Nova Barra Flutuante (HUD)
-  console.log('4. [Windows] Capturando Modo de Apresentação com HUD Interativo...');
-  await safeJs(`startPresent(); return true;`);
-  await wait(400);
-  await safeJs(`presentStep(1); presentStep(1); return true;`);
-  await wait(500);
-  await shotWin(path.join(WIN_OUT, '04-modo-apresentacao-hud.png'));
-  await safeJs(`stopPresent(); return true;`);
-  await wait(500);
-
   // 5. Bancada de Estudos - Estado Vazio / Launchpad
   console.log('5. [Windows] Capturando Bancada de Estudos (Launchpad vazio)...');
   await safeJs(`

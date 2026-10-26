@@ -12,6 +12,18 @@ let timing = false;       // cronômetro de estudo em andamento
 let forceClose = false;
 let pendingFile = argvFile(process.argv, app.isPackaged);
 
+// Comandos que só fazem sentido com um mapa de trabalho na tela (a tela inicial cobre o mapa). Começam desabilitados: a tela inicial abre primeiro.
+// O renderer informa a situação ('map-state', ver context-ui.js) e aqui só se aplica; reconstruir o menu reaplica o último estado.
+const MAP_COMMANDS = ['m-closeMap', 'm-restore', 'm-save', 'm-saveAs', 'm-libAdd', 'm-export', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
+  'cut', 'copy', 'paste', 'selectAll', 'm-fit'];
+let mapInUse = false;
+function applyMapCommands() {
+  const menu = Menu.getApplicationMenu();
+  if (!menu) return;
+  for (const id of MAP_COMMANDS) { const item = menu.getMenuItemById(id); if (item) item.enabled = mapInUse; }
+}
+ipcMain.on('map-state', (_e, inUse) => { mapInUse = !!inUse; applyMapCommands(); });
+
 function argvFile(argv, packaged) {
   return argv.slice(packaged ? 1 : 2).find((a) => OPENABLE.test(a));
 }
@@ -50,8 +62,8 @@ function buildMenu() {
       { label: 'Tela inicial', accelerator: 'CmdOrCtrl+Shift+H', click: send('home') },
       { label: 'Novo', accelerator: 'CmdOrCtrl+N', click: send('new') },
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: send('open') },
-      { label: 'Fechar mapa', accelerator: 'CmdOrCtrl+Shift+M', click: send('closeMap') },
-      { label: 'Restaurar versão anterior…', click: send('restore') },
+      { id: 'm-closeMap', label: 'Fechar mapa', accelerator: 'CmdOrCtrl+Shift+M', click: send('closeMap') },
+      { id: 'm-restore', label: 'Restaurar versão anterior…', click: send('restore') },
       { label: 'Abrir pasta de backups', click: () => openUserSub('backups') },
       { label: 'Abrir pasta de registros de erro', click: () => openUserSub('logs') },
       { type: 'separator' },
@@ -59,29 +71,32 @@ function buildMenu() {
         const items = loadRecent().filter((p) => fs.existsSync(p)).map((p) => ({ label: p, click: () => win && win.webContents.send('open-path', p) }));
         return items.length ? [...items, { type: 'separator' }, { label: 'Limpar lista', click: () => { saveRecent([]); buildMenu(); } }] : [{ label: '(vazio)', enabled: false }];
       })() },
-      { label: 'Salvar', accelerator: 'CmdOrCtrl+S', click: send('save') },
-      { label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
+      { id: 'm-save', label: 'Salvar', accelerator: 'CmdOrCtrl+S', click: send('save') },
+      { id: 'm-saveAs', label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
       { label: 'Biblioteca de mapas…', accelerator: 'CmdOrCtrl+Shift+B', click: send('lib') },
-      { label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
-      { label: 'Sincronização (opcional)…', click: send('sync') },
+      { id: 'm-libAdd', label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
       { type: 'separator' },
       { label: 'Novo mapa de concurso (modelo)', click: send('template') },
       { label: 'Importar edital (colar texto)…', click: send('edital') },
       { label: 'Importar CSV de edital (gerado por IA)…', click: send('csv') },
       { label: 'Planilha de planejamento (exportar / importar)…', click: send('plan') },
       { type: 'separator' },
-      { label: 'Exportar', submenu: ['pdf', 'docx', 'png', 'svg', 'md', 'opml'].map((f) => ({ label: f.toUpperCase(), click: send('export:' + f) })) },
+      { id: 'm-export', label: 'Exportar', submenu: [
+        { label: 'Mindomo (.mom)', click: send('saveAs') },
+        { type: 'separator' },
+        ...['pdf', 'docx', 'png', 'svg', 'md', 'opml'].map((f) => ({ label: f.toUpperCase(), click: send('export:' + f) })),
+      ] },
       { type: 'separator' },
       isMac ? { role: 'close', label: 'Fechar' } : { role: 'quit', label: 'Sair' },
     ] },
     { label: 'Editar', submenu: [
-      { label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
-      { label: 'Refazer', accelerator: isMac ? 'Shift+Cmd+Z' : 'Ctrl+Y', click: send('redo') },
+      { id: 'm-undo', label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
+      { id: 'm-redo', label: 'Refazer', accelerator: isMac ? 'Shift+Cmd+Z' : 'Ctrl+Y', click: send('redo') },
       { type: 'separator' },
-      { label: 'Subir tópico (Alt+↑)', click: send('moveUp') },
-      { label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
-      { label: 'Promover — subir um nível (Alt+←)', click: send('outdent') },
-      { label: 'Rebaixar — virar filho do irmão de cima (Alt+→)', click: send('indent') },
+      { id: 'm-moveUp', label: 'Subir tópico (Alt+↑)', click: send('moveUp') },
+      { id: 'm-moveDown', label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
+      { id: 'm-outdent', label: 'Promover — subir um nível (Alt+←)', click: send('outdent') },
+      { id: 'm-indent', label: 'Rebaixar — virar filho do irmão de cima (Alt+→)', click: send('indent') },
       { type: 'separator' },
       // itens próprios (não 'role'): em campos de texto agem no texto; no mapa, nos tópicos (ver editCommand no renderer)
       { id: 'cut', label: 'Recortar', accelerator: 'CmdOrCtrl+X', click: send('cut') },
@@ -90,8 +105,7 @@ function buildMenu() {
       { id: 'selectAll', label: 'Selecionar tudo', accelerator: 'CmdOrCtrl+A', click: send('selectAll') },
     ] },
     { label: 'Exibir', submenu: [
-      { label: 'Ajustar à tela', accelerator: 'CmdOrCtrl+0', click: send('fit') },
-      { label: 'Apresentar', accelerator: 'F5', click: send('present') },
+      { id: 'm-fit', label: 'Ajustar à tela', accelerator: 'CmdOrCtrl+0', click: send('fit') },
       { label: 'Painel de estudos', accelerator: 'CmdOrCtrl+E', click: send('dash') },
       { label: 'Painel lateral (recolher/expandir)', accelerator: 'CmdOrCtrl+\\', click: send('panelsToggle') },
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
@@ -101,7 +115,6 @@ function buildMenu() {
       { label: 'Navegador web (questões e leis)', accelerator: 'CmdOrCtrl+Shift+W', click: send('browser') },
       { type: 'separator' },
       { role: 'togglefullscreen', label: 'Tela cheia' },
-      { role: 'toggleDevTools', label: 'Ferramentas de desenvolvedor' },
     ] },
     { label: 'Ajuda', submenu: [
       { label: 'Manual de uso', click: send('manual') },
@@ -109,6 +122,7 @@ function buildMenu() {
     ] },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  applyMapCommands();
 }
 
 function createWindow() {

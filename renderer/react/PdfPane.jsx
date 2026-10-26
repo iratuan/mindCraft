@@ -8,7 +8,7 @@ const STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 const shorten = (s, n = 110) => (s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…');
 
 /** Leitor de PDF (painel dividido ao lado do mapa). Selecionar um trecho → criar tópico ou anotar, com página e destaque. */
-export function PdfPane({ initial, onClose }) {
+export function PdfPane({ initial }) {
   const h = H(); useMcRender();
   const map = h.map();
   const [src, setSrc] = useState(initial.path ? { path: initial.path, name: initial.name } : null);
@@ -118,7 +118,10 @@ export function PdfPane({ initial, onClose }) {
     if (!e.ctrlKey && !e.metaKey) return;
     const el = e.target.closest('.pdf-page'); if (!el) return;
     const pr = el.getBoundingClientRect(), x = (e.clientX - pr.left) / pr.width, y = (e.clientY - pr.top) / pr.height;
-    const hit = highlights.get(+el.dataset.page)?.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+    // Trechos sobrepostos: vale o destaque cujo centro está mais perto do clique (o mais específico), não o primeiro da lista
+    const hits = (highlights.get(+el.dataset.page) || []).filter((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+    const dist = (r) => Math.hypot(x - (r.x + r.w / 2), y - (r.y + r.h / 2));
+    const hit = hits.sort((a, b) => dist(a) - dist(b))[0];
     if (hit) h.goTo(hit.node);
   };
 
@@ -184,9 +187,6 @@ export function PdfPane({ initial, onClose }) {
             <FlatIcon name="close" size={12} style={{ marginRight: '4px' }} /> Fechar PDF
           </button>
         )}
-        <button className="btn small" id="pdfClose" onClick={onClose} title="Fechar o leitor (Ctrl+Shift+P)" aria-label="Fechar leitor" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <FlatIcon name="close" size={12} />
-        </button>
       </div>
       {doc && (
         <div className="pdf-bar">

@@ -28,11 +28,11 @@ const { startMockGoogle } = require('./mock-google');
   const waitText = async (sel, re, ms = 20000) => { await waitFor(async () => re.test(await text(sel)), ms); return text(sel); };
   const syncNow = async () => { await click('#syncNow'); await waitFor(async () => /Pronto|Não sincronizou/.test(await text('#syncMsg')), 30000); return text('#syncMsg'); };
 
-  await t('desligada por padrão: nada de arquivo de configuração, nada na pasta, e o item de menu existe', async () => {
+  await t('desligada por padrão: nada de arquivo de configuração, nada na pasta; o item saiu do menu de release (0.5.0)', async () => {
     await wait(1500);
     ok(!fs.existsSync(cfgFile), 'sem sync.json'); eq(fs.readdirSync(SHARED), [], 'pasta intacta');
-    const file = Menu.getApplicationMenu().items.find((i) => /Arquivo/.test(i.label)); const all = []; const walk = (m) => { for (const i of m.items || []) { all.push(i.label); if (i.submenu) walk(i.submenu); } }; walk(Menu.getApplicationMenu());
-    ok(all.some((l) => /Sincronização/.test(l)), 'menu: ' + all.join('|')); ok(file);
+    const all = []; const walk = (m) => { for (const i of m.items || []) { all.push(i.label); if (i.submenu) walk(i.submenu); } }; walk(Menu.getApplicationMenu());
+    ok(!all.some((l) => /Sincronização/.test(l)), 'menu não deve mais ter Sincronização: ' + all.join('|'));
   });
 
   let idA, idB;

@@ -230,16 +230,10 @@ app.whenReady().then(async () => {
     eq(await js(`map.root.title`), before, 'mapa atual intacto');
   });
 
-  await t('modo apresentação: avança, volta e sai com Esc', async () => {
+  await t('modo apresentação foi retirado: F5 não faz nada e o botão não existe', async () => {
     await js(`openPath(${JSON.stringify(file)})`);
     await js(`__key('F5')`); await wait(300);
-    ok(await js(`!!present`), 'entrou');
-    await js(`__key('ArrowRight'); __key('ArrowRight')`);
-    eq(await js(`present.i`), 2, 'avançou');
-    await js(`__key('ArrowLeft')`); eq(await js(`present.i`), 1, 'voltou');
-    await js(`__key('Escape')`); await wait(300);
-    eq(await js(`present`), null, 'saiu');
-    ok(await js(`!document.body.classList.contains('presenting')`), 'UI restaurada');
+    ok(await js(`!document.querySelector('[data-act="present"]') && typeof present === 'undefined'`), 'sem botão e sem modo');
   });
 
   await t('busca encontra tópicos e notas e navega com Enter', async () => {

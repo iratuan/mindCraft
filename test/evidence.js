@@ -98,10 +98,6 @@ const { TODAY, d, concurso } = require('./fixtures');
   await step('edital-importado', 'Mapa gerado pelo edital', 'O edital virou mapa: disciplinas → itens → subitens.', async () => { await js(`document.querySelector('#impOk').click()`); await wait(600); });
   await step('modelo-concurso', 'Modelo de concurso', 'Estrutura pronta (disciplinas × Teoria/Resumos/Questões/Revisão).', async () => { await js(`dirty = false; act.template()`); await wait(700); });
 
-  await step('apresentacao', 'Modo apresentação', 'Revela os tópicos um a um em tela cheia (útil para revisar em voz alta).', async () => {
-    await load(fMain); await js(`startPresent()`); await wait(500); await js(`presentStep(1); presentStep(1); presentStep(1); presentStep(1)`); await wait(300); });
-  await js(`stopPresent()`); await wait(500);
-
   // ---------- exemplos reais gerados (arquivos) ----------
   console.log('\nGerando exemplos de exportação…\n');
   const { m: ex } = concurso();

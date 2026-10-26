@@ -89,7 +89,8 @@ function makePdf(file, pages) {
     await js(`document.querySelector('#pdfScroll').scrollTop = 0`); await wait(200);
     await click('#refsList .ref-open'); await c.waitFor(() => js(`document.querySelector('#pdfPageNum').value === '2'`), 8000);
     await js(`__md(__id('Crase')); true`); await wait(200); await settle();
-    await js(`(() => { const hl = document.querySelector('.pdf-page[data-page="2"] .pdf-hl'); const p = hl.closest('.pdf-page').getBoundingClientRect(), r = hl.getBoundingClientRect();
+    // há cópias escondidas (largura 0) das páginas no DOM: o clique vai no destaque VISÍVEL do tópico Legalidade
+    await js(`(() => { const hl = [...document.querySelectorAll('.pdf-page[data-page="2"] .pdf-hl[data-node="' + __id('Legalidade') + '"]')].find((h) => h.getBoundingClientRect().width > 0); const p = hl.closest('.pdf-page').getBoundingClientRect(), r = hl.getBoundingClientRect();
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2; (document.elementFromPoint(cx, cy) || hl).dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: true, clientX: cx, clientY: cy })); })()`);
     await wait(150); eq(await js('map.find(selectedId).node.title'), 'Legalidade', 'Ctrl+clique no destaque levou ao tópico');
     await js(`showPanel('notes'); true`); await c.waitFor(() => js(`document.querySelectorAll('#refsList .ref-row').length === 2`));

@@ -39,7 +39,7 @@ O que já foi corrigido por causa do QA está em `evidencias/RESULTADOS.md`; aqu
 
 ## Revisão "como concurseiro" (rodada final)
 **Feito:** aba **Estudo** como padrão ao abrir pela primeira vez (a escolha seguinte é lembrada); importação de edital por CSV; agenda de 28 dias; pontos fracos; reabrir último mapa; backups; Alt+setas.
-**Mantido de propósito (não descartado):** marcadores, cores/formas por tópico, 5 temas, apresentação e exportações PNG/SVG/OPML — são do mapa mental em si, não atrapalham o fluxo de estudo, e removê-los arriscaria mapas existentes. Candidatos a esconder em um futuro "modo estudo" se a tela ficar carregada: marcadores 🚩/💡, relações × links `[[ ]]` (funções parecidas — hoje as relações servem para setas visuais e os links para a rede).
+**Mantido de propósito (não descartado):** marcadores, cores/formas por tópico, 5 temas e exportações PNG/SVG/OPML (o modo apresentação foi retirado na 0.5.0) — são do mapa mental em si, não atrapalham o fluxo de estudo, e removê-los arriscaria mapas existentes. Candidatos a esconder em um futuro "modo estudo" se a tela ficar carregada: marcadores 🚩/💡, relações × links `[[ ]]` (funções parecidas — hoje as relações servem para setas visuais e os links para a rede).
 **Descartado:** repetição espaçada adaptativa (SM-2/FSRS) e peso por disciplina no cálculo — sem dados reais de uso, o ganho não compensa o risco de agendar mal; os intervalos fixos 1-7-15-30-60-120 são previsíveis.
 **Próximos passos úteis:** testar um CSV gerado por uma IA real com um edital seu e anotar o que ela erra (ajusto as instruções); assinar o instalador; testar macOS/Linux via CI.
 

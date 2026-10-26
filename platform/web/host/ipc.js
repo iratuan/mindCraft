@@ -62,6 +62,8 @@ function createIpc({ fs, path, MindCore, host = {} }) {
     'backup:clear': () => { targets.del(BACKUP_KEY); return true; },
     'app:path': (name) => ({ userData: DIRS.userData, documents: DIRS.docs, temp: '/tmp', home: '/', downloads: DIRS.exports }[name] || '/'),
     'app:start-override': () => null,
+    // o menu do tablet (host/menu.js) lê o estado do mapa direto da página; o canal existe só para a interface ser a mesma do desktop
+    'map-state': () => null,
     'dialog:confirm-discard': () => dialogs.confirmBox({ message: 'Há alterações não salvas.', detail: 'Deseja salvar antes de continuar?', buttons: ['Salvar', 'Descartar', 'Cancelar'], defaultId: 0, cancelId: 2 }),
     'dialog:confirm': (o) => dialogs.confirmBox({ message: o.message, detail: o.detail, buttons: o.buttons, defaultId: 0, cancelId: o.buttons.length - 1 }),
     'dialog:error': (msg) => { dialogs.errorBox(msg); },

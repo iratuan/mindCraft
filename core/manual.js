@@ -124,18 +124,16 @@ const SECTIONS = [
       ['p', '**Leitor de PDF | mapa**: com o PDF aberto a tela se divide e o divisor entre os dois também é arrastável — com o **mouse**, o **dedo** ou as **setas do teclado** (**duplo clique/toque** restaura os 46%). O mapa **nunca fica espremido**: o divisor não deixa o mapa ficar com menos de ~260 px.'],
       ['tip', 'Para ler o PDF com o máximo de espaço: recolha o painel lateral e alargue o leitor; depois traga o painel de volta com o botão ‹.'],
     ] },
-  { id: 'busca-apresentar', group: 'Mapa', title: 'Buscar, ajustar à tela e apresentar', summary: 'Achar um tópico, enquadrar o mapa, modo apresentação.',
-    keywords: 'buscar procurar zoom ajustar tela apresentar presentation f5 pinça',
+  { id: 'busca-ajustar', group: 'Mapa', title: 'Buscar e ajustar à tela', summary: 'Achar um tópico e enquadrar o mapa.',
+    keywords: 'buscar procurar zoom ajustar tela pinça',
     blocks: [
       ['ul', [
         '**Buscar no mapa** (Ctrl+F) destaca os tópicos que contêm o texto.',
         '**Ajustar à tela** (Ctrl+0) enquadra o mapa todo; o controle de **zoom** fica na barra de status.',
-        '**Apresentar** (F5) revela o mapa **tópico a tópico** em tela cheia: **← →** navegam e **Esc** sai.',
       ], { only: 'desktop' }],
       ['ul', [
         '**Buscar no mapa** destaca os tópicos que contêm o texto.',
         '**Pinça** (dois dedos) dá zoom; **arrastar** no vazio move o mapa; ☰ → **Ajustar à tela** enquadra tudo.',
-        '☰ → **Apresentar** revela o mapa tópico a tópico em tela cheia (Esc ou o botão Voltar sai).',
       ], { only: 'touch' }],
     ] },
 
@@ -320,7 +318,7 @@ const SECTIONS = [
     blocks: [
       ['keys', [
         ['Tab / Enter / F2 / Delete', 'filho / irmão / editar / excluir'], ['Espaço', 'recolher/expandir ramo'], ['Alt+↑ ↓ ← →', 'mover entre irmãos / mudar de nível'], ['R', 'relação entre tópicos'],
-        ['Ctrl+Z / Ctrl+Y', 'desfazer / refazer'], ['Ctrl+C / X / V', 'copiar, recortar, colar'], ['Ctrl+F · Ctrl+0 · F5', 'buscar · ajustar à tela · apresentar'],
+        ['Ctrl+Z / Ctrl+Y', 'desfazer / refazer'], ['Ctrl+C / X / V', 'copiar, recortar, colar'], ['Ctrl+F · Ctrl+0', 'buscar · ajustar à tela'],
         ['Ctrl+E · Ctrl+G · Ctrl+Shift+R', 'painel de estudos · rede · revisão do dia'], ['Ctrl+\\', 'recolher/expandir o painel lateral'], ['Ctrl+Shift+B · Ctrl+Shift+P · Ctrl+Shift+H', 'biblioteca · PDF · tela inicial'],
         ['Ctrl+N / O / S · Ctrl+Shift+S', 'novo, abrir, salvar · salvar como'], ['F1', 'janela de atalhos'],
       ], { only: 'desktop' }],

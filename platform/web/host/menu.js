@@ -4,12 +4,16 @@
  * aqui um botão "☰" abre a mesma lista e dispara os MESMOS comandos ('menu' + nome). Em aparelhos de toque a barra ganha botões para o que
  * no desktop é só teclado: Editar (F2), Recolher/Expandir (Espaço) e a gaveta de Painéis (em janelas estreitas).
  */
+/** Comandos que só fazem sentido com um mapa de trabalho na tela (com a tela inicial aberta ficam desabilitados). */
+const MAP_CMDS = new Set(['save', 'saveAs', 'libAdd', 'fit', 'undo', 'redo', 'moveUp', 'moveDown', 'outdent', 'indent']);
 const ITEMS = [
   ['Arquivo', [['new', 'Novo mapa'], ['template', 'Novo mapa de concurso (modelo)'], ['open', 'Abrir arquivo…'], ['save', 'Salvar'], ['saveAs', 'Salvar como…'], ['home', 'Tela inicial']]],
-  ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['sync', 'Sincronização (opcional)…'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
-  ['Ver', [['graph', 'Rede de conhecimento'], ['pdf', 'Leitor de PDF'], ['video', 'Player de Vídeo (videoaulas)'], ['browser', 'Navegador Web (questões e leis)'], ['present', 'Apresentar'], ['fit', 'Ajustar à tela'], ['panelsToggle', 'Painel lateral: recolher/expandir'], ['manual', 'Manual de uso'], ['help', 'Atalhos do teclado']]],
+  ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
+  ['Ver', [['graph', 'Rede de conhecimento'], ['pdf', 'Leitor de PDF'], ['video', 'Player de Vídeo (videoaulas)'], ['browser', 'Navegador Web (questões e leis)'], ['fit', 'Ajustar à tela'], ['panelsToggle', 'Painel lateral: recolher/expandir'], ['manual', 'Manual de uso'], ['help', 'Atalhos do teclado']]],
   ['Editar', [['undo', 'Desfazer'], ['redo', 'Refazer'], ['moveUp', 'Subir tópico'], ['moveDown', 'Descer tópico'], ['outdent', 'Promover (subir um nível)'], ['indent', 'Rebaixar (virar filho do irmão de cima)']]],
 ];
+
+const homeOpen = () => !!(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
 
 function installMenu({ emit, css = '' }) {
   const style = document.createElement('style');
@@ -59,10 +63,14 @@ function installMenu({ emit, css = '' }) {
   const panel = document.createElement('div'); panel.id = 'mcHostMenu'; panel.hidden = true; panel.setAttribute('role', 'menu');
   for (const [group, items] of ITEMS) {
     const h = document.createElement('h3'); h.textContent = group; panel.append(h);
-    for (const [cmd, label] of items) { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.dataset.cmd = cmd; b.textContent = label; b.onclick = () => { close(); emit(cmd); }; panel.append(b); }
+    for (const [cmd, label] of items) {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.dataset.cmd = cmd; b.textContent = label;
+      if (MAP_CMDS.has(cmd)) b.dataset.map = '1';   // só com um mapa de trabalho na tela (ver syncBar)
+      b.onclick = () => { close(); emit(cmd); }; panel.append(b);
+    }
   }
   // A "cortina" (scrim) cobre a tela atrás do menu/gaveta. Tocar nela só FECHA: o fechamento acontece no 'click' (depois de soltar o dedo), com a
-  // cortina ainda no lugar; se fechasse no pointerdown o 'click' seguinte cairia no botão que estava por baixo (ex.: "Apresentar").
+  // cortina ainda no lugar; se fechasse no pointerdown o 'click' seguinte cairia no botão que estava por baixo (ex.: "Subir o tópico").
   const syncScrim = () => { scrim.hidden = panel.hidden && !document.body.classList.contains('tb-panels'); };
   const close = () => { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); syncScrim(); };
   btn.onclick = () => { closePanels(); panel.hidden = !panel.hidden; btn.setAttribute('aria-expanded', String(!panel.hidden)); syncScrim(); if (!panel.hidden) panel.querySelector('button').focus(); };
@@ -73,7 +81,7 @@ function installMenu({ emit, css = '' }) {
   // ⊟ = recolher o ramo (esconde os subtópicos) · ⊞ = expandir. Desativado quando o tópico não tem subtópicos. O texto diz quantos subtópicos mexem.
   const syncFold = () => {
     const st = window.MCView && window.MCView.branchState ? window.MCView.branchState() : { can: false };
-    fold.disabled = !st.can;
+    fold.disabled = !st.can || homeOpen();
     const isCol = st.can && st.collapsed;
     fold.innerHTML = `${isCol ? ICONS.expand : ICONS.fold}<span style="display:none">${isCol ? '⊞' : '⊟'}</span>`;
     const lbl = !st.can ? 'Recolher ou expandir o ramo (selecione um tópico que tenha subtópicos)' : st.collapsed ? `Expandir o ramo: mostrar ${st.count} subtópico(s)` : `Recolher o ramo: esconder ${st.count} subtópico(s)`;
@@ -89,8 +97,11 @@ function installMenu({ emit, css = '' }) {
       return;
     }
 
-    const hasSel = window.MCView && window.MCView.hasSelection ? window.MCView.hasSelection() : false;
+    // Com a tela inicial por cima o mapa de fundo não é o que o usuário está editando: nada de manipulação de tópicos.
+    const home = homeOpen();
+    const hasSel = !home && window.MCView && window.MCView.hasSelection ? window.MCView.hasSelection() : false;
     const isRoot = window.MCView && window.MCView.isRoot ? window.MCView.isRoot() : false;
+    panel.querySelectorAll('[data-map]').forEach((b) => { b.disabled = home; });
 
     edit.disabled = !hasSel;
     up.disabled = !hasSel || isRoot;

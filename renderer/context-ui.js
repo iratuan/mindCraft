@@ -7,6 +7,8 @@
  * 3. Atalhos rápidos para mídias de estudo (Ctrl+Shift+V para vídeo, Ctrl+Shift+W para navegador).
  */
 
+const NO_MAP_TITLE = 'Abra um mapa mental para usar este comando';
+
 function setToolBtn(btn, enabled, title) {
   if (!btn) return;
   btn.disabled = !enabled;
@@ -15,56 +17,66 @@ function setToolBtn(btn, enabled, title) {
   if (title) btn.title = title;
 }
 
+/**
+ * Há um mapa de trabalho na tela? Não há enquanto a tela inicial está por cima (ela cobre o mapa de fundo).
+ * Toda ação que mexe no mapa (ou que só faz sentido com ele aberto) depende desta única regra, inclusive o menu do desktop e o do tablet.
+ */
+function mapInUse() {
+  return !!(map && map.root) && !(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
+}
+
+// O menu do desktop (electron/main.js) habilita/desabilita os próprios comandos conforme esta informação. Só avisa quando muda.
+let lastMapState = null;
+function notifyMapState(inUse) {
+  if (inUse === lastMapState) return;
+  lastMapState = inUse;
+  try { ipcRenderer.send('map-state', inUse); } catch { /* sem canal com o processo principal (ex.: testes da página) */ }
+}
+
 function syncContextUI() {
   if (!map) return;
-  const sel = selectedId && map.find(selectedId);
-  const rel = selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
+  const inUse = mapInUse();
+  notifyMapState(inUse);
+  const sel = inUse && selectedId && map.find(selectedId);
+  const rel = inUse && selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
   const isRoot = !!(sel && sel.node.id === map.root.id);
-  const multi = selIds.size > 1;
+  const multi = inUse && selIds.size > 1;
+  const pick = (msg) => (inUse ? msg : NO_MAP_TITLE);
 
   // 1. Atualização dos botões do trilho lateral (#rail)
-  setToolBtn($('[data-act="child"]'), !!sel, sel ? 'Novo tópico filho (Tab)' : 'Selecione um tópico para criar filho');
+  setToolBtn($('[data-act="child"]'), !!sel, sel ? 'Novo tópico filho (Tab)' : pick('Selecione um tópico para criar filho'));
   setToolBtn(
     $('[data-act="sibling"]'),
     !!sel && !isRoot && !multi,
-    isRoot ? 'A ideia central não tem irmãos' : multi ? 'Selecione um único tópico para criar irmão' : sel ? 'Novo tópico irmão (Enter)' : 'Selecione um tópico para criar irmão'
+    isRoot ? 'A ideia central não tem irmãos' : multi ? 'Selecione um único tópico para criar irmão' : sel ? 'Novo tópico irmão (Enter)' : pick('Selecione um tópico para criar irmão')
   );
   setToolBtn(
     $('[data-act="delete"]'),
     (!!sel && !isRoot) || !!rel,
-    isRoot ? 'A ideia central não pode ser excluída' : rel ? 'Excluir relação selecionada (Del)' : sel ? 'Excluir (Del)' : 'Selecione um tópico ou relação para excluir'
+    isRoot ? 'A ideia central não pode ser excluída' : rel ? 'Excluir relação selecionada (Del)' : sel ? 'Excluir (Del)' : pick('Selecione um tópico ou relação para excluir')
   );
   setToolBtn(
     $('[data-act="moveUp"]'),
     !!sel && !isRoot && !multi,
-    isRoot ? 'A ideia central não pode ser movida' : multi ? 'Selecione um único tópico para mover' : sel ? 'Subir tópico (Alt+↑)' : 'Selecione um tópico para mover'
+    isRoot ? 'A ideia central não pode ser movida' : multi ? 'Selecione um único tópico para mover' : sel ? 'Subir tópico (Alt+↑)' : pick('Selecione um tópico para mover')
   );
   setToolBtn(
     $('[data-act="moveDown"]'),
     !!sel && !isRoot && !multi,
-    isRoot ? 'A ideia central não pode ser movida' : multi ? 'Selecione um único tópico para mover' : sel ? 'Descer tópico (Alt+↓)' : 'Selecione um tópico para mover'
+    isRoot ? 'A ideia central não pode ser movida' : multi ? 'Selecione um único tópico para mover' : sel ? 'Descer tópico (Alt+↓)' : pick('Selecione um tópico para mover')
   );
   setToolBtn(
     $('[data-act="relate"]'),
     !!sel && !multi,
-    multi ? 'Selecione um único tópico para criar relação' : sel ? 'Relação entre tópicos (R)' : 'Selecione um tópico para iniciar relação'
+    multi ? 'Selecione um único tópico para criar relação' : sel ? 'Relação entre tópicos (R)' : pick('Selecione um tópico para iniciar relação')
   );
-  setToolBtn($('[data-act="undo"]'), map._undo && map._undo.length > 0, 'Desfazer (Ctrl+Z)');
-  setToolBtn($('[data-act="redo"]'), map._redo && map._redo.length > 0, 'Refazer (Ctrl+Y)');
-
-  const hasActiveMap = !!(map && map.root && (!window.MCReact || !window.MCReact.homeIsOpen?.()));
-  const presentBtn = $('[data-act="present"]');
-  setToolBtn(presentBtn, hasActiveMap, hasActiveMap ? 'Apresentar mapa (F5)' : 'Abra um mapa mental para apresentar');
-  if (presentBtn) {
-    if (!hasActiveMap) {
-      presentBtn.classList.add('disabled');
-      presentBtn.style.opacity = '0.35';
-      presentBtn.style.pointerEvents = 'none';
-    } else {
-      presentBtn.classList.remove('disabled');
-      presentBtn.style.opacity = '';
-      presentBtn.style.pointerEvents = '';
-    }
+  setToolBtn($('[data-act="undo"]'), inUse && map._undo && map._undo.length > 0, inUse ? 'Desfazer (Ctrl+Z)' : NO_MAP_TITLE);
+  setToolBtn($('[data-act="redo"]'), inUse && map._redo && map._redo.length > 0, inUse ? 'Refazer (Ctrl+Y)' : NO_MAP_TITLE);
+  setToolBtn($('[data-act="fit"]'), inUse, inUse ? 'Ajustar à tela (Ctrl+0)' : NO_MAP_TITLE);
+  // Cabeçalho e barra de status também são do mapa: busca, exportação, fechar mapa e zoom
+  for (const id of ['#search', '#export', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) {
+    const el = $(id);
+    if (el) el.disabled = !inUse;
   }
 
   // 2. Alternância contextual da barra superior (#options) com garantia de exclusão mútua
@@ -74,7 +86,7 @@ function syncContextUI() {
   const optCanvas = $('#optCanvas');
 
   if (options && optTopic && optRel && optCanvas) {
-    if (window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen()) {
+    if (!inUse) {
       options.setAttribute('data-context', 'none');
       optTopic.hidden = true;
       optRel.hidden = true;
@@ -193,6 +205,16 @@ function initContextUIEvents() {
     closeMapBtn.addEventListener('touchend', handleClose);
   }
 
+  // Níveis na barra do mapa: repassa a escolha ao seletor da barra do tópico (sem atributo onchange no HTML)
+  const levelCanvas = $('#levelSelCanvas');
+  if (levelCanvas) {
+    levelCanvas.addEventListener('change', (e) => {
+      const levelSel = $('#levelSel');
+      levelSel.value = e.target.value;
+      levelSel.dispatchEvent(new Event('change'));
+    });
+  }
+
   const relLabelIn = $('#optRelLabel');
   if (relLabelIn) {
     relLabelIn.addEventListener('input', (e) => {
@@ -248,7 +270,7 @@ function initContextUIEvents() {
     }
   });
 
-  // Atualiza a cada render do mapa
+  // Atualiza a cada render do mapa e sempre que a tela inicial abre ou fecha (ela cobre o mapa, então muda o que está disponível)
   window.addEventListener('mc:render', syncContextUI);
   syncContextUI();
 }

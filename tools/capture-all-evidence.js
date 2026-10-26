@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Captura Completa de Evidências Visuais (Windows e Android Tablet) v0.4.6
+ * Captura Completa de Evidências Visuais (Windows e Android Tablet) v0.4.7
  * Coordena módulos tools/capture-win.js e tools/capture-android.js.
  */
 const fs = require('fs');
@@ -13,7 +13,7 @@ const { writeMom } = require('../core/mom');
 const { captureWindows } = require('./capture-win');
 const { captureAndroid } = require('./capture-android');
 
-const BASE_OUT = path.join(__dirname, '..', 'evidencias', 'rodada-evolucao-v0.4.6');
+const BASE_OUT = path.join(__dirname, '..', 'evidencias', 'rodada-evolucao-v0.4.7');
 const WIN_OUT = path.join(BASE_OUT, 'windows');
 const AND_OUT = path.join(BASE_OUT, 'android');
 
@@ -34,7 +34,7 @@ const shotAndroid = (file) => {
 
 (async () => {
   console.log('================================================================');
-  console.log('   MINDCRAFT — CAPTURA COMPLETA DE EVIDÊNCIAS VISUAIS v0.4.6   ');
+  console.log('   MINDCRAFT — CAPTURA COMPLETA DE EVIDÊNCIAS VISUAIS v0.4.7   ');
   console.log('   Plataformas: Windows Desktop e Android Tablet               ');
   console.log('================================================================\n');
 
@@ -109,7 +109,7 @@ const shotAndroid = (file) => {
   // 3. Relatório README.md do Catálogo
   console.log('--- GERANDO RELATÓRIO DE EVIDÊNCIAS (README.md) ---');
   const reportLines = [
-    '# Catálogo Completo de Evidências Visuais — MindCraft v0.4.6',
+    '# Catálogo Completo de Evidências Visuais — MindCraft v0.4.7',
     '',
     `Data da rodada: **23 de Outubro de 2026**  `,
     'Ambientes capturados: **Windows 11 Desktop (x64)** e **Samsung Galaxy Tab (Android 16 Emulado)**',
@@ -123,9 +123,8 @@ const shotAndroid = (file) => {
     '| # | Funcionalidade | Captura Windows Desktop | Captura Android Tablet | Descrição / Validação |',
     '|---|---|---|---|---|',
     '| 1 | **Splash Screen** | [windows/01-splash-screen.png](windows/01-splash-screen.png) | [android/01-splash-screen.png](android/01-splash-screen.png) | Tela de abertura animada com logotipo oficial e indicador de carregamento da biblioteca. |',
-    '| 2 | **Tela Inicial (Home)** | [windows/02-tela-inicial-home.png](windows/02-tela-inicial-home.png) | [android/02-tela-inicial-home.png](android/02-tela-inicial-home.png) | Tela inicial com lista de mapas recentes, biblioteca e cartões. Botão Play (`present`) reativamente desabilitado/oculto na ausência de mapa ativo. |',
-    '| 3 | **Mapa Mental no Editor** | [windows/03-mapa-mental-editor.png](windows/03-mapa-mental-editor.png) | [android/03-mapa-mental-editor.png](android/03-mapa-mental-editor.png) | Editor principal com ideia central, tópicos temáticos, ramos orgânicos, relações pontilhadas e botão Play habilitado na barra de ferramentas. |',
-    '| 4 | **Modo Apresentação (HUD)** | [windows/04-modo-apresentacao-hud.png](windows/04-modo-apresentacao-hud.png) | [android/04-modo-apresentacao-hud.png](android/04-modo-apresentacao-hud.png) | Apresentação em tela cheia com centralização e zoom no slide atual. Barra flutuante (#hud) com Anterior, contador dinâmico com título, Próximo e botão Sair. |',
+    '| 2 | **Tela Inicial (Home)** | [windows/02-tela-inicial-home.png](windows/02-tela-inicial-home.png) | [android/02-tela-inicial-home.png](android/02-tela-inicial-home.png) | Tela inicial com lista de mapas recentes, biblioteca e cartões. Ações de mapa da barra de ferramentas (ajustar, desfazer, tópicos) ficam desabilitadas enquanto esta tela está aberta. |',
+    '| 3 | **Mapa Mental no Editor** | [windows/03-mapa-mental-editor.png](windows/03-mapa-mental-editor.png) | [android/03-mapa-mental-editor.png](android/03-mapa-mental-editor.png) | Editor principal com ideia central, tópicos temáticos, ramos orgânicos, relações pontilhadas e a barra de ferramentas com todas as ações de mapa habilitadas. |',
     '| 5 | **Bancada de Estudos (Launchpad)** | [windows/05-bancada-estudo-launchpad.png](windows/05-bancada-estudo-launchpad.png) | [android/05-bancada-estudo-launchpad.png](android/05-bancada-estudo-launchpad.png) | Estado vazio convidativo da bancada integrada quando não há abas abertas, oferecendo ações rápidas e lista de materiais vinculados ao mapa. |',
     '| 6 | **Aba Leitor de PDF** | [windows/06-bancada-estudo-leitor-pdf.png](windows/06-bancada-estudo-leitor-pdf.png) | [android/06-bancada-estudo-leitor-pdf.png](android/06-bancada-estudo-leitor-pdf.png) | Leitor de PDF com paginação, zoom ajustável e atalho para criar tópicos ou anotações a partir de citações do texto. |',
     '| 7 | **Aba Player de Vídeo** | [windows/07-bancada-estudo-player-video.png](windows/07-bancada-estudo-player-video.png) | [android/07-bancada-estudo-player-video.png](android/07-bancada-estudo-player-video.png) | Player de videoaula com suporte a arquivos locais e links do YouTube, controle de velocidade e botão de vincular carimbo de tempo ao mapa mental. |',

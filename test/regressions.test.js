@@ -21,16 +21,14 @@ test('arquivos do Mindomo (sem a marca do MindCraft) continuam tendo a formataç
   const back = readMom(z.toBuffer()); assert.equal(back.root.children[0].title, 'Negrito e\nquebra <C>'); assert.equal(back.root.children[0].notes, 'texto');
 });
 
-test('HUD de apresentação: elementos de controle e saída presentes no index.html', () => {
+test('modo de apresentação foi retirado: sem HUD, sem script, sem botão e sem F5 na interface', () => {
   const fs = require('fs');
   const path = require('path');
   const html = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'index.html'), 'utf-8');
-  assert.ok(html.includes('id="presentPrev"'), 'botão anterior da apresentação presente');
-  assert.ok(html.includes('id="presentNext"'), 'botão próximo da apresentação presente');
-  assert.ok(html.includes('id="presentExit"'), 'botão sair da apresentação presente');
-  assert.ok(html.includes('id="presentCur"'), 'contador atual da apresentação presente');
-  assert.ok(html.includes('id="presentTotal"'), 'contador total da apresentação presente');
-  assert.ok(html.includes('present-ui.js'), 'script present-ui.js carregado no index.html');
+  assert.ok(!html.includes('present-ui.js'), 'script present-ui.js não é mais carregado');
+  assert.ok(!html.includes('id="hud"'), 'barra flutuante da apresentação não existe mais');
+  assert.ok(!html.includes('data-act="present"'), 'botão Apresentar não existe mais');
+  assert.ok(!html.includes('F5'), 'nenhuma dica de F5 (apresentar) na interface');
 });
 
 test('Navegador Web: sanitização bloqueia protocolos perigosos e normaliza links', () => {
