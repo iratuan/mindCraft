@@ -442,11 +442,12 @@ function updateLabels() {
   const near = new Set(); for (const c of [hov, selI]) if (c !== null && c !== undefined) { near.add(c); adj[c].forEach((j) => near.add(j)); }
   const isForced = (i) => near.has(i) || !!(gOpt.q && match[i]);
   const score = (i) => (i === selI ? 1e7 : 0) + (i === hov ? 1e7 : 0) + (gOpt.q && match[i] ? 1e6 : 0) + (near.has(i) ? 1e5 : 0) + (nodes[i].isRoot ? 1e3 : 0) + nodes[i].deg * 10 + (gLast.leafCount[i] || 0);
-  const items = []; nodes.forEach((n, i) => { if (vis[i] && labels[i] && onScreen(i)) items.push({ id: i, x: scr[i].x, y: scr[i].y, r: scr[i].r, text: labels[i].dataset.full, forced: isForced(i), score: score(i), relevant: n.isRoot || n.deg >= 4 }); });
+  const items = []; nodes.forEach((n, i) => { if (vis[i] && labels[i] && onScreen(i)) items.push({ id: i, x: scr[i].x, y: scr[i].y, r: scr[i].r, text: labels[i].dataset.full, forced: isForced(i), score: score(i), relevant: n.isRoot || n.deg >= 4, big: i === selI || i === hov }); });
   const obstacles = [];   // o que flutua sobre o desenho também ocupa lugar
   for (const sel of ['#gLegend', '#gZoom', '#gStat']) { const o = $(sel); if (!o || o.hidden) continue; const bb = o.getBoundingClientRect(); if (bb.width) obstacles.push({ x: bb.left - r.left - 4, y: bb.top - r.top - 4, w: bb.width + 8, h: bb.height + 8 }); }
   const budget = Math.max(10, Math.round(D.budget * (r.width * r.height) / 9000));
-  const { placed, shown } = placeLabels(items, { width: r.width, height: r.height, obstacles, mode, budget, gap: D.gap, measure: textW, fit: fitText });
+  // o rótulo do nó selecionado/apontado fica em negrito (classe "big") e é mais largo: a medição reserva 8% a mais só para ele
+  const { placed, shown } = placeLabels(items, { width: r.width, height: r.height, obstacles, mode, budget, gap: D.gap, measure: (s, it) => textW(s) * (it && it.big ? 1.08 : 1), fit: fitText });
   labels.forEach((el0, i) => {
     if (!el0) return;
     const p = placed.get(i);

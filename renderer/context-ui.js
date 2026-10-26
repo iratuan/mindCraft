@@ -320,6 +320,8 @@ function initContextUIEvents() {
   document.addEventListener('mc:media-focus', () => setWorkspaceFocus('media'));
   const tabMap = $('#tabMap');
   if (tabMap) tabMap.addEventListener('click', (e) => { if (!e.target.closest('#closeMapBtn')) setWorkspaceFocus('map'); });
+  const reveal = $('#panelsReveal');
+  if (reveal) reveal.addEventListener('click', () => setWorkspaceFocus('map'));
   const stageEl = $('#stage');
   if (stageEl) stageEl.addEventListener('mousedown', () => { if (workspaceFocus !== 'map') setWorkspaceFocus('map'); }, true);
 

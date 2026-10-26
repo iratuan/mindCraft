@@ -54,9 +54,30 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'correcoes-v0.6.0');
     await js(`document.querySelector('#tabMedia .tab').click()`); await wait(150);
     await js(`document.querySelector('#tabMedia .tab-x').click()`); await wait(300);
     eq(await js(`document.querySelectorAll('#tabMedia .tab').length`), 0, 'nenhuma aba de mídia');
+    await wait(300);
+    eq(await js(`document.querySelector('#pdfpane').hidden`), true, 'a última aba fechada fecha a bancada sozinha');
     eq(await js(`document.body.classList.contains('focus-media')`), false, 'foco de volta ao mapa');
   });
 
+  await t('com uma mídia em foco, o ícone de borda reabre o painel do mapa (sem texto)', async () => {
+    await js(`window.MCReact.openPdf({}); true`); await wait(400);
+    eq(await js(`document.body.classList.contains('focus-media')`), true);
+    eq(await shown('#panelsReveal'), true, 'ícone de reabrir visível');
+    await js(`document.querySelector('#panelsReveal').click()`); await wait(250);
+    eq(await js(`document.body.classList.contains('focus-media')`), false, 'o ícone devolveu o foco ao mapa');
+    eq(await shown('#panels'), true, 'painel do mapa de volta');
+    await js(`window.MCReact.closePdf(); true`); await wait(250);
+  });
+
+  await t('janela estreita: a faixa de abas rola em vez de cortar as abas', async () => {
+    await js(`window.MCReact.openPdf({}); true`); await wait(300);
+    c.win.setSize(700, 760); await wait(500);
+    const r = await js(`(() => { const b = document.querySelector('#tabbar'); return { overflow: getComputedStyle(b).overflowX, scrollable: b.scrollWidth >= b.clientWidth }; })()`);
+    eq(r.overflow, 'auto', 'faixa rola na horizontal');
+    await c.shot(path.join(SHOTS, '07-abas-janela-estreita.png'));
+    c.win.setSize(1280, 800); await wait(400);
+    await js(`window.MCReact.closePdf(); true`); await wait(250);
+  });
   await t('o ✕ da aba do mapa fecha o mapa e volta à tela inicial', async () => {
     await js(`document.querySelector('#closeMapBtn').click()`);
     await c.waitFor(() => js(`!!(window.MCReact && MCReact.homeIsOpen())`), 8000);

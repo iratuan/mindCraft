@@ -19,7 +19,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando ambiente de estudos…</div>
-    <div class="splash-foot">v0.6.0 · Concursos</div>
+    <div class="splash-foot">v0.6.1 · Concursos</div>
   </div>
 </div>
 
@@ -30,6 +30,15 @@
     <div class="brand" title="MindCraft">
       <svg viewBox="0 0 24 24" width="22" height="22"><rect width="24" height="24" rx="5" fill="#2680eb"/><circle cx="12" cy="12" r="3.2" fill="#fff"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 12 6 6.5M12 12l6-5.5M12 12l-6 5.5M12 12l6 5.5"/></g></svg>
     </div>
+    <!-- Faixa de abas: o mapa e cada leitor/vídeo/navegador aberto. Cada aba tem o seu ✕. -->
+  <nav id="tabbar" aria-label="Abas abertas">
+    <div class="tab on" id="tabMap" role="tab" tabindex="0" aria-selected="true" title="Mapa mental">
+      <svg class="tab-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 9V4M9 13.5l-5 4M15 13.5l5 4"/></svg>
+      <span id="docTitle">Sem título</span><span id="dirtyDot" hidden title="Alterações não salvas"></span>
+      <button id="closeMapBtn" class="tab-x" data-act="closeMap" title="Fechar mapa (Ctrl+Shift+M)" aria-label="Fechar mapa"><svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg></button>
+    </div>
+    <div id="tabMedia" class="tabs-media"></div>
+  </nav>
     <!-- o título do mapa vira a aba do mapa (como em um navegador) -->
     <span class="grow"></span>
     <div class="searchbox">
@@ -41,16 +50,6 @@
     </label>
     <button id="lightToggle" class="icon-btn" title="Alternar tema claro/escuro" aria-label="Alternar tema"><svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="3.3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
   </header>
-  <!-- Faixa de abas: o mapa e cada leitor/vídeo/navegador aberto. Cada aba tem o seu ✕. -->
-  <nav id="tabbar" aria-label="Abas abertas">
-    <div class="tab on" id="tabMap" role="tab" tabindex="0" aria-selected="true" title="Mapa mental">
-      <svg class="tab-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 9V4M9 13.5l-5 4M15 13.5l5 4"/></svg>
-      <span id="docTitle">Sem título</span><span id="dirtyDot" hidden title="Alterações não salvas"></span>
-      <button id="closeMapBtn" class="tab-x" data-act="closeMap" title="Fechar mapa (Ctrl+Shift+M)" aria-label="Fechar mapa"><svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg></button>
-    </div>
-    <div id="tabMedia" class="tabs-media"></div>
-  </nav>
-
   <!-- Barra de opções (contextual ao tópico, relação ou mapa) -->
   <div id="options" class="map-only" data-context="topic">
     <!-- Modo Tópico (quando um tópico está selecionado) -->
@@ -234,6 +233,8 @@
         <div class="panel-b"><div id="outline" role="tree"></div></div>
       </section>
     </aside>
+    <!-- com uma mídia em foco o painel do mapa fica recolhido: este ícone (sem texto) o traz de volta -->
+    <button id="panelsReveal" type="button" class="panels-reveal" title="Mostrar o painel do mapa" aria-label="Mostrar o painel do mapa">‹</button>
   </div>
 
   <!-- Barra de status -->

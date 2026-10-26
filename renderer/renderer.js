@@ -442,7 +442,12 @@ $('#search').addEventListener('input', (e) => {
   hitList = [];
   if (q) map.walk((n) => { if (n.title.toLowerCase().includes(q) || (n.notes || '').toLowerCase().includes(q)) hitList.push(n.id); });
   hits = q ? new Set(hitList) : null; hitIdx = -1;
-  render(); setStatus(q ? `${hitList.length} resultado(s) — Enter vai para o próximo` : '');
+  render();
+  // tópicos soltos do Mindomo não entram na navegação da árvore; a barra de status diz quantos casam com a busca
+  let soltos = 0;
+  if (q) for (const f of map.meta._momFloating || []) (function walk(n) { if (n.title.toLowerCase().includes(q) || (n.notes || '').toLowerCase().includes(q)) soltos++; n.children.forEach(walk); })(f.node);
+  const extra = soltos ? ` · ${soltos} em tópicos soltos à direita (Editar → Trazer tópicos soltos)` : '';
+  setStatus(q ? `${hitList.length} resultado(s) — Enter vai para o próximo${extra}` : '');
 });
 $('#search').addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.target.value = ''; e.target.dispatchEvent(new Event('input')); e.target.blur(); }

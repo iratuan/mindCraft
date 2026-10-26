@@ -50,7 +50,7 @@ function placeLabels(items, o) {
     const forced = !!it.forced;
     const allowed = mode === 'all' ? true : mode === 'none' ? forced : mode === 'relevant' ? (forced || !!it.relevant) : (forced || shown < budget);
     if (!allowed) continue;
-    const text = fit(it.text, forced ? 300 : 170), w = measure(text) + 6, off = it.r + 4;
+    const text = fit(it.text, forced ? 300 : 170), w = measure(text, it) + 6, off = it.r + 4;
     const cands = [
       { x: it.x - w / 2, y: it.y + off, anchor: 'middle', ox: 0, oy: off + ROW_H / 2 },
       { x: it.x + off, y: it.y - ROW_H / 2, anchor: 'start', ox: off, oy: 0 },

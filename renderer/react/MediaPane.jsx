@@ -176,6 +176,12 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
     };
   }, [tabs, closeTab]);
   useEffect(() => () => document.dispatchEvent(new CustomEvent('mc:media-tabs', { detail: { tabs: [], active: null } })), []);
+  // a última aba fechada fecha a bancada (sem painel vazio ocupando a tela); adiado para não desmontar durante o próprio render
+  const hadTab = useRef(tabs.length > 0);
+  useEffect(() => {
+    if (tabs.length) { hadTab.current = true; return; }
+    if (hadTab.current && onClose) { hadTab.current = false; setTimeout(() => onClose(), 0); }
+  }, [tabs]);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const mapPdfs = (map && map.meta && map.meta.pdfs) || [];

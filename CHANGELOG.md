@@ -2,6 +2,13 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.6.1
+- **Layout mais limpo:** as abas ficam na mesma linha do logo (uma barra a menos no topo).
+- **Bancada de mídia:** ao fechar a última aba, a bancada fecha sozinha; com uma mídia em foco, um ícone sem texto na borda direita reabre o painel do mapa.
+- **Janela estreita:** a faixa de abas rola na horizontal em vez de cortar as abas.
+- **Busca:** a barra de status informa quantos resultados estão nos tópicos soltos do Mindomo.
+- **Rede de conhecimento:** o rótulo do nó selecionado (em negrito) não invade os vizinhos.
+
 ## 0.6.0
 - **Abas do espaço de trabalho**, como em um navegador: a aba do mapa (com ✕ para fechar) e uma aba para cada PDF, vídeo ou navegador aberto (com ✕ em cada uma).
 - **Foco:** com uma mídia ativa, as ações do mapa e o painel da direita ficam ocultos; o mapa continua visível e um clique nele (ou na aba do mapa) devolve o foco ao mapa.
