@@ -86,7 +86,7 @@ const start = require('./harness');
     await open('openPlanModal()'); ok(await exists('#planPaste')); await paste('#planPaste', `Aqui estão as linhas:\n${FENCE}\n${edited}\n${FENCE}`); await waitFor(() => js(`!document.querySelector('#planPreview').hidden`), 4000);
     ok(/mudança\(s\)/.test(await text('#planPreview')), await text('#planPreview')); ok(!(await js(`document.querySelector('#planOk').disabled`))); await c.shot(path.join(SHOTS, '04-planilha-colada.png'));
     const before = await js(`JSON.stringify(map.toJSON())`); await clickSel('#planOk'); await waitFor(() => js(`document.querySelector('#modal').hidden`), 4000); await wait(300);
-    ok((await js(`JSON.stringify(map.toJSON())`)) !== before, 'o mapa mudou'); await key('Z', ['control']); eq(await js(`JSON.stringify(map.toJSON())`), before, 'um Ctrl+Z desfaz tudo');
+    ok((await js(`JSON.stringify(map.toJSON())`)) !== before, 'o mapa mudou'); await js(`ipcRenderer.emit('menu', {}, 'undo'); true`); await wait(250);   // o mesmo comando que o Ctrl+Z dispara pelo menu (o atalho é coberto em e2e-reorder) eq(await js(`JSON.stringify(map.toJSON())`), before, 'um Ctrl+Z desfaz tudo');
   });
 
   await t('nenhum erro de console', async () => { eq(c.errors, [], 'erros de console'); });

@@ -35,7 +35,7 @@ const { MindMap, createNode } = require('../core/model');
 
   await t('Esc cancela (nada muda, nenhuma entrada no histórico); clicar fora CONFIRMA (blur); o foco volta ao mapa', async () => {
     await fresh(); const r = await rect('Tópico 2'); await click(r.x, r.y); const u0 = await undoLen();
-    await key('F2'); await waitFor(editorOpen); await type('descartado'); await key('Escape'); await waitFor(async () => !(await editorOpen()));
+    await key('F2'); await waitFor(editorOpen); await waitFor(() => js(`document.activeElement === editor`)); await type('descartado'); await key('Escape'); await waitFor(async () => !(await editorOpen()));
     eq((await titles()).includes('1:Tópico 2'), true); eq(await undoLen(), u0, 'sem histórico'); eq(await js('document.activeElement.id'), 'stage', 'foco volta ao mapa');
     await key('F2'); await waitFor(editorOpen); await type('Confirmado ao clicar fora'); await click(600, 600); await waitFor(async () => !(await editorOpen())); ok((await titles()).includes('1:Confirmado ao clicar fora'), (await titles()).join(','));
   });
