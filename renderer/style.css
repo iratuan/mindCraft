@@ -659,3 +659,19 @@ body.panels-drawer #panelsSplit, body.panels-auto-hidden #panelsSplit { display:
   color: #475569;
   letter-spacing: 0.5px;
 }
+
+/* ---------- Faixa de abas (0.6.0): o mapa e as mídias abertas, como em um navegador ---------- */
+#tabbar { display: flex; align-items: flex-end; gap: 2px; height: 36px; padding: 6px 8px 0; background: var(--bg-bar); border-bottom: 1px solid var(--line); overflow: hidden; flex-shrink: 0; }
+.tabs-media { display: flex; gap: 2px; min-width: 0; overflow: hidden; }
+.tab { display: flex; align-items: center; gap: 6px; height: 30px; max-width: 240px; min-width: 0; padding: 0 6px 0 10px; border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; background: transparent; color: var(--text-dim); font: inherit; font-size: 12.5px; cursor: pointer; user-select: none; flex-shrink: 0; }
+.tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tab:hover { background: var(--bg-hover); color: var(--text-strong); }
+.tab.on { background: var(--bg-panel); color: var(--text-strong); border-color: var(--line); }
+.tab-ico { flex-shrink: 0; opacity: .8; }
+.tab-x { display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; opacity: .7; cursor: pointer; padding: 0; }
+.tab-x:hover { background: var(--bg-hover); opacity: 1; }
+.tab-x:disabled { opacity: .3; cursor: default; }
+/* foco numa mídia (PDF, vídeo, navegador): só as ferramentas e o painel da esquerda; o mapa continua visível, e um clique nele volta ao mapa */
+body.focus-media .map-only { display: none !important; }
+body.focus-media .right-panel { display: none !important; }
+.media-tabs-list { display: none !important; }

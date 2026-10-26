@@ -102,6 +102,7 @@ const resizeSoon = () => setTimeout(() => window.dispatchEvent(new Event('resize
 function openMedia(tab = 'pdf', opts = {}) {
   const pane = document.getElementById('pdfpane'), split = document.getElementById('pdfsplit');
   activeMediaTab = tab;
+  document.dispatchEvent(new CustomEvent('mc:media-focus'));   // abrir uma mídia leva o foco para ela (faixa de abas, context-ui.js)
   if (mediaRoot) {
     document.dispatchEvent(new CustomEvent('mc:media-switch', { detail: { tab, pdfOpts: opts } }));
     if (opts.path || opts.page) document.dispatchEvent(new CustomEvent('mc:pdf-open', { detail: opts }));

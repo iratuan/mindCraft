@@ -2,6 +2,12 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.6.0
+- **Abas do espaço de trabalho**, como em um navegador: a aba do mapa (com ✕ para fechar) e uma aba para cada PDF, vídeo ou navegador aberto (com ✕ em cada uma).
+- **Foco:** com uma mídia ativa, as ações do mapa e o painel da direita ficam ocultos; o mapa continua visível e um clique nele (ou na aba do mapa) devolve o foco ao mapa.
+- **Compatibilidade com o Mindomo:** tópicos soltos (sem ligação à raiz) aparecem à direita do mapa, só para leitura, e Editar → "Trazer tópicos soltos para o mapa" os traz para a árvore (Ctrl+Z desfaz). A lixeira do Mindomo, o histórico, as relações e todos os temas são preservados ao salvar.
+- Correção: um arquivo `.mom` com ciclos de pai não trava mais a leitura.
+
 ## 0.5.0
 - **Modo apresentação retirado** (botão ▶, tecla F5, barra flutuante, item do menu Exibir e da barra do tablet). Para simplificar o produto e reduzir riscos. Nada que o usuário já tem é apagado: mapas, notas, revisões e pacotes continuam iguais.
 - **Botões que dependem de mapa aberto** só ficam habilitados com um mapa na tela. Antes, ao abrir o app (tela inicial por cima), botões como Ajustar à tela, Desfazer, Novo tópico e Relação apareciam habilitados. Vale também para o menu do desktop (Salvar, Exportar, Editar, Ajustar…) e o menu do tablet.

@@ -161,6 +161,22 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
     };
   }, []);
 
+  // Faixa de abas do topo (renderer/context-ui.js): a bancada avisa quais abas há e obedece a ativar/fechar uma aba
+  useEffect(() => {
+    document.dispatchEvent(new CustomEvent('mc:media-tabs', { detail: { tabs: tabs.map((t) => ({ id: t.id, title: t.title, type: t.type })), active: activeTabId } }));
+  }, [tabs, activeTabId]);
+  useEffect(() => {
+    const onActivate = (e) => { const id = (e.detail || {}).id; if (tabs.some((t) => t.id === id)) setActiveTabId(id); };
+    const onCloseReq = (e) => { const id = (e.detail || {}).id; if (id) closeTab(id); };
+    document.addEventListener('mc:media-activate', onActivate);
+    document.addEventListener('mc:media-close', onCloseReq);
+    return () => {
+      document.removeEventListener('mc:media-activate', onActivate);
+      document.removeEventListener('mc:media-close', onCloseReq);
+    };
+  }, [tabs, closeTab]);
+  useEffect(() => () => document.dispatchEvent(new CustomEvent('mc:media-tabs', { detail: { tabs: [], active: null } })), []);
+
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const mapPdfs = (map && map.meta && map.meta.pdfs) || [];
 
@@ -169,7 +185,8 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
       {/* Barra de Abas Multimídia da Bancada de Estudos */}
       <div style={{ display: 'flex', alignItems: 'center', height: '36px', background: 'var(--bg-bar)', borderBottom: '1px solid var(--line)', padding: '0 6px', gap: '3px' }}>
         {/* Abas Abertas */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1, minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {/* a troca entre abas agora é a faixa do topo (renderer/context-ui.js): esta lista fica escondida (ver style.css) */}
+        <div className="media-tabs-list" style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1, minWidth: 0, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {tabs.map((t) => {
             const isActive = t.id === activeTabId;
             return (

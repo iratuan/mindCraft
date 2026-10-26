@@ -69,7 +69,12 @@ function render() {
   const bb = L.bounds;
   const board = `<defs><filter id="abs" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="3" stdDeviation="9" flood-color="#000" flood-opacity=".5"/></filter></defs>`
     + `<rect x="${bb.x}" y="${bb.y}" width="${bb.w}" height="${bb.h}" rx="3" fill="${L.theme.background}" filter="url(#abs)"/>`;
-  view.innerHTML = board + renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits });
+  // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
+  L.floats = placeFloating();
+  const floatSvg = L.floats.map(({ fl, dx, dy }) => `<g transform="translate(${dx} ${dy})">`
+    + `<rect x="${fl.bounds.x - 12}" y="${fl.bounds.y - 12}" width="${fl.bounds.w + 24}" height="${fl.bounds.h + 24}" rx="8" fill="none" stroke="#8a8a8a" stroke-width="1.2" stroke-dasharray="6 5" opacity=".7"/>`
+    + `<g opacity=".6">${renderGroup(fl, { interactive: false })}</g></g>`).join('');
+  view.innerHTML = board + renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits }) + floatSvg;
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
   syncCustomTheme();
   $('#theme').value = map.meta.theme;
@@ -234,9 +239,29 @@ function reveal(id, margin = 70) {
   return true;
 }
 
+/** Cada tópico solto é desenhado à parte (layout próprio) e colocado à direita da árvore principal, empilhado de cima para baixo. */
+function placeFloating() {
+  const list = (map && map.meta._momFloating) || [];
+  const out = [];
+  let y = L.bounds.y;
+  const x0 = L.bounds.x + L.bounds.w + 140;
+  for (const f of list) {
+    const fl = layoutMap({ root: f.node, meta: map.meta }, { today: nowStr() });
+    out.push({ fl, dx: x0 - fl.bounds.x, dy: y - fl.bounds.y });
+    y += fl.bounds.h + 80;
+  }
+  return out;
+}
+
 function fit() {
   const r = svg.getBoundingClientRect();
-  const { x, y, w, h } = L.bounds;
+  // enquadra a árvore principal e os tópicos soltos (se houver)
+  let { x, y, w, h } = L.bounds;
+  for (const { fl, dx, dy } of L.floats || []) {
+    const x1 = Math.min(x, fl.bounds.x + dx - 12), y1 = Math.min(y, fl.bounds.y + dy - 12);
+    const x2 = Math.max(x + w, fl.bounds.x + dx + fl.bounds.w + 12), y2 = Math.max(y + h, fl.bounds.y + dy + fl.bounds.h + 12);
+    x = x1; y = y1; w = x2 - x1; h = y2 - y1;
+  }
   const raw = Math.min((r.width * 0.92) / w, (r.height * 0.92) / h, 1.5); // folga em volta da prancheta
   pan.k = Math.max(0.25, raw);
   if (raw < 0.25) { // mapa enorme: abaixo de 25% nada se lê; mantém 25% centrado na raiz (use "Níveis" para recolher)
@@ -260,6 +285,9 @@ async function openPath(p, { silent = false } = {}) {
     filePath = ext === 'mom' ? p : null; dirty = ext !== 'mom'; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
     if (typeof closeHome === 'function') closeHome();
     render(); fit();
+    // tópicos soltos do Mindomo: avisa uma vez, na barra de status (o bloco fica à direita do mapa)
+    const soltos = (map.meta._momFloating || []).length;
+    if (soltos) setStatus(`${soltos} tópico(s) solto(s) do Mindomo à direita do mapa. Editar → Trazer tópicos soltos para o mapa.`);
     if (ext === 'mom') { ipcRenderer.invoke('recent:add', p).catch(() => {}); saveCfg({ lastKind: 'file' }); }
     return true;
   } catch (e) {
@@ -374,6 +402,15 @@ const act = {
     setStatus(v ? `Ramo recolhido: ${hidden} subtópico(s) escondido(s). Toque de novo para expandir.` : 'Ramo expandido.');
   },
   closeMap() { if (typeof closeCurrentMap === 'function') return closeCurrentMap(); },
+  /** Traz os tópicos soltos do Mindomo para o mapa, como filhos da raiz. Um único Ctrl+Z desfaz tudo. */
+  attachFloating() {
+    const list = (map.meta._momFloating || []).slice();
+    if (!list.length) return setStatus('Não há tópicos soltos neste mapa.');
+    try {
+      change(() => map.batch(() => { for (const f of list) map.addSubtree(map.root.id, f.node); delete map.meta._momFloating; return true; }));
+      setStatus(`${list.length} tópico(s) solto(s) trazido(s) para o mapa. Ctrl+Z desfaz.`);
+    } catch (e) { setStatus(e.message || 'Não foi possível trazer os tópicos soltos.'); }
+  },
 };
 /** Reordena/muda o nível do tópico selecionado (um por vez; uma ação desfazível). */
 function reshape(method, arg, failMsg) {

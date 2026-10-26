@@ -31,10 +31,10 @@ const start = require('./harness');
     ok(!(await collapsed())); const p0 = await W('#panels'), s0 = await W('#stage'); ok(p0 > 200, 'painel aberto: ' + p0);
     eq(await js(`document.querySelector('#panelsToggle').textContent`), '›'); ok(/Recolher o painel lateral/.test(await js(`document.querySelector('#panelsToggle').title`)));
     await c.shot(path.join(SHOTS, '01-painel-aberto.png'));
-    await click('#panelsToggle'); ok(await collapsed(), 'recolheu'); ok(await hidden(), 'painel escondido'); const s1 = await W('#stage'); ok(s1 > s0 + p0 - 6, `mapa ganhou a largura do painel: ${s0} → ${s1}`);
+    await js("document.querySelector('#tabMap').click()"); await click('#panelsToggle'); ok(await collapsed(), 'recolheu'); ok(await hidden(), 'painel escondido'); const s1 = await W('#stage'); ok(s1 > s0 + p0 - 6, `mapa ganhou a largura do painel: ${s0} → ${s1}`);
     eq(await js(`document.querySelector('#panelsToggle').textContent`), '‹'); eq(await js(`document.querySelector('#panelsToggle').getAttribute('aria-expanded')`), 'false'); ok(/Expandir o painel lateral/.test(await js(`document.querySelector('#panelsToggle').title`)));
     ok(/Painel lateral recolhido/.test(await js(`document.querySelector('#status').textContent`)), 'avisa o que fez'); eq(cfg().panelsCollapsed, true, 'lembrado'); await c.shot(path.join(SHOTS, '02-painel-recolhido.png'));
-    await click('#panelsToggle'); ok(!(await collapsed())); ok(Math.abs((await W('#panels')) - p0) < 3, 'voltou à largura'); eq(cfg().panelsCollapsed, false);
+    await js("document.querySelector('#tabMap').click()"); await click('#panelsToggle'); ok(!(await collapsed())); ok(Math.abs((await W('#panels')) - p0) < 3, 'voltou à largura'); eq(cfg().panelsCollapsed, false);
   });
 
   await t('menu Exibir → "Painel lateral" faz o mesmo; pedir uma aba (Alt+2) com o painel recolhido o EXPANDE; o mapa não é alterado', async () => {
@@ -73,14 +73,15 @@ const start = require('./harness');
   });
 
   await t('com o leitor aberto, recolher o painel lateral dá ainda mais espaço ao mapa e os dois divisores convivem', async () => {
-    const s0 = await W('#stage'); await click('#panelsToggle'); ok(await collapsed()); ok((await W('#stage')) > s0 + 200, `mapa ${s0} → ${await W('#stage')}`);
+    await js("document.querySelector('#tabMap').click()"); const s0 = await W('#stage');   // com o foco no mapa o painel da direita aparece: medir depois de voltar ao mapa
+    await click('#panelsToggle'); ok(await collapsed()); ok((await W('#stage')) > s0 + 200, `mapa ${s0} → ${await W('#stage')}`);
     await dragSplit('#pdfsplit', 200); ok((await W('#stage')) >= 255); await c.shot(path.join(SHOTS, '06-pdf-com-painel-recolhido.png'));
-    await click('#panelsToggle'); ok(!(await collapsed())); ok((await W('#stage')) >= 255, 'ao expandir o painel o mapa ainda cabe: ' + (await W('#stage')));
+    await js("document.querySelector('#tabMap').click()"); await click('#panelsToggle'); ok(!(await collapsed())); ok((await W('#stage')) >= 255, 'ao expandir o painel o mapa ainda cabe: ' + (await W('#stage')));
     await js(`window.MCReact.closePdf(); true`); await wait(200); ok(await js(`document.querySelector('#pdfpane').hidden`));
   });
 
   await t('recolhido é lembrado ao recarregar o app; nenhum erro de console', async () => {
-    await click('#panelsToggle'); ok(await collapsed()); eq(cfg().panelsCollapsed, true);
+    await js("document.querySelector('#tabMap').click()"); await click('#panelsToggle'); ok(await collapsed()); eq(cfg().panelsCollapsed, true);
     wc().reload(); await waitFor(() => js(`typeof map !== 'undefined' && !!document.querySelector('#panelsToggle')`).catch(() => false), 15000, 300); await waitFor(() => collapsed(), 8000, 300).catch(() => {});
     ok(await collapsed(), 'continua recolhido depois de recarregar: ' + JSON.stringify(cfg())); eq(await js(`document.querySelector('#panelsToggle').textContent`), '‹');
     await js(`closeHome && closeHome(); act.panelsToggle(); true`); await wait(300); ok(!(await collapsed()), 'expandido de novo'); eq(cfg().panelsCollapsed, false);

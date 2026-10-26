@@ -14,7 +14,7 @@ let pendingFile = argvFile(process.argv, app.isPackaged);
 
 // Comandos que só fazem sentido com um mapa de trabalho na tela (a tela inicial cobre o mapa). Começam desabilitados: a tela inicial abre primeiro.
 // O renderer informa a situação ('map-state', ver context-ui.js) e aqui só se aplica; reconstruir o menu reaplica o último estado.
-const MAP_COMMANDS = ['m-closeMap', 'm-restore', 'm-save', 'm-saveAs', 'm-libAdd', 'm-export', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
+const MAP_COMMANDS = ['m-closeMap', 'm-restore', 'm-save', 'm-saveAs', 'm-libAdd', 'm-export', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent', 'm-attach',
   'cut', 'copy', 'paste', 'selectAll', 'm-fit'];
 let mapInUse = false;
 function applyMapCommands() {
@@ -97,6 +97,7 @@ function buildMenu() {
       { id: 'm-moveDown', label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
       { id: 'm-outdent', label: 'Promover — subir um nível (Alt+←)', click: send('outdent') },
       { id: 'm-indent', label: 'Rebaixar — virar filho do irmão de cima (Alt+→)', click: send('indent') },
+      { id: 'm-attach', label: 'Trazer tópicos soltos para o mapa', click: send('attachFloating') },
       { type: 'separator' },
       // itens próprios (não 'role'): em campos de texto agem no texto; no mapa, nos tópicos (ver editCommand no renderer)
       { id: 'cut', label: 'Recortar', accelerator: 'CmdOrCtrl+X', click: send('cut') },

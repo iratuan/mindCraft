@@ -22,7 +22,52 @@ function setToolBtn(btn, enabled, title) {
  * Toda ação que mexe no mapa (ou que só faz sentido com ele aberto) depende desta única regra, inclusive o menu do desktop e o do tablet.
  */
 function mapInUse() {
-  return !!(map && map.root) && !(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
+  return !!(map && map.root) && workspaceFocus === 'map' && !(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
+}
+
+// Foco do espaço de trabalho (0.6.0): 'map' = o mapa está ativo (ações e painel da direita); 'media' = PDF/vídeo/navegador ativo.
+let workspaceFocus = 'map';
+function setWorkspaceFocus(f) {
+  if (f !== 'map' && f !== 'media') return;
+  workspaceFocus = f;
+  document.body.classList.toggle('focus-media', f === 'media');
+  const tabMap = $('#tabMap');
+  if (tabMap) { tabMap.classList.toggle('on', f === 'map'); tabMap.setAttribute('aria-selected', String(f === 'map')); }
+  document.querySelectorAll('#tabMedia .tab').forEach((el) => {
+    const on = f === 'media' && el.dataset.id === mediaActiveId;
+    el.classList.toggle('on', on);
+    el.setAttribute('aria-selected', String(on));
+  });
+  if (typeof syncContextUI === 'function') syncContextUI();
+}
+
+// Abas das mídias abertas (PDF, vídeo, navegador): a bancada da esquerda avisa a lista; aqui só se desenha e se pede ativar/fechar.
+let mediaActiveId = null;
+function renderMediaTabs(detail) {
+  const box = $('#tabMedia');
+  if (!box) return;
+  const tabs = (detail && detail.tabs) || [];
+  mediaActiveId = (detail && detail.active) || null;
+  box.textContent = '';
+  for (const t of tabs) {
+    const el = document.createElement('div');
+    el.className = 'tab'; el.dataset.id = t.id; el.setAttribute('role', 'tab'); el.title = t.title;
+    const name = document.createElement('span'); name.textContent = t.title;     // textContent: o título nunca vira HTML
+    const x = document.createElement('button');
+    x.className = 'tab-x'; x.title = 'Fechar ' + t.title; x.setAttribute('aria-label', 'Fechar ' + t.title);
+    x.innerHTML = '<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg>';
+    el.append(name, x);
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.tab-x')) return;
+      document.dispatchEvent(new CustomEvent('mc:media-activate', { detail: { id: t.id } }));
+      setWorkspaceFocus('media');
+    });
+    x.addEventListener('click', (e) => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('mc:media-close', { detail: { id: t.id } })); });
+    box.append(el);
+  }
+  // sem mídias abertas, não há o que estar em foco: volta ao mapa
+  if (!tabs.length && workspaceFocus === 'media') setWorkspaceFocus('map');
+  else setWorkspaceFocus(workspaceFocus);
 }
 
 // O menu do desktop (electron/main.js) habilita/desabilita os próprios comandos conforme esta informação. Só avisa quando muda.
@@ -269,6 +314,14 @@ function initContextUIEvents() {
       }
     }
   });
+
+  // Faixa de abas (0.6.0): a aba do mapa e as mídias; um clique no mapa devolve o foco a ele (o clique segue normalmente)
+  document.addEventListener('mc:media-tabs', (e) => renderMediaTabs(e.detail));
+  document.addEventListener('mc:media-focus', () => setWorkspaceFocus('media'));
+  const tabMap = $('#tabMap');
+  if (tabMap) tabMap.addEventListener('click', (e) => { if (!e.target.closest('#closeMapBtn')) setWorkspaceFocus('map'); });
+  const stageEl = $('#stage');
+  if (stageEl) stageEl.addEventListener('mousedown', () => { if (workspaceFocus !== 'map') setWorkspaceFocus('map'); }, true);
 
   // Atualiza a cada render do mapa e sempre que a tela inicial abre ou fecha (ela cobre o mapa, então muda o que está disponível)
   window.addEventListener('mc:render', syncContextUI);

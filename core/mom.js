@@ -49,9 +49,10 @@ function readMom(source) {
   const fromMindCraft = doc.mcWriter === 'mindcraft';
   const clean = fromMindCraft ? (s) => String(s ?? '') : stripTags;
   const byId = new Map();
+  const dups = new Set();
   for (const n of nodes) {
     if (!n || typeof n !== 'object' || n.deleted || typeof n.id !== 'string') continue;
-    if (byId.has(mapId(n.id)) ) continue;       // id duplicado: vale o primeiro
+    if (byId.has(mapId(n.id))) { dups.add(n); continue; }   // id duplicado: vale o primeiro; a cópia extra volta ao arquivo como estava
     const { id, parentId, previousId, title, index, mc, ...raw } = n;
     const nid = mapId(id);
     const m = mc && typeof mc === 'object' ? mc : {};
@@ -68,6 +69,7 @@ function readMom(source) {
         ...(m.videoRef && typeof m.videoRef.time === 'number' ? { mcVideoRef: { videoId: String(m.videoRef.videoId || ''), time: m.videoRef.time, title: String(m.videoRef.title || '') } } : {}),
       }),
       parentId: typeof parentId === 'string' ? mapId(parentId) : null, index: Number.isFinite(index) ? index : 0, raw: { ...raw },
+      prev: typeof previousId === 'string' ? mapId(previousId) : null,
     });
   }
 
@@ -105,8 +107,37 @@ function readMom(source) {
   const theme = doc.mcTheme === 'custom' && custom ? 'custom' : typeof doc.mcTheme === 'string' && THEMES[doc.mcTheme] ? doc.mcTheme : (!fromMindCraft && custom ? 'custom' : 'ocean');
   const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
   map.meta._momDoc = doc; // preservado para round-trip
+  // Três grupos de nós que a árvore principal não mostra. Nenhum pode sumir ao salvar:
+  //  - SOLTOS: tópicos sem ligação à raiz (o Mindomo os mostra à parte). Viram _momFloating: aparecem à direita do mapa.
+  //  - LIXEIRA: nós marcados como excluídos no Mindomo (e o que está dentro deles). Ficam guardados como estavam, sem aparecer.
+  //  - duplicados e entradas inválidas: também voltam ao arquivo como estavam.
+  const shown = new Set();
+  (function walk(n) { shown.add(n.id); n.children.forEach(walk); })(rootEntry.node);
+  const rawById = new Map(nodes.filter((n) => n && typeof n.id === 'string').map((n) => [n.id, n]));
+  const floatTops = new Map(), floatIds = new Set();
+  for (const [id, e] of byId) {
+    if (shown.has(id)) continue;
+    let top = e;
+    const climbed = new Set([top.node.id]);   // um arquivo hostil pode ter ciclos de pai: sem isto o laço nunca termina
+    while (top.parentId && byId.has(top.parentId) && !climbed.has(top.parentId)) { top = byId.get(top.parentId); climbed.add(top.node.id); }   // sobe até o topo da cadeia que o app enxerga
+    const rawParent = top.parentId ? rawById.get(top.parentId) : null;
+    if (rawParent && !rawParent.deleted) continue;                                 // pai existe e não está na lixeira: não é um solto
+    if (rawParent && rawParent.deleted) continue;                                  // dentro da lixeira do Mindomo: fica como está
+    if (!floatTops.has(top.node.id)) floatTops.set(top.node.id, top);
+  }
+  for (const top of floatTops.values()) (function walk(n) { floatIds.add(n.id); n.children.forEach(walk); })(top.node);
+  if (floatTops.size) map.meta._momFloating = [...floatTops.values()].map((t) => ({ node: t.node, index: t.index, previousId: t.prev }));
+  const hidden = nodes.filter((n) => {
+    if (!n || typeof n !== 'object') return false;
+    if (typeof n.id !== 'string') return true;                                     // inválido para o app: volta como estava
+    if (dups.has(n)) return true;                                                  // cópia duplicada do mesmo id
+    const mid = mapId(n.id);
+    return !shown.has(mid) && !floatIds.has(mid);                                  // lixeira
+  });
+  if (hidden.length) map.meta._momHidden = hidden;
   if (custom) map.meta.customTheme = custom;
-  if (themes && tid && themes[tid] && JSON.stringify(themes[tid]).length < 400000) map.meta._momThemes = { [tid]: themes[tid] };   // regravado em themes.json: o Mindomo continua achando o tema
+  // todos os temas do arquivo voltam ao themes.json (o Mindomo tem uma biblioteca de temas, não só o que está em uso)
+  if (themes && typeof themes === 'object' && !Array.isArray(themes) && JSON.stringify(themes).length < 4000000) map.meta._momThemes = themes;
   if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
   if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
   { const sims = sanitizeSimulados(doc.mcSimulados, newId); if (sims.length) map.meta.simulados = sims; }
@@ -121,6 +152,15 @@ function readMom(source) {
         ...(typeof v.url === 'string' && v.url ? { url: v.url } : {}),
         ...(typeof v.dur === 'number' && v.dur >= 0 ? { dur: Math.floor(v.dur) } : {})
       }));
+  }
+  // Mindomo guarda o histórico (changes.json) e as relações dele (relations.json). O MindCraft ainda não mostra as relações do Mindomo,
+  // mas elas NÃO podem ser perdidas: guardamos o conteúdo original (com os ids já mapeados) e regravamos no mesmo formato.
+  const changes = get('changes.json');
+  if (Array.isArray(changes)) map.meta._momChanges = changes;
+  const momRel = get('relations.json');
+  if (Array.isArray(momRel)) {
+    map.meta._momRelations = momRel.filter((r) => r && typeof r.fromNodeId === 'string' && typeof r.toNodeId === 'string')
+      .map((r) => ({ ...r, fromNodeId: mapId(r.fromNodeId), toNodeId: mapId(r.toNodeId) }));
   }
   if (Array.isArray(doc.mcRelations)) {
     map.meta.relations = doc.mcRelations
@@ -161,6 +201,9 @@ function writeMom(map, target) {
     node.children.forEach((c, i) => { visit(c, node.id, prev, i); prev = c.id; });
   };
   visit(map.root, null, null, 0);
+  // tópicos soltos (sem pai) voltam à posição que tinham; a lixeira e os duplicados voltam como estavam
+  for (const f of map.meta._momFloating || []) visit(f.node, null, f.previousId || null, Number.isFinite(f.index) ? f.index : 0);
+  for (const raw of map.meta._momHidden || []) list.push(raw);
 
   const doc = map.meta._momDoc || {
     version: 40,
@@ -188,8 +231,14 @@ function writeMom(map, target) {
   zip.addFile('themes.json', Buffer.from(JSON.stringify(map.meta._momThemes || {})));
   zip.addFile('document.json', Buffer.from(JSON.stringify(doc)));
   zip.addFile('nodes.json', Buffer.from(JSON.stringify(list)));
-  zip.addFile('changes.json', Buffer.from('[]'));
-  zip.addFile('Document.xml', Buffer.from('<mo:map xmlns:mo="http://schemas.mindomo.com/application/version-4.4"></mo:map>'));
+  // histórico do Mindomo volta como estava; relações do Mindomo só se os dois tópicos ainda existem (sem referência solta)
+  zip.addFile('changes.json', Buffer.from(JSON.stringify(map.meta._momChanges || [])));
+  if (Array.isArray(map.meta._momRelations)) {
+    const ids = new Set(list.map((x) => x.id));
+    const rel = map.meta._momRelations.filter((r) => ids.has(r.fromNodeId) && ids.has(r.toNodeId));
+    if (rel.length) zip.addFile('relations.json', Buffer.from(JSON.stringify(rel)));
+  }
+  zip.addFile('Document.xml',Buffer.from('<mo:map xmlns:mo="http://schemas.mindomo.com/application/version-4.4"></mo:map>'));
   const buf = zip.toBuffer();
   if (target) {
     // grava num arquivo temporário e renomeia: uma falha no meio nunca deixa o arquivo original pela metade

@@ -19,7 +19,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando ambiente de estudos…</div>
-    <div class="splash-foot">v0.5.0 · Concursos</div>
+    <div class="splash-foot">v0.6.0 · Concursos</div>
   </div>
 </div>
 
@@ -30,20 +30,29 @@
     <div class="brand" title="MindCraft">
       <svg viewBox="0 0 24 24" width="22" height="22"><rect width="24" height="24" rx="5" fill="#2680eb"/><circle cx="12" cy="12" r="3.2" fill="#fff"/><g stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M12 12 6 6.5M12 12l6-5.5M12 12l-6 5.5M12 12l6 5.5"/></g></svg>
     </div>
-    <div id="docinfo"><span id="docTitle">Sem título</span><span id="dirtyDot" hidden title="Alterações não salvas"></span><button id="closeMapBtn" data-act="closeMap" class="icon-btn sm close-map-btn" title="Fechar mapa atual e ir para a Tela Inicial (Ctrl+Shift+M)" aria-label="Fechar mapa"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg></button></div>
+    <!-- o título do mapa vira a aba do mapa (como em um navegador) -->
     <span class="grow"></span>
     <div class="searchbox">
       <svg viewBox="0 0 20 20" width="14" height="14"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      <input id="search" type="search" placeholder="Buscar no mapa (Ctrl+F)" autocomplete="off">
+      <input id="search" class="map-only" type="search" placeholder="Buscar no mapa (Ctrl+F)" autocomplete="off">
     </div>
-    <label class="select-btn" title="Exportar mapa"><span>Exportar</span>
+    <label class="select-btn map-only" title="Exportar mapa"><span>Exportar</span>
       <select id="export"><option value="">…</option><option value="pdf">PDF</option><option value="docx">Word (.docx)</option><option value="png">PNG</option><option value="svg">SVG</option><option value="md">Markdown</option><option value="opml">OPML</option></select>
     </label>
     <button id="lightToggle" class="icon-btn" title="Alternar tema claro/escuro" aria-label="Alternar tema"><svg viewBox="0 0 20 20" width="16" height="16"><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="3.3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
   </header>
+  <!-- Faixa de abas: o mapa e cada leitor/vídeo/navegador aberto. Cada aba tem o seu ✕. -->
+  <nav id="tabbar" aria-label="Abas abertas">
+    <div class="tab on" id="tabMap" role="tab" tabindex="0" aria-selected="true" title="Mapa mental">
+      <svg class="tab-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 9V4M9 13.5l-5 4M15 13.5l5 4"/></svg>
+      <span id="docTitle">Sem título</span><span id="dirtyDot" hidden title="Alterações não salvas"></span>
+      <button id="closeMapBtn" class="tab-x" data-act="closeMap" title="Fechar mapa (Ctrl+Shift+M)" aria-label="Fechar mapa"><svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg></button>
+    </div>
+    <div id="tabMedia" class="tabs-media"></div>
+  </nav>
 
   <!-- Barra de opções (contextual ao tópico, relação ou mapa) -->
-  <div id="options" data-context="topic">
+  <div id="options" class="map-only" data-context="topic">
     <!-- Modo Tópico (quando um tópico está selecionado) -->
     <div id="optTopic" class="opt-group">
       <span class="opt-label" id="optTopicLabel">Tópico</span>
@@ -96,22 +105,22 @@
       <span class="hsep"></span>
 
       <!-- Bloco 2: Estrutura do Mapa (Contextual ao nó selecionado) -->
-      <button data-act="child" class="tool" title="Novo tópico filho (Tab)" aria-label="Novo filho"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><path d="M10 12h2.5V7H14M17.5 14v6M14.5 17h6"/></svg></button>
-      <button data-act="sibling" class="tool" title="Novo tópico irmão (Enter)" aria-label="Novo irmão"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><path d="M17 8v8M13 12h8"/></svg></button>
-      <button data-act="moveUp" class="tool tool-reorder" title="Subir tópico (Alt+↑)" aria-label="Subir tópico"><svg viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5M5 21h14"/></svg></button>
-      <button data-act="moveDown" class="tool tool-reorder" title="Descer tópico (Alt+↓)" aria-label="Descer tópico"><svg viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5M5 3h14"/></svg></button>
-      <button data-act="delete" class="tool" title="Excluir (Del)" aria-label="Excluir"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10.5 11v6M13.5 11v6"/></svg></button>
+      <button data-act="child" class="tool map-only" title="Novo tópico filho (Tab)" aria-label="Novo filho"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><path d="M10 12h2.5V7H14M17.5 14v6M14.5 17h6"/></svg></button>
+      <button data-act="sibling" class="tool map-only" title="Novo tópico irmão (Enter)" aria-label="Novo irmão"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><path d="M17 8v8M13 12h8"/></svg></button>
+      <button data-act="moveUp" class="tool tool-reorder map-only" title="Subir tópico (Alt+↑)" aria-label="Subir tópico"><svg viewBox="0 0 24 24"><path d="M12 19V6M6.5 11.5 12 6l5.5 5.5M5 21h14"/></svg></button>
+      <button data-act="moveDown" class="tool tool-reorder map-only" title="Descer tópico (Alt+↓)" aria-label="Descer tópico"><svg viewBox="0 0 24 24"><path d="M12 5v13M6.5 12.5 12 18l5.5-5.5M5 3h14"/></svg></button>
+      <button data-act="delete" class="tool map-only" title="Excluir (Del)" aria-label="Excluir"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10.5 11v6M13.5 11v6"/></svg></button>
 
       <span class="hsep"></span>
 
       <!-- Bloco 3: Conexões (Contextual) -->
-      <button data-act="relate" class="tool" title="Relação entre tópicos (R)" aria-label="Relação"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="6.5" r="2.5"/><path d="M8 17.5c6 0 4-11 8-11" stroke-dasharray="2.5 2.2"/></svg></button>
+      <button data-act="relate" class="tool map-only" title="Relação entre tópicos (R)" aria-label="Relação"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="18.5" cy="6.5" r="2.5"/><path d="M8 17.5c6 0 4-11 8-11" stroke-dasharray="2.5 2.2"/></svg></button>
 
       <span class="hsep"></span>
 
       <!-- Bloco 4: Histórico -->
-      <button data-act="undo" class="tool" title="Desfazer (Ctrl+Z)" aria-label="Desfazer"><svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" transform="translate(0 -3)"/></svg></button>
-      <button data-act="redo" class="tool" title="Refazer (Ctrl+Y)" aria-label="Refazer"><svg viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5h-9a5 5 0 0 0 0 10h2" transform="translate(0 -3)"/></svg></button>
+      <button data-act="undo" class="tool map-only" title="Desfazer (Ctrl+Z)" aria-label="Desfazer"><svg viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" transform="translate(0 -3)"/></svg></button>
+      <button data-act="redo" class="tool map-only" title="Refazer (Ctrl+Y)" aria-label="Refazer"><svg viewBox="0 0 24 24"><path d="M15 7l4.5 4.5L15 16M19 11.5h-9a5 5 0 0 0 0 10h2" transform="translate(0 -3)"/></svg></button>
 
       <span class="hsep"></span>
 
@@ -125,7 +134,7 @@
 
       <!-- Bloco 6: Modos de Visualização -->
       <button data-act="graph" class="tool has-cap" title="Rede de conhecimento (Ctrl+G)" aria-label="Rede de conhecimento"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><circle cx="19" cy="15" r="1.6"/><path d="M8 8l8-1.5M7.2 9 11 16M13.6 16.7l4.4-1M17.4 8l1.2 5.4"/></svg><span class="tool-cap">Rede</span></button>
-      <button data-act="fit" class="tool" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button data-act="fit" class="tool map-only" title="Ajustar à tela (Ctrl+0)" aria-label="Ajustar"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </nav>
 
     <!-- Área de trabalho -->
@@ -141,10 +150,10 @@
     </main>
 
     <!-- Divisor do painel lateral (arrastar = largura) + botão para recolher/expandir -->
-    <div id="panelsSplit"><button id="panelsToggle" type="button" aria-controls="panels">›</button></div>
+    <div id="panelsSplit" class="right-panel"><button id="panelsToggle" type="button" aria-controls="panels">›</button></div>
 
     <!-- Painéis -->
-    <aside id="panels">
+    <aside id="panels" class="right-panel">
       <div id="ptabs" role="tablist" aria-label="Painéis laterais">
         <button class="ptab" data-tab="props" role="tab" title="Estilo do mapa, marcadores e progresso">Estilo</button>
         <button class="ptab" data-tab="study" role="tab" title="Estudo do tópico: revisão, tempo e questões">Estudo</button>
@@ -231,10 +240,10 @@
   <footer id="statusbar">
     <span id="status"></span>
     <span class="grow"></span>
-    <button id="zoomOut" class="icon-btn sm" title="Reduzir zoom" aria-label="Reduzir zoom">−</button>
-    <input id="zoom" type="range" min="10" max="400" value="100" step="1" title="Zoom" aria-label="Zoom">
-    <button id="zoomIn" class="icon-btn sm" title="Ampliar zoom" aria-label="Ampliar zoom">+</button>
-    <span id="zoomVal">100%</span>
+    <button id="zoomOut" class="icon-btn sm map-only" title="Reduzir zoom" aria-label="Reduzir zoom">−</button>
+    <input id="zoom" class="map-only" type="range" min="10" max="400" value="100" step="1" title="Zoom" aria-label="Zoom">
+    <button id="zoomIn" class="icon-btn sm map-only" title="Ampliar zoom" aria-label="Ampliar zoom">+</button>
+    <span id="zoomVal" class="map-only">100%</span>
   </footer>
   <div id="modal" hidden role="dialog" aria-modal="true"></div>
 </div>

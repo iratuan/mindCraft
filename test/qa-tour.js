@@ -558,9 +558,9 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await clickSel('#pdfMkTopic'); await c.waitFor(() => js("!!__id('Licitação')"), 6000);
     eq(await js("map.find(__id('Licitação')).node.refs[0].page"), 1); eq(await js("map.meta.pdfs[0].name"), 'Lei de Licitações'); await wait(500); await shot('topico-criado');
     ok(await js("document.querySelectorAll('.pdf-hl').length >= 1"), 'destaque desenhado'); ok(await js("!!document.querySelector('#pdfChips .chip2')"), 'chip do tópico nesta página');
-    await clickSel('#ptabs [data-tab="notes"]'); await c.waitFor(() => js("!!document.querySelector('#refsList')")); await shot('fontes-nas-notas');
+    await js("document.querySelector('#tabMap').click()"); await clickSel('#ptabs [data-tab="notes"]'); await c.waitFor(() => js("!!document.querySelector('#refsList')")); await shot('fontes-nas-notas');
     // fechar a última aba deixa a bancada aberta no launchpad (de propósito); o ✕ do cabeçalho é que fecha a bancada
-    await clickSel('#pdfpane .media-tab-close'); await c.waitFor(() => js("document.querySelectorAll('#pdfpane .media-tab-close').length === 0"));
+    await clickSel('#tabMedia .tab-x'); await c.waitFor(() => js("document.querySelectorAll('#pdfpane .media-tab-close').length === 0"));   // o ✕ da aba agora é o da faixa do topo
   });
   await feature('Estudos', 'Revisão do dia (recordação ativa) e tela de atalhos (F1)', 'Cliques reais: Mostrar anotações → Lembrei / Errei; atalho de teclado Espaço', async ({ shot }) => {
     await js("dirty = false; ipcRenderer.emit('menu', {}, 'review'); true"); await c.waitFor(() => js("!!document.querySelector('#rvTitle')")); await shot('pergunta');
