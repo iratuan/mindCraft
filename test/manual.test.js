@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const M = require('../core/manual');
 
-const KINDS = new Set(['p', 'ul', 'steps', 'tip', 'warn', 'keys']);
+const KINDS = new Set(['p', 'ul', 'steps', 'tip', 'warn', 'keys', 'modelo']);
 const ROOT = path.join(__dirname, '..');
 
 test('seções: ids únicos, título, resumo e blocos válidos', () => {

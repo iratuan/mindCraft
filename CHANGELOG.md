@@ -2,6 +2,9 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.6.2
+- **Modelo de prompt para transformar o edital em PDF em planilha (CSV)**: seção "Edital em planilha (CSV) com a IA" na Ajuda, com botão **Copiar o modelo** e passo a passo de importação.
+
 ## 0.6.1
 - **Layout mais limpo:** as abas ficam na mesma linha do logo (uma barra a menos no topo).
 - **Bancada de mídia:** ao fechar a última aba, a bancada fecha sozinha; com uma mídia em foco, um ícone sem texto na borda direita reabre o painel do mapa.

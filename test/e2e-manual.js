@@ -71,6 +71,15 @@ const start = require('./harness');
     ok(!(await js(`!!document.querySelector('#manualBox img')`)), 'sem <img>'); ok(!(await js('!!window.__pwn')), 'nada executado'); eq(await js(`document.querySelector('#manualNone').textContent.includes('<img')`), true, 'mostra o texto, como texto');
     await key('Escape'); await wait(200); eq(await js('JSON.stringify(map.toJSON())'), before, 'mapa intacto'); ok(!(await js('dirty')), 'nada ficou "alterado"');
   });
+  await t('modelo de prompt (edital em PDF → CSV): aparece na seção, o botão copia o texto exato para a área de transferência', async () => {
+    await js(`act.manual('edital-pdf'); true`); await waitFor(open, 3000); await wait(300);
+    ok(await js(`!!document.querySelector('#manualCopiarModelo')`), 'botão Copiar o modelo presente');
+    ok(await js(`/concurso,data_prova,disciplina,item,topico,peso,notas,relacionados/.test(document.querySelector('.mn-pre').textContent)`), 'o cabeçalho do CSV está no modelo');
+    await js(`document.querySelector('#manualCopiarModelo').click(); true`); await wait(400);
+    const clip = await c.readClip();
+    ok(clip.includes('concurso,data_prova,disciplina,item,topico,peso,notas,relacionados') && clip.includes('Você vai converter'), 'a área de transferência recebeu o modelo');
+    await js(`act.manual(); true`); await waitFor(open, 3000);
+  });
   await t('nenhum erro de console durante todo o manual', async () => { eq(c.errors, [], 'erros de console'); });
   await c.finish();
 })().catch((e) => { console.error('Falha no harness:', e); require('electron').app.exit(2); });

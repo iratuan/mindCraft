@@ -48,7 +48,7 @@ function renderLinks() {
   if (window.MCReact) window.MCReact.unmountLinks();
   return renderLinksClassic();
 }
-Object.assign(window.MC, { createTopicFromLink: (t) => createTopicFromLink(t), linkifyMention: (node, m) => linkifyMention(node, m) });
+Object.assign(window.MC, { copyText: (t) => ipcRenderer.invoke('clip:write', String(t)), createTopicFromLink: (t) => createTopicFromLink(t), linkifyMention: (node, m) => linkifyMention(node, m) });
 
 // ---------- leitor de PDF ----------
 const shortTitle = (s, n = 110) => (s.length <= n ? s : s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…');

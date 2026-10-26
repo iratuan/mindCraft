@@ -680,3 +680,6 @@ body.focus-media .right-panel { display: none !important; }
 .panels-reveal { display: none; position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 20; width: 16px; height: 56px; padding: 0; border: 1px solid var(--line); border-right: 0; border-radius: 8px 0 0 8px; background: var(--bg-panel); color: var(--text-dim); font-size: 14px; cursor: pointer; }
 .panels-reveal:hover { color: var(--text-strong); background: var(--bg-hover); }
 body.focus-media .panels-reveal { display: block; }
+.mn-modelo { display: grid; gap: 8px; margin: 6px 0 10px; }
+.mn-pre { white-space: pre-wrap; font: 12px/1.45 Consolas, monospace; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; max-height: 260px; overflow: auto; user-select: text; }
+.mn-modelo-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

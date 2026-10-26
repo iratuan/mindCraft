@@ -10,6 +10,19 @@ function Inline({ text }) {
   });
 }
 
+/** Modelo de prompt copiável (ajuda: "Transformar o edital em PDF em planilha"). O botão usa a mesma área de transferência do app. */
+function ModeloCopiavel({ text }) {
+  const [msg, setMsg] = useState('');
+  return (
+    <div className="mn-modelo">
+      <pre className="mn-pre">{text}</pre>
+      <div className="mn-modelo-acoes">
+        <button className="btn primary" id="manualCopiarModelo" onClick={async () => { await window.MC.copyText(text); setMsg('Modelo copiado. Cole na conversa com a IA, junto com o PDF.'); }}>Copiar o modelo</button>
+        {msg && <span className="muted" role="status">{msg}</span>}
+      </div>
+    </div>
+  );
+}
 function Block({ b }) {
   const [kind, body] = b;
   if (kind === 'p') return <p><Inline text={body} /></p>;
@@ -17,6 +30,7 @@ function Block({ b }) {
   if (kind === 'steps') return <ol>{body.map((t, i) => <li key={i}><Inline text={t} /></li>)}</ol>;
   if (kind === 'tip') return <div className="mn-note tip"><b>Dica:</b> <Inline text={body} /></div>;
   if (kind === 'warn') return <div className="mn-note warn"><b>Atenção:</b> <Inline text={body} /></div>;
+  if (kind === 'modelo') return <ModeloCopiavel text={body} />;
   if (kind === 'keys') return <div className="mn-keys">{body.map(([k, d]) => <div className="keys-row" key={k}><kbd>{k}</kbd><span>{d}</span></div>)}</div>;
   return null;
 }
