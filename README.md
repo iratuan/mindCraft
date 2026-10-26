@@ -1,190 +1,112 @@
 # MindCraft
 
-Editor de mapas mentais **e gerenciador de estudos** (concursos e provas) para Windows, macOS e Linux, em Node/Electron.
-Compatível com arquivos `.mom`. Código próprio — só o formato de arquivo é compatível com o Mindomo.
+**Mapas mentais e rotina de estudos para concursos e provas.** Você monta o mapa do edital, estuda cada tópico com PDF, vídeo e questões ao lado, e o app avisa quando é hora de revisar.
 
-## Uso
-```
+- Desktop: **Windows** (instalador) · **macOS** e **Linux** (gerados a partir do código)
+- Tablet: **Android** (APK)
+- Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende
+
+## Telas
+
+| Tela inicial | Leitor de PDF ao lado do mapa |
+|---|---|
+| ![Tela inicial](evidencias/layout/inicio-1280x800.png) | ![PDF dividido com o mapa](evidencias/layout/pdf-dividido-1280x800.png) |
+| **Rede de conhecimento** | **Tablet** |
+| ![Rede de conhecimento](evidencias/rede/01-denso-ajustado.png) | ![Tablet na vertical](evidencias/tablet/10-tablet-retrato.png) |
+
+## Funcionalidades
+
+**Mapa mental**
+- Tópicos, notas em Markdown e `[[links]]` entre tópicos
+- Relações com seta entre tópicos distantes
+- Marcadores, progresso, cores, cinco temas visuais, recolher ramos por nível
+- Reordenar com teclado, toque ou arrastar; copiar, colar e desfazer
+
+**Edital para mapa**
+- Cole o conteúdo programático e ele vira tópicos
+- **Modelo de concurso** com disciplinas prontas
+- **CSV gerado por IA**: a Ajuda traz um modelo para transformar o PDF do edital em planilha. A importação mostra uma prévia antes de criar o mapa
+- Planilha de planejamento: exporte, edite no Excel e importe de volta
+
+**Estudo**
+- **Revisão espaçada** (1, 7, 15, 30, 60 e 120 dias): "Estudei hoje" avança, "Errei" volta ao início
+- Por tópico: peso, próxima revisão, cronômetro, minutos, questões feitas e acertos
+- **Painel de estudos** (Ctrl+E): contagem regressiva da prova, progresso por disciplina, sequência de dias, tempo da semana e fila de revisões
+- **Caderno de erros** e metas semanais
+- Simulados por disciplina e questões por banca e ano
+- Relatório em `.md` ou `.docx` com os mesmos números do painel
+
+**PDF, vídeo e navegador ao lado do mapa**
+- **Leitor de PDF:** selecione um trecho e crie um tópico ou nota com a página e o destaque. Clique no destaque para ir ao tópico
+- **Player de vídeo:** videoaulas locais ou do YouTube, com carimbos de tempo ligados ao mapa
+- **Navegador:** para questões e leis, com favoritos de concursos
+- Abas no topo, como em um navegador. Com uma mídia em foco, as ações do mapa somem e o mapa continua visível
+
+**Rede de conhecimento**
+- Visão do mapa como rede, com os links entre tópicos e entre mapas da biblioteca
+
+**Dados**
+- **Biblioteca de mapas** no próprio app (SQLite)
+- **Cópia de segurança** em pacote `.mcpack`, com lembrete, e restauração que nunca sobrescreve
+- **Revisão do dia** e agenda `.ics` para o calendário
+- Aviso diário de revisões vencidas (opcional)
+
+**Mindomo**
+- Abre e salva `.mom`. Tópicos soltos aparecem à direita do mapa e podem ser trazidos para a árvore
+- A lixeira do Mindomo, o histórico, as relações e os temas são preservados ao salvar
+- Exporta Markdown, OPML, PDF, Word, PNG e SVG
+
+**Tablet Android**
+- A mesma interface do desktop, com menu e barra adaptados ao toque
+- Cópia de segurança para uma pasta escolhida
+
+## Instalar
+
+**Windows:** baixe `MindCraft Setup x.y.z.exe` na página de [releases](https://github.com/iratuan/mindCraft/releases) e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois "Executar assim mesmo".
+
+**Android:** baixe `MindCraft-x.y.z.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
+
+**macOS e Linux:** ainda sem instalador publicado. Gere a partir do código (veja abaixo) com `npm run dist`. No macOS, a primeira abertura pede confirmação em "Ajustes → Privacidade e Segurança".
+
+## Usar
+
+1. Abra o app e escolha **Novo mapa de concurso** ou **Importar edital**.
+2. Estude cada tópico: peso, cronômetro e questões no painel da direita. O PDF, o vídeo ou o navegador ficam à esquerda.
+3. Toda manhã, abra o **Painel de estudos** (Ctrl+E) e faça a fila de revisões.
+4. Faça uma **cópia de segurança** de vez em quando (Tela inicial). Guarde o arquivo fora do computador.
+
+Atalhos completos: **F1** ou Ajuda → Atalhos. Explicações de cada função: Ajuda → Manual de uso.
+
+## Para desenvolver
+
+```bash
 npm install
-npm start                  # editor
-npm test                   # 48 testes unitários (núcleo em Node puro + CLI)
-npm run e2e                # 52 cenários ponta a ponta no Electron real (no Linux: xvfb-run -a npm run e2e)
-npm run qa                 # QA por funcionalidade com ENTRADA REAL (62 casos, ~80 capturas em evidencias/qa/)
-npm run evidence           # regenera a pasta evidencias/ (telas + exemplos)
-npm run dist               # instalador do SO atual em dist/ (NSIS / DMG / AppImage)
-node bin/mindcraft.js mapa.mom saida.pdf --theme dark --outline
+npm start          # abre o app
+npm run check      # lint + testes unitários + paridade com o núcleo web
+npm run e2e        # testes ponta a ponta no Electron real (34 etapas)
+npm run qa         # QA por funcionalidade, com entrada real (81 casos)
+npm run dist       # instalador do sistema atual, em dist/
 ```
-CLI: entrada `.mom | .md | .opml`; saída `.pdf | .docx | .svg | .md | .opml | .mom`.
 
-## Gestão de estudos
-- **Edital → mapa:** cole o conteúdo programático (numeração `1`, `1.1`, itens `a)`, disciplinas em MAIÚSCULAS, linhas quebradas do PDF) ou use o **modelo de concurso**.
-- **Revisão espaçada** (1 → 7 → 15 → 30 → 60 → 120 dias): "Estudei hoje", "Errei" reinicia o ciclo; idempotente no mesmo dia.
-- **Por tópico:** peso (1–5), progresso, cronômetro/minutos, questões (feitas/acertos), próxima revisão. Valem para vários tópicos selecionados.
-- **Selos no mapa:** ↻ revisão vencida (somados em ramos recolhidos) e progresso agregado dos tópicos-pai (ponderado pelo peso).
-- **Painel de estudos (Ctrl+E):** contagem regressiva da prova, progresso geral e por disciplina, tempo hoje/7 dias, sequência, acerto em questões, plano (tópicos/dia), fila de revisões com ✓/↻ rápidos.
-- **Relatório** `.md` / `.docx` com os mesmos números do painel.
+Android: `cd tablet && node scripts/release.js` gera e assina o APK em `tablet/dist/`. A chave de assinatura fica em `tablet/keystore/`, fora do Git: **faça uma cópia**, sem ela não é possível atualizar o app instalado.
 
-### Importar CSV de edital (gerado por IA)
-Arquivo → **Importar CSV de edital (gerado por IA)…** (ou botão no Painel de estudos). Passos: (1) **Copiar instruções para a IA** e cole numa IA junto com o texto do edital; (2) salve a resposta como `.csv`; (3) **Escolher arquivo CSV** — a prévia mostra quantos tópicos entram, as linhas com problema e os avisos; (4) **Criar o mapa**.
-Colunas: `concurso, data_prova, disciplina*, item, topico*, peso (1–5), notas, relacionados (separados por | ou ;), progresso (0–100), nivel` (* obrigatórias; ordem livre; vírgula, ponto e vírgula ou tab; UTF-8 ou ANSI do Excel). `item` (1, 1.1, 1.1.1) define a hierarquia; `relacionados` viram links `[[ ]]` e já semeiam a rede de conhecimento. Linhas inválidas são puladas e listadas; nada é gravado até você confirmar. **Salvar CSV de exemplo…** gera o modelo.
+Estrutura: `core/` (regras de negócio puras, sem Electron nem DOM) · `electron/` (processo principal) · `renderer/` (interface) · `platform/` (versão web, para o tablet) · `tablet/` (Capacitor) · `test/`.
 
-### Notas em Markdown
-O painel **Notas** tem a barra de formatação (negrito Ctrl+B, itálico Ctrl+I, riscado, título, lista, numerada, tarefas, citação, código, `[[ ]]` Ctrl+K e link da internet) e dois modos: **Editar** (texto Markdown, com autocompletar de `[[`) e **Visualizar** (formatado: títulos, listas, **tarefas que você marca com um clique**, tabelas, código, citações; `[[links]]` abrem o tópico; links http(s) abrem no navegador). Duplo clique na visualização volta a editar. A nota continua sendo texto Markdown puro (compatível com Obsidian); no Word/PDF os símbolos viram texto limpo. HTML digitado na nota nunca é executado.
-
-### Relações desenhadas na rede de conhecimento
-A seta desenhada entre dois tópicos (tecla R) é uma conexão lógica: aparece no painel **Conexões** dos dois tópicos (com o rótulo; "seta · rótulo"), no grafo e na exportação para o Obsidian (`Relacionado: [[…]] (rótulo)`). Se existir também um `[[link]]` para o mesmo tópico, aparece uma linha só. Excluir a seta desfaz a conexão. Relações valem dentro do mesmo mapa; entre mapas use `[[Mapa#Tópico]]`.
-
-### Planilha de planejamento (exportar → editar no Excel → importar)
-Arquivo → **Planilha de planejamento…** (ou botão no Painel de estudos). **Salvar planilha…** gera um CSV (abre com duplo clique no Excel/Planilhas) do mapa inteiro ou só da disciplina selecionada, com uma linha por tópico. Edite: `topico` (renomeia), `peso` (1–5), `progresso` (0–100, só tópicos sem subtópicos), `proxima_revisao` (AAAA-MM-DD ou DD/MM/AAAA; `-` remove), `revisou_hoje` (sim / errei), `tempo_total_min`, `questoes_total`, `acertos_total`, `notas` e `data_prova` (linha da raiz). **Importar planilha editada…** mostra a prévia das mudanças, avisos e erros por linha; só ao clicar em **Aplicar mudanças** o mapa é alterado, numa única operação (Ctrl+Z desfaz tudo).
-Regras de segurança: nunca apaga tópicos; célula em branco não altera nada; tempo e questões são *totais* — só a diferença para maior é somada a hoje (reimportar a mesma planilha não duplica; valores menores que o registrado são recusados); linhas sem `id` com `disciplina` + `topico` criam tópicos novos sob a disciplina (sem duplicar); planilha de outro mapa é recusada. Não altere a coluna `id`.
-
-## Rede de conhecimento (estilo Obsidian)
-- Escreva `[[Tópico]]`, `[[Mapa#Tópico]]` ou `[[Tópico|texto]]` no título/notas. **Autocompletar** ao digitar `[[`.
-- Painel **Conexões**: links, **citado em** (retrolinks) e **menções sem link** (transforma em `[[link]]` com um clique). Link sem destino vira nó "fantasma" (dá para criar o tópico).
-- **Grafo (Ctrl+G):** este mapa ou **vault** (pasta com vários `.mom`), cores por mapa, hierarquia opcional, só vizinhança, busca, arrastar nós, rótulos sem sobreposição.
-- **Exportar para o Obsidian:** um `.md` por mapa com `[[Mapa#Tópico]]` resolvidos; **nunca sobrescreve** uma nota que não seja do MindCraft. "Abrir no Obsidian" usa o protocolo `obsidian://` (ou o executável instalado no Windows).
-
-## Leitor de PDF ao lado do mapa
-**Ctrl+Shift+P** (ou o botão do PDF na barra lateral esquerda) divide a tela: PDF à esquerda, mapa à direita; arraste o divisor para ajustar a largura (a medida é lembrada). **Abrir PDF…** escolhe o arquivo; o leitor tem páginas, zoom (ajustar à largura), busca no texto, e lembra a página onde você parou (por arquivo).
-- **Selecione um trecho** do PDF e use **＋ Tópico** (cria um tópico filho do selecionado, com o trecho em notas e a fonte "PDF, p. N") ou **＋ Nota** (acrescenta o trecho, como citação, às notas do tópico selecionado). Cada ação é **um único desfazer** e destaca o trecho no PDF.
-- **Fontes** de cada tópico aparecem no painel **Notas** (📖 PDF, p. N): clicar abre o PDF na página. **Ctrl+clique** num destaque vai ao tópico; o leitor mostra os tópicos da página atual.
-- O mapa guarda só o **caminho** do PDF (o arquivo não é copiado). Se o arquivo mudar de lugar (ou em outro computador), o leitor avisa e **Localizar o PDF…** reaponta; as fontes e destaques são preservados. As fontes entram também na exportação para o Obsidian ("Fonte: PDF, p. N — trecho"). PDF protegido por senha e PDF sem texto (só imagem) abrem com aviso claro (sem texto não há o que selecionar).
-- Só ler não altera o mapa; o PDF só é registrado no mapa quando você captura o primeiro trecho.
-
-## Tela inicial
-Abre ao iniciar o MindCraft (Ctrl+Shift+H, o botão da casa na barra esquerda ou Arquivo → Tela inicial a qualquer momento; Esc fecha). Mostra:
-- **Continuar de onde parou** (último mapa — do arquivo ou da biblioteca — com tópicos, progresso, revisões vencidas e dias para a prova);
-- **Atalhos**: novo mapa, novo mapa de concurso (modelo), importar edital (CSV da IA ou texto colado), abrir arquivo, biblioteca, ler um PDF, revisão do dia e registrar simulado;
-- **Arquivos recentes** (os 10 últimos; arquivo que sumiu aparece esmaecido; ✕ tira da lista e "limpar lista" esvazia — os arquivos em si nunca são tocados);
-- **Hoje** (revisões vencidas nos mapas da biblioteca, com atalho para revisar), **Próximas provas** (as 3 mais próximas, ≤ 14 dias em destaque) e os mapas mais recentes da **biblioteca**.
-- **Ao iniciar**: escolha mostrar esta tela (padrão), reabrir o último mapa ou começar em branco. Soltar um arquivo `.mom/.md/.opml` (abre, perguntando sobre alterações pendentes) ou `.pdf` (abre no leitor) na janela funciona em qualquer tela; soltar qualquer outro arquivo não faz a janela "navegar" para ele.
-
-## Simulados
-**Registrar simulado** (Tela inicial ou Painel de estudos): nome, banca, data, duração e, por disciplina do mapa, questões feitas e acertos (com total ao vivo). Opção "somar às questões de cada disciplina" alimenta o acerto e os pontos fracos (uma ação desfazível). O Painel de estudos mostra a **evolução** (gráfico), média, melhor e último com variação ▲/▼, as **disciplinas mais fracas** e os últimos simulados (✕ apaga, desfazível); o relatório .md inclui a seção.
-
-## Caderno de erros e metas semanais
-- **Caderno de erros** (painel **Estudo** → "Caderno de erros"): escolha o **motivo** (falta de atenção, não sabia, confundi conceitos, falta de tempo, chutei, outro), anote o que errou/como evitar e clique **＋ Erro**; a opção "contar também como questão errada" soma 1 questão feita sem acerto (alimenta os pontos fracos). Cada erro é um desfazer e pode ser apagado (✕). Máx. 200 por tópico.
-- O **Painel de estudos** mostra o caderno: erros por motivo, quantos nos últimos 7 dias, tópicos com mais erros e os mais recentes (clique leva ao tópico). A **Revisão do dia** mostra "Seus erros neste tópico" ao revelar as anotações, e o **relatório** (.md/.docx) inclui o caderno.
-- **Metas semanais** (Painel de estudos): defina horas por semana e/ou questões por semana (ex.: "2,5" horas); barras mostram o progresso nos **últimos 7 dias** e quanto falta. Ficam salvas no mapa (.mom e biblioteca).
-- Estas duas funções existem na interface React; a versão clássica (reserva) não tem as metas nem a seção do caderno no painel.
-
-## Revisão do dia, agenda (.ics) e atalhos
-- **Revisão do dia** (Ctrl+Shift+R ou botão no Painel de estudos): recordação ativa — aparece só o tópico; você tenta lembrar, pede **Mostrar anotações** (Espaço) e responde **Lembrei** (Y) ou **Errei** (N); **Pular** (S). Cada resposta usa o mesmo ciclo 1‑7‑15‑30‑60‑120 e é um desfazer.
-- **Agenda (.ics)** (Painel de estudos): um evento de dia inteiro por dia com revisões (as atrasadas caem em hoje) e a data da prova com alerta; importe no Google Agenda/Outlook. Reexportar mantém os mesmos identificadores (não duplica).
-- **F1** abre a lista de atalhos do teclado.
-
-## Interface React (etapa 3 — migração por fatias)
-A interface está migrando para **React 18**, uma tela por vez, sem reescrever tudo de uma vez. O código-fonte fica em `renderer/react/*.jsx` e é empacotado (esbuild) em `renderer/bundle/react-ui.js` — nada é baixado em tempo de execução. `npm start`, `npm run e2e`, `npm run qa` e `npm run dist` geram o pacote sozinhos (`npm run build:ui` gera à mão; a pasta `bundle/` não vai para o Git).
-- **Já em React:** Biblioteca de mapas, Versões, Importar CSV de edital, Planilha de planejamento, **Painel de estudos** (cartões, agenda, pontos fracos, revisões) e os painéis **Conexões** e **Estrutura**.
-- **Segurança da migração:** cada tela portada mantém os MESMOS ids/classes da versão clássica (que continua no código como reserva). Os testes rodam nas duas interfaces (`--classic`) e conferem qual está em uso. Para voltar à clássica sem recompilar: `reactUi: false` em `config.json`.
-- **Fica como está, de propósito (por ora):** o editor do mapa e o grafo (motores SVG imperativos, compartilhados com a exportação PDF/Word/PNG/SVG — reescrevê-los em React traria risco sem ganho; a ideia é hospedá-los dentro de componentes React) e os painéis de formulário Estilo, Estudo e Notas (HTML estático ligado a atalhos e ao cronômetro; migrar junto com a casca do aplicativo, quando a versão clássica das telas já migradas puder ser removida).
-
-## Biblioteca de mapas no aplicativo (etapa 2)
-Menu **Arquivo → Biblioteca de mapas…** (Ctrl+Shift+B). Um mapa tem **uma casa**: um arquivo `.mom` **ou** a biblioteca.
-- **Guardar este mapa na biblioteca** copia o mapa (o arquivo `.mom` de origem não é alterado). Depois, **Ctrl+S salva no banco** (gravação verificada: o app relê e compara; se falhar, nada muda e o mapa continua aberto). **Salvar como…** num mapa da biblioteca exporta uma cópia `.mom`.
-- A janela lista os mapas (tópicos, revisões vencidas, prova), **abre**, mostra **versões** (abre uma versão como mapa novo; nunca sobrescreve), manda para a **lixeira** (restaurável; o mapa aberto não pode ser excluído), **exporta .mom**, **busca em todos os mapas**, importa **.mom / pasta de .mom / pacote .mcpack**, exporta **pacote** e faz **backup do banco**.
-- Opção no Painel de estudos: **Salvar mapas novos na biblioteca** (desligada por padrão: sem ela nada muda no seu fluxo atual com arquivos).
-- **Rede de conhecimento**: os mapas da biblioteca entram na rede (`[[Mapa#Tópico]]`, Conexões, grafo, Obsidian) e no "Em outros mapas" do painel de estudos. Um arquivo já migrado vale pela cópia da biblioteca.
-- O reabrir-o-último, o rascunho de sessão (autosave) e o aviso ao fechar funcionam também para mapas da biblioteca. Se o banco estiver danificado, o app avisa e continua funcionando com arquivos; o arquivo ruim nunca é apagado.
-
-## Janelas pequenas e teclado
-O app funciona até 720×480: painéis do estudo viram uma coluna; com o leitor de PDF aberto numa janela estreita (< 900 px) o painel lateral se recolhe para o mapa não ficar espremido. **Teclado**: nas janelas (biblioteca, simulado, CSV…), Tab e Shift+Tab circulam só dentro delas, Esc fecha e devolve o foco a quem abriu; com uma janela, a tela inicial ou os painéis em foco, Tab/Delete/Enter/setas pertencem ao controle focado e **nunca** alteram o mapa por baixo.
-
-## Questões por banca e ano · erros para refazer
-No painel **Estudo**, informe a **banca** (com sugestões das já usadas) e o **ano** ao registrar questões; os campos valem também para o caderno de erros e ficam preenchidos para o próximo registro. O **Painel de estudos** mostra o acerto **por banca** e **por ano** (Cespé = CESPE; sem banca fica só nos totais) e o **Caderno de erros** com filtros (situação, motivo, banca, ano): marque ✔ "refiz e acertei" / ✖ "errei de novo" (↶ desfaz) — tudo desfazível. A **tela inicial** avisa quantos erros ainda estão para refazer na biblioteca, e os relatórios **.md e .docx** incluem simulados, as tabelas por banca/ano e a situação dos erros.
-
-## Versão para tablet Android (APK 0.3.0)
-O plano é uma versão para tablets (> 10") para **estudar, revisar e editar mapas**, com **sincronização com uma pasta no Google Drive** e instalação por **.apk** (Capacitor). A base é o mesmo núcleo do desktop, sem duplicar regras.
-- **Etapa 1 (concluída)**: o núcleo (`core/`) roda **sem Node**, com adaptadores em `platform/web/` (SHA-256 em JS, zip via fflate, SQLite em WebAssembly com gravação durável após cada transação, sistema de arquivos virtual). `npm run build:web` gera `build/web/core-browser.js`; `npm run test:web` roda **os mesmos testes unitários do desktop contra o núcleo da web** (prova de equivalência). O desktop não foi alterado.
-- **Etapa 2 (concluída)**: a **mesma interface do desktop, sem alterar uma linha de renderer/**, roda num navegador sem Node. Em vez de refatorar a interface, `platform/web/host/` **emula o Electron** (`require`, `ipcRenderer` com os 21 canais, diálogos próprios, arquivos virtuais persistidos no IndexedDB, entrega de exportações como download, arrastar-e-soltar, menu ☰ com os comandos do menu do desktop). `npm run build:web-app` monta `build/web/app/` (servir por HTTP); `npm run test:web-app` abre num Chromium sem Node e roda 14 testes ponta a ponta.
-- **Etapa 3 (concluída)**: **toque** (`platform/web/host/touch.js`: tocar = clique, duplo toque, arrastar, pinça = zoom, toque longo = Ctrl+clique; "grudar" no ponto mais próximo da rede), layout de tablet (alvos ≥ 44 px, painéis viram gaveta, barra flutuante ☰ ✎ ⇕ ☷), edição de tópico acima do teclado virtual, botão Voltar do Android, compartilhar arquivos/pacote, **notificações agendadas** (7 lembretes, sem pedir "alarme exato"). `npm run e2e` agora tem 30 etapas (inclui `e2e-edit` e `e2e-tablet`).
-- **Etapa 4 (concluída)**: projeto Capacitor em `tablet/`. Gerar o .apk assinado: `node tablet\scripts\release.js` → `tablet\dist\MindCraft-<versão>.apk`. Testes no emulador Android: `node tablet\scripts\test-android.js` (14 testes com toque e teclado reais, incl. editar nó e editar nó da rede). **Faça cópia de `tablet\keystore`** (senha em `senha.txt`): sem ela não é possível publicar atualização por cima do app instalado.
-- **Instalar no tablet**: copie o .apk, abra-o e permita "instalar de fontes desconhecidas". Dados ficam no armazenamento do app (WebView): **exporte o pacote .mcpack de vez em quando** (Compartilhar) como cópia de segurança.
-- **Ainda não existe**: sincronização com o Google Drive; no tablet, exportar PDF, Obsidian/pasta de vault. **Não testado em tablet físico** (só emulador Android 16, 2560×1600).
-
-## Sincronização opcional (pasta ou Google Drive)
-Vem **desligada**: nada roda e nenhum arquivo é criado até você ligar (menu Arquivo → "Sincronização (opcional)…"). Serve para manter a biblioteca igual no computador e no tablet.
-- **Destino "pasta"** (só no computador): qualquer pasta que outro programa já espelha — a do **Google Drive para computador**, OneDrive, Dropbox, pendrive. Só mexe em `<pasta>/maps/`; gravação atômica.
-- **Destino "Google Drive"** (computador e tablet): você entra com um **código** (fluxo de dispositivo, sem redirecionamento): o app mostra o código, você digita em google.com/device. Escopo mínimo `drive.file`: o MindCraft só enxerga a pasta "MindCraft" que ele mesmo cria. É preciso criar **uma vez** um "ID do cliente OAuth" do tipo *TVs e dispositivos de entrada limitada* no Google Cloud (a tela explica; **publique o app** como "Em produção", senão o login vence a cada 7 dias).
-- **Regras de segurança** (`core/sync.js`, testadas): nunca apaga nada (nem local, nem remoto: excluir um mapa não se espalha); se o mesmo mapa mudou nos dois lados, **as duas versões ficam** (a do outro aparelho entra como cópia "(da sincronização …)"); antes de trazer uma versão nova guarda uma versão do mapa atual; tudo que chega é validado (nome, tamanho, hash) e relido do banco; um mapa aberto com alterações não salvas é adiado, nunca trocado por baixo de você; relógio errado em um aparelho não faz edições sumirem. "Desligar" também esquece o login do Google neste aparelho.
-- Limites: sincroniza os **mapas** (não as configurações); a sincronização é manual ("Sincronizar agora") ou ao abrir (opção); o login do Google fica no armazenamento do app (no tablet, o do WebView).
-
-## Formatação original do Mindomo
-Ao abrir/importar um `.mom` do Mindomo, o MindCraft agora **desenha com a formatação do arquivo**: o **tema original** (fundo, formas, cores, fonte, espessura e cor das linhas por nível), a formatação **própria de cada tópico** (preenchimento, forma, borda, linha que liga ao pai, cor/tamanho/nome/negrito da fonte) e as **notas** (campo `description`, em HTML, que antes não aparecia). O tema aparece como "Original do Mindomo" no seletor de temas (só nesses mapas) e é o escolhido por padrão; dá para trocar e voltar. Ao salvar, o `themes.json` original é mantido (antes era apagado) e o HTML das notas só é reescrito se você editar a nota. As tabelas de formas/estilos vêm do próprio código do Mindomo.
-- **Ainda não reproduzido**: ícones/símbolos do Mindomo, imagens e anexos, comentários, links entre tópicos, fundo com imagem, formas especiais (nuvem, seta, balão… viram retângulo arredondado), degradês (viram a cor do meio) e negrito/cor em **trechos** do título (só vale se for o título todo).
-## Rede de conhecimento — rodada de aperfeiçoamento
-- **Rótulos**: medidos de verdade e posicionados em **4 posições** (embaixo, direita, em cima, esquerda); só somem se nenhuma estiver livre. Nunca passam por baixo da legenda, dos botões de zoom nem da estatística. O ponto selecionado, o sob o mouse, seus vizinhos e os resultados da busca **sempre** têm rótulo (completo). As **relações** do mapa mostram o próprio rótulo ("depende de") no meio da linha (ou perto do ponto selecionado). Seletor **Rótulos**: automáticos / todos / só relevantes / nenhum.
-- **Densidade**: *compacta / normal / detalhada* (tamanho dos pontos, folga e quantidade de rótulos por área), lembrada ao reabrir. **Agrupar folhas**: folhas da hierarquia somem atrás do pai com um selo **+N** até haver zoom, seleção, busca ou clique no pai. O **tamanho** do ponto mostra quantas ligações ele tem; o **anel verde**, o progresso. **Focar a seleção** esmaece o resto.
-- **Layout novo**: cada componente conectado é calculado sozinho e depois **empacotado** (antes os pontos se encostavam numa moldura retangular e os sem ligação se amontoavam no centro); pontos sem ligação ficam numa grade compacta.
-- **Usabilidade**: botões **+ − ajustar centralizar** (grandes no toque); teclado (setas navegam entre pontos ligados · Enter abre · + − 0 zoom · C centraliza · F foca · L vizinhança · G agrupa · / busca · Esc fecha menu/gaveta/rede); busca com contador e **Enter/Shift+Enter** percorrendo os resultados; **legenda clicável** (oculta/mostra um mapa sem mexer nas posições); alvo de toque mínimo ~28 px por ponto em qualquer zoom.
-- **Responsividade**: a barra ficou numa linha (menus *Exibir ▾* e *⋯*); a largura que vale é a **da própria rede** (consulta de contêiner): estreita, o painel de detalhes vira **gaveta** (abre ao escolher um ponto, botão ℹ, os botões de zoom sobem acima dela); redimensionar/girar mantém o mesmo ponto no centro.
-
-## Banca como lista de seleção
-No painel Estudo (e no registro de simulado) a **banca** é uma lista: as **já usadas no mapa**, as **mais comuns em concursos do Brasil** (CEBRASPE/CESPE, FGV, FCC, VUNESP, CESGRANRIO, IBFC, QUADRIX, AOCP, IDECAN, CONSULPLAN, FUNDATEC, IADES, FUNCAB, FEPESE, FUMARC, NC-UFPR, ESAF, SELECON…) e **Outra…** (abre um campo para digitar). A escolha fica para o próximo registro; o agrupamento por banca continua ignorando caixa e acentos.
-
-## Tablet: área segura
-O app abre **dentro da área segura**: não fica sob a barra de status, a de navegação (gestos ou 3 botões) nem o recorte da câmera. Antes dependia da versão do WebView (nos novos, com `viewport-fit=cover`, o conteúdo passava por baixo das barras). Agora o Capacitor sempre reserva a área, o fundo da janela tem a cor do app e os ícones das barras são claros.
-## Reordenar tópicos
-- **Arrastar entre irmãos**: solte um tópico na parte de **cima** (30%) do alvo para ficar **antes** dele, na de **baixo** (30%) para ficar **depois** — uma **linha laranja** mostra o ponto exato — e no **meio** para torná-lo **filho** (como antes). Funciona entre pais diferentes, com vários tópicos selecionados (a ordem do documento é mantida) e com o dedo no tablet. Tudo é **uma ação desfazível**; soltar sobre si mesmo, dentro do próprio ramo ou no vazio não altera nada.
-- **Sem arrastar**: botões **▲ ▼** na barra lateral (desktop) e **▲ ▼ ◀ ▶** na barra flutuante do tablet (subir, descer, promover, rebaixar); menu **Editar** (desktop) e menu ☰ (tablet); atalhos **Alt+↑ / ↓** (subir/descer) e **Alt+← / →** (promover/rebaixar).
-## Salvar e Salvar como (nome e local editáveis)
-- **Desktop**: o diálogo do sistema deixa mudar **nome e pasta**; ele agora **começa na pasta do arquivo atual** (ou na última usada). Mapas da biblioteca são salvos na biblioteca; "Salvar como…" exporta uma cópia `.mom` onde você escolher.
-- **Tablet**: "Salvar" de um mapa novo e "Salvar como…" abrem uma janela com o **nome editável** e o **destino**: *Documentos do MindCraft* (reabre pela tela inicial), *Escolher pasta e nome no aparelho…* (o seletor de documentos do Android: Downloads, Google Drive, cartão SD — lá também dá para editar o nome e a pasta) ou, para exportações, *Compartilhar*. Depois de escolher um arquivo do aparelho, **cada Salvar o atualiza** (também depois de fechar e reabrir o app). Se a gravação no local escolhido falhar, a cópia no app continua segura e a mensagem diz como escolher outro local.
-- Corrigido junto: no tablet o **backup antes de sobrescrever** nunca funcionava (faltava `copyFileSync` no sistema de arquivos virtual).
-
-## Manual de uso, painel recolhível e tela inicial (v0.4.0)
-- **Manual** (Ajuda → Manual de uso; no tablet ☰ → Manual de uso): índice por assunto, busca sem acento e instruções diferentes para computador e tablet. Botões **Como usar?** abrem a seção da tela em que você está. O conteúdo é dado puro em `core/manual.js`; o teste `test/manual.test.js` exige uma seção para cada funcionalidade.
-- **Painel lateral**: o botão **‹ ›** na borda (ou **Ctrl+\\**, ou Exibir → Painel lateral) recolhe/expande; arraste o divisor para mudar a largura (220–560 px); duplo clique restaura; com o divisor em foco, ← → ajustam. O **leitor de PDF | mapa** tem o mesmo tipo de divisor (mouse, dedo, teclado), e o mapa nunca fica com menos de ~260 px. Tudo é lembrado.
-- **Tela inicial**: **Seu estudo** (sequência de dias, tempo hoje e em 7 dias, acerto, metas, disciplina mais atrasada), aviso de **cópia de segurança** (a cada 7/14/30 dias ou nunca; só some quando o pacote é gerado) e os atalhos **Cópia de segurança** / **Restaurar cópia** (um pacote `.mcpack`; **nunca sobrescreve** — conflito vira cópia).
-
-## Para quem vai evoluir o projeto
-- **`CLAUDE.md`** — regras de ouro, comandos, armadilhas e convenções (comece por aqui, pessoa ou IA).
-- **`docs/ARCHITECTURE.md`** — camadas, módulos, fluxos, formatos e dívidas técnicas · **`docs/DECISIONS.md`** — por que é assim (ADRs).
-- **`docs/TESTING.md`** — pirâmide de testes e como rodar/escrever cada um · **`docs/CONTRIBUTING.md`** — estilo, segurança, checklist por tipo de mudança, definição de pronto.
-- **`.claude/skills/`** — receitas: `mindcraft-verify`, `mindcraft-release`, `mindcraft-new-core-module`, `mindcraft-ui-change`, `mindcraft-android-test`, `mindcraft-sync-provider`.
-- Qualidade automática: `npm run check` (ESLint sem avisos + unitários + **testes de arquitetura** + paridade com o núcleo web). `CHANGELOG.md` resume as versões.
-## Aviso diário de revisões
-No **Painel de estudos**, marque "Avisar das revisões do dia às" e escolha o horário. O MindCraft mostra uma notificação do sistema ("5 revisões vencidas em 3 mapas · 2 erros para refazer"), no máximo **uma vez por dia**, só se houver algo a dizer; clicar nela abre a Revisão do dia. Vem **desligado**, e o botão "Testar aviso" confere se o Windows o exibe. Funciona **com o app aberto** (nada é agendado no sistema): se você abrir depois do horário, o aviso aparece no primeiro minuto. A opção e o horário vão no pacote .mcpack.
-
-## Levar tudo para outro computador
-**Biblioteca → Exportar pacote** gera um `.mcpack` com **todos os mapas** (inclui questões por banca/ano, erros e "refeito", versões não — use Backup do banco para isso) **e as configurações** (tela inicial, tema, opções, leitor de PDF; nunca caminhos do computador), com verificação SHA-256 de cada parte. **Importar pacote** restaura os mapas (sem sobrescrever sem avisar) e as configurações. Para uma cópia exata do banco, use **Backup do banco**.
-
-## Profundidade dos tópicos
-Você pode aninhar até **100 níveis** de subtópicos (mapas reais ficam abaixo de 15). Ao tentar passar disso — criando, movendo ou colando um ramo — o app avisa na barra de status e **não altera nada**. Arquivos `.mom` com mais de 500 níveis são **recusados** (antes o ramo era cortado em silêncio e um "Salvar" depois gravaria o arquivo mutilado). Todos os recursos enxergam qualquer profundidade: rede de conhecimento (um nó por tópico, aresta de hierarquia por nível, relações entre níveis distantes), Estrutura (recuo limitado + selo com o nível), revisões, planilha, exportações e biblioteca.
-
-## Testes e caça a bugs
-`npm test` (unitários + **fuzz** com sementes fixas: 4 800 operações aleatórias no modelo com invariantes, entradas hostis para Markdown/CSV/planilha/.mom/pacotes), `npm run e2e` (suítes por funcionalidade nas duas interfaces, **desempenho com 3 000 tópicos** e o **"macaco"**: ações aleatórias de interface com a invariante "sem alterações ⇒ o disco/biblioteca é igual à tela"), inclui **texto hostil em todas as telas**, **falhas injetadas** (pasta inexistente, arquivo somente leitura, banco travado por outro processo, .mom cortado/zip bomba), **layout em 720×480 / 1000×640 / 1280×800** e **acessibilidade** (foco, Tab preso, rótulos); `npm run qa` (entrada real de mouse/teclado, com capturas). Rodada longa do macaco: `MONKEY_SEEDS=11,12,13 MONKEY_STEPS=300 npm run monkey`.
-
-## Biblioteca SQLite (etapa 1 da migração React + SQLite)
-`core/library.js` guarda todos os mapas num banco SQLite (módulo nativo `node:sqlite`, sem compilar nada): tópicos, estudo, relações, tema e prova, com **versões** (até 30 por mapa), **lixeira** e consultas entre mapas (revisões vencidas, tempo e questões por dia, busca). O aplicativo atual ainda usa arquivos `.mom`; a biblioteca é a base da próxima etapa (interface em React).
-Linha de comando (`bin/mindcraft-library.js`):
-- `migrar <pasta> <biblioteca.db>` — importa todos os `.mom` (os originais nunca são alterados; cada mapa é relido do banco e comparado antes de valer; reexecutar não duplica).
-- `listar <biblioteca.db>` · `backup <biblioteca.db> <copia.db>`.
-- `exportar <biblioteca.db> <saida.mcpack>` — **pacote portátil** (um arquivo, com SHA-256 de cada mapa) para levar a outro computador.
-- `importar <biblioteca.db> <pacote.mcpack> [--substituir | --ignorar]` — valida tudo antes de gravar; mapa igual é ignorado; mapa diferente com o mesmo id vira **cópia** (nunca sobrescreve em silêncio).
-
-## Interface
-- Painel lateral em **abas** (Estilo · Estudo · Notas · Conexões · Estrutura), um por vez; tema escuro/claro; barra de **Níveis** (recolher/expandir o mapa por profundidade — editais grandes abrem recolhidos).
-
-## Edição e segurança dos dados
-- Seleção múltipla (Ctrl/Shift+clique, retângulo com Shift, Ctrl+A), mover/formatar/excluir em lote com **um único desfazer**; copiar/recortar/colar tópicos (e colar texto/edital como ramos).
-- **Autosave** com recuperação após queda; **arquivos recentes**; confirmação ao fechar com alterações; gravação atômica (arquivo temporário + renomear).
-- `.mom` lido com validação defensiva (ids, estilos, ciclos, tamanho) — nada vindo do arquivo vai direto para o HTML.
-
-## Estrutura
-`core/` (Node puro: modelo, layout, temas, mom, import, export, estudo, edital, links, grafo, vault, obsidian, relatório) · `electron/` · `renderer/` · `test/` · `evidencias/`
-
-## Documentos
-- `evidencias/RESULTADOS.md` (resultados reais e bugs achados) · `evidencias/qa/RELATORIO-QA.md` (cada funcionalidade com captura) · `SUGESTOES.md` (próximos passos).
+Documentação para quem vai evoluir o projeto:
+- [`CLAUDE.md`](CLAUDE.md): regras, comandos e armadilhas. Comece por aqui.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) e [`docs/DECISIONS.md`](docs/DECISIONS.md): arquitetura e decisões
+- [`docs/TESTING.md`](docs/TESTING.md) e [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md): testes e contribuição
+- [`CHANGELOG.md`](CHANGELOG.md): histórico de versões
 
 ## Limitações conhecidas
-- Do `.mom` do Mindomo importa estrutura, títulos e notas; ícones, anexos, tarefas e Gantt são ignorados (campos desconhecidos são preservados ao salvar). Marcadores, progresso, estudo, relações e estilos são extensões do MindCraft em campos próprios.
-- PDF: fonte DejaVu (latim, grego, cirílico); sem CJK.
-- Builds de macOS e Linux vêm do CI (`.github/workflows/build.yml`), ainda não executado; localmente só o Windows foi construído e testado.
-- Instalador sem assinatura de código (SmartScreen/Gatekeeper mostrarão aviso).
-- Diálogos nativos (abrir/salvar/escolher pasta/confirmar) são simulados nos testes; atalhos do menu nativo são testados pelo clique no item do menu, não pela tecla.
-- O cronômetro não sobrevive a um fechamento do app (os minutos só são gravados ao parar).
 
+- **Mindomo:** ícones, anexos, tarefas e Gantt não são importados. Relações do Mindomo são preservadas no arquivo, mas ainda não aparecem no mapa. Tópicos soltos são só de leitura até serem trazidos para a árvore.
+- **Sincronização com Google Drive:** testada apenas contra um servidor de testes. Ainda não validada com uma conta real.
+- **Instaladores sem assinatura de código:** o Windows e o macOS mostram avisos na primeira execução.
+- **PDF:** fonte DejaVu (latim, grego e cirílico). Não há suporte a CJK.
+- **Cronômetro:** os minutos só são gravados quando você para.
+- **macOS e Linux:** os builds vêm do CI (`.github/workflows/build.yml`) e ainda não foram validados nessas plataformas.
 
-## Licenças de terceiros
-O leitor de PDF usa o PDF.js (Mozilla, Apache‑2.0), empacotado no aplicativo; a interface usa React (MIT).
+## Licenças
+
+Código sob a licença MIT (veja `package.json`). O leitor de PDF usa o PDF.js (Mozilla, Apache 2.0); a interface usa React (MIT).
