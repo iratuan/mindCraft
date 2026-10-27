@@ -84,9 +84,9 @@ Object.assign(window.MC, {
   removeRef: (nodeId, i) => { change(() => map.removeRef(nodeId, i)); },
   pdfOpenRef: (ref) => { const p = (map.meta.pdfs || []).find((x) => x.id === ref.pdf); if (!p) { setStatus('Este PDF não está vinculado ao mapa.'); return; } window.MCReact.openPdf({ path: p.path, name: p.name, page: ref.page }); },
 });
-act.pdf = () => (window.MCReact ? window.MCReact.togglePdf() : setStatus('O leitor de PDF precisa da interface React (reactUi não pode ser false).'));
-act.video = () => (window.MCReact ? window.MCReact.toggleVideo() : setStatus('O player de vídeo precisa da interface React.'));
-act.browser = () => (window.MCReact ? window.MCReact.toggleBrowser() : setStatus('O navegador de estudo precisa da interface React.'));
+act.pdf = () => { if (!needMap()) return; return window.MCReact ? window.MCReact.togglePdf() : setStatus('O leitor de PDF precisa da interface React.'); };
+act.video = () => { if (!needMap()) return; return window.MCReact ? window.MCReact.toggleVideo() : setStatus('O player de vídeo precisa da interface React.'); };
+act.browser = () => { if (!needMap()) return; return window.MCReact ? window.MCReact.toggleBrowser() : setStatus('O navegador de estudo precisa da interface React.'); };
 
 act.review = () => { closeDash(); return window.MCReact ? window.MCReact.openReview() : setStatus('A revisão do dia precisa da interface React (reactUi não pode ser false).'); };
 act.simulado = () => { closeDash(); if (typeof closeHome === 'function') closeHome(); return window.MCReact ? window.MCReact.openSimulado() : setStatus('O registro de simulados precisa da interface React.'); };
@@ -180,7 +180,7 @@ const homeActions = {
   openCsv: () => { closeHome(); return openCsvModal(); },
   openEdital: () => { closeHome(); return openImportModal(); },
   openLibrary: () => { closeHome(); return openLibraryModal(); },
-  openPdf: () => { closeHome(); return window.MCReact.openPdf({}); },
+  openPdf: () => { if (!map) newMap(); closeHome(); return window.MCReact.openPdf({}); },   // o leitor trabalha com o mapa: ele é criado antes, só agora
   review: () => { closeHome(); return act.review(); },
   simulado: () => { closeHome(); return act.simulado(); },
   openFile: async () => { if (!(await confirmDiscard())) return false; const p = await ipcRenderer.invoke('dialog:open'); if (!p) return false; return openPath(p); },
@@ -230,7 +230,7 @@ setTimeout(notifyTick, 5000); setInterval(notifyTick, 60000);
 async function handleDroppedPaths(paths) {
   const p = paths.find((x) => /\.(mom|md|opml|pdf)$/i.test(x));
   if (!p) { setStatus('Arraste um arquivo .mom, .md, .opml ou .pdf para abrir.'); return false; }
-  if (/\.pdf$/i.test(p)) { closeHome(); window.MCReact.openPdf({ path: p, name: path.basename(p).replace(/\.pdf$/i, '') }); return true; }
+  if (/\.pdf$/i.test(p)) { if (!map) newMap(); closeHome(); window.MCReact.openPdf({ path: p, name: path.basename(p).replace(/\.pdf$/i, '') }); return true; }
   if (!(await confirmDiscard())) return false;
   return openPath(p);
 }

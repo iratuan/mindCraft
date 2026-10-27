@@ -2,6 +2,14 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.6.3
+- **Primeiro uso:** nenhum mapa abre por padrão; a tela inicial mostra só os caminhos iniciais (novo mapa, importar edital, ler PDF, abrir arquivo, restaurar cópia e cópia de segurança).
+- **Ferramentas do mapa só ativas com um mapa aberto:** Rede, Painel de estudos, PDF, vídeo e navegador. Sem mapa, atalhos e menus mostram uma mensagem em vez de falhar.
+- **Maximizar e restaurar:** botões no cabeçalho do painel da direita e da bancada da esquerda (um por vez).
+- **Mais área para o mapa:** controles do tópico foram para o painel Estilo; a barra de opções só aparece quando há o que mostrar. Painel da direita com abas em ícones.
+- **Barra de ferramentas mais enxuta:** saíram Ajustar à tela (continua em Ctrl+0 e no menu Exibir), Desfazer e Refazer (continuam em Ctrl+Z, Ctrl+Y e no menu Editar).
+- Barra de status mostra só o nome do arquivo.
+
 ## 0.6.2
 - **Modelo de prompt para transformar o edital em PDF em planilha (CSV)**: seção "Edital em planilha (CSV) com a IA" na Ajuda, com botão **Copiar o modelo** e passo a passo de importação.
 

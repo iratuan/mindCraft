@@ -82,7 +82,7 @@ const start = require('./harness');
 
   await t('recolhido é lembrado ao recarregar o app; nenhum erro de console', async () => {
     await js("document.querySelector('#tabMap').click()"); await click('#panelsToggle'); ok(await collapsed()); eq(cfg().panelsCollapsed, true);
-    wc().reload(); await waitFor(() => js(`typeof map !== 'undefined' && !!document.querySelector('#panelsToggle')`).catch(() => false), 15000, 300); await waitFor(() => collapsed(), 8000, 300).catch(() => {});
+    wc().reload(); await waitFor(() => js(`!!document.querySelector('#panelsToggle')`).catch(() => false), 15000, 300); await waitFor(() => collapsed(), 8000, 300).catch(() => {});
     ok(await collapsed(), 'continua recolhido depois de recarregar: ' + JSON.stringify(cfg())); eq(await js(`document.querySelector('#panelsToggle').textContent`), '‹');
     await js(`closeHome && closeHome(); act.panelsToggle(); true`); await wait(300); ok(!(await collapsed()), 'expandido de novo'); eq(cfg().panelsCollapsed, false);
     eq(c.errors, [], 'erros de console');

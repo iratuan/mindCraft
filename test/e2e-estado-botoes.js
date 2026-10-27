@@ -7,7 +7,7 @@ const start = require('./harness');
 const { writeMom } = require('../core/mom');
 const { concurso } = require('./fixtures');
 
-const MAP_BUTTONS = ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate', 'undo', 'redo', 'fit'];
+const MAP_BUTTONS = ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate'];   // desfazer/refazer saíram da barra (Ctrl+Z/Ctrl+Y e o menu Editar)   // 'fit' (Ajustar à tela) saiu da barra: fica no atalho Ctrl+0 e no menu Exibir
 const MAP_MENU = ['m-fit', 'm-save', 'm-saveAs', 'm-export', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent', 'm-closeMap', 'm-restore', 'm-libAdd', 'cut', 'copy', 'paste', 'selectAll'];
 const SHOTS = path.join(__dirname, '..', 'evidencias', 'correcoes-v0.5.0');
 
@@ -58,7 +58,7 @@ const SHOTS = path.join(__dirname, '..', 'evidencias', 'correcoes-v0.5.0');
 
   await t('com um mapa aberto: ações de mapa habilitadas e itens de menu habilitados', async () => {
     const s = await btnStates();
-    ok(s.fit === true && s.child === true, 'Ajustar e Novo filho habilitados: ' + JSON.stringify(s));
+    ok(s.child === true, 'Novo filho habilitado: ' + JSON.stringify(s));
     for (const id of ['#search', '#export', '#closeMapBtn', '#zoom']) eq(await js(`document.querySelector('${id}').disabled`), false, id + ' habilitado com mapa');
     const m = menuStates();
     ok(m['m-fit'] && m['m-save'] && m['m-export'] && m['m-closeMap'], 'itens de menu com mapa: ' + JSON.stringify(m));

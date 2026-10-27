@@ -141,8 +141,8 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
   await feature('Mapa', 'Excluir, Desfazer e Refazer', 'Delete real; botões ↶ ↷ da barra de ferramentas', async ({ shot }) => {
     await clickNode('Irmão criado'); const n0 = (await titles()).length; await key('Delete'); eq((await titles()).length, n0 - 1, 'excluiu');
-    await clickSel('[data-act="undo"]'); eq((await titles()).length, n0, 'desfez'); await clickSel('[data-act="redo"]'); eq((await titles()).length, n0 - 1, 'refez');
-    await clickSel('[data-act="undo"]'); eq((await titles()).length, n0);
+    await js('act.undo()'); eq((await titles()).length, n0, 'desfez'); await js('act.redo()'); eq((await titles()).length, n0 - 1, 'refez');
+    await js('act.undo()'); eq((await titles()).length, n0);
   });
   await feature('Mapa', 'Recolher e expandir ramo (Espaço)', 'Seleciona "Tópico 1" → Espaço → contador no ramo', async ({ shot }) => {
     await clickNode('Tópico 1'); await key('Space'); ok(await js(`${N('Tópico 1')}.collapsed`), 'recolhido');
@@ -151,7 +151,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
   await feature('Mapa', 'Arrastar tópico para dentro de outro (mover)', 'Arrasto real com 6 passos intermediários', async () => {
     const a = await P('Irmão criado').catch(() => null);
-    await clickSel('[data-act="fit"]'); await clickNode('Tópico 1'); const A = await P('Filho criado pelo teclado'), B = await P('Tópico 3');
+    await js('act.fit()'); await clickNode('Tópico 1'); const A = await P('Filho criado pelo teclado'), B = await P('Tópico 3');
     await js(`window.__rec = []; if (!window.__recOn) { window.__recOn = true; for (const t of ['mousedown', 'mousemove', 'mouseup']) window.addEventListener(t, (e) => { if (window.__rec.length < 40) window.__rec.push(t[5] + ':' + Math.round(e.clientX) + ',' + Math.round(e.clientY) + ':' + (e.target.closest && e.target.closest('.node') ? 'nó' : e.target.tagName)); }, true); } true`);
     await drag(A, B);
     const pai = await js(`map.find(__id('Filho criado pelo teclado')).parent.title`);
@@ -212,7 +212,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   await feature('Mapa', 'Zoom (roda e controle), pan e ajustar', 'Roda do mouse real, arrastar o fundo, botão Ajustar', async ({ shot }) => {
     const k0 = await js('pan.k'); const r = await rectOf('#svg'); ok(await wheelUntil(r.x, r.y, 240, async () => (await js('pan.k')) > k0), 'zoom in pela roda (deltaY do Chromium é invertido em relação ao DOM)');
     const x0 = await js('pan.x'); await drag({ x: r.x - 300, y: r.y + 250 }, { x: r.x - 200, y: r.y + 270 }); ok((await js('pan.x')) !== x0, 'pan arrastando o fundo');
-    await clickSel('[data-act="fit"]'); ok(Math.abs((await js('pan.k')) - k0) < 0.3, 'ajustar volta ao enquadramento');
+    await js('act.fit()'); ok(Math.abs((await js('pan.k')) - k0) < 0.3, 'ajustar volta ao enquadramento');
   });
   await feature('Mapa', 'Estrutura (outline): selecionar e recolher', 'Clique real nas linhas e no triângulo', async () => {
     const rows0 = await js(`document.querySelectorAll('.ol-row').length`);
@@ -228,7 +228,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
 
   await feature('Mapa', 'Tópico sublinhado é clicável em toda a caixa (não só nas letras)', 'Cliques reais no canto esquerdo e no canto direito da caixa de um tópico de nível 3', async ({ shot }) => {
-    await openMain(); await clickSel('[data-act="fit"]');
+    await openMain(); await js('act.fit()');
     for (const [titulo, rel] of [['Crase', 0.06], ['Crase', 0.94], ['Redes', 0.05]]) {
       await blank(); const p = await js(`(() => { const b = L.boxes.get(__id(${JSON.stringify(titulo)})); return { x: (b.x + b.w * ${rel}) * pan.k + pan.x + svg.getBoundingClientRect().left, y: (b.y + b.h / 2) * pan.k + pan.y + svg.getBoundingClientRect().top, shape: b.style.shape }; })()`);
       eq(p.shape, 'underline', 'o teste exige um tópico sublinhado'); await click(p.x, p.y); eq(await sel(), titulo, `clique a ${Math.round(rel * 100)}% da largura de "${titulo}"`);
@@ -245,7 +245,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await openMain(); const total = await js('L.boxes.size'); const lv = (v) => js(`(() => { const s = document.querySelector('#levelSel'); s.value = '${v}'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
     await lv('1'); await wait(250); eq(await js('L.boxes.size'), 5, 'nível 1: raiz + 4 disciplinas'); await shot('nivel-1');
     await lv('2'); await wait(250); ok((await js('L.boxes.size')) > 5 && (await js('L.boxes.size')) <= total, 'nível 2 mostra os tópicos'); await shot('nivel-2');
-    await lv('all'); await wait(250); eq(await js('L.boxes.size'), total, 'expandir tudo'); await clickSel('[data-act="undo"]'); eq(await js('L.boxes.size') < total, true, 'desfazer volta ao estado anterior');
+    await lv('all'); await wait(250); eq(await js('L.boxes.size'), total, 'expandir tudo'); await js('act.undo()'); eq(await js('L.boxes.size') < total, true, 'desfazer volta ao estado anterior');
   });
   await feature('Mapa', 'Editor inline cresce com títulos longos (não corta a 1ª linha)', 'Tab + texto de 3 linhas em zoom alto', async ({ shot }) => {
     await freshMap(); await js('pan.k = 2.2; render()'); await clickNode('Tópico 1'); await key('Tab');
@@ -264,13 +264,13 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   await feature('Lote', 'Formatar vários de uma vez e desfazer em 1 passo', 'Chips e botão B com vários selecionados; Ctrl+Z (botão)', async () => {
     await clickNode('Tópico 1'); await clickNode('Tópico 3', { mods: ['control'] }); await clickSel('#progressChips [data-value="50"]'); await clickSel('#markerChips [data-marker="ok"]');
     for (const t of ['Tópico 1', 'Tópico 3']) { eq(await js(`${N(t)}.progress`), 50, t); eq(await js(`${N(t)}.markers`), ['ok'], t); }
-    await clickSel('[data-act="undo"]'); await clickSel('[data-act="undo"]'); eq(await js(`${N('Tópico 1')}.progress`), null);
+    await js('act.undo()'); await js('act.undo()'); eq(await js(`${N('Tópico 1')}.progress`), null);
   });
   await feature('Lote', 'Copiar, colar e recortar tópicos (menu)', 'Itens Copiar/Colar/Recortar do menu nativo', async () => {
     await needClip();
     await clickNode('Tópico 1'); c.menu('copy'); await wait(120); await clickNode('Tópico 2'); c.menu('paste'); await wait(150);
-    eq(await js(`${N('Tópico 2')}.children.map((x) => x.title)`), ['Tópico 1'], 'colou como filho'); await clickSel('[data-act="undo"]');
-    await clickNode('Tópico 3'); c.menu('cut'); await wait(150); ok(!(await titles()).includes('1:Tópico 3'), 'recortou'); await clickSel('[data-act="undo"]');
+    eq(await js(`${N('Tópico 2')}.children.map((x) => x.title)`), ['Tópico 1'], 'colou como filho'); await js('act.undo()');
+    await clickNode('Tópico 3'); c.menu('cut'); await wait(150); ok(!(await titles()).includes('1:Tópico 3'), 'recortou'); await js('act.undo()');
   });
   await feature('Lote', 'Colar um texto externo como ramos', 'Área de transferência com lista numerada → Colar', async () => {
     await needClip();
@@ -314,7 +314,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     const p = await txt('#planPreview'); ok(p.includes('Licitações — peso: 3 → 5') || p.includes('Licitações — peso'), p); ok(p.includes('Improbidade administrativa') && p.includes('não existe neste mapa') && p.includes('Súmula Vinculante 13'), p);
     eq(await js("document.querySelector('#planOk').disabled"), false); await clickSel('#planOk'); await c.waitFor(() => js("!!__id('Improbidade administrativa')")); await wait(250);
     eq(await js(`${N('Licitações')}.progress`), 70); eq(await js(`${N('Moralidade')}.notes`), 'Súmula Vinculante 13'); ok((await txt('#status')).includes('Planilha aplicada'), await txt('#status')); await shot('aplicada');
-    await clickSel('[data-act="undo"]'); await wait(200); ok(await js("!__id('Improbidade administrativa')"), 'Desfazer (botão) reverte a planilha inteira de uma vez'); await clickSel('[data-act="redo"]'); await wait(200); ok(await js("!!__id('Improbidade administrativa')"), 'Refazer reaplica');
+    await js('act.undo()'); await wait(200); ok(await js("!__id('Improbidade administrativa')"), 'Desfazer (botão) reverte a planilha inteira de uma vez'); await js('act.redo()'); await wait(200); ok(await js("!!__id('Improbidade administrativa')"), 'Refazer reaplica');
   });
   await feature('Estudos', 'Agenda de revisões (28 dias): clicar num dia lista os tópicos', 'Painel de estudos; cliques reais nos dias', async ({ shot }) => {
     await clickSel('[data-act="dash"]'); await c.waitFor(() => js("!!document.querySelector('#agenda .ag-day')"));
@@ -434,7 +434,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
     await clickNode('Concordância'); await clickNode('Organização do Estado', { mods: ['control'] }); await clickNode('Redes', { mods: ['control'] });
     const picked = await js(`[...selIds].map((id) => map.find(id).node.title)`); eq(picked.sort(), ['Concordância', 'Organização do Estado', 'Redes'].sort(), 'seleção dos 3 tópicos'); ok((await txt('#studyMulti')).startsWith('3 tópicos')); await clickSel('#studyDone');
     for (const t of ['Concordância', 'Organização do Estado', 'Redes']) eq(await js(`${N(t)}.study.next`), S.addDays(TODAY, 1), t);
-    await clickSel('[data-act="undo"]'); eq(await js(`${N('Redes')}.study`), undefined, 'um desfazer reverte os 3');
+    await js('act.undo()'); eq(await js(`${N('Redes')}.study`), undefined, 'um desfazer reverte os 3');
   });
   await feature('Estudos', 'Painel de estudos (visão geral)', 'Botão do painel na barra de ferramentas', async ({ shot }) => {
     await clickSel('[data-act="dash"]'); ok(await js(`!document.querySelector('#dash').hidden`)); await shot('topo'); await js(`document.querySelector('#dash').scrollTop = 9999`); await wait(150); await shot('fim'); await js(`document.querySelector('#dash').scrollTop = 0`);
@@ -467,7 +467,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
   await feature('Rede', 'Menção sem link → transformar em [[link]]', 'Botão [[ ]] na lista de menções', async ({ shot }) => {
     await clickNode('Atos administrativos'); await js('renderLinks()'); await wait(150); await shot('antes'); await clickSel('#linksBody [data-linkify]'); await wait(150);
-    ok((await js(`${N('Atos administrativos')}.notes`)).includes('[[moralidade]]'), 'virou link'); await js('renderLinks()'); await shot('depois'); await clickSel('[data-act="undo"]');
+    ok((await js(`${N('Atos administrativos')}.notes`)).includes('[[moralidade]]'), 'virou link'); await js('renderLinks()'); await shot('depois'); await js('act.undo()');
   });
   await feature('Rede', 'Autocompletar ao digitar [[', 'Digitação real no painel de notas; setas e Enter', async ({ shot }) => {
     await clickNode('Redes'); await clickSel('#notes'); await type('Depende de [[seg'); ok(await js('!document.querySelector("#linkSuggest").hidden'), 'lista aberta');

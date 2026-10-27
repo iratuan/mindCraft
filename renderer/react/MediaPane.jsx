@@ -30,6 +30,13 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
   });
 
   const [activeTabId, setActiveTabId] = useState(() => (tabs[0] ? tabs[0].id : null));
+  // maximizar/restaurar a bancada (botão no cabeçalho dela): o estado vem da classe no body (layout-ui.js) e é avisado por evento
+  const [dockMax, setDockMax] = useState(() => document.body.classList.contains('dock-max'));
+  useEffect(() => {
+    const f = () => setDockMax(document.body.classList.contains('dock-max'));
+    document.addEventListener('mc:dock-max-changed', f);
+    return () => document.removeEventListener('mc:dock-max-changed', f);
+  }, []);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef(null);
 
@@ -318,6 +325,16 @@ export function MediaPane({ initialTab = 'pdf', pdfOpts = {}, onClose }) {
           Como usar?
         </button>
 
+        <button
+          className={'icon-btn sm' + (dockMax ? ' on' : '')}
+          onClick={() => window.toggleDockMax && window.toggleDockMax()}
+          title={dockMax ? 'Restaurar a bancada' : 'Maximizar a bancada'}
+          aria-label={dockMax ? 'Restaurar a bancada' : 'Maximizar a bancada'}
+          aria-pressed={dockMax}
+          style={{ width: '26px', height: '26px', marginRight: '2px' }}
+        >
+          <FlatIcon name={dockMax ? 'restore' : 'maximize'} size={13} />
+        </button>
         <button
           className="icon-btn sm"
           onClick={onClose}

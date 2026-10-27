@@ -187,6 +187,15 @@ export function FlatIcon({ name, size = 16, className = '', style = {} }) {
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
         </svg>
       );
+    case 'maximize':
+      return (
+        <svg viewBox="0 0 24 24" style={common} className={className}>
+          <polyline points="15 3 21 3 21 9" />
+          <polyline points="9 21 3 21 3 15" />
+          <line x1="21" y1="3" x2="14" y2="10" />
+          <line x1="3" y1="21" x2="10" y2="14" />
+        </svg>
+      );
     case 'restore':
       return (
         <svg viewBox="0 0 24 24" style={common} className={className}>

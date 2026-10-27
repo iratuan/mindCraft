@@ -683,3 +683,39 @@ body.focus-media .panels-reveal { display: block; }
 .mn-modelo { display: grid; gap: 8px; margin: 6px 0 10px; }
 .mn-pre { white-space: pre-wrap; font: 12px/1.45 Consolas, monospace; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; max-height: 260px; overflow: auto; user-select: text; }
 .mn-modelo-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* a aba do mapa e os controles do mapa somem (não só ficam apagados) quando não há mapa aberto */
+#tabMap[hidden] { display: none !important; }
+
+/* recolher/expandir: quando o painel está aberto, o botão fica no cabeçalho dele (ver layout-ui.js) */
+#ptabs #panelsToggle { position: static; flex: none; margin: 0 0 0 auto; top: auto; left: auto; transform: none; width: 26px; height: 26px; font-size: 14px; line-height: 1; border-radius: 6px; }
+
+/* no toque, o botão de recolher do cabeçalho do painel precisa de alvo grande (mínimo 44 px) */
+@media (pointer: coarse) { #ptabs #panelsToggle { width: 40px; height: 44px; font-size: 18px; } }
+
+/* ---------- maximizar / restaurar (0.6.3) ---------- */
+/* painel da direita maximizado: ocupa a área de trabalho; o mapa e a bancada somem até restaurar */
+body.panel-max #stage, body.panel-max #pdfpane, body.panel-max #pdfsplit, body.panel-max #panelsSplit { display: none !important; }
+body.panel-max #panels { width: auto !important; flex: 1 1 auto; }
+/* bancada da esquerda maximizada: ocupa a área de trabalho; o mapa e o painel da direita somem até restaurar */
+body.dock-max #stage, body.dock-max #panels, body.dock-max #panelsSplit, body.dock-max #panelsReveal, body.dock-max #pdfsplit { display: none !important; }
+body.dock-max #pdfpane { width: auto !important; flex: 1 1 auto; }
+/* botão de maximizar/restaurar do cabeçalho do painel */
+.panel-tool { display: grid; place-items: center; flex: none; width: 26px; height: 26px; margin-left: 2px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-dim); cursor: pointer; }
+.panel-tool:hover, .panel-tool:focus-visible { color: var(--text-strong); background: var(--bg-hover); border-color: var(--line-soft); }
+.panel-tool.on { color: var(--accent-hover); background: var(--accent-soft); border-color: var(--accent); }
+
+/* primeiro uso: só os quatro caminhos iniciais e nada de seções vazias (ver Home.jsx) */
+.hm-actions.first-use > :not(#hmNew):not(#hmCsv):not(#hmPdf):not(#hmOpen):not(#hmRestore):not(#hmBackup), .hm-cols.first-use { display: none !important; }
+
+/* abas do painel da direita: ícones (o nome fica no tooltip e para leitores de tela) */
+#ptabs .ptab { display: grid; place-items: center; min-width: 0; padding: 0 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* controles do tópico dentro do painel Estilo (antes numa barra acima do mapa) */
+#panels #optTopic { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+#panels #optTopic[hidden] { display: none !important; }
+#panels #optTopic .opt-label { width: 100%; }
+
+/* a barra de opções some por completo quando não tem o que mostrar (o atributo hidden precisa vencer o display da barra) */
+#options[hidden] { display: none !important; }

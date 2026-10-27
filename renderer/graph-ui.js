@@ -305,7 +305,7 @@ function openGraph() {
   renderGraph(true); fitGraph();
 }
 function closeGraph() { graphOpen = false; const g = $('#graph'); if (g) g.hidden = true; const b = document.querySelector('[data-act="graph"]'); if (b) b.classList.remove('on'); }
-act.graph = () => (graphOpen ? closeGraph() : openGraph());
+act.graph = () => { if (graphOpen) return closeGraph(); if (!needMap()) return; return openGraph(); };
 
 async function pickVaultDir() {
   const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta com os seus mapas (.mom)');
@@ -640,4 +640,4 @@ window.addEventListener('keydown', (e) => {
   else used = false;
   if (used) { e.preventDefault(); e.stopPropagation(); }
 }, true);
-render();
+if (map) render();   // no boot não há mapa ainda (a tela inicial aparece antes)

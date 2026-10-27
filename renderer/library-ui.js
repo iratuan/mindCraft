@@ -255,7 +255,7 @@ window.MC = {
   modalEl: () => $('#modal'), closeModal: () => closeModal(),
   lib: getLibrary, libError: () => _libErr, libPath, nowStr: () => nowStr(), fmtDate: (d) => fmtDate(d), when,
   ipc: (ch, ...a) => ipcRenderer.invoke(ch, ...a), basename: (p) => path.basename(p),
-  map: () => map, currentLibId: () => (map && map.meta.libId) || null, inLibrary, isDirty: () => dirty,
+  map: () => map || emptyMapStub(), currentLibId: () => (map && map.meta.libId) || null, inLibrary, isDirty: () => dirty,
   openFromLibrary, moveToLibrary, saveToLibrary, confirmDiscard: () => confirmDiscard(), goTo: (id) => goTo(id), setStatus: (t) => setStatus(t),
   openLibrary: (tab) => openLibraryModal(tab), openVersions: (id, o) => openVersionsModal(id, o),
 };

@@ -21,6 +21,9 @@
 - Relações com seta entre tópicos distantes
 - Marcadores, progresso, cores, cinco temas visuais, recolher ramos por nível
 - Reordenar com teclado, toque ou arrastar; copiar, colar e desfazer
+- Controles do tópico (cor, forma, negrito, níveis) no painel **Estilo**; o painel da direita tem abas em ícones
+- **Maximizar** o painel da direita ou a bancada de estudo (botão no cabeçalho de cada um)
+- **Área de trabalho em primeiro lugar:** nenhum mapa abre por padrão, e a barra de ferramentas mostra só o que faz sentido no momento
 
 **Edital para mapa**
 - Cole o conteúdo programático e ele vira tópicos

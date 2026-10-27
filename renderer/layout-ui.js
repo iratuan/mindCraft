@@ -44,16 +44,40 @@
     pSplit.setAttribute('aria-valuenow', String(Math.round(panels.getBoundingClientRect().width)));
     painting = false;
   }
+  // O botão de recolher mora NO PRÓPRIO painel (cabeçalho das abas) enquanto ele está aberto; recolhido, o painel some e o botão
+  // passa para a borda, onde é o único jeito de trazê-lo de volta. Mesmo elemento e mesmo id, então os atalhos e testes não mudam.
+  const placeToggle = () => { const host = collapsed ? pSplit : $('#ptabs'); if (host && pBtn.parentElement !== host) host.appendChild(pBtn); };
   function setCollapsed(v, persist = true) {
     collapsed = !!v; if (persist) saveCfg({ panelsCollapsed: collapsed });
-    paintToggle(); refit();
+    if (collapsed) document.body.classList.remove('panel-max');   // recolhido não pode estar maximizado
+    placeToggle(); paintToggle(); refit();
     // adiado: o redesenho do mapa (resize) reescreve a barra de status
     if (typeof setStatus === 'function') setTimeout(() => setStatus(collapsed ? 'Painel lateral recolhido. Use o botão ‹ na borda direita (ou Ctrl+\\) para voltar.' : 'Painel lateral expandido.'), 60);
   }
+  placeToggle();
   pBtn.addEventListener('click', (e) => { e.stopPropagation(); setCollapsed(!(collapsed && !drawer())); pBtn.blur(); });
   pBtn.addEventListener('pointerdown', (e) => e.stopPropagation());       // clicar no botão nunca inicia um arrasto do divisor
   // chamado por showPanel (renderer.js): quem pede uma aba precisa ver o painel
   window.expandPanels = () => { if (collapsed) setCollapsed(false); };
+
+  // ---------- maximizar / restaurar: o painel da direita (botão no cabeçalho dele) e a bancada da esquerda (botão no cabeçalho dela) ----------
+  // Só um dos dois fica maximizado por vez; maximizar ocupa a área de trabalho inteira; restaurar volta ao layout anterior.
+  const pMax = $('#panelMax');
+  function paintMax() {
+    const on = document.body.classList.contains('panel-max');
+    if (pMax) { pMax.classList.toggle('on', on); pMax.setAttribute('aria-pressed', String(on)); pMax.title = on ? 'Restaurar o painel' : 'Maximizar o painel'; pMax.setAttribute('aria-label', pMax.title); }
+  }
+  function toggleMax(kind) {
+    const cls = kind + '-max';
+    const on = !document.body.classList.contains(cls);
+    document.body.classList.remove('panel-max', 'dock-max');
+    if (on && kind === 'panel' && collapsed) setCollapsed(false);   // maximizar um painel recolhido o mostra primeiro
+    if (on) document.body.classList.add(cls);
+    paintMax(); refit();
+    document.dispatchEvent(new CustomEvent('mc:dock-max-changed'));
+  }
+  window.toggleDockMax = () => toggleMax('dock');
+  if (pMax) pMax.addEventListener('click', () => toggleMax('panel'));
   act.panelsToggle = () => setCollapsed(!(collapsed && !drawer()));
   if (root.dataset.host === 'web') window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); act.panelsToggle(); } }, true);   // no desktop o atalho vem do menu Exibir
 
@@ -121,7 +145,7 @@
   const applySaved = () => {
     const c = cfg(), saved = num(c.panelsWidth);
     if (saved) root.style.setProperty('--panels-w', Math.max(PANEL_MIN, Math.min(PANEL_MAX, saved)) + 'px');
-    collapsed = c.panelsCollapsed === true; paintToggle(); refit();
+    collapsed = c.panelsCollapsed === true; placeToggle(); paintToggle(); refit();
   };
   // espera a pasta de dados (definida no início do init) sem depender do fim da restauração da sessão, que pode demorar (rascunho, diálogos)
   let tries = 0; const waitCfg = () => { if (typeof userDataDir !== 'undefined' && userDataDir) applySaved(); else if (++tries < 200) setTimeout(waitCfg, 50); else applySaved(); };

@@ -90,7 +90,9 @@ function render() {
   $('#progress').value = sel && sel.node.progress != null ? String(sel.node.progress) : '';
   document.title = `${dirty ? '• ' : ''}${map.root.title} — MindCraft`;
   let count = 0; map.walk(() => count++);
-  setStatus(`${count} tópicos · ${map.meta.libId ? 'na biblioteca' : filePath || 'sem arquivo'}`);
+  // na barra de status só o nome do arquivo (o caminho completo fica no tooltip): a área de trabalho é o que importa
+  setStatus(`${count} tópicos · ${map.meta.libId ? 'na biblioteca' : filePath ? path.basename(filePath) : 'sem arquivo'}`);
+  { const st = $('#status'); if (st) st.title = filePath || ''; }
   ipcRenderer.send('dirty', { dirty, timing: typeof timer !== 'undefined' && !!timer });
   syncChrome(sel);
   autosaveTick();
@@ -844,7 +846,7 @@ const report = (m) => {
   setStatus('Erro: ' + m); console.error(m);
   try { if (userDataDir) logError(path.join(userDataDir, 'logs'), m); } catch { /* o registro nunca pode causar outro erro */ }
 };
-window.addEventListener('error', (e) => report(e.message));
+window.addEventListener('error', (e) => report(e.message + (e.error && e.error.stack ? ' | ' + e.error.stack.split('\n').slice(1, 4).map((s) => s.trim()).join(' <- ') : '')));
 window.addEventListener('unhandledrejection', (e) => report(e.reason && e.reason.message || e.reason));
 
 // ---------- autosave e recuperação de sessão ----------
@@ -969,7 +971,7 @@ window.hideSplash = hideSplash;
 window.setSplashStatus = setSplashStatus;
 
 let today0 = nowStr();
-setInterval(() => { if (nowStr() !== today0) { today0 = nowStr(); render(); } }, 30000); // virou o dia: atualiza selos de revisão
+setInterval(() => { if (nowStr() !== today0) { today0 = nowStr(); if (map) render(); } }, 30000); // virou o dia: atualiza selos de revisão
 window.addEventListener('focus', () => { if (map && nowStr() !== today0) { today0 = nowStr(); render(); } });
 
 let firstInit = true;
@@ -989,8 +991,9 @@ async function init() {
     if (cfg.lastKind === 'lib' && cfg.lastLib && libraryExists()) { if (!(await openFromLibrary(cfg.lastLib, { confirm: false, silent: true }))) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); } }
     else { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
   }   // app de estudo diário: volta de onde parou
-  if (cfg.dashOnStart && typeof act.dash === 'function') act.dash();
+  if (!map) newMap();   // início em branco (ou nada a reabrir): só aqui nasce um mapa vazio
+    if (cfg.dashOnStart && typeof act.dash === 'function') act.dash();
   hideSplash();
 }
-newMap();
+// nenhum mapa é criado no boot: a tela inicial aparece antes; um mapa só existe quando o usuário abre ou cria um (ver init)
 const ready = init(); // aberturas por linha de comando esperam a restauração (ver 'open-path')

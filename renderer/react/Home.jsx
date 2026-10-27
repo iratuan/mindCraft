@@ -58,6 +58,8 @@ export function Home({ onClose }) {
   const today = new Date();
   const A = h.homeActions;
   const act = (fn) => async () => { await fn(); };
+  // primeiro uso (nenhum arquivo, nenhum mapa na biblioteca): a tela mostra só os quatro caminhos iniciais, sem ruído
+  const firstUse = !d.recent.length && !d.library.total && !d.last;
 
   useEffect(() => {
     const f = (e) => { if (e.key === 'Escape' && document.getElementById('modal').hidden) { e.stopPropagation(); onClose(); } };
@@ -105,7 +107,7 @@ export function Home({ onClose }) {
 
       <Glance g={d.glance} collapsed={cfg.glanceCollapsed === true} onToggle={() => { h.saveCfg({ glanceCollapsed: cfg.glanceCollapsed !== true }); refresh(); }} onReview={act(A.review)} onDash={act(async () => { onClose(); h.actions.openDash && h.actions.openDash(); })} />
 
-      <div className="hm-actions">
+      <div className={"hm-actions" + (firstUse ? " first-use" : "")}>
         <Big id="hmNew" icon="plus" title="Novo mapa" sub="em branco" onClick={act(A.newBlank)} primary={!d.last} />
         <Big id="hmTemplate" icon="target" title="Novo mapa de concurso" sub="modelo com disciplinas" onClick={act(A.newTemplate)} />
         <Big id="hmCsv" icon="robot" title="Importar edital (CSV da IA)" sub="esqueleto pronto" onClick={act(A.openCsv)} />
@@ -119,7 +121,7 @@ export function Home({ onClose }) {
         <Big id="hmRestore" icon="restore" title="Restaurar cópia" sub="de um pacote .mcpack" onClick={act(async () => { if (await A.restorePack()) refresh(); })} />
       </div>
 
-      <div className="hm-cols">
+      <div className={"hm-cols" + (firstUse ? " first-use" : "")}>
         <div className="hm-col">
           <div className="hm-sec" id="hmRecent">
             <h3>Arquivos recentes {d.recent.length > 0 && <button className="link" id="hmClearRecent" onClick={async () => { await A.clearRecent(); refresh(); }}>limpar lista</button>}</h3>

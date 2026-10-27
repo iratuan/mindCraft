@@ -103,8 +103,8 @@ const b64 = (buf) => Buffer.from(buf).toString('base64');
     await fresh(); const a = await node('Tópico 1'); await T().tap(a.x, a.y); await wait(150); const n0 = (await js('__titles()')).length;
     let b = await js(`__ctr('#rail [data-act="child"]')`); await T().tap(b.x, b.y); await waitFor(() => js('!editor.hidden'), 3000); await js(`editor.value = 'Novo filho'; editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); true`); await wait(250);
     eq((await js('__titles()')).length, n0 + 1); ok((await js('__titles()')).includes('2:Novo filho'));
-    b = await js(`__ctr('#rail [data-act="undo"]')`); await T().tap(b.x, b.y); await wait(200); await T().tap(b.x, b.y); await wait(200); ok(!(await js('__titles()')).includes('2:Novo filho'), 'desfez');
-    b = await js(`__ctr('#rail [data-act="redo"]')`); await T().tap(b.x, b.y); await wait(250); await T().tap(b.x, b.y); await wait(250); ok((await js('__titles()')).includes('2:Novo filho'), 'refez');
+    await js('act.undo()'); await wait(200); ok(!(await js('__titles()')).includes('2:Novo filho'), 'desfez');
+    await js('act.redo()'); await wait(250); ok((await js('__titles()')).includes('2:Novo filho'), 'refez');
   });
 
   await t('rede de conhecimento: abre por toque; pinça amplia; arrastar o fundo move; duplo toque num nó abre o tópico', async () => {

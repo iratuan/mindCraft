@@ -153,7 +153,7 @@ $('#qAdd').addEventListener('click', () => {
 // ---------- painel de estudos (sobreposição) ----------
 function openDash() { commitNotes(); if (typeof closeHome === 'function') closeHome(); if (typeof closeGraph === 'function') closeGraph(); dashOpen = true; $('#dash').hidden = false; document.querySelector('[data-act="dash"]').classList.add('on'); renderDash(); }
 function closeDash() { dashOpen = false; $('#dash').hidden = true; document.querySelector('[data-act="dash"]').classList.remove('on'); }
-act.dash = () => (dashOpen ? closeDash() : openDash());
+act.dash = () => { if (dashOpen) return closeDash(); if (!needMap()) return; return openDash(); };
 
 function goTo(id) {
   closeDash();
@@ -399,7 +399,7 @@ function openImportModal() {
   const bx = el('div', 'modal-box');
   const h = el('h2', '', 'Importar edital / lista de tópicos');
   const hint = el('div', 'muted', 'Cole o conteúdo programático. Reconhece "1", "1.1", "1.1.1", itens "a)", marcadores "-", disciplinas em MAIÚSCULAS ou terminadas em ":" e junta linhas quebradas do PDF.');
-  const title = el('input'); title.type = 'text'; title.id = 'impTitle'; title.placeholder = 'Nome do concurso / prova'; title.value = map.root.title && map.root.title !== 'Ideia central' ? map.root.title : '';
+  const title = el('input'); title.type = 'text'; title.id = 'impTitle'; title.placeholder = 'Nome do concurso / prova'; title.value = map && map.root.title && map.root.title !== 'Ideia central' ? map.root.title : '';
   const ta = el('textarea'); ta.id = 'impText'; ta.placeholder = 'LÍNGUA PORTUGUESA\n1 Compreensão e interpretação de textos\n2 Ortografia oficial; acentuação gráfica\n2.1 Emprego do sinal indicativo de crase\n…';
   const opts = el('div', 'opts');
   const mk = (val, label, checked) => { const l = el('label'); const r = el('input'); r.type = 'radio'; r.name = 'impMode'; r.value = val; r.checked = checked; l.append(r, document.createTextNode(label)); return l; };
@@ -566,4 +566,4 @@ act.plan = () => openPlanModal();
 // Esc fecha o painel — mas, com uma janela aberta por cima dele (ex.: o manual), o Esc é da janela
 window.addEventListener('keydown', (e) => { if (dashOpen && e.key === 'Escape' && $('#modal').hidden) { e.stopPropagation(); closeDash(); } }, true);
 
-render(); // primeira renderização com o painel de estudo montado
+if (map) render(); // primeira renderização com o painel de estudo montado (no boot não há mapa: a tela inicial aparece antes)

@@ -8,6 +8,20 @@
  */
 
 const NO_MAP_TITLE = 'Abra um mapa mental para usar este comando';
+const NO_MAP_MSG = 'Abra ou crie um mapa para usar esta ferramenta.';
+/** Ferramentas que só existem com um mapa: sem mapa, mostram a mensagem em vez de quebrar. Devolve true se pode continuar. */
+/** Um mapa vazio e descartável para as telas que só LEEM o mapa atual (ex.: revisão do dia, que é da biblioteca) quando não há mapa aberto.
+ *  Nunca é salvo: não está em nenhuma biblioteca nem em nenhum arquivo. */
+let _emptyStub = null;
+function emptyMapStub() {
+  if (!_emptyStub) { const { MindMap, createNode } = require(path.join(core, 'model')); _emptyStub = new MindMap(createNode(''), { name: '' }); }
+  return _emptyStub;
+}
+function needMap() {
+  if (map) return true;
+  if (typeof setStatus === 'function') setStatus(NO_MAP_MSG);
+  return false;
+}
 
 function setToolBtn(btn, enabled, title) {
   if (!btn) return;
@@ -78,9 +92,35 @@ function notifyMapState(inUse) {
   try { ipcRenderer.send('map-state', inUse); } catch { /* sem canal com o processo principal (ex.: testes da página) */ }
 }
 
+/** Sem mapa aberto (início, ou depois de fechar o mapa): nada do mapa aparece nem fica habilitado; a tela inicial é a única coisa útil. */
+function syncNoMapUI() {
+  const home = !!(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
+  const tabMap = $('#tabMap');
+  if (tabMap) tabMap.hidden = true;
+  // ferramentas que dependem do mapa (edição, rede, painel de estudos e as mídias que alimentam o mapa): desabilitadas sem mapa
+  for (const a of ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate', 'fit', 'graph', 'dash', 'pdf', 'video', 'browser']) setToolBtn($(`[data-act="${a}"]`), false, NO_MAP_TITLE);
+  // Início só faz sentido com a tela inicial aberta: sem mapa, não há para onde voltar
+  setToolBtn($('[data-act="home"]'), home, home ? '' : 'Tela inicial');
+  for (const id of ['#search', '#export', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) { const el = $(id); if (el) el.disabled = true; }
+  const st = $('#status'); if (st && home) st.textContent = '';
+  notifyMapState(false);
+  const options = $('#options'); if (options) { options.setAttribute('data-context', 'none'); options.hidden = true; }
+}
+
 function syncContextUI() {
-  if (!map) return;
+  if (!map) { syncNoMapUI(); return; }
   const inUse = mapInUse();
+  const homeNow = !!(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
+  const tabMapEl = $('#tabMap');
+  if (tabMapEl) tabMapEl.hidden = homeNow;            // a aba do mapa só existe com um mapa aberto (não na tela inicial)
+  const st = $('#status'); if (st && homeNow) st.textContent = '';
+  setToolBtn($('[data-act="graph"]'), inUse, inUse ? 'Rede de conhecimento (Ctrl+G)' : NO_MAP_TITLE);   // rede é do mapa: só com o mapa ativo
+  setToolBtn($('[data-act="home"]'), true, 'Tela inicial (Ctrl+Shift+H)');
+  // ferramentas que alimentam o mapa: habilitadas com um mapa aberto (o caminho sem mapa as desabilita; aqui precisam voltar)
+  setToolBtn($('[data-act="dash"]'), true, 'Painel de estudos (Ctrl+E)');
+  setToolBtn($('[data-act="pdf"]'), true, 'Leitor de PDF ao lado do mapa (Ctrl+Shift+P)');
+  setToolBtn($('[data-act="video"]'), true, 'Player de vídeo para videoaulas (Ctrl+Shift+V)');
+  setToolBtn($('[data-act="browser"]'), true, 'Navegador web para questões e leis (Ctrl+Shift+W)');
   notifyMapState(inUse);
   const sel = inUse && selectedId && map.find(selectedId);
   const rel = inUse && selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
@@ -115,8 +155,6 @@ function syncContextUI() {
     !!sel && !multi,
     multi ? 'Selecione um único tópico para criar relação' : sel ? 'Relação entre tópicos (R)' : pick('Selecione um tópico para iniciar relação')
   );
-  setToolBtn($('[data-act="undo"]'), inUse && map._undo && map._undo.length > 0, inUse ? 'Desfazer (Ctrl+Z)' : NO_MAP_TITLE);
-  setToolBtn($('[data-act="redo"]'), inUse && map._redo && map._redo.length > 0, inUse ? 'Refazer (Ctrl+Y)' : NO_MAP_TITLE);
   setToolBtn($('[data-act="fit"]'), inUse, inUse ? 'Ajustar à tela (Ctrl+0)' : NO_MAP_TITLE);
   // Cabeçalho e barra de status também são do mapa: busca, exportação, fechar mapa e zoom
   for (const id of ['#search', '#export', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) {
@@ -166,6 +204,9 @@ function syncContextUI() {
       optRel.hidden = true;
       optCanvas.hidden = false;
     }
+    // a barra de opções só existe quando tem algo a mostrar: com um tópico, os controles estão no painel Estilo (ganha-se a faixa do mapa)
+    const ctx = options.getAttribute('data-context');
+    options.hidden = ctx === 'topic' || ctx === 'none';
   }
 }
 
@@ -202,10 +243,9 @@ async function closeCurrentMap() {
     if (typeof closeDash === 'function') closeDash();
     if (typeof closeGraph === 'function') closeGraph();
 
-    // Descarrega o mapa atual da memória criando um estado limpo
-    if (typeof newMap === 'function') {
-      newMap();
-    }
+    // Descarrega o mapa: sem mapa aberto, a tela inicial fica sozinha (nenhum mapa vazio fica por baixo dela)
+    map = null;
+    selectedRel = null; selIds = new Set(); hits = null;
 
     dirty = false;
     filePath = null;
