@@ -4,7 +4,7 @@ App de **mapas mentais + gestão de estudos para concursos**. Desktop (Electron)
 
 ## Regras de ouro (vieram do dono do projeto; não negocie)
 1. **Nunca perder dados.** Gravação atômica (temporário + renomear), transação no banco, versão antes de sobrescrever, lixeira, nada é apagado sem confirmação. Em sincronização: **nunca apagar nada**.
-2. **Só mudanças seguras e provadas por teste.** Teste real (entrada real, não só unitário), com evidência (captura em `evidencias/`). Se mudou algo que o usuário vê, olhe a captura.
+2. **Só mudanças seguras e provadas por teste.** Teste real (entrada real, não só unitário), com evidência (captura em `docs/evidencias/`). Se mudou algo que o usuário vê, olhe a captura.
 3. **Diga o que NÃO foi testado.** Sem exagero: se algo só foi provado contra um dublê (ex.: Google Drive falso), diga.
 4. **Desktop e tablet funcionam juntos.** Mudança no desktop precisa continuar valendo no tablet (`npm run test:web`, `e2e-tablet`).
 5. **Responda sempre em português.** Mensagens de erro para o usuário em pt-BR, claras e acionáveis.

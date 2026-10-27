@@ -29,7 +29,7 @@ Falhou em `architecture.test.js`? A mensagem diz a regra quebrada (módulo fora 
 ## 3. Antes de entregar
 1. **Desligue o emulador Android** (`adb emu kill`) → `npm run e2e` (41 etapas, ~10 min; rode em segundo plano e acompanhe o log) → `npm run qa`.
 2. Ligue o emulador → bateria Android completa (`npm run android`, 21 testes) — **sem nada em paralelo**.
-3. Atualize `evidencias/RESULTADOS.md` (números reais) e os docs.
+3. Atualize `docs/evidencias/README.md` (números reais) e os docs.
 
 ## 4. Sabotagem (teste do teste)
 Se uma mudança arriscada passou "de primeira", quebre de propósito a linha que o teste deveria proteger e confirme que falha; depois restaure. (Já revelou testes frouxos e premissas erradas.)

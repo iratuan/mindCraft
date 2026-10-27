@@ -34,7 +34,7 @@
 ## Definição de pronto
 1. `npm run check` verde (lint, unitários, paridade web).
 2. e2e relevantes verdes (e `npm run e2e` completo antes de entregar).
-3. Capturas/evidências atualizadas; `evidencias/RESULTADOS.md` com **o que foi e o que NÃO foi testado**.
+3. Capturas/evidências atualizadas; `docs/evidencias/README.md` com **o que foi e o que NÃO foi testado**.
 4. README/docs atualizados (e `CLAUDE.md` se mudou comando, regra ou armadilha).
 5. Nenhum dado de usuário nas evidências; nenhum segredo no repositório.
 

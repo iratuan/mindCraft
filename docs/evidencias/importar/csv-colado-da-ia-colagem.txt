@@ -1,0 +1,1 @@
+A área de transferência do sistema não estava disponível neste ambiente: o texto foi colado pelo mesmo evento de colagem que o app recebe (paste).

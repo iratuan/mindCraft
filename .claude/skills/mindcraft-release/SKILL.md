@@ -13,7 +13,7 @@ Pré-requisitos desta máquina: Git do Laragon (`C:\laragon\bin\git\cmd` no PATH
 3. **APK assinado**: `node tablet/scripts/release.js` (faz build da UI, do app web, `cap sync`, `assembleRelease`, zipalign, apksigner e verifica). Saída: `dist/MindCraft-<versão>.apk`. A chave está em `tablet/keystore` (senha em `senha.txt`) — **nunca versionar** e **lembrar o usuário de guardar cópia**.
 4. **Instalador Windows**: `CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --win --publish never` → `dist/MindCraft Setup <versão>.exe` (~116 MB).
 5. **Fumaça do APK release** (emulador ligado): `adb uninstall app.mindcraft.estudos` (a assinatura difere do debug) → `adb install -r dist/MindCraft-<v>.apk` → conferir `versionName/versionCode` e `DEBUGGABLE` ausente → abrir, tocar "Novo mapa", `monkey -p app.mindcraft.estudos --throttle 60 -v 2000`, `logcat -b crash` sem `FATAL`. Guarde capturas em `evidencias/android/`.
-6. **Docs**: `README.md` (versão e seções), `evidencias/RESULTADOS.md` (números reais + o que NÃO foi testado), memória do projeto se houver fato novo.
+6. **Docs**: `README.md` (versão e seções), `docs/evidencias/README.md` (números reais + o que NÃO foi testado), memória do projeto se houver fato novo.
 7. **Commit e push** (autorizado para `https://github.com/iratuan/mindCraft.git`): `git add -A`; confirme que **não** entram `tablet/keystore`, `node_modules`, `dist`, `*.apk`, `*.exe`, `_extracted`; mensagem em arquivo (`git commit -F`) terminando com `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`; `git push origin HEAD`.
 8. **Resposta final ao usuário** (português): caminhos dos dois arquivos; aviso da cópia do keystore; como instalar (fontes desconhecidas); o que mudou; o que foi testado e o que **não** foi.
 

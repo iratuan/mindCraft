@@ -151,7 +151,7 @@ Você deve examinar, auditar e propor melhorias para as seguintes áreas funcion
 Execute a tarefa seguindo rigorosamente as quatro etapas abaixo:
 
 ### Etapa 1: Diagnóstico e Matriz de Gaps
-- Percorra o código de cada módulo e as evidências visuais mais recentes (`evidencias/`).
+- Percorra o código de cada módulo e as evidências visuais mais recentes (`docs/evidencias/`).
 - Elabore uma **Matriz de Fricções de Usabilidade**, pontuando cada problema por Gravidade (Cosmético, Menor, Maior, Crítico) e Impacto no Usuário.
 - Apresente um plano sucinto das intervenções propostas antes de editar o código.
 

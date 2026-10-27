@@ -10,58 +10,100 @@
 
 | Tela inicial | Leitor de PDF ao lado do mapa |
 |---|---|
-| ![Tela inicial](evidencias/layout/inicio-1280x800.png) | ![PDF dividido com o mapa](evidencias/layout/pdf-dividido-1280x800.png) |
+| ![Tela inicial](docs/evidencias/inicio/tela-inicial.png) | ![Leitor de PDF ao lado do mapa](docs/evidencias/midias/leitor-de-pdf.png) |
 | **Rede de conhecimento** | **Tablet** |
-| ![Rede de conhecimento](evidencias/rede/01-denso-ajustado.png) | ![Tablet na vertical](evidencias/tablet/10-tablet-retrato.png) |
+| ![Rede de conhecimento](docs/evidencias/estilo/rede-de-conhecimento.png) | ![Tablet na vertical](docs/evidencias/tablet/tela-inicial-retrato.png) |
 
 ## Funcionalidades
 
-**Mapa mental**
-- Tópicos, notas em Markdown e `[[links]]` entre tópicos
-- Relações com seta entre tópicos distantes
-- Marcadores, progresso, cores, cinco temas visuais, recolher ramos por nível
-- Reordenar com teclado, toque ou arrastar; copiar, colar e desfazer
-- Controles do tópico (cor, forma, negrito, níveis) no painel **Estilo**; o painel da direita tem abas em ícones
-- **Maximizar** o painel da direita ou a bancada de estudo (botão no cabeçalho de cada um)
-- **Área de trabalho em primeiro lugar:** nenhum mapa abre por padrão, e a barra de ferramentas mostra só o que faz sentido no momento
+<!-- funcionalidades:inicio -->
 
-**Edital para mapa**
-- Cole o conteúdo programático e ele vira tópicos
-- **Modelo de concurso** com disciplinas prontas
-- **CSV gerado por IA**: a Ajuda traz um modelo para transformar o PDF do edital em planilha. A importação mostra uma prévia antes de criar o mapa
-- Planilha de planejamento: exporte, edite no Excel e importe de volta
+Cada funcionalidade abaixo foi executada no app (41 testadas e ok, 2 não testadas neste ambiente). Atualizado em 2026-10-27 por `npm run evidence`; as capturas ficam em [docs/evidencias](docs/evidencias/README.md).
 
-**Estudo**
-- **Revisão espaçada** (1, 7, 15, 30, 60 e 120 dias): "Estudei hoje" avança, "Errei" volta ao início
-- Por tópico: peso, próxima revisão, cronômetro, minutos, questões feitas e acertos
-- **Painel de estudos** (Ctrl+E): contagem regressiva da prova, progresso por disciplina, sequência de dias, tempo da semana e fila de revisões
-- **Caderno de erros** e metas semanais
-- Simulados por disciplina e questões por banca e ano
-- Relatório em `.md` ou `.docx` com os mesmos números do painel
+### Início e primeiro uso
 
-**PDF, vídeo e navegador ao lado do mapa**
-- **Leitor de PDF:** selecione um trecho e crie um tópico ou nota com a página e o destaque. Clique no destaque para ir ao tópico
-- **Player de vídeo:** videoaulas locais ou do YouTube, com carimbos de tempo ligados ao mapa
-- **Navegador:** para questões e leis, com favoritos de concursos
-- Abas no topo, como em um navegador. Com uma mídia em foco, as ações do mapa somem e o mapa continua visível
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Tela inicial com os atalhos para começar | ✅ ok | [tela-inicial.png](docs/evidencias/inicio/tela-inicial.png) |
+| Sem mapa aberto, o painel lateral some e a tela fica limpa | ✅ ok | [sem-mapa-sem-painel.png](docs/evidencias/inicio/sem-mapa-sem-painel.png) |
+| Manual de uso (Ajuda → Manual de uso), com índice e busca | ✅ ok | [manual-de-uso.png](docs/evidencias/inicio/manual-de-uso.png) |
+| Lista de atalhos do teclado (F1) | ✅ ok | [atalhos-do-teclado.png](docs/evidencias/inicio/atalhos-do-teclado.png) |
 
-**Rede de conhecimento**
-- Visão do mapa como rede, com os links entre tópicos e entre mapas da biblioteca
+### Editar o mapa
 
-**Dados**
-- **Biblioteca de mapas** no próprio app (SQLite)
-- **Cópia de segurança** em pacote `.mcpack`, com lembrete, e restauração que nunca sobrescreve
-- **Revisão do dia** e agenda `.ics` para o calendário
-- Aviso diário de revisões vencidas (opcional)
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Novo mapa em branco | ✅ ok | [novo-mapa-em-branco.png](docs/evidencias/mapas/novo-mapa-em-branco.png) |
+| Criar tópico filho (Tab) e irmão (Enter) | ✅ ok | [criar-topico-filho-e-irmao.png](docs/evidencias/mapas/criar-topico-filho-e-irmao.png) |
+| Renomear o tópico (botão Renomear ou F2) | ✅ ok | [renomear-topico.png](docs/evidencias/mapas/renomear-topico.png) |
+| Excluir tópico (botão na lateral ou Del) | ✅ ok | [excluir-topico.png](docs/evidencias/mapas/excluir-topico.png) |
+| Desfazer e refazer (Ctrl+Z e Ctrl+Y) | ✅ ok | [desfazer-e-refazer.png](docs/evidencias/mapas/desfazer-e-refazer.png) |
+| Recolher e expandir um ramo (tecla Espaço) | ✅ ok | [recolher-ramo.png](docs/evidencias/mapas/recolher-ramo.png) |
+| Forma do tópico (barra do tópico) | ✅ ok | [forma-do-topico.png](docs/evidencias/mapas/forma-do-topico.png) |
+| Notas e links [[entre tópicos]] | ✅ ok | [notas-e-links-entre-topicos-notas.png](docs/evidencias/mapas/notas-e-links-entre-topicos-notas.png) · [notas-e-links-entre-topicos-conexoes.png](docs/evidencias/mapas/notas-e-links-entre-topicos-conexoes.png) |
 
-**Mindomo**
-- Abre e salva `.mom`. Tópicos soltos aparecem à direita do mapa e podem ser trazidos para a árvore
-- A lixeira do Mindomo, o histórico, as relações e os temas são preservados ao salvar
-- Exporta Markdown, OPML, PDF, Word, PNG e SVG
+### Aparência e painéis
 
-**Tablet Android**
-- A mesma interface do desktop, com menu e barra adaptados ao toque
-- Cópia de segurança para uma pasta escolhida
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Buscar no mapa (Ctrl+F) | ✅ ok | [busca-no-mapa.png](docs/evidencias/estilo/busca-no-mapa.png) |
+| Tema visual do mapa (Oceano, Neon, Papel…) | ✅ ok | [tema-do-mapa.png](docs/evidencias/estilo/tema-do-mapa.png) |
+| Marcadores de prioridade no tópico | ✅ ok | [marcadores.png](docs/evidencias/estilo/marcadores.png) |
+| Estrutura do mapa em árvore (aba Estrutura) | ✅ ok | [estrutura-em-arvore.png](docs/evidencias/estilo/estrutura-em-arvore.png) |
+| Recolher e reabrir o painel lateral | ✅ ok | [painel-lateral-recolher-recolhido.png](docs/evidencias/estilo/painel-lateral-recolher-recolhido.png) · [painel-lateral-recolher-aberto.png](docs/evidencias/estilo/painel-lateral-recolher-aberto.png) |
+| Maximizar e restaurar o painel | ✅ ok | [painel-maximizar.png](docs/evidencias/estilo/painel-maximizar.png) |
+| Rede de conhecimento (o mapa como rede de conexões) | ✅ ok | [rede-de-conhecimento.png](docs/evidencias/estilo/rede-de-conhecimento.png) |
+
+### Estudo e revisão
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Estudo do tópico: revisão, tempo e questões | ✅ ok | [painel-do-topico.png](docs/evidencias/estudo/painel-do-topico.png) |
+| Marcar "Estudei hoje" e "Errei" (agenda a próxima revisão) | ✅ ok | [estudei-hoje-e-errei-estudei.png](docs/evidencias/estudo/estudei-hoje-e-errei-estudei.png) · [estudei-hoje-e-errei-errei.png](docs/evidencias/estudo/estudei-hoje-e-errei-errei.png) |
+| Registrar minutos de estudo | ✅ ok | [minutos-de-estudo.png](docs/evidencias/estudo/minutos-de-estudo.png) |
+| Caderno de erros, com o motivo de cada erro | ✅ ok | [caderno-de-erros.png](docs/evidencias/estudo/caderno-de-erros.png) |
+| Painel de estudos (progresso, sequência e metas) | ✅ ok | [painel-de-estudos.png](docs/evidencias/estudo/painel-de-estudos.png) |
+| Revisão do dia (tópicos vencidos) | ✅ ok | [revisao-do-dia.png](docs/evidencias/estudo/revisao-do-dia.png) |
+| Registrar simulado por disciplina | ✅ ok | [simulado.png](docs/evidencias/estudo/simulado.png) |
+
+### Criar e importar mapas
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Novo mapa de concurso: escolher um modelo pronto | ✅ ok | [modelos-de-concurso-escolha.png](docs/evidencias/importar/modelos-de-concurso-escolha.png) · [modelos-de-concurso-mapa.png](docs/evidencias/importar/modelos-de-concurso-mapa.png) |
+| Importar o CSV colado (resposta da IA), com prévia | ✅ ok | [csv-colado-da-ia-colagem.txt](docs/evidencias/importar/csv-colado-da-ia-colagem.txt) · [csv-colado-da-ia-previa.png](docs/evidencias/importar/csv-colado-da-ia-previa.png) · [csv-colado-da-ia-mapa.png](docs/evidencias/importar/csv-colado-da-ia-mapa.png) |
+| Importar edital colando o texto do conteúdo programático | ✅ ok | [importar-edital-por-texto.png](docs/evidencias/importar/importar-edital-por-texto.png) |
+
+### Dados, exportação e biblioteca
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Biblioteca de mapas (todos os mapas guardados) | ✅ ok | [biblioteca-de-mapas.png](docs/evidencias/dados/biblioteca-de-mapas.png) |
+| Exportar em Markdown (.md) | ✅ ok | [exportar-markdown.md](docs/evidencias/dados/exportar-markdown.md) |
+| Exportar em OPML (para outros programas de mapas) | ✅ ok | [exportar-opml.opml](docs/evidencias/dados/exportar-opml.opml) |
+| Exportar em PDF | ✅ ok | [exportar-pdf.pdf](docs/evidencias/dados/exportar-pdf.pdf) |
+| Exportar em Word (.docx) | ✅ ok | [exportar-word.docx](docs/evidencias/dados/exportar-word.docx) |
+| Abrir e salvar no formato do Mindomo (.mom) sem perder dados | ✅ ok | [mindomo-mom.txt](docs/evidencias/dados/mindomo-mom.txt) |
+| Agenda de revisões e provas (.ics, para o calendário) | ✅ ok | [agenda-ics.ics](docs/evidencias/dados/agenda-ics.ics) · [agenda-ics-resumo.txt](docs/evidencias/dados/agenda-ics-resumo.txt) |
+| Importar um mapa a partir de Markdown | ✅ ok | [importar-markdown.txt](docs/evidencias/dados/importar-markdown.txt) |
+| Cópia de segurança em pacote (.mcpack) com a biblioteca | ✅ ok | [backup-pacote.txt](docs/evidencias/dados/backup-pacote.txt) |
+| Sincronização com Google Drive ou pasta | ⚪ não testado | — |
+
+### PDF, vídeo e navegador
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Leitor de PDF ao lado do mapa (criar tópico a partir de um trecho) | ✅ ok | [leitor-de-pdf.png](docs/evidencias/midias/leitor-de-pdf.png) |
+| Player de vídeo para videoaulas (arquivo local ou YouTube) | ⚪ não testado | [player-de-video.png](docs/evidencias/midias/player-de-video.png) |
+| Navegador web ao lado do mapa (questões e leis) | ✅ ok | [navegador-web.png](docs/evidencias/midias/navegador-web.png) |
+
+### Tablet
+
+| Funcionalidade | Status | Evidência |
+|---|---|---|
+| Tela inicial em formato de tablet (retrato) | ✅ ok | [tela-inicial-retrato.png](docs/evidencias/tablet/tela-inicial-retrato.png) |
+
+<!-- funcionalidades:fim -->
 
 ## Instalar
 

@@ -22,3 +22,6 @@ tablet/android/app/src/main/assets/capacitor.config.json
 tablet/android/app/src/main/assets/capacitor.plugins.json
 tablet/android/capacitor-cordova-android-plugins/build/
 dist-*/
+
+# registros locais de teste (as evidências publicadas ficam em docs/evidencias)
+/evidencias/
