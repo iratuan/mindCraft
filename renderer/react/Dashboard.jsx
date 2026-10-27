@@ -327,7 +327,7 @@ export function Dashboard() {
         <button className="btn" id="btnCsv" onClick={() => h.actions.openCsvModal()}>Importar CSV (IA)…</button>
         <button className="btn" id="btnPlan" onClick={() => h.actions.openPlanModal()}>Planilha de planejamento…</button>
         <button className="btn" id="btnLib" onClick={() => h.actions.openLibraryModal()}>Biblioteca de mapas…</button>
-        <button className="btn" id="btnTemplate" onClick={() => h.actions.newStudyTemplate()}>Novo mapa de concurso (modelo)</button>
+        <button className="btn" id="btnTemplate" onClick={() => h.actions.newStudyTemplate()}>Novo mapa de concurso…</button>
         <button className="btn primary" id="btnDashClose" onClick={() => h.actions.closeDash()}>Fechar</button>
       </div>
     </>

@@ -2,6 +2,19 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.7.1
+- **Ações do tópico na barra:** ao selecionar um tópico, a barra mostra de novo preenchimento, forma, negrito, níveis e o botão **Renomear** (F2 continua valendo). Antes, os controles de estilo ficavam só no painel Estilo.
+- **Tela inicial sem painel:** sem mapa aberto, o painel lateral e o divisor somem, e a tela inicial ocupa a janela.
+- **Painel lateral:** o nome da aba ativa aparece acima das abas (Estilo, Estudo, Notas, Conexões, Estrutura).
+- **Barra lateral:** o botão Navegador ganhou a legenda, como os demais botões de primeiro nível.
+- **Menus e botões:** "Novo mapa de concurso…" tem o mesmo nome no menu Arquivo, no tablet e na tela inicial.
+
+## 0.7.0
+- **Modelos de concurso:** "Novo mapa de concurso" abre a lista de modelos (BNB, DATAPREV, TJ-CE, POSCOMP e OAB), com busca. Escolher um modelo cria o mapa com as disciplinas e os tópicos do edital. "Começar do zero" mantém o modelo genérico.
+- Modelos em `modelos/` (CSV) geram `core/templates-data.js` (`npm run build:templates`); o teste acusa se os dois ficarem fora de sincronia.
+- Correção: na tela inicial de primeiro uso, "Novo mapa de concurso" estava escondido (regressão da 0.6.3).
+- Correção: importar CSV pela tela inicial (0.6.4) e roda do mouse sem mapa.
+
 ## 0.6.4
 - **Importar CSV pela tela inicial:** "Criar o mapa" não falha mais quando não há mapa aberto (antes, o erro "reading 'find'" deixava a janela aberta e o mapa não era criado).
 - **Roda do mouse na tela inicial:** não tenta mais dar zoom num mapa inexistente.

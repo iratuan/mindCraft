@@ -19,7 +19,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando ambiente de estudos…</div>
-    <div class="splash-foot">v0.6.4 · Concursos</div>
+    <div class="splash-foot">v0.7.1 · Concursos</div>
   </div>
 </div>
 
@@ -54,7 +54,21 @@
   <div id="options" class="map-only" data-context="topic">
     <!-- Modo Tópico (quando um tópico está selecionado) -->
     <!-- Modo Relação (quando uma seta/relação está selecionada) -->
-    <div id="optRel" class="opt-group" hidden>
+    <div id="optTopic" class="opt-group">
+      <span class="opt-label" id="optTopicLabel">Tópico</span>
+      <label class="opt">Preenchimento <input type="color" id="fill" value="#0073e6"></label>
+      <label class="opt">Forma
+        <select id="shape"><option value="">Padrão do tema</option><option value="pill">Pílula</option><option value="round">Arredondado</option><option value="rect">Retângulo</option><option value="underline">Sublinhado</option></select>
+      </label>
+      <button data-act="bold" class="txt-btn" title="Negrito"><b>B</b></button> <button data-act="rename" class="txt-btn" id="optRename" title="Renomear o tópico (F2)">Renomear</button>
+      <label class="opt" title="Recolhe ou expande o mapa todo por profundidade">Níveis
+        <select id="levelSel"><option value="">escolher…</option><option value="1">Mostrar até o nível 1</option><option value="2">Mostrar até o nível 2</option><option value="3">Mostrar até o nível 3</option><option value="4">Mostrar até o nível 4</option><option value="all">Expandir tudo</option></select>
+      </label>
+      <span class="vsep"></span>
+      
+    <span id="optHint" class="opt-hint">Tab: filho · Enter: irmão · F2: editar · Espaço: recolher · R: relação</span>
+    </div>
+  <div id="optRel" class="opt-group" hidden>
       <span class="opt-label">Relação</span>
       <label class="opt">Rótulo <input type="text" id="optRelLabel" placeholder="ex.: depende de, leva a…" style="width:140px;height:24px;background:var(--bg-field);border:1px solid var(--line-soft);border-radius:4px;padding:0 6px;color:var(--text);font:inherit"></label>
       <label class="opt">Cor <input type="color" id="optRelColor" value="#2680eb"></label>
@@ -110,7 +124,7 @@
       <!-- Bloco 5: Mídias de Estudo Integradas -->
       <button data-act="pdf" class="tool has-cap" title="Leitor de PDF ao lado do mapa (Ctrl+Shift+P)" aria-label="Leitor de PDF"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></svg><span class="tool-cap">PDF</span></button>
       <button data-act="video" class="tool has-cap" title="Player de Vídeo para videoaulas (Ctrl+Shift+V)" aria-label="Player de Vídeo"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="15" height="14" rx="2"/><polygon points="21 7 18 10 18 14 21 17"/><polygon points="9 9 14 12 9 15" fill="currentColor"/></svg><span class="tool-cap">Vídeo</span></button>
-      <button data-act="browser" class="tool" title="Navegador Web para questões e leis (Ctrl+Shift+W)" aria-label="Navegador Web"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg></button>
+      <button data-act="browser" class="tool has-cap" title="Navegador Web para questões e leis (Ctrl+Shift+W)" aria-label="Navegador Web"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg><span class="tool-cap">Navegador</span></button>
       <button data-act="dash" class="tool has-cap" title="Painel de estudos (Ctrl+E)" aria-label="Painel de estudos"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tool-cap">Painel</span></button>
 
       <span class="hsep"></span>
@@ -136,7 +150,8 @@
 
     <!-- Painéis -->
     <aside id="panels" class="right-panel">
-      <div id="ptabs" role="tablist" aria-label="Painéis laterais">
+      <div class="ptab-name" id="ptabName" aria-live="polite"></div>
+        <div id="ptabs" role="tablist" aria-label="Painéis laterais">
         <button class="ptab" data-tab="props" role="tab" title="Estilo — Estilo do mapa, marcadores e progresso" aria-label="Estilo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="8.5" cy="10" r="1.2" fill="currentColor"/><circle cx="12.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="11" r="1.2" fill="currentColor"/></svg><span class="sr-only">Estilo</span></button>
         <button class="ptab" data-tab="study" role="tab" title="Estudo — Estudo do tópico: revisão, tempo e questões" aria-label="Estudo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="sr-only">Estudo</span></button>
         <button class="ptab" data-tab="notes" role="tab" title="Notas — Notas do tópico (ou rótulo da relação)" aria-label="Notas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span class="sr-only">Notas</span></button>
@@ -147,22 +162,6 @@
       <section class="panel" data-panel="props">
         <header class="panel-h"><span class="chev"></span>Propriedades</header>
         <div class="panel-b">
-          <!-- controles do tópico selecionado (antes ficavam numa barra acima do mapa): aparecem só quando há um tópico -->
-          <div id="optTopic" class="opt-group">
-      <span class="opt-label" id="optTopicLabel">Tópico</span>
-      <label class="opt">Preenchimento <input type="color" id="fill" value="#0073e6"></label>
-      <label class="opt">Forma
-        <select id="shape"><option value="">Padrão do tema</option><option value="pill">Pílula</option><option value="round">Arredondado</option><option value="rect">Retângulo</option><option value="underline">Sublinhado</option></select>
-      </label>
-      <button data-act="bold" class="txt-btn" title="Negrito"><b>B</b></button>
-      <label class="opt" title="Recolhe ou expande o mapa todo por profundidade">Níveis
-        <select id="levelSel"><option value="">escolher…</option><option value="1">Mostrar até o nível 1</option><option value="2">Mostrar até o nível 2</option><option value="3">Mostrar até o nível 3</option><option value="4">Mostrar até o nível 4</option><option value="all">Expandir tudo</option></select>
-      </label>
-      <span class="vsep"></span>
-      
-    <span id="optHint" class="opt-hint">Tab: filho · Enter: irmão · F2: editar · Espaço: recolher · R: relação</span>
-    </div>
-
           <div class="field-label">Estilo do mapa</div>
           <div id="themeGrid" class="theme-grid"></div>
           <select id="theme" hidden></select>
@@ -251,6 +250,7 @@
 <script src="icons.js"></script>
 <script src="renderer.js"></script>
 <script src="study-ui.js"></script>
+<script src="template-ui.js"></script>
 <script src="graph-ui.js"></script>
 <script src="notes-ui.js"></script>
 <script src="library-ui.js"></script>

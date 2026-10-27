@@ -398,7 +398,7 @@ const OUT = path.join(__dirname, '..', 'evidencias', 'qa');
   });
 
   console.log('\n— ESTUDOS —\n');
-  await feature('Estudos', 'Modelo de concurso', 'Menu Arquivo › Novo mapa de concurso (modelo)', async () => {
+  await feature('Estudos', 'Modelo de concurso', 'Menu Arquivo › Novo mapa de concurso…', async () => {
     await js('dirty = false'); win.webContents.send('menu', 'template'); await c.waitFor(() => js(`map.root.title === 'Concurso — nome da prova'`)); eq((await titles()).length, 26);
   });
   await feature('Estudos', 'Importar edital colando o texto', 'Modal: digitar nome, colar texto, ver contagem, Importar', async ({ shot }) => {

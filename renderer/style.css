@@ -706,16 +706,29 @@ body.dock-max #pdfpane { width: auto !important; flex: 1 1 auto; }
 .panel-tool.on { color: var(--accent-hover); background: var(--accent-soft); border-color: var(--accent); }
 
 /* primeiro uso: só os quatro caminhos iniciais e nada de seções vazias (ver Home.jsx) */
-.hm-actions.first-use > :not(#hmNew):not(#hmCsv):not(#hmPdf):not(#hmOpen):not(#hmRestore):not(#hmBackup), .hm-cols.first-use { display: none !important; }
+.hm-actions.first-use > :not(#hmNew):not(#hmTemplate):not(#hmCsv):not(#hmPdf):not(#hmOpen):not(#hmRestore):not(#hmBackup), .hm-cols.first-use { display: none !important; }
 
 /* abas do painel da direita: ícones (o nome fica no tooltip e para leitores de tela) */
 #ptabs .ptab { display: grid; place-items: center; min-width: 0; padding: 0 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* controles do tópico dentro do painel Estilo (antes numa barra acima do mapa) */
-#panels #optTopic { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-#panels #optTopic[hidden] { display: none !important; }
-#panels #optTopic .opt-label { width: 100%; }
 
 /* a barra de opções some por completo quando não tem o que mostrar (o atributo hidden precisa vencer o display da barra) */
 #options[hidden] { display: none !important; }
+
+/* escolha de modelo de concurso (renderer/template-ui.js) */
+.tpl-list { display: grid; gap: 6px; max-height: 52vh; overflow: auto; margin: 8px 0; }
+.tpl-item { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; }
+.tpl-item:hover, .tpl-item:focus-visible { border-color: var(--accent); }
+.tpl-item b { font-weight: 600; }
+#tplSearch { width: 100%; min-height: 40px; }
+
+/* barra do tópico: rótulos e o botão Renomear não se sobrepõem (texto em uma linha, sem encolher) */
+#optTopic .opt, #optRename { white-space: nowrap; flex: none; }
+#optRename { width: auto; min-width: 0; padding: 0 10px; }
+
+/* sem mapa aberto (tela inicial): sem painel lateral nem divisor (ver context-ui.js) */
+body.no-map #panels, body.no-map #panelsSplit, body.no-map #panelsReveal { display: none !important; }
+
+/* nome da aba ativa acima das abas do painel (layout-ui.js) */
+.ptab-name { font-size: 12px; font-weight: 600; color: var(--text-strong, inherit); padding: 6px 12px 0; min-height: 22px; }

@@ -334,7 +334,7 @@ function renderDashClassic() {
     b('btnCsv', 'Importar CSV (IA)…', () => openCsvModal()),
     b('btnPlan', 'Planilha de planejamento…', () => openPlanModal()),
     b('btnLib', 'Biblioteca de mapas…', () => openLibraryModal()),
-    b('btnTemplate', 'Novo mapa de concurso (modelo)', () => newStudyTemplate()),
+    b('btnTemplate', 'Novo mapa de concurso…', () => newStudyTemplate()),
     b('btnDashClose', 'Fechar', () => closeDash(), 'primary'));
 
   box.append(head, cards, grid, act2);
@@ -378,7 +378,9 @@ function resetStudyUI() {
   timer = null; document.body.classList.remove('timing'); tickTimer(); closeDash(); msg('');
 }
 
-async function newStudyTemplate() {
+/** "Novo mapa de concurso": abre a escolha de modelos (template-ui.js); o genérico continua em newGenericTemplate. */
+function newStudyTemplate() { openTemplatePicker(); }
+async function newGenericTemplate() {
   if (!(await confirmDiscard())) return;
   const root = createNode('Concurso — nome da prova');
   for (const d of ['Língua Portuguesa', 'Raciocínio Lógico', 'Direito Constitucional', 'Direito Administrativo', 'Informática']) {
@@ -568,3 +570,6 @@ act.plan = () => openPlanModal();
 window.addEventListener('keydown', (e) => { if (dashOpen && e.key === 'Escape' && $('#modal').hidden) { e.stopPropagation(); closeDash(); } }, true);
 
 if (map) render(); // primeira renderização com o painel de estudo montado (no boot não há mapa: a tela inicial aparece antes)
+
+// Renomear o tópico selecionado (botão da barra de opções e F2): abre a edição do título no próprio mapa.
+act.rename = () => startEdit();

@@ -52,7 +52,7 @@ const { TODAY, concurso, d } = require('./fixtures');
 
   await t('atalhos: novo em branco, modelo de concurso, abrir arquivo (cancelar mantém a tela), CSV, edital, biblioteca, PDF e revisão', async () => {
     await js(`act.home(true)`); await c.waitFor(() => homeOpen()); await click('#hmNew'); await c.waitFor(() => js(`!document.querySelector('#home') || document.querySelector('#home').hidden`)); eq(await js('filePath'), null); ok(await js('map.root.children.length') >= 0);
-    await js(`act.home(true)`); await c.waitFor(() => homeOpen()); await click('#hmTemplate'); await c.waitFor(() => js(`map.root.title.startsWith('Concurso')`)); eq(await homeOpen(), false); ok((await js('map.root.children.length')) >= 5, 'modelo com disciplinas');
+    await js(`act.home(true)`); await c.waitFor(() => homeOpen()); await click('#hmTemplate'); await c.waitFor(() => js(`!!document.querySelector('#tplList')`)); await click('#tplGeneric'); await c.waitFor(() => js(`map.root.title.startsWith('Concurso')`)); eq(await homeOpen(), false); ok((await js('map.root.children.length')) >= 5, 'modelo com disciplinas');
     await js(`dirty = false; act.home(true)`); await c.waitFor(() => homeOpen()); await js('window.__dlg.open = null'); await click('#hmOpen'); await wait(300); ok(await homeOpen(), 'cancelar o diálogo mantém a tela inicial');
     await js(`window.__dlg.open = ${JSON.stringify(f3)}`); await click('#hmOpen'); await c.waitFor(() => js(`filePath === ${JSON.stringify(f3)}`)); eq(await homeOpen(), false);
     const modals = { '#hmCsv': '#csvBox', '#hmEdital': '#impTitle', '#hmLib': '#libBox' };

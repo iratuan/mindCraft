@@ -34,11 +34,14 @@ const DATASET = `(() => {
 
   await t('modelo de concurso cria 5 disciplinas × 4 etapas e pede confirmação só se houver alterações', async () => {
     await js(`act.template()`); await wait(200);
+    eq(await js(`!!document.querySelector('#tplList')`), true, 'Novo mapa de concurso abre a escolha de modelos');
+    await js(`closeModal(); true`);
+    await js(`newGenericTemplate()`); await wait(200);
     eq(await js(`__titles().length`), 26, 'tópicos do modelo');
     eq(await js(`map.root.title`), 'Concurso — nome da prova');
     eq(await js(`dirty`), true, 'modelo é um mapa novo não salvo');
     await js(`window.__dlg.discard = 2`);          // Cancelar
-    await js(`act.template()`); await wait(200);
+    await js(`newGenericTemplate()`); await wait(200);
     eq(await js(`__titles().length`), 26, 'cancelar não substitui o mapa');
     await js(`window.__dlg.discard = 1`);
   });

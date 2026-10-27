@@ -94,6 +94,7 @@ function notifyMapState(inUse) {
 
 /** Sem mapa aberto (início, ou depois de fechar o mapa): nada do mapa aparece nem fica habilitado; a tela inicial é a única coisa útil. */
 function syncNoMapUI() {
+  document.body.classList.add('no-map');   // sem mapa (tela inicial): o painel da direita não tem o que mostrar
   const home = !!(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
   const tabMap = $('#tabMap');
   if (tabMap) tabMap.hidden = true;
@@ -108,6 +109,7 @@ function syncNoMapUI() {
 }
 
 function syncContextUI() {
+  document.body.classList.toggle('no-map', !map);
   if (!map) { syncNoMapUI(); return; }
   const inUse = mapInUse();
   const homeNow = !!(window.MCReact && typeof window.MCReact.homeIsOpen === 'function' && window.MCReact.homeIsOpen());
@@ -206,7 +208,7 @@ function syncContextUI() {
     }
     // a barra de opções só existe quando tem algo a mostrar: com um tópico, os controles estão no painel Estilo (ganha-se a faixa do mapa)
     const ctx = options.getAttribute('data-context');
-    options.hidden = ctx === 'topic' || ctx === 'none';
+    options.hidden = ctx === 'none';   // no contexto de tópico a barra mostra preenchimento, forma, negrito e níveis (e a dica)
   }
 }
 

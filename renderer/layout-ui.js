@@ -158,3 +158,13 @@
   new MutationObserver(paintToggle).observe(body, { attributes: true, attributeFilter: ['class'] });
   paintToggle();
 })();
+
+// Nome da aba ativa no cabeçalho do painel (a aba ativa só mostra o ícone; o rótulo ajuda a saber onde se está).
+(function showActivePanelName() {
+  const label = document.getElementById('ptabName');
+  const tabs = document.querySelectorAll('#ptabs .ptab');
+  if (!label || !tabs.length) return;
+  const paint = () => { const on = document.querySelector('#ptabs .ptab.on'); label.textContent = on ? (on.getAttribute('aria-label') || '') : ''; };
+  new MutationObserver(paint).observe(document.getElementById('ptabs'), { subtree: true, attributes: true, attributeFilter: ['class'] });
+  paint();
+})();

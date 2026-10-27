@@ -76,7 +76,7 @@ function buildMenu() {
       { label: 'Biblioteca de mapas…', accelerator: 'CmdOrCtrl+Shift+B', click: send('lib') },
       { id: 'm-libAdd', label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
       { type: 'separator' },
-      { label: 'Novo mapa de concurso (modelo)', click: send('template') },
+      { label: 'Novo mapa de concurso…', click: send('template') },
       { label: 'Importar edital (colar texto)…', click: send('edital') },
       { label: 'Importar CSV de edital (gerado por IA)…', click: send('csv') },
       { label: 'Planilha de planejamento (exportar / importar)…', click: send('plan') },

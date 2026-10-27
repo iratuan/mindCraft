@@ -185,6 +185,17 @@ const SECTIONS = [
     ] },
 
   // ------------------------------------------------------------------ estudo
+  { id: 'modelos-concurso', group: 'Arquivos e dados', title: 'Modelos de concurso', summary: 'Escolha um concurso pronto (BNB, DATAPREV, TJ-CE, POSCOMP, OAB) e comece com as disciplinas e os tópicos.',
+    keywords: 'modelo template concurso bnb dataprev tjce poscomp oab edital disciplinas tópicos novo mapa referência',
+    blocks: [
+      ['p', 'Em **Novo mapa de concurso** (tela inicial ou menu Estudo) você escolhe um modelo com as disciplinas e os tópicos do edital. A busca filtra por concurso, cargo ou fonte.'],
+      ['ul', [
+        'Cada modelo mostra quantos tópicos e disciplinas tem. Ao escolher, o mapa é criado com o nome do concurso e você pode seguir com as notas, os pesos e as revisões.',
+        '**Referência:** os modelos do BNB e do TJ-CE vêm de editais de 2022; o modelo da DATAPREV é do edital de 2026; o da POSCOMP é a classificação das provas de 2016 a 2025; o da OAB traz só as áreas do direito.',
+        'Confira sempre com o edital publicado antes de estudar: editais mudam de um concurso para outro.',
+        '**Começar do zero** cria o modelo genérico, com cinco disciplinas padrão para você renomear.',
+      ]],
+    ] },
   { id: 'edital-pdf', group: 'Arquivos e dados', title: 'Edital em planilha (CSV) com a IA', summary: 'Do PDF do edital ao mapa, com um modelo pronto para a IA, em 4 passos.',
     keywords: 'pdf edital csv ia prompt modelo conteúdo programático importar planilha chatgpt claude',
     blocks: [

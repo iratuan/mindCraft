@@ -7,7 +7,7 @@
 /** Comandos que só fazem sentido com um mapa de trabalho na tela (com a tela inicial aberta ficam desabilitados). */
 const MAP_CMDS = new Set(['save', 'saveAs', 'libAdd', 'fit', 'undo', 'redo', 'moveUp', 'moveDown', 'outdent', 'indent', 'attachFloating']);
 const ITEMS = [
-  ['Arquivo', [['new', 'Novo mapa'], ['template', 'Novo mapa de concurso (modelo)'], ['open', 'Abrir arquivo…'], ['save', 'Salvar'], ['saveAs', 'Salvar como…'], ['home', 'Tela inicial']]],
+  ['Arquivo', [['new', 'Novo mapa'], ['template', 'Novo mapa de concurso…'], ['open', 'Abrir arquivo…'], ['save', 'Salvar'], ['saveAs', 'Salvar como…'], ['home', 'Tela inicial']]],
   ['Estudo', [['review', 'Revisão do dia'], ['dash', 'Painel de estudos'], ['lib', 'Biblioteca de mapas'], ['libAdd', 'Guardar na biblioteca'], ['plan', 'Planilha de planejamento…'], ['csv', 'Importar CSV (IA)…'], ['edital', 'Importar edital…']]],
   ['Ver', [['graph', 'Rede de conhecimento'], ['pdf', 'Leitor de PDF'], ['video', 'Player de Vídeo (videoaulas)'], ['browser', 'Navegador Web (questões e leis)'], ['fit', 'Ajustar à tela'], ['panelsToggle', 'Painel lateral: recolher/expandir'], ['manual', 'Manual de uso'], ['help', 'Atalhos do teclado']]],
   ['Editar', [['undo', 'Desfazer'], ['redo', 'Refazer'], ['moveUp', 'Subir tópico'], ['moveDown', 'Descer tópico'], ['outdent', 'Promover (subir um nível)'], ['indent', 'Rebaixar (virar filho do irmão de cima)'], ['attachFloating', 'Trazer tópicos soltos para o mapa']]],
