@@ -91,7 +91,7 @@ npm run qa         # QA por funcionalidade, com entrada real (81 casos)
 npm run dist       # instalador do sistema atual, em dist/
 ```
 
-Android: `cd tablet && node scripts/release.js` gera e assina o APK em `tablet/dist/`. A chave de assinatura fica em `tablet/keystore/`, fora do Git: **faça uma cópia**, sem ela não é possível atualizar o app instalado.
+Android: `cd tablet && node scripts/release.js` gera e assina o APK em `dist/` (junto com os instaladores Windows). A chave de assinatura fica em `tablet/keystore/`, fora do Git: **faça uma cópia**, sem ela não é possível atualizar o app instalado.
 
 Estrutura: `core/` (regras de negócio puras, sem Electron nem DOM) · `electron/` (processo principal) · `renderer/` (interface) · `platform/` (versão web, para o tablet) · `tablet/` (Capacitor) · `test/`.
 

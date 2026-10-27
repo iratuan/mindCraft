@@ -494,7 +494,8 @@ function openCsvModalClassic() {
 }
 /** "Criar o mapa" da importação de CSV (compartilhado pelas interfaces clássica e React). `close` fecha a janela. */
 async function applyCsvImport(cm, { name, mode, close }) {
-  let total = 0; cm.walk(() => total++); total -= 1;
+  // só os tópicos: não conta a raiz nem as disciplinas (senão a mensagem diz 33 para 31 tópicos)
+  let total = 0; cm.walk(() => total++); total -= 1 + cm.root.children.length;
   if (mode === 'new') {
     if (!(await confirmDiscard())) return false;
     close(); cm.root.title = name; cm.meta.name = name; if (cm.meta.exam && !cm.meta.exam.name) cm.meta.exam.name = name;

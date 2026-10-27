@@ -197,7 +197,7 @@ document.querySelectorAll('#ptabs .ptab').forEach((b) => b.addEventListener('cli
 
 /** Grava no modelo o texto do painel (notas/rótulo) para o dono ORIGINAL, mesmo que a seleção já tenha mudado. */
 function commitNotes() {
-  if (!notesOwner) return;
+  if (!notesOwner || !map) { notesOwner = null; return; }   // sem mapa aberto (CSV importado da tela inicial) não há o que gravar
   const o = notesOwner;
   if (o.rel) {
     const r = map.meta.relations.find((x) => x.id === o.id);
@@ -731,7 +731,7 @@ svg.addEventListener('dblclick', (e) => { if (nodeAt(e.target)) startEdit(); });
 svg.addEventListener('wheel', (e) => {
   e.preventDefault();
   const r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
-  zoomMapAt(mx, my, e.deltaY < 0 ? 1.12 : 1 / 1.12);
+  if (map) zoomMapAt(mx, my, e.deltaY < 0 ? 1.12 : 1 / 1.12);   // na tela inicial não há mapa para dar zoom
 }, { passive: false });
 /** Zoom do mapa em torno de um ponto (coordenadas relativas ao #svg): roda do mouse e pinça compartilham esta fórmula. */
 function zoomMapAt(mx, my, factor) {

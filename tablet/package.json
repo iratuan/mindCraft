@@ -1,6 +1,6 @@
 {
   "name": "mindcraft-tablet",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "private": true,
   "description": "Empacotamento Android (Capacitor) do MindCraft: a mesma interface do desktop, gerada em ../build/web/app. Isolado do app desktop.",
   "scripts": {

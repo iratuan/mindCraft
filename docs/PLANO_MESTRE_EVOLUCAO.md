@@ -154,7 +154,7 @@ graph TD
 ### Fase 5: Testes, Validação e Builds
 1. Executar bateria de testes automatizados (`npm test`, `npm run check`).
 2. Adicionar testes unitários para o gerenciador de abas e parsing de mídias.
-3. Gerar artefatos finais: executável Windows (`dist/`) e APK assinado para o tablet Android (`tablet/dist/`).
+3. Gerar artefatos finais: executável Windows (`dist/`) e APK assinado para o tablet Android (`dist/`, junto com o instalador).
 
 ---
 

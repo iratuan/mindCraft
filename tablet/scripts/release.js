@@ -1,5 +1,5 @@
 'use strict';
-// Gera o APK de INSTALAÇÃO (release): compila, alinha e ASSINA com uma chave sua. Resultado: tablet/dist/MindCraft-<versão>.apk
+// Gera o APK de INSTALAÇÃO (release): compila, alinha e ASSINA com uma chave sua. Resultado: dist/MindCraft-<versão>.apk (na pasta de instaladores do projeto)
 //   node scripts/release.js
 // A chave (keystore) é criada na primeira vez em tablet/keystore/ (fora do Git) com uma senha aleatória guardada em tablet/keystore/senha.txt.
 // FAÇA UMA CÓPIA dessa pasta: sem a MESMA chave não é possível atualizar o app instalado (só desinstalar e instalar de novo, perdendo os dados do aparelho).
@@ -43,7 +43,7 @@ run(process.execPath, [path.join(__dirname, 'gradle.js'), 'assembleRelease'], { 
 const bt = path.join(sdk, 'build-tools'); const ver = fs.readdirSync(bt).sort().pop(); const tools = path.join(bt, ver);
 const rel = path.join(root, 'android', 'app', 'build', 'outputs', 'apk', 'release');
 const unsigned = fs.readdirSync(rel).find((f) => /unsigned\.apk$|release\.apk$/.test(f)); if (!unsigned) { console.error('APK release não encontrado em ' + rel); process.exit(1); }
-const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')); const outDir = path.join(root, 'dist'); fs.mkdirSync(outDir, { recursive: true });
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')); const outDir = path.join(root, '..', 'dist');   // saídas em um único lugar: app/dist (instaladores Windows e APKs) fs.mkdirSync(outDir, { recursive: true });
 const aligned = path.join(outDir, 'alinhado.tmp.apk'), final = path.join(outDir, `MindCraft-${pkg.version}.apk`);
 run(path.join(tools, 'zipalign' + exe), ['-f', '-p', '4', path.join(rel, unsigned), aligned]);
 run(path.join(jdk, 'bin', 'java' + exe), ['-jar', path.join(tools, 'lib', 'apksigner.jar'), 'sign', '--ks', ks, '--ks-key-alias', 'mindcraft', '--ks-pass', 'pass:' + pw, '--key-pass', 'pass:' + pw, '--out', final, aligned]);

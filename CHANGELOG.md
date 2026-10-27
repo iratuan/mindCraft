@@ -2,6 +2,12 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.6.4
+- **Importar CSV pela tela inicial:** "Criar o mapa" não falha mais quando não há mapa aberto (antes, o erro "reading 'find'" deixava a janela aberta e o mapa não era criado).
+- **Roda do mouse na tela inicial:** não tenta mais dar zoom num mapa inexistente.
+- A prévia do CSV mostra separador, linhas lidas e colunas reconhecidas, para diagnosticar um arquivo que não importa.
+- A mensagem de importação conta só os tópicos (não as disciplinas).
+
 ## 0.6.3
 - **Primeiro uso:** nenhum mapa abre por padrão; a tela inicial mostra só os caminhos iniciais (novo mapa, importar edital, ler PDF, abrir arquivo, restaurar cópia e cópia de segurança).
 - **Ferramentas do mapa só ativas com um mapa aberto:** Rede, Painel de estudos, PDF, vídeo e navegador. Sem mapa, atalhos e menus mostram uma mensagem em vez de falhar.

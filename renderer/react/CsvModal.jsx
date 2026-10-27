@@ -6,6 +6,13 @@ const List = ({ cls, items }) => (!items.length ? null : (
   <ul className={cls}>{items.slice(0, 8).map((t, i) => <li key={i}>{t}</li>)}{items.length > 8 && <li>{`… e mais ${items.length - 8}`}</li>}</ul>
 ));
 
+// o que o app entendeu do texto: ajuda a diagnosticar um CSV que não importa (separador, colunas, linhas lidas)
+const Diag = ({ rep }) => (
+  <div className="csv-diag muted" id="csvDiag">
+    {`Separador: ${rep.delimiter === '\t' ? 'tabulação' : `"${rep.delimiter}"`} · linhas lidas: ${rep.rows} · colunas: ${rep.columns && rep.columns.length ? rep.columns.join(', ') : '(nenhuma reconhecida)'}`}
+  </div>
+);
+
 /** Importar CSV de edital (gerado por IA). Mesmos ids/atributos da versão clássica (openCsvModalClassic). */
 export function CsvModal({ onClose }) {
   const h = H();
@@ -62,9 +69,10 @@ export function CsvModal({ onClose }) {
         onChange={(e) => { clearTimeout(pasteRef.timer); const v = e.target.value; pasteRef.timer = setTimeout(() => analyze(v), 350); }} />
       <div className={'msg' + (msg.kind ? ' ' + msg.kind : '')} id="csvMsg">{msg.text}</div>
       <div className="csv-prev" id="csvPreview" hidden={!loaded}>
-        {loaded && !cm && <><div className="csv-sum err">O arquivo não pôde ser importado.</div><List cls="csv-err" items={rep.errors.map((e) => (e.line ? `Linha ${e.line}: ` : '') + e.msg)} /></>}
+        {loaded && !cm && <><div className="csv-sum err">O arquivo não pôde ser importado.</div><Diag rep={rep} /><List cls="csv-err" items={rep.errors.map((e) => (e.line ? `Linha ${e.line}: ` : '') + e.msg)} /></>}
         {cm && <>
           <div className="csv-sum">{`${rep.imported} tópicos em ${rep.disciplines} disciplina(s)${cm.meta.exam ? ` · prova em ${h.fmtDate(cm.meta.exam.date)}` : ''}${rep.skipped ? ` · ${rep.skipped} linha(s) puladas` : ''}`}</div>
+          <Diag rep={rep} />
           <List cls="csv-disc" items={cm.root.children.map((d) => `${d.title} — ${count(d)} tópico(s)`)} />
           <List cls="csv-err" items={rep.errors.map((e) => `Linha ${e.line}: ${e.msg}`)} />
           <List cls="csv-warn" items={rep.warnings} />
