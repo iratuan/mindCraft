@@ -53,10 +53,36 @@ Subtópicos: ${kids}` : ''), topic: path.join(' > ') });
 }
 
 /** Monta o documento e grava no caminho escolhido. Devolve o caminho gravado ou lança erro para o usuário. */
+/** Exportação de um fluxograma (flow-export.js): mesma janela, mesma regra dos parágrafos da IA. */
+async function exportFlowTo(format, target, opts = {}) {
+  const { toFlowMarkdown, toFlowHtml } = require(path.join(core, 'flow-export'));
+  let generated = new Map();
+  if (opts.aiFill) {
+    const ks = await ipcRenderer.invoke('ai:key-status', aiProv());
+    if (!ks.saved) {
+      lastStudyAi = { generated: 0, total: 0, skipped: 0, error: 'sem chave de IA' };
+      ipcRenderer.invoke('dialog:error', 'Para gerar os parágrafos de revisão com a IA, guarde a chave do provedor em Visualizar → Configurar IA. O material será exportado sem eles.');
+    } else generated = await studyParagraphs();
+  }
+  const o = { notes: opts.notes !== false, generated };
+  if (format === 'md') {
+    const tmp = target + '.tmp-' + process.pid;
+    fs.writeFileSync(tmp, toFlowMarkdown(map, o), 'utf8');
+    fs.renameSync(tmp, target);
+    return target;
+  }
+  exportProgress.show(2, 'Exportando PDF');
+  const r = await ipcRenderer.invoke('export:pdf', toFlowHtml(map, o), target);
+  exportProgress.hide();
+  if (!r.ok) throw new Error(r.error);
+  return r.path;
+}
+
 async function exportStudyTo(format, target, opts = {}) {
   if (!map) throw new Error('Abra um mapa para exportar o material de estudo.');
   commitNotes();
   lastStudyAi = null;
+  if (isFlow(map)) return exportFlowTo(format, target, opts);
   if (opts.aiFill) {
     const ks = await ipcRenderer.invoke('ai:key-status', aiProv());
     if (!ks.saved) {
@@ -82,12 +108,15 @@ async function exportStudyTo(format, target, opts = {}) {
 }
 
 /** Janela de opções do material de estudo (a partir do menu Arquivo). */
-function openExportModal() {
-  if (!map) return setStatus('Abra um mapa para exportar o material de estudo.');
+function openExportModal(mode = 'export') {
+  if (!map) return setStatus(mode === 'share' ? 'Abra um mapa para compartilhar o material de estudo.' : 'Abra um mapa para exportar o material de estudo.');
+  const sharing = mode === 'share';
   const m = $('#modal'); m.textContent = ''; m.hidden = false;
   const box = el('div', 'modal-box'); box.id = 'exportBox';
-  box.append(el('h2', '', 'Exportar material de estudo'));
-  box.append(el('p', 'muted', 'Material de consulta com títulos por hierarquia e peso, notas, fontes (PDFs e páginas) e conexões. Escolha o que incluir:'));
+  box.append(el('h2', '', sharing ? 'Compartilhar material de estudo' : 'Exportar material de estudo'));
+  box.append(el('p', 'muted', sharing
+    ? 'Prepara o arquivo para enviar (PDF para imprimir ou Markdown para outros apps). No tablet, abre a folha de compartilhar; no computador, mostra o arquivo na pasta e copia o caminho.'
+    : 'Material de consulta com títulos por hierarquia e peso, notas, fontes (PDFs e páginas) e conexões. Escolha o que incluir:'));
   const opts = {};
   const check = (id, label, key, on) => {
     const l = el('label', 'opt'); const i = el('input'); i.type = 'checkbox'; i.id = id; i.checked = on; opts[key] = i;
@@ -102,16 +131,25 @@ function openExportModal() {
     check('exBw', 'Modo impressão em preto e branco', 'bw', false));
   const foot = el('div', 'foot');
   const cancel = el('button', 'btn', 'Cancelar'); cancel.id = 'exCancel';
-  const md = el('button', 'btn', 'Gerar Markdown'); md.id = 'exMd';
-  const pdf = el('button', 'btn primary', 'Gerar PDF'); pdf.id = 'exPdf';
+  const md = el('button', 'btn', sharing ? 'Preparar Markdown' : 'Gerar Markdown'); md.id = 'exMd';
+  const pdf = el('button', 'btn primary', sharing ? 'Preparar PDF' : 'Gerar PDF'); pdf.id = 'exPdf';
   const read = () => Object.fromEntries(Object.entries(opts).map(([k, i]) => [k, i.checked]));
+  const onTablet = document.documentElement.dataset.host === 'web';
   const run = async (format) => {
     const fname = (map.meta.name || map.root.title || 'material') + (format === 'pdf' ? '-material-de-estudo.pdf' : '-material-de-estudo.md');
-    const target = await ipcRenderer.invoke('dialog:save-export', format, fname);
+    // compartilhar no computador não pede local: o arquivo vai para a pasta de exportados; no tablet, o salvamento já abre a folha de compartilhar
+    const target = sharing && !onTablet ? await ipcRenderer.invoke('share:temp', fname) : await ipcRenderer.invoke('dialog:save-export', format, fname);
     if (!target) return;
     closeModal();
     try {
       const out = await exportStudyTo(format, target, read());
+      if (sharing && !onTablet) {
+        const c = await ipcRenderer.invoke('dialog:confirm', { message: 'Material pronto para compartilhar', detail: out, buttons: ['Mostrar na pasta', 'Copiar caminho', 'Fechar'] });
+        if (c === 0) await ipcRenderer.invoke('share:reveal', out);
+        else if (c === 1) await ipcRenderer.invoke('share:copy', out);
+        setStatus('Material pronto: ' + out);
+        return;
+      }
       const a = lastStudyAi;
       const note = !a ? '' : a.error ? ` Parágrafos da IA: ${a.generated} de ${a.total} tópico(s) (${a.error}).` : a.total ? ` Parágrafos da IA: ${a.generated} tópico(s)${a.skipped ? `; ${a.skipped} sem geração (limite de ${STUDY_AI_MAX})` : ''}.` : '';
       setStatus('Material de estudo exportado: ' + out + note);
@@ -129,5 +167,6 @@ function openExportModal() {
   m.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeModal(); } });
 }
 
-act['export-study'] = openExportModal;
+act['export-study'] = () => openExportModal('export');
+act['share-study'] = () => openExportModal('share');
 window.exportStudyTo = exportStudyTo;

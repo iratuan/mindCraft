@@ -23,7 +23,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando o BRANIAC…</div>
-    <div class="splash-foot" id="splashVersion">BRANIAC · v0.1.19</div>
+    <div class="splash-foot" id="splashVersion">BRANIAC · v0.1.21</div>
   </div>
 </div>
 <script src="tablet-bundle.js"></script>
@@ -165,6 +165,28 @@
     <main id="stage" tabindex="-1">
       <div id="nodebar" class="node-bar" role="toolbar" aria-label="Ações do tópico selecionado" hidden></div>
       <svg id="svg"><g id="view"></g></svg>
+      <section id="flowpane" hidden aria-label="Fluxograma">
+        <div class="flow-bar" role="toolbar" aria-label="Ações do fluxograma">
+          <button type="button" class="btn small" data-flow="step" title="Passo seguinte ao selecionado (Enter)">+ Passo</button>
+          <button type="button" class="btn small" data-flow="decision" title="Insere uma decisão depois do selecionado">+ Decisão</button>
+          <button type="button" class="btn small" data-flow="branch" title="Novo ramo de uma decisão selecionada (Tab)">+ Ramo</button>
+          <button type="button" class="btn small" data-flow="end" title="Insere o fim depois do selecionado">+ Fim</button>
+          <select id="flowType" title="Tipo do passo selecionado" aria-label="Tipo do passo">
+            <option value="start">Início</option><option value="step">Passo</option><option value="decision">Decisão</option><option value="end">Fim</option>
+          </select>
+          <button type="button" class="btn small" data-flow="delete" title="Excluir o passo selecionado (Delete)">Excluir</button>
+          <span class="grow"></span>
+          <button type="button" class="btn small" data-flow="organize" title="Reorganiza e ajusta o fluxo à tela">Auto-organizar</button>
+          <button type="button" class="btn small" data-flow="fit" title="Ajustar à tela">Ajustar</button>
+          <button type="button" class="btn small" data-flow="info" title="Caminhos possíveis e avisos de validação">Caminhos e avisos</button>
+        </div>
+        <svg id="flowSvg" role="img" aria-label="Fluxograma">
+          <defs><marker id="flowArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+          <g id="flowView"></g>
+        </svg>
+        <div id="flowInfo" class="flow-info" hidden></div>
+        <div class="flow-foot"><span id="flowCount"></span><span class="muted">Enter passo · Tab ramo · Delete excluir · F2 renomear · duplo clique edita o título</span></div>
+      </section>
       <textarea id="editor" hidden></textarea>
       <div id="marquee" hidden></div>
       <div id="home" hidden role="dialog" aria-label="Tela inicial"></div>
@@ -308,6 +330,8 @@
 <script src="tabs.js"></script>
 <script src="touch-gestures.js"></script>
 <script src="organize-ui.js"></script>
+<script src="outline-ui.js"></script>
+<script src="flow-ui.js"></script>
 <script src="menu-commands.js"></script>
 <script src="context-menu.js"></script>
 <script src="bundle/graph3d.js"></script>

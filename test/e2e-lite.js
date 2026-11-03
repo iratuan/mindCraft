@@ -927,6 +927,63 @@ async function main() {
     const calls = await js("window.__aiAsk.length");
     assert.ok(calls >= 1, 'a IA deveria ser consultada para o tópico sem nota');
   });
+  await check('menu Ajuda mostra a versão da release', async () => {
+    await js("(async () => { for (let i = 0; i < 50 && !window.braniacVersion; i++) await new Promise((r) => setTimeout(r, 100)); return 0; })()");
+    const v = await js("window.braniacVersion");
+    assert.ok(/^\d+\.\d+\.\d+$/.test(v), 'versão lida: ' + v);
+    const label = await js(`(() => { const b = [...document.querySelectorAll('#menubar [data-mb]')].find((x) => x.textContent.trim() === 'Ajuda'); b.click(); const t = document.querySelector('.mb-item[data-cmd="about"] span').textContent; document.querySelector('.mb-drop') && document.querySelector('.mb-drop').remove(); return t; })()`);
+    assert.strictEqual(label, `Versão ${v}`);
+  });
+  await check('fluxograma: cria, insere passo e decisão com ramos, teclado, avisos, exporta e volta ao mapa', async () => {
+    await js("act.newFlow(); 0");
+    await waitFor(() => js("!document.getElementById('flowpane').hidden"));
+    assert.strictEqual(await js("getComputedStyle(document.getElementById('svg')).display"), 'none', 'o mapa mental sai da tela no fluxo');
+    assert.strictEqual(await js("document.querySelectorAll('#flowView .flow-node').length"), 1, 'começa com o início');
+    await js("(() => { flowAct('step'); flowAct('step', 'decision'); const d = selectedId; flowAct('branch'); flowSelect(d); flowAct('branch'); flowSelect(d); return 0; })()");
+    assert.strictEqual(await js("document.querySelectorAll('#flowView .flow-node').length"), 5, 'início, passo, decisão e dois ramos');
+    assert.strictEqual(await js("document.querySelectorAll('#flowView .flow-node.decision').length"), 1);
+    // com a decisão selecionada e os dois ramos já criados, Enter só avisa (não cria um terceiro ramo)
+    await js("(() => { flowKey(new KeyboardEvent('keydown', { key: 'Enter' })); return 0; })()");
+    assert.strictEqual(await js("document.querySelectorAll('#flowView .flow-node').length"), 5, 'decisão cheia não ganha terceiro ramo');
+    assert.match(await js("document.getElementById('status').textContent"), /já tem os dois ramos/);
+    // selecionando o ramo Sim, Enter insere o passo seguinte dele
+    await js("(() => { let s = null; map.walk((n) => { if (n.branchLabel === 'Sim') s = n; }); flowSelect(s.id); return 0; })()");
+    await js("window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' })); 0");
+    assert.strictEqual(await js("document.querySelectorAll('#flowView .flow-node').length"), 6, 'Enter insere passo depois do ramo selecionado');
+    await js("document.querySelector('#flowpane [data-flow=\"fit\"]').click(); 0");
+    await shot('fluxo-visao');
+    await js("document.querySelector('#flowpane [data-flow=\"info\"]').click(); 0");
+    await shot('fluxo-caminhos-avisos');
+    const info = await js("document.getElementById('flowInfo').textContent");
+    assert.match(info, /Caminhos possíveis/);
+    assert.match(info, /Avisos/);
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-fluxo-'));
+    const md = path.join(dir, 'fluxo.md');
+    await js(`exportStudyTo('md', ${JSON.stringify(md)}, { notes: true, aiFill: false }).then(() => 0)`);
+    const text = fs.readFileSync(md, 'utf8');
+    assert.match(text, /## Caminhos possíveis/);
+    assert.match(text, /Sim/);
+    const pdf = path.join(dir, 'fluxo.pdf');
+    await js(`exportStudyTo('pdf', ${JSON.stringify(pdf)}, { notes: true, aiFill: false }).then(() => 0)`);
+    assert.strictEqual(fs.readFileSync(pdf).subarray(0, 4).toString(), '%PDF', 'o fluxo sai em PDF');
+    fs.mkdirSync(EVID, { recursive: true });
+    fs.copyFileSync(pdf, path.join(EVID, 'fluxo-exportado.pdf'));
+    await js("newMap(); 0");
+    await waitFor(() => js("document.getElementById('flowpane').hidden === true"));
+    assert.notStrictEqual(await js("getComputedStyle(document.getElementById('svg')).display"), 'none', 'o mapa mental volta à tela');
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  await check('compartilhar material: o menu e a janela têm o modo de compartilhar; o desktop prepara o arquivo em exportados', async () => {
+    await js("newMap(); 0");
+    await js("openExportModal('share'); 0");
+    const r = await js("({ titulo: document.querySelector('#exportBox h2').textContent, pdf: document.getElementById('exPdf').textContent, md: document.getElementById('exMd').textContent })");
+    await js("document.getElementById('exCancel').click(); 0");
+    assert.deepStrictEqual(r, { titulo: 'Compartilhar material de estudo', pdf: 'Preparar PDF', md: 'Preparar Markdown' });
+    assert.strictEqual(await js("typeof act['share-study']"), 'function');
+    const p = await js("ipcRenderer.invoke('share:temp', 'material teste.md')");
+    assert.ok(/exportados[\\/]material teste\.md$/.test(p), 'caminho de exportados: ' + p);   // barra do Windows ou do POSIX
+  });
   await check('sem erros no console do app', async () => {
     assert.deepStrictEqual(errors, []);
   });

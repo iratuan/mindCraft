@@ -1,6 +1,7 @@
 import { useEscape } from './hooks.js';
 
 const GROUPS = [
+  ['Fluxograma', [['Enter', 'passo seguinte (depois do selecionado)'], ['Tab', 'novo ramo da decisão selecionada'], ['F2 ou duplo clique', 'editar o título do passo'], ['Delete', 'excluir o passo (com o que vem depois)'], ['Esc', 'limpar a seleção (volta ao início)'], ['Roda do mouse', 'zoom'], ['Arrastar o fundo', 'mover a vista']]],
   ['Mapa', [['Tab', 'novo tópico filho'], ['Enter', 'novo tópico irmão'], ['F2', 'renomear o tópico'], ['Espaço', 'recolher/expandir o ramo'], ['Delete', 'excluir'],
     ['Ctrl+Z / Ctrl+Y', 'desfazer / refazer'], ['Ctrl+C / X / V', 'copiar, recortar e colar tópicos'], ['Alt+↑ ↓', 'mover o tópico entre irmãos'], ['Alt+← →', 'subir / descer de nível'],
     ['Ctrl+F', 'buscar no mapa'], ['Ctrl+0', 'ajustar à tela'], ['Ctrl+\\', 'recolher/expandir o painel lateral'], ['Ctrl + roda do mouse', 'zoom'],

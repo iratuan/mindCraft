@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -13,7 +13,7 @@ let pendingFile = argvFile(process.argv, app.isPackaged);
 
 // Comandos que só fazem sentido com um mapa aberto (a tela inicial cobre o mapa). Começam desabilitados.
 // O renderer informa a situação ('map-state') e aqui só se aplica; reconstruir o menu reaplica o último estado.
-const MAP_COMMANDS = ['m-save', 'm-saveAs', 'm-exportStudy', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
+const MAP_COMMANDS = ['m-save', 'm-saveAs', 'm-exportStudy', 'm-shareStudy', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
   'cut', 'copy', 'paste', 'selectAll', 'm-fit', 'm-organize'];
 let mapInUse = false;
 function applyMapCommands() {
@@ -59,6 +59,7 @@ function buildMenu() {
     { label: 'Arquivo', submenu: [
       { label: 'Tela inicial', accelerator: 'CmdOrCtrl+Shift+H', click: send('home') },
       { label: 'Novo mapa', accelerator: 'CmdOrCtrl+N', click: send('new') },
+      { label: 'Novo fluxograma', click: send('new-flow') },
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: send('open') },
       { label: 'Abrir recente', submenu: (() => {
         const items = loadRecent().filter((p) => fs.existsSync(p)).map((p) => ({ label: p, click: () => win && win.webContents.send('open-path', p) }));
@@ -67,6 +68,7 @@ function buildMenu() {
       { type: 'separator' },
       { id: 'm-save', label: 'Salvar', accelerator: 'CmdOrCtrl+S', click: send('save') },
       { id: 'm-exportStudy', label: 'Exportar material de estudo (PDF e Markdown)…', click: send('export-study') },
+      { id: 'm-shareStudy', label: 'Compartilhar material de estudo…', click: send('share-study') },
       { id: 'm-saveAs', label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
       { label: 'Versões anteriores…', click: send('restore') },
       { label: 'Abrir pasta de cópias de segurança', click: openBackups },
@@ -105,6 +107,7 @@ function buildMenu() {
     ] },
     { label: 'Ajuda', submenu: [
       { label: 'Atalhos do teclado', accelerator: 'F1', click: send('help') },
+      { label: `Versão ${app.getVersion()}`, enabled: false },
     ] },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -175,6 +178,17 @@ ipcMain.handle('dialog:save-export', async (_e, kind, defaultName) => {
   const r = await dialog.showSaveDialog(win, { filters, defaultPath: defaultName });
   return r.canceled ? null : r.filePath;
 });
+// Compartilhar (desktop): o arquivo fica numa pasta de exportados do app; mostrar na pasta e copiar o caminho
+ipcMain.handle('share:temp', (_e, name) => {
+  const dir = path.join(app.getPath('userData'), 'exportados');
+  fs.mkdirSync(dir, { recursive: true });
+  const base = String(name || 'material').replace(/[\/:*?"<>|]+/g, '_').slice(0, 120);
+  let p = path.join(dir, base), i = 2;
+  while (fs.existsSync(p)) { const ext = path.extname(base); p = path.join(dir, `${path.basename(base, ext)} (${i++})${ext}`); }
+  return p;
+});
+ipcMain.handle('share:reveal', (_e, p) => { shell.showItemInFolder(String(p)); clipboard.writeText(String(p)); return true; });
+ipcMain.handle('share:copy', (_e, p) => { clipboard.writeText(String(p)); return true; });
 // o progresso chega à janela de exportação pelo canal 'export:progress' (percentual e etapa)
 ipcMain.handle('export:pdf', async (e, html, target) => {
   const send = (pct, label) => { if (!e.sender.isDestroyed()) e.sender.send('export:progress', { pct, label }); };
@@ -206,6 +220,7 @@ ipcMain.handle('open-external', async (_e, url) => {
 // Testes: força o modo de início ('home' | 'blank') só na 1ª inicialização; no uso normal é sempre null.
 ipcMain.handle('app:start-override', () => process.env.MINDCRAFT_START || null);
 ipcMain.handle('app:path', (_e, name) => app.getPath(name));
+ipcMain.handle('app:version', () => app.getVersion());
 // Tela inicial: lista (com existência e data), remover um e limpar. Só devolve caminhos que o próprio app registrou.
 ipcMain.handle('recent:list', () => loadRecent().map((p) => { let st = null; try { st = fs.statSync(p); } catch { /* sumiu */ } return { path: p, exists: !!st && st.isFile(), mtime: st ? st.mtimeMs : null }; }));
 ipcMain.handle('recent:remove', (_e, p) => { saveRecent(loadRecent().filter((x) => x !== p)); buildMenu(); });

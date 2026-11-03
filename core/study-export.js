@@ -8,6 +8,7 @@ const { parseLinks } = require('./links');
 const { mdToHtml } = require('./markdown');
 const { MARKERS } = require('./markers');
 const { escapeHtml: esc } = require('./text');
+const { printCss, weightClass } = require('./print-style');
 
 const WEIGHT = { p1: 3, p2: 2, p3: 1 };
 const DEFAULTS = { notes: true, sources: true, links: true, byWeight: true, maxDepth: Infinity, bw: false };
@@ -105,7 +106,7 @@ function toHtml(doc) {
   const sec = (t) => {
     const h = Math.min(t.depth + 1, 5);
     const badge = t.priority ? `<span class="pri" style="background:${PRIORITY_COLOR(t.priority, doc.options.bw)}">P${esc(t.priority.slice(1))}</span>` : '';
-    const parts = [`<section class="topic d${t.depth}"><h${h}><span class="num">${esc(t.num)}</span> ${esc(t.title)} ${badge}</h${h}>`];
+    const parts = [`<section class="topic d${t.depth} ${weightClass(t.priority)}"><h${h}><span class="num">${esc(t.num)}</span> ${esc(t.title)} ${badge}</h${h}>`];
     if (t.progress !== null) parts.push(`<p class="meta">Progresso ${esc(String(t.progress))}%</p>`);
     if (t.notes) parts.push(`<div class="notes">${mdToHtml(t.notes)}</div>`);
     else if (t.generated.length) parts.push(`<div class="notes ai"><p class="ai-note">Texto de revisão gerado pela IA (revise antes de usar)</p>${t.generated.map((p) => `<p>${esc(p)}</p>`).join('')}</div>`);
@@ -125,27 +126,14 @@ function toHtml(doc) {
   walkItems(doc.topics, (t) => toc.push(`<li class="l${t.depth}"><span class="num">${esc(t.num)}</span> ${esc(t.title)}</li>`));
   const srcs = doc.options.sources && doc.sources.length
     ? `<section class="sources"><h2>Fontes</h2><ul>${doc.sources.map((s) => `<li>${esc(s.name)}${s.uses ? ` (${s.uses} trecho(s))` : ''}</li>`).join('')}</ul></section>` : '';
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>
-    @page { size: A4; margin: 18mm 16mm; }
-    body { font-family: "Segoe UI", Arial, sans-serif; color: #1c1c1c; font-size: 11pt; line-height: 1.45; }
-    h1 { font-size: 24pt; margin: 0 0 4px; } .sub { color: #555; margin: 0 0 18px; }
-    h2 { font-size: 15pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; break-after: avoid; }
-    .toc { list-style: none; padding: 0; columns: 2; } .toc li { break-inside: avoid; padding: 1px 0; }
-    .toc .l2, .toc .l3 { padding-left: 14px; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 28px; color: #555; font-size: 10pt; }
-    .topic { break-inside: auto; margin-top: 10px; } .topic .topic { margin-left: 14px; border-left: 2px solid #ddd; padding-left: 10px; }
-    h2, h3, h4, h5, h6 { break-after: avoid; } h3 { font-size: 13.5pt; } h4 { font-size: 12pt; } h5 { font-size: 11pt; }
-    .num { color: #555; font-weight: 600; margin-right: 4px; }
-    .pri { color: #fff; font-size: 8.5pt; font-weight: 700; padding: 1px 6px; border-radius: 9px; vertical-align: middle; margin-left: 6px; }
-    .meta { color: #666; font-size: 9.5pt; margin: 2px 0; }
-    .notes { background: #f6f6f4; border-left: 3px solid #999; padding: 6px 10px; margin: 6px 0; }
-    .notes p { margin: 4px 0; } .notes blockquote { color: #444; border-left: 2px solid #aaa; margin: 4px 0; padding-left: 8px; }
-    .src { font-size: 9.5pt; color: #333; margin: 4px 0; font-style: italic; }
-    .links { font-size: 10pt; color: #333; margin: 4px 0; padding-left: 18px; }
-    .sources ul { font-size: 10.5pt; } code { font-size: 9.5pt; }
-    section.sources { break-before: auto; margin-top: 18px; }
-    /* o material sempre sai em duas colunas (o título e o sumário ficam na largura toda) */
-    .cols { column-count: 2; column-gap: 9mm; column-fill: auto; }
-  </style></head><body>
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>${printCss(`
+    .toc { list-style: none; padding: 0; columns: 2; column-gap: 8mm; font-size: 9pt; }
+    .toc li { break-inside: avoid; padding: 0.3mm 0; }
+    .toc .l2, .toc .l3 { padding-left: 3mm; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 6mm; color: #555; }
+    .topic { margin-top: 2mm; }
+    .topic .topic { margin-left: 4mm; border-left: 0.6pt solid #ddd; padding-left: 3mm; }
+    section.sources { margin-top: 6mm; break-before: auto; } .sources ul { font-size: 9pt; }
+`)}</style></head><body>
     <h1>${esc(doc.title)}</h1><p class="sub">Material de estudo · ${esc(doc.date)} · ${doc.count} tópico(s)</p>
     <h2>Sumário</h2><ul class="toc">${toc.join('')}</ul>
     <div class="cols">${doc.topics.map(sec).join('')}</div>

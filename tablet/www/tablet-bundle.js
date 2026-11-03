@@ -4127,6 +4127,41 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     }
   });
 
+  // package.json
+  var require_package = __commonJS({
+    "package.json"(exports, module) {
+      module.exports = {
+        name: "braniac-tablet",
+        version: "0.1.21",
+        private: true,
+        description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
+        scripts: {
+          "build:www": "node scripts/build-www.js",
+          sync: "npm run build:www && npx cap sync android && node scripts/patch-android.js",
+          "apk:debug": "cd android && gradlew assembleDebug"
+        },
+        dependencies: {
+          "@aparajita/capacitor-secure-storage": "^8.0.1",
+          "@capacitor/android": "^8.6.0",
+          "@capacitor/app": "^8.1.2",
+          "@capacitor/browser": "^8.0.5",
+          "@capacitor/clipboard": "^8.0.1",
+          "@capacitor/core": "^8.6.0",
+          "@capacitor/dialog": "^8.0.1",
+          "@capacitor/filesystem": "^8.1.5",
+          "@capacitor/preferences": "^8.0.1",
+          "@capacitor/share": "^8.0.3",
+          "@capawesome/capacitor-file-picker": "^8.1.1",
+          buffer: "^6.0.3",
+          fflate: "^0.8.3"
+        },
+        devDependencies: {
+          "@capacitor/cli": "^8.6.0"
+        }
+      };
+    }
+  });
+
   // shim/host.js
   var require_host = __commonJS({
     "shim/host.js"(exports, module) {
@@ -4222,6 +4257,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
       }
       var reg = (channel, fn) => handlers.set(channel, fn);
       reg("app:path", () => APP_DIR);
+      reg("app:version", () => require_package().version);
       reg("app:start-override", () => null);
       reg("dialog:open", async () => {
         const r = await FilePicker.pickFiles({ types: ["*/*"], limit: 1, readData: true }).catch(() => null);
@@ -4651,430 +4687,641 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     }
   });
 
-  // ../core/forcelayout.js
-  var require_forcelayout = __commonJS({
-    "../core/forcelayout.js"(exports, module) {
+  // ../core/pdfrefs.js
+  var require_pdfrefs = __commonJS({
+    "../core/pdfrefs.js"(exports, module) {
       "use strict";
-      function mulberry32(a) {
-        return () => {
-          a |= 0;
-          a = a + 1831565813 | 0;
-          let t = Math.imul(a ^ a >>> 15, 1 | a);
-          t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-          return ((t ^ t >>> 14) >>> 0) / 4294967296;
-        };
-      }
-      function layoutComponent(m, edges, rnd, k, iterations) {
-        const px = new Float64Array(m), py = new Float64Array(m), dx = new Float64Array(m), dy = new Float64Array(m);
-        const golden = Math.PI * (3 - Math.sqrt(5));
-        for (let i = 0; i < m; i++) {
-          const a = i * golden + rnd() * 0.6, r = Math.sqrt(i + 0.5) * k * 0.55;
-          px[i] = Math.cos(a) * r;
-          py[i] = Math.sin(a) * r;
-        }
-        const its = Math.max(60, Math.min(iterations, Math.round(iterations * Math.min(1, 500 / m))));
-        let t = k * Math.min(3, 0.6 + Math.sqrt(m) * 0.12);
-        const cool = t / (its + 1), cut2 = k * 6 * (k * 6);
-        for (let it = 0; it < its; it++) {
-          dx.fill(0);
-          dy.fill(0);
-          for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
-            let ddx = px[i] - px[j], ddy = py[i] - py[j], d2 = ddx * ddx + ddy * ddy;
-            if (d2 > cut2) continue;
-            if (d2 < 0.01) {
-              ddx = rnd() - 0.5;
-              ddy = rnd() - 0.5;
-              d2 = 0.01;
-            }
-            const d = Math.sqrt(d2), f = k * k / d, fx = ddx / d * f, fy = ddy / d * f;
-            dx[i] += fx;
-            dy[i] += fy;
-            dx[j] -= fx;
-            dy[j] -= fy;
-          }
-          for (const [a, b, w] of edges) {
-            const ddx = px[a] - px[b], ddy = py[a] - py[b], d = Math.sqrt(ddx * ddx + ddy * ddy) || 0.01, f = d * d / k * w;
-            dx[a] -= ddx / d * f;
-            dy[a] -= ddy / d * f;
-            dx[b] += ddx / d * f;
-            dy[b] += ddy / d * f;
-          }
-          let cx = 0, cy = 0;
-          for (let i = 0; i < m; i++) {
-            cx += px[i];
-            cy += py[i];
-          }
-          cx /= m;
-          cy /= m;
-          for (let i = 0; i < m; i++) {
-            dx[i] -= (px[i] - cx) * 0.03;
-            dy[i] -= (py[i] - cy) * 0.03;
-            const d = Math.sqrt(dx[i] * dx[i] + dy[i] * dy[i]) || 0.01, s = Math.min(d, t);
-            px[i] += dx[i] / d * s;
-            py[i] += dy[i] / d * s;
-          }
-          t -= cool;
-        }
-        let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-        for (let i = 0; i < m; i++) {
-          x1 = Math.min(x1, px[i]);
-          y1 = Math.min(y1, py[i]);
-          x2 = Math.max(x2, px[i]);
-          y2 = Math.max(y2, py[i]);
-        }
-        const pts = [];
-        for (let i = 0; i < m; i++) pts.push({ x: px[i] - x1, y: py[i] - y1 });
-        return { pts, w: x2 - x1, h: y2 - y1 };
-      }
-      function forceLayout(nodes, edges, { iterations = 300, seed = 7, maxNodes = 1500, spacing = 120 } = {}) {
-        const pos = /* @__PURE__ */ new Map();
-        if (!nodes.length) return pos;
-        const list = nodes.length > maxNodes ? [...nodes].sort((a, b) => b.deg - a.deg).slice(0, maxNodes) : nodes;
-        const n = list.length, idx = new Map(list.map((x3, i) => [x3.id, i]));
-        const E = [];
-        for (const e of edges) {
-          const a = idx.get(e.from), b = idx.get(e.to);
-          if (a !== void 0 && b !== void 0 && a !== b) E.push([a, b, e.type === "hierarchy" ? 0.5 : 1]);
-        }
-        const parent = Int32Array.from({ length: n }, (_, i) => i);
-        const find = (x3) => {
-          while (parent[x3] !== x3) {
-            parent[x3] = parent[parent[x3]];
-            x3 = parent[x3];
-          }
-          return x3;
-        };
-        for (const [a, b] of E) {
-          const ra = find(a), rb = find(b);
-          if (ra !== rb) parent[Math.max(ra, rb)] = Math.min(ra, rb);
-        }
-        const comps = /* @__PURE__ */ new Map();
-        for (let i = 0; i < n; i++) {
-          const r = find(i);
-          (comps.get(r) || comps.set(r, []).get(r)).push(i);
-        }
-        const real = [...comps.values()].filter((c) => c.length >= 2).sort((a, b) => b.length - a.length || a[0] - b[0]);
-        const orphans = [...comps.values()].filter((c) => c.length === 1).map((c) => c[0]);
-        const extra = nodes.length > n ? nodes.filter((x3) => !idx.has(x3.id)) : [];
-        const k = spacing * 0.8, gap = spacing * 0.9;
-        const blocks = real.map((c, ci) => {
-          const local = new Map(c.map((g, i) => [g, i])), ce = [];
-          for (const [a, b, w] of E) if (local.has(a) && local.has(b)) ce.push([local.get(a), local.get(b), w]);
-          const r = layoutComponent(c.length, ce, mulberry32(seed * 7919 + ci * 104729 + 13), k, iterations);
-          return { c, ...r };
-        });
-        const area = blocks.reduce((s, b) => s + (b.w + gap) * (b.h + gap), 0) + (orphans.length + extra.length) * (k * 0.75) * (k * 0.75);
-        const maxW = blocks.reduce((m, b) => Math.max(m, b.w), 0), target = Math.max(maxW, Math.sqrt(area) * 1.7);
-        let x = 0, y = 0, rowH = 0, usedW = 0;
-        const placed = [];
-        for (const b of blocks) {
-          if (x > 0 && x + b.w > target) {
-            x = 0;
-            y += rowH + gap;
-            rowH = 0;
-          }
-          placed.push({ b, ox: x, oy: y });
-          x += b.w + gap;
-          rowH = Math.max(rowH, b.h);
-          usedW = Math.max(usedW, x - gap);
-        }
-        const bottom = blocks.length ? y + rowH : 0;
-        for (const { b, ox, oy } of placed) b.c.forEach((g, i) => pos.set(list[g].id, { x: ox + b.pts[i].x, y: oy + b.pts[i].y }));
-        const lone = [...orphans.map((i) => list[i].id), ...extra.map((e) => e.id)];
-        if (lone.length) {
-          const cell = k * 0.75, cols = Math.max(3, Math.min(lone.length, Math.ceil(Math.max(usedW, cell * 6) / cell), Math.ceil(Math.sqrt(lone.length * 1.8))));
-          const top = blocks.length ? bottom + gap * 1.4 : 0;
-          lone.forEach((id, i) => pos.set(id, { x: i % cols * cell, y: top + Math.floor(i / cols) * cell }));
-        }
-        let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-        for (const p of pos.values()) {
-          x1 = Math.min(x1, p.x);
-          y1 = Math.min(y1, p.y);
-          x2 = Math.max(x2, p.x);
-          y2 = Math.max(y2, p.y);
-        }
-        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-        for (const p of pos.values()) {
-          p.x -= mx;
-          p.y -= my;
-        }
-        return pos;
-      }
-      module.exports = { forceLayout };
-    }
-  });
-
-  // ../core/links.js
-  var require_links = __commonJS({
-    "../core/links.js"(exports, module) {
-      "use strict";
-      var norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
-      var LINK_RE = /\[\[([^\[\]\n|#]{1,200})(?:#([^\[\]\n|]{0,200}))?(?:\|([^\[\]\n]{1,200}))?\]\]/g;
-      var stripCode = (s) => String(s ?? "").replace(/```[\s\S]*?```/g, " ").replace(/`[^`\n]*`/g, " ");
-      function parseLinks(text) {
-        const out = [];
-        for (const m of stripCode(text).matchAll(LINK_RE)) {
-          const a = m[1].trim(), b = m[2] === void 0 ? void 0 : m[2].trim();
-          if (!a) continue;
-          if (b === void 0) out.push({ raw: m[0], map: null, topic: a, alias: m[3] ? m[3].trim() : null });
-          else out.push({ raw: m[0], map: a, topic: b || null, alias: m[3] ? m[3].trim() : null });
+      var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+      var MAX_PDFS = 200;
+      var MAX_REFS = 500;
+      var MAX_RECTS = 40;
+      var MAX_QUOTE = 2e3;
+      var MAX_PAGE = 1e5;
+      var clamp01 = (n) => Math.min(1, Math.max(0, n));
+      function sanitizePdfs(list) {
+        const out = [], seen = /* @__PURE__ */ new Set();
+        for (const p of Array.isArray(list) ? list : []) {
+          if (out.length >= MAX_PDFS) break;
+          if (!p || typeof p.id !== "string" || !SAFE_ID.test(p.id) || seen.has(p.id) || typeof p.path !== "string" || !p.path) continue;
+          seen.add(p.id);
+          out.push({ id: p.id, name: String(p.name ?? "").slice(0, 200) || baseName(p.path), path: p.path.slice(0, 1e3) });
         }
         return out;
       }
-      function rewriteLinks(text, fn) {
-        const src = String(text ?? "");
-        const protectedRanges = [];
-        for (const m of src.matchAll(/```[\s\S]*?```|`[^`\n]*`/g)) protectedRanges.push([m.index, m.index + m[0].length]);
-        return src.replace(LINK_RE, (raw, a, b, alias, offset) => {
-          if (protectedRanges.some(([s, e]) => offset >= s && offset < e)) return raw;
-          const A = a.trim(), B = b === void 0 ? void 0 : b.trim();
-          const link = B === void 0 ? { raw, map: null, topic: A, alias: alias ? alias.trim() : null } : { raw, map: A, topic: B || null, alias: alias ? alias.trim() : null };
-          const r = fn(link);
-          return r == null ? raw : r;
-        });
+      var baseName = (p) => String(p).split(/[\\/]/).pop().replace(/\.pdf$/i, "").slice(0, 200) || "PDF";
+      function sanitizeRefs(list) {
+        const out = [];
+        for (const r of Array.isArray(list) ? list : []) {
+          if (out.length >= MAX_REFS) break;
+          if (!r || typeof r.pdf !== "string" || !SAFE_ID.test(r.pdf) || !Number.isInteger(r.page) || r.page < 1 || r.page > MAX_PAGE) continue;
+          const rects = (Array.isArray(r.rects) ? r.rects : []).slice(0, MAX_RECTS).filter((q) => Array.isArray(q) && q.length === 4 && q.every((n) => Number.isFinite(n))).map((q) => q.map(clamp01)).filter((q) => q[2] > 0 && q[3] > 0);
+          out.push({ pdf: r.pdf, page: r.page, quote: String(r.quote ?? "").slice(0, MAX_QUOTE), rects });
+        }
+        return out;
       }
-      var plainLinks = (text) => rewriteLinks(text, (lk) => lk.alias || lk.topic || lk.map);
-      module.exports = { norm, parseLinks, rewriteLinks, plainLinks, LINK_RE };
+      var refLabel = (ref, pdfs) => {
+        const p = (pdfs || []).find((x) => x.id === ref.pdf);
+        return `${p ? p.name : "PDF n\xE3o vinculado"}, p. ${ref.page}`;
+      };
+      module.exports = { sanitizePdfs, sanitizeRefs, refLabel, baseName, SAFE_ID, MAX_REFS };
     }
   });
 
-  // ../core/graph.js
-  var require_graph = __commonJS({
-    "../core/graph.js"(exports, module) {
+  // ../core/model.js
+  var require_model = __commonJS({
+    "../core/model.js"(exports, module) {
       "use strict";
-      var { norm, parseLinks } = require_links();
-      function walkAll(map, fn) {
-        const visit = (node, level, parent) => {
-          fn(node, level, parent);
-          for (const c of node.children) visit(c, level + 1, node);
-        };
-        visit(map.root, 0, null);
-        for (const f of map.meta._momFloating || []) visit(f.node, 0, null);
+      var crypto = require_crypto();
+      var pdfrefs = require_pdfrefs();
+      var newId = () => crypto.randomBytes(16).toString("hex");
+      function createNode(title = "T\xF3pico", extra = {}) {
+        return { id: newId(), title, notes: "", collapsed: false, style: {}, markers: [], progress: null, children: [], ...extra };
       }
-      function buildGraph(maps, { hierarchy = false } = {}) {
-        const nodes = [];
-        const byId = /* @__PURE__ */ new Map();
-        const edges = [];
-        const edgeKeys = /* @__PURE__ */ new Set();
-        const ghosts = /* @__PURE__ */ new Map();
-        const mapIndex = /* @__PURE__ */ new Map();
-        const add = (k, e) => {
-          if (!mapIndex.has(k)) mapIndex.set(k, []);
-          mapIndex.get(k).push(e);
-        };
-        const entries = maps.map((m) => {
-          const topics = /* @__PURE__ */ new Map();
-          const e = { ...m, topics, root: m.map.root };
-          walkAll(m.map, (n) => {
-            const k = norm(n.title);
-            if (!topics.has(k)) topics.set(k, []);
-            topics.get(k).push(n);
-          });
-          return e;
-        });
-        for (const e of entries) {
-          add(norm(e.name), e);
-          if (norm(e.map.root.title) !== norm(e.name)) add(norm(e.map.root.title), e);
+      var MAX_DEPTH = 100;
+      var MindMap = class _MindMap {
+        constructor(root = createNode("Mapa mental"), meta = {}) {
+          this.root = root;
+          this.meta = { name: root.title, theme: "ocean", ...meta };
+          if (!Array.isArray(this.meta.relations)) this.meta.relations = [];
+          this._undo = [];
+          this._redo = [];
         }
-        const idOf = (e, n) => `${e.key}::${n.id}`;
-        for (const e of entries) {
-          walkAll(e.map, (n, level, parent) => {
-            const g = { id: idOf(e, n), kind: "topic", title: n.title, mapKey: e.key, mapName: e.name, topicId: n.id, isRoot: !parent, progress: n.progress ?? null, deg: 0, childCount: n.children.length, hasNote: !!(n.notes && String(n.notes).trim()), weight: 0 };
-            nodes.push(g);
-            byId.set(g.id, g);
-          });
+        /** Acha um tópico pelo id. Sem `node`, procura na árvore principal e também nos tópicos soltos do Mindomo (editáveis no lugar). */
+        find(id, node = null, parent = null) {
+          if (node) return this._findIn(id, node, parent);
+          const main = this._findIn(id, this.root, null);
+          if (main) return main;
+          for (const f of this.meta._momFloating || []) {
+            const r = this._findIn(id, f.node, null);
+            if (r) return r;
+          }
+          return null;
         }
-        const link = (from, to, type, extra = {}) => {
-          if (from === to) return;
-          const k = `${from}>${to}>${type}`;
-          if (edgeKeys.has(k)) return;
-          edgeKeys.add(k);
-          edges.push({ from, to, type, ...extra });
-        };
-        const ghost = (label, key) => {
-          const id = `ghost::${key}`;
-          if (!ghosts.has(id)) {
-            const g = { id, kind: "ghost", title: label, mapKey: null, mapName: null, topicId: null, isRoot: false, progress: null, deg: 0 };
-            ghosts.set(id, g);
-            nodes.push(g);
-            byId.set(id, g);
+        _findIn(id, node, parent) {
+          if (node.id === id) return { node, parent };
+          for (const c of node.children) {
+            const r = this._findIn(id, c, node);
+            if (r) return r;
           }
-          return id;
-        };
-        const resolve = (lk, from) => {
-          const t = lk.topic == null ? null : norm(lk.topic);
-          if (lk.map) {
-            const cands = mapIndex.get(norm(lk.map)) || [];
-            if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? "#" + t : "")) };
-            const e = cands.find((c) => c.key === from.key) || cands[0];
-            if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1 };
-            const hit = (e.topics.get(t) || [])[0];
-            return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1 } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + "#" + t) };
+          return null;
+        }
+        walk(fn, node = this.root, level = 0, parent = null) {
+          fn(node, level, parent);
+          for (const c of node.children) this.walk(fn, c, level + 1, node);
+        }
+        // --- histórico (snapshots JSON; simples e robusto para mapas de tamanho normal) ---
+        _snapshot() {
+          if (this._inBatch) return;
+          this._undo.push(JSON.stringify({ root: this.root, meta: this.meta }));
+          if (this._undo.length > 200) this._undo.shift();
+          this._redo.length = 0;
+        }
+        _restore(json) {
+          const s = JSON.parse(json);
+          this.root = s.root;
+          this.meta = s.meta;
+        }
+        /** Há o que desfazer / refazer (a interface usa para habilitar os botões). */
+        canUndo() {
+          return this._undo.length > 0;
+        }
+        canRedo() {
+          return this._redo.length > 0;
+        }
+        undo() {
+          if (!this._undo.length) return false;
+          this._redo.push(JSON.stringify({ root: this.root, meta: this.meta }));
+          this._restore(this._undo.pop());
+          return true;
+        }
+        redo() {
+          if (!this._redo.length) return false;
+          this._undo.push(JSON.stringify({ root: this.root, meta: this.meta }));
+          this._restore(this._redo.pop());
+          return true;
+        }
+        /**
+         * Executa várias alterações como UMA ação desfazível. Se algo lançar erro, tudo é revertido
+         * (nenhuma alteração parcial fica no mapa).
+         */
+        batch(fn) {
+          if (this._inBatch) return fn();
+          const before = JSON.stringify({ root: this.root, meta: this.meta });
+          this._snapshot();
+          this._inBatch = true;
+          try {
+            return fn();
+          } catch (e) {
+            this._restore(before);
+            this._undo.pop();
+            throw e;
+          } finally {
+            this._inBatch = false;
           }
-          const own = (from.topics.get(t) || [])[0];
-          if (own) return { id: idOf(from, own) };
-          const asMap = (mapIndex.get(t) || []).filter((c) => c.key !== from.key);
-          const others = [];
-          for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))) {
-            if (e.key === from.key) continue;
-            const hit = (e.topics.get(t) || [])[0];
-            if (hit) others.push(idOf(e, hit));
+        }
+        /** Ids ordenados pela ordem do documento, sem repetidos, sem a raiz e sem descendentes de outro id da lista. */
+        topLevel(ids) {
+          const want = new Set(ids);
+          const out = [];
+          const rec = (n, covered) => {
+            if (want.has(n.id) && n !== this.root) {
+              if (!covered) out.push(n);
+              covered = true;
+            }
+            n.children.forEach((c) => rec(c, covered));
+          };
+          rec(this.root, false);
+          return out;
+        }
+        // --- edição ---
+        /** Profundidade de um tópico (raiz = 0), ou -1 se não existir. Iterativo: seguro em árvores muito fundas. */
+        depthOf(id) {
+          const stack = [[this.root, 0]];
+          while (stack.length) {
+            const [n, d] = stack.pop();
+            if (n.id === id) return d;
+            for (const c of n.children) stack.push([c, d + 1]);
           }
-          for (const e of asMap) {
-            const id = idOf(e, e.root);
-            if (!others.includes(id)) others.push(id);
+          return -1;
+        }
+        /** Altura de uma subárvore (nó sem filhos = 0). Iterativo. */
+        static heightOf(node) {
+          let h = 0;
+          const stack = [[node, 0]];
+          while (stack.length) {
+            const [n, d] = stack.pop();
+            if (d > h) h = d;
+            for (const c of n.children) stack.push([c, d + 1]);
           }
-          if (others.length) return { id: others[0], ambiguous: others.length > 1 };
-          return { id: ghost(lk.topic, t) };
-        };
-        for (const e of entries) {
-          walkAll(e.map, (n, level, parent) => {
-            const me = idOf(e, n);
-            if (hierarchy && parent) link(idOf(e, parent), me, "hierarchy");
-            for (const text of [n.title, n.notes]) {
-              for (const lk of parseLinks(text)) {
-                const r = resolve(lk, e);
-                link(me, r.id, "link", { ...r.ambiguous ? { ambiguous: true } : {}, ...lk.alias ? { alias: lk.alias } : {} });
-              }
+          return h;
+        }
+        /** Garante que um tópico (ou subárvore de altura `height`) pendurado em `parentId` não passe de MAX_DEPTH níveis. */
+        _checkDepth(parentId, height = 0) {
+          if (this.depthOf(parentId) + 1 + height > MAX_DEPTH) throw new Error(`Profundidade m\xE1xima: ${MAX_DEPTH} n\xEDveis de subt\xF3picos.`);
+        }
+        addChild(parentId, title = "T\xF3pico", index) {
+          const p = this.find(parentId);
+          if (!p) return null;
+          this._checkDepth(parentId);
+          this._snapshot();
+          const n = createNode(title);
+          p.node.collapsed = false;
+          if (index == null || index > p.node.children.length) p.node.children.push(n);
+          else p.node.children.splice(index, 0, n);
+          return n;
+        }
+        addSibling(id, title = "T\xF3pico") {
+          const r = this.find(id);
+          if (!r || !r.parent) return null;
+          return this.addChild(r.parent.id, title, r.parent.children.indexOf(r.node) + 1);
+        }
+        remove(id) {
+          const r = this.find(id);
+          if (!r || !r.parent) return false;
+          this._snapshot();
+          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
+          const gone = /* @__PURE__ */ new Set();
+          this.walk((n) => gone.add(n.id), r.node);
+          this.meta.relations = this.meta.relations.filter((x) => !gone.has(x.from) && !gone.has(x.to));
+          return true;
+        }
+        toggleMarker(id, marker) {
+          const r = this.find(id);
+          if (!r) return false;
+          this._snapshot();
+          const m = r.node.markers || (r.node.markers = []);
+          const i = m.indexOf(marker);
+          if (i >= 0) m.splice(i, 1);
+          else m.push(marker);
+          return true;
+        }
+        /** Relação (seta) entre dois tópicos quaisquer. Retorna a relação ou null se inválida/duplicada. */
+        addRelation(from, to, label = "") {
+          if (from === to || !this.find(from) || !this.find(to)) return null;
+          if (this.meta.relations.some((x) => x.from === from && x.to === to)) return null;
+          this._snapshot();
+          const rel = { id: newId(), from, to, label };
+          this.meta.relations.push(rel);
+          return rel;
+        }
+        updateRelation(id, patch) {
+          const r = this.meta.relations.find((x) => x.id === id);
+          if (!r) return false;
+          this._snapshot();
+          Object.assign(r, patch);
+          return true;
+        }
+        removeRelation(id) {
+          if (!this.meta.relations.some((x) => x.id === id)) return false;
+          this._snapshot();
+          this.meta.relations = this.meta.relations.filter((x) => x.id !== id);
+          return true;
+        }
+        /** Remove vários tópicos (e suas relações) como uma ação. Retorna quantos tópicos de topo saíram. */
+        /** Exclui um tópico solto do Mindomo (com tudo o que está dentro dele). Uma ação desfazível. */
+        removeFloating(id) {
+          const list = this.meta._momFloating;
+          const i = (list || []).findIndex((f) => f.node.id === id);
+          if (i < 0) return false;
+          this._snapshot();
+          list.splice(i, 1);
+          if (!list.length) delete this.meta._momFloating;
+          return true;
+        }
+        removeMany(ids) {
+          const tops = this.topLevel(ids);
+          if (!tops.length) return 0;
+          this.batch(() => tops.forEach((n) => this.remove(n.id)));
+          return tops.length;
+        }
+        updateMany(ids, patch) {
+          const list = ids.filter((id) => this.find(id));
+          if (!list.length) return false;
+          this.batch(() => list.forEach((id) => this.update(id, patch)));
+          return true;
+        }
+        toggleMarkerMany(ids, marker) {
+          const list = ids.map((id) => this.find(id)).filter(Boolean);
+          if (!list.length) return false;
+          const all = list.every((r) => (r.node.markers || []).includes(marker));
+          this.batch(() => list.forEach((r) => {
+            if ((r.node.markers || []).includes(marker) === all) this.toggleMarker(r.node.id, marker);
+          }));
+          return true;
+        }
+        /** Move vários tópicos (preservando a ordem do documento) para dentro de newParentId. */
+        moveMany(ids, newParentId, index) {
+          const tops = this.topLevel(ids);
+          if (!tops.length || !this.find(newParentId)) return false;
+          if (tops.some((n) => this.find(newParentId, n))) return false;
+          this.batch(() => tops.forEach((n, i) => this.move(n.id, newParentId, index == null ? void 0 : index + i)));
+          return true;
+        }
+        /**
+         * Mostra os tópicos até o nível `n` (0 = só a raiz; 1 = raiz + disciplinas…) e recolhe os mais profundos.
+         * `n = Infinity` expande tudo. Uma única ação desfazível. Retorna quantos tópicos mudaram de estado.
+         */
+        showLevels(n) {
+          const changes = [];
+          this.walk((node, level) => {
+            const want = node.children.length > 0 && level >= n;
+            if (!!node.collapsed !== want) changes.push([node, want]);
+          });
+          if (!changes.length) return 0;
+          this._snapshot();
+          for (const [node, want] of changes) node.collapsed = want;
+          return changes.length;
+        }
+        /**
+         * Põe os tópicos `ids` (em ordem de documento) ANTES ou DEPOIS do tópico `targetId`, como irmãos dele — é o "soltar entre irmãos" do arrastar.
+         * Serve para reordenar (mesmo pai) e para mudar de pai ao mesmo tempo. Uma única ação desfazível. A raiz não tem irmãos.
+         * @param where 'before' | 'after'
+         */
+        moveBeside(ids, targetId, where) {
+          const t = this.find(targetId);
+          if (!t || !t.parent || where !== "before" && where !== "after") return false;
+          const tops = this.topLevel(ids);
+          if (!tops.length || tops.some((n) => n.id === targetId || this.find(targetId, n))) return false;
+          const parentId = t.parent.id;
+          this.batch(() => {
+            let anchor = t.node;
+            for (const n of tops) {
+              const kids = t.parent.children.filter((c) => c !== n);
+              const at = kids.indexOf(anchor);
+              this.move(n.id, parentId, where === "before" && anchor === t.node ? at : at + 1);
+              anchor = n;
             }
           });
-          for (const r of e.map.meta.relations || []) {
-            const a = e.map.find(r.from), b = e.map.find(r.to);
-            if (a && b) link(idOf(e, a.node), idOf(e, b.node), "relation", { label: r.label || "" });
+          return true;
+        }
+        // ---- reordenar e mudar de nível (teclado: Alt+setas) ----
+        /** Troca de lugar com o irmão anterior (dir = -1) ou seguinte (dir = +1). */
+        moveSibling(id, dir) {
+          const r = this.find(id);
+          if (!r || !r.parent) return false;
+          const arr = r.parent.children, i = arr.indexOf(r.node), j = i + dir;
+          if (j < 0 || j >= arr.length) return false;
+          this._snapshot();
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+          return true;
+        }
+        /** Rebaixa: o tópico vira o último filho do irmão que vem logo antes dele. */
+        indent(id) {
+          const r = this.find(id);
+          if (!r || !r.parent) return false;
+          const arr = r.parent.children, i = arr.indexOf(r.node);
+          if (i <= 0) return false;
+          const prev = arr[i - 1];
+          this._snapshot();
+          arr.splice(i, 1);
+          prev.collapsed = false;
+          prev.children.push(r.node);
+          return true;
+        }
+        /** Promove: o tópico passa a ser irmão do pai, logo depois dele. Filhos diretos da raiz não podem subir. */
+        outdent(id) {
+          const r = this.find(id);
+          if (!r || !r.parent) return false;
+          const g = this.find(r.parent.id);
+          if (!g.parent) return false;
+          this._snapshot();
+          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
+          g.parent.children.splice(g.parent.children.indexOf(g.node) + 1, 0, r.node);
+          return true;
+        }
+        /**
+         * Escolhe sozinho o maior nível que mantém no máximo `maxVisible` tópicos visíveis (mínimo 1: as disciplinas sempre
+         * aparecem) e recolhe o resto. Serve para importações grandes (editais com centenas de tópicos). Retorna o nível usado.
+         */
+        autoLevels(maxVisible = 120) {
+          const per = [];
+          this.walk((n, l) => {
+            per[l] = (per[l] || 0) + 1;
+          });
+          let cum = 0, best = 1;
+          for (let l = 0; l < per.length; l++) {
+            cum += per[l];
+            if (cum <= maxVisible) best = Math.max(best, l);
           }
+          this.showLevels(best);
+          return best;
         }
-        for (const ed of edges) {
-          if (ed.type === "hierarchy") continue;
-          byId.get(ed.from).deg++;
-          byId.get(ed.to).deg++;
+        /** Cópia profunda com ids novos. A cópia é um tópico novo: não leva os campos extras do arquivo original (_mcExtra). */
+        static cloneSubtree(node) {
+          const { children, ...rest } = node;
+          const c = { ...JSON.parse(JSON.stringify(rest)), id: newId() };
+          delete c._mom;
+          delete c._mcExtra;
+          c.children = node.children.map((k) => _MindMap.cloneSubtree(k));
+          return c;
         }
-        for (const g of nodes) g.weight = (g.childCount || 0) + (g.hasNote ? 1 : 0) + g.deg;
-        const out = /* @__PURE__ */ new Map(), inn = /* @__PURE__ */ new Map();
-        for (const ed of edges) {
-          if (!out.has(ed.from)) out.set(ed.from, []);
-          out.get(ed.from).push(ed);
-          if (!inn.has(ed.to)) inn.set(ed.to, []);
-          inn.get(ed.to).push(ed);
+        /** Insere uma subárvore já com ids novos como filho de parentId. Retorna o nó inserido. */
+        addSubtree(parentId, tree, index) {
+          const p = this.find(parentId);
+          if (!p) return null;
+          this._checkDepth(parentId, _MindMap.heightOf(tree));
+          this._snapshot();
+          p.node.collapsed = false;
+          if (index == null || index > p.node.children.length) p.node.children.push(tree);
+          else p.node.children.splice(index, 0, tree);
+          return tree;
         }
-        return {
-          nodes,
-          edges,
-          byId,
-          outgoing: (id) => (out.get(id) || []).filter((x) => x.type !== "hierarchy"),
-          incoming: (id) => (inn.get(id) || []).filter((x) => x.type !== "hierarchy"),
-          idOf: (mapKey, topicId) => `${mapKey}::${topicId}`,
-          /** Resolve um link escrito no mapa `fromKey` com o mesmo critério do grafo (usado pelo exportador do Obsidian). */
-          resolveLink: (lk, fromKey) => {
-            const e = entries.find((x) => x.key === fromKey);
-            return e ? resolve(lk, e) : null;
-          }
-        };
-      }
-      function neighborhood(g, id, depth = 1) {
-        if (!g.byId.has(id)) return { nodes: [], edges: [] };
-        const adj = /* @__PURE__ */ new Map();
-        for (const e of g.edges) {
-          if (!adj.has(e.from)) adj.set(e.from, []);
-          adj.get(e.from).push(e.to);
-          if (!adj.has(e.to)) adj.set(e.to, []);
-          adj.get(e.to).push(e.from);
+        // --- PDFs vinculados e referências de trechos (core/pdfrefs.js) ---
+        /** Registra um PDF no mapa (mesmo caminho = mesmo registro). */
+        addPdf({ name, path: p }) {
+          if (!p || typeof p !== "string") throw new Error("Caminho do PDF inv\xE1lido.");
+          const cur = (this.meta.pdfs || []).find((x) => x.path.toLowerCase() === p.toLowerCase());
+          if (cur) return cur;
+          this._snapshot();
+          const pdf = { id: newId().slice(0, 16), name: String(name || "").slice(0, 200) || pdfrefs.baseName(p), path: p.slice(0, 1e3) };
+          (this.meta.pdfs = this.meta.pdfs || []).push(pdf);
+          return pdf;
         }
-        const seen = /* @__PURE__ */ new Map([[id, 0]]);
-        let front = [id];
-        for (let d = 1; d <= depth; d++) {
-          const next = [];
-          for (const x of front) for (const y of adj.get(x) || []) if (!seen.has(y)) {
-            seen.set(y, d);
-            next.push(y);
-          }
-          front = next;
+        /** Aponta um PDF registrado para outro arquivo (outro computador, arquivo movido). */
+        relinkPdf(id, p) {
+          const pdf = (this.meta.pdfs || []).find((x) => x.id === id);
+          if (!pdf || !p || typeof p !== "string") return false;
+          this._snapshot();
+          pdf.path = p.slice(0, 1e3);
+          return true;
         }
-        return { nodes: g.nodes.filter((n) => seen.has(n.id)), edges: g.edges.filter((e) => seen.has(e.from) && seen.has(e.to)), distance: seen };
-      }
-      module.exports = { buildGraph, neighborhood };
-    }
-  });
-
-  // ../core/graph-labels.js
-  var require_graph_labels = __commonJS({
-    "../core/graph-labels.js"(exports, module) {
-      "use strict";
-      var ROW_H = 15;
-      var CELL = 80;
-      var SpatialGrid = class {
-        constructor(cell = CELL) {
-          this.cell = cell;
-          this.cells = /* @__PURE__ */ new Map();
+        /** Anexa uma referência (PDF, página, trecho e retângulos) a um tópico. */
+        addRef(nodeId, ref) {
+          const r = this.find(nodeId);
+          if (!r) return false;
+          const clean = pdfrefs.sanitizeRefs([ref])[0];
+          if (!clean) throw new Error("Refer\xEAncia de PDF inv\xE1lida.");
+          if (!(this.meta.pdfs || []).some((x) => x.id === clean.pdf)) throw new Error("O PDF da refer\xEAncia n\xE3o est\xE1 registrado no mapa.");
+          this._snapshot();
+          (r.node.refs = r.node.refs || []).push(clean);
+          return true;
         }
-        _key(cx, cy) {
-          return cx * 100003 + cy;
+        removeRef(nodeId, index) {
+          const r = this.find(nodeId);
+          if (!r || !Array.isArray(r.node.refs) || !r.node.refs[index]) return false;
+          this._snapshot();
+          r.node.refs.splice(index, 1);
+          if (!r.node.refs.length) delete r.node.refs;
+          return true;
         }
-        put(b) {
-          const c = this.cell;
-          for (let cx = Math.floor(b.x / c); cx <= Math.floor((b.x + b.w) / c); cx++) for (let cy = Math.floor(b.y / c); cy <= Math.floor((b.y + b.h) / c); cy++) {
-            const k = this._key(cx, cy);
-            (this.cells.get(k) || this.cells.set(k, []).get(k)).push(b);
-          }
-          return b;
+        update(id, patch) {
+          const r = this.find(id);
+          if (!r) return false;
+          this._snapshot();
+          const { style, ...rest } = patch;
+          Object.assign(r.node, rest);
+          if (style) r.node.style = { ...r.node.style, ...style };
+          return true;
         }
-        /** `b` encosta (com folga `gap`) em algum retângulo guardado, exceto `skip`? */
-        hits(b, gap = 0, skip = null) {
-          const c = this.cell;
-          for (let cx = Math.floor((b.x - gap) / c); cx <= Math.floor((b.x + b.w + gap) / c); cx++) for (let cy = Math.floor((b.y - gap) / c); cy <= Math.floor((b.y + b.h + gap) / c); cy++) {
-            const l = this.cells.get(this._key(cx, cy));
-            if (!l) continue;
-            for (const o of l) if (o !== skip && b.x - gap < o.x + o.w && o.x < b.x + b.w + gap && b.y - gap < o.y + o.h && o.y < b.y + b.h + gap) return true;
-          }
-          return false;
+        /** Move `id` para ser filho de `newParentId` na posição `index`. Impede ciclos. */
+        move(id, newParentId, index) {
+          const r = this.find(id);
+          const np = this.find(newParentId);
+          if (!r || !np || !r.parent) return false;
+          if (this.find(newParentId, r.node)) return false;
+          this._checkDepth(newParentId, _MindMap.heightOf(r.node));
+          this._snapshot();
+          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
+          const i = index == null ? np.node.children.length : Math.min(index, np.node.children.length);
+          np.node.children.splice(i, 0, r.node);
+          return true;
+        }
+        toJSON() {
+          return { meta: this.meta, root: this.root };
+        }
+        static fromJSON(j) {
+          return new _MindMap(j.root, j.meta);
         }
       };
-      function placeLabels(items, o) {
-        const { width, height, obstacles = [], mode = "auto", budget = Infinity, gap = 0, measure, fit } = o;
-        const placed = /* @__PURE__ */ new Map();
-        let shown = 0;
-        const grid = new SpatialGrid();
-        const order = items.map((it, n) => [it, n]).sort((a, b) => (b[0].score || 0) - (a[0].score || 0) || a[1] - b[1]).map((x) => x[0]);
-        const circ = /* @__PURE__ */ new Map();
-        for (const it of order) circ.set(it.id, grid.put({ x: it.x - it.r, y: it.y - it.r, w: it.r * 2, h: it.r * 2 }));
-        for (const b of obstacles) if (b.w > 0 && b.h > 0) grid.put({ ...b });
-        for (const it of order) {
-          const forced = !!it.forced;
-          const allowed = mode === "all" ? true : mode === "none" ? forced : mode === "relevant" ? forced || !!it.relevant : forced || shown < budget;
-          if (!allowed) continue;
-          const text = fit(it.text, forced ? 300 : 170), w = measure(text, it) + 6, off = it.r + 4;
-          const cands = [
-            { x: it.x - w / 2, y: it.y + off, anchor: "middle", ox: 0, oy: off + ROW_H / 2 },
-            { x: it.x + off, y: it.y - ROW_H / 2, anchor: "start", ox: off, oy: 0 },
-            { x: it.x - w / 2, y: it.y - off - ROW_H, anchor: "middle", ox: 0, oy: -off - ROW_H / 2 },
-            { x: it.x - off - w, y: it.y - ROW_H / 2, anchor: "end", ox: -off, oy: 0 }
-          ];
-          let pick = null;
-          if (mode === "all") pick = cands[0];
-          else for (const c of cands) {
-            const b = { x: c.x, y: c.y, w, h: ROW_H };
-            if (b.x >= -2 && b.x + w <= width + 2 && b.y >= 0 && b.y + ROW_H <= height + 2 && !grid.hits(b, gap, circ.get(it.id))) {
-              pick = c;
-              break;
+      module.exports = { MindMap, createNode, newId, MAX_DEPTH };
+    }
+  });
+
+  // ../core/flow.js
+  var require_flow = __commonJS({
+    "../core/flow.js"(exports, module) {
+      "use strict";
+      var { MindMap, createNode } = require_model();
+      var FLOW_TYPES = ["start", "step", "decision", "end"];
+      var FLOW_LABELS = { start: "In\xEDcio", step: "Passo", decision: "Decis\xE3o", end: "Fim" };
+      var MAX_BRANCHES = 2;
+      var DEFAULT_BRANCHES = ["Sim", "N\xE3o"];
+      var MAX_PATHS = 200;
+      var MAX_PATH_LEN = 60;
+      var typeOf = (n) => FLOW_TYPES.includes(n.flowType) ? n.flowType : "step";
+      function isFlow(map) {
+        return map.meta.kind === "flow" || map.root.flowType === "start";
+      }
+      function createFlow(title = "Fluxograma") {
+        return new MindMap(createNode(title, { flowType: "start" }), { kind: "flow", name: title });
+      }
+      var nodeOf = (map, id) => {
+        const r = map.find(id);
+        return r ? r.node : null;
+      };
+      var isLeaf = (n) => n.children.length === 0;
+      function insertStepAfter(map, id, { type = "step", title, branch } = {}) {
+        const r = map.find(id);
+        if (!r) throw new Error("Passo n\xE3o encontrado.");
+        if (!FLOW_TYPES.includes(type)) throw new Error("Tipo de passo desconhecido.");
+        if (type === "start") throw new Error("Um fluxo tem s\xF3 um in\xEDcio.");
+        const t = typeOf(r.node);
+        if (t === "end") throw new Error("O fim n\xE3o tem sa\xEDda. Insira o passo antes dele, selecionando o passo anterior.");
+        if (t === "decision") {
+          if (!branch) throw new Error("Escolha o ramo da decis\xE3o (ex.: Sim ou N\xE3o).");
+          return addBranch(map, id, branch, { type, title });
+        }
+        if (type === "end" && r.node.children.length) throw new Error("O fim deve ficar no final: insira-o depois do \xFAltimo passo.");
+        map._snapshot();
+        const n = createNode(title || FLOW_LABELS[type], { flowType: type });
+        if (type !== "end") {
+          n.children = r.node.children;
+          r.node.children = [n];
+        } else {
+          r.node.children.push(n);
+        }
+        r.node.collapsed = false;
+        return n;
+      }
+      function addBranch(map, decisionId, label, { type = "step", title } = {}) {
+        const r = map.find(decisionId);
+        if (!r) throw new Error("Decis\xE3o n\xE3o encontrada.");
+        if (typeOf(r.node) !== "decision") throw new Error("S\xF3 uma decis\xE3o tem ramos.");
+        const text = String(label || "").trim();
+        if (!text) throw new Error("O ramo precisa de um r\xF3tulo (ex.: Sim ou N\xE3o).");
+        if (r.node.children.length >= MAX_BRANCHES) throw new Error(`Uma decis\xE3o tem no m\xE1ximo ${MAX_BRANCHES} ramos.`);
+        if (r.node.children.some((c) => (c.branchLabel || "").toLowerCase() === text.toLowerCase())) throw new Error(`J\xE1 existe um ramo "${text}".`);
+        if (type === "start") throw new Error("Um fluxo tem s\xF3 um in\xEDcio.");
+        map._snapshot();
+        const n = createNode(title || FLOW_LABELS[type], { flowType: type, branchLabel: text.slice(0, 60) });
+        r.node.children.push(n);
+        r.node.collapsed = false;
+        return n;
+      }
+      function setFlowType(map, id, type) {
+        const r = map.find(id);
+        if (!r) throw new Error("Passo n\xE3o encontrado.");
+        if (!FLOW_TYPES.includes(type)) throw new Error("Tipo de passo desconhecido.");
+        if (type === "start" && findStarts(map).some((n) => n.id !== id)) throw new Error("Um fluxo tem s\xF3 um in\xEDcio.");
+        if (type === "end" && r.node.children.length) throw new Error("O fim n\xE3o tem sa\xEDda: remova ou mova os pr\xF3ximos passos antes.");
+        map._snapshot();
+        r.node.flowType = type;
+        return r.node;
+      }
+      function removeStep(map, id) {
+        const r = map.find(id);
+        if (!r) throw new Error("Passo n\xE3o encontrado.");
+        if (!r.parent) throw new Error("O in\xEDcio do fluxo n\xE3o pode ser exclu\xEDdo.");
+        const n = r.node;
+        const sub = n.children.length > 1 || typeOf(n) === "decision";
+        if (!sub && n.children.length === 1) {
+          map._snapshot();
+          const i = r.parent.children.indexOf(n);
+          const next = n.children[0];
+          if (typeOf(r.parent) === "decision") next.branchLabel = n.branchLabel || next.branchLabel;
+          r.parent.children.splice(i, 1, next);
+          map.meta.relations = map.meta.relations.filter((x) => x.from !== n.id && x.to !== n.id);
+          return { removed: 1, subtree: false };
+        }
+        const count = [];
+        map.walk((x) => count.push(x), n);
+        map.remove(id);
+        return { removed: count.length, subtree: sub };
+      }
+      function findStarts(map) {
+        const out = [];
+        map.walk((n) => {
+          if (typeOf(n) === "start") out.push(n);
+        });
+        return out;
+      }
+      function successors(map, id) {
+        const n = nodeOf(map, id);
+        if (!n) return [];
+        const seq = n.children.map((c) => ({ to: c.id, label: c.branchLabel || "", kind: "seq" }));
+        const rel = map.meta.relations.filter((x) => x.from === id).map((x) => ({ to: x.to, label: x.label || "", kind: "rel" }));
+        return [...seq, ...rel];
+      }
+      function validateFlow(map) {
+        const warn = [];
+        const starts = findStarts(map);
+        if (!starts.length) warn.push({ level: "error", id: null, message: "O fluxo n\xE3o tem in\xEDcio." });
+        if (starts.length > 1) warn.push({ level: "error", id: starts[1].id, message: "H\xE1 mais de um in\xEDcio no fluxo." });
+        map.walk((n) => {
+          const t = typeOf(n);
+          const name = n.title || "Sem t\xEDtulo";
+          if (t === "decision") {
+            const k = n.children.length;
+            if (k !== MAX_BRANCHES) warn.push({ level: "warn", id: n.id, message: `Decis\xE3o "${name}" com ${k} ramo(s); o correto s\xE3o ${MAX_BRANCHES} (ex.: Sim e N\xE3o).` });
+            for (const c of n.children) if (!c.branchLabel) warn.push({ level: "warn", id: c.id, message: `Ramo sem r\xF3tulo ap\xF3s a decis\xE3o "${name}".` });
+          } else if (t === "end" && n.children.length) {
+            warn.push({ level: "error", id: n.id, message: `O fim "${name}" tem sa\xEDdas; o fim n\xE3o pode ter pr\xF3ximos passos.` });
+          } else if (t !== "end" && n.children.length > 1) {
+            warn.push({ level: "warn", id: n.id, message: `Passo "${name}" com ${n.children.length} pr\xF3ximos; para bifurcar, use uma decis\xE3o.` });
+          }
+          if (t !== "end" && t !== "decision" && isLeaf(n) && !map.meta.relations.some((x) => x.from === n.id)) {
+            warn.push({ level: "warn", id: n.id, message: `Passo "${name}" sem sa\xEDda: marque como Fim ou acrescente o pr\xF3ximo passo.` });
+          }
+        });
+        return warn;
+      }
+      function listPaths(map, { max = MAX_PATHS, maxLen = MAX_PATH_LEN } = {}) {
+        const paths = [];
+        let truncated = false;
+        const starts = findStarts(map);
+        if (!starts.length) return { paths, truncated };
+        const walkFrom = (id, trail, seen) => {
+          if (paths.length >= max) {
+            truncated = true;
+            return;
+          }
+          const outs = successors(map, id);
+          if (typeOf(nodeOf(map, id)) === "end" || !outs.length) {
+            paths.push(trail.slice());
+            return;
+          }
+          if (trail.length >= maxLen) {
+            truncated = true;
+            paths.push(trail.slice());
+            return;
+          }
+          for (const e of outs) {
+            if (seen.has(e.to)) {
+              paths.push([...trail, { id: e.to, via: e.label, loopTo: true }]);
+              continue;
+            }
+            seen.add(e.to);
+            trail.push({ id: e.to, via: e.label });
+            walkFrom(e.to, trail, seen);
+            trail.pop();
+            seen.delete(e.to);
+            if (paths.length >= max) {
+              truncated = true;
+              return;
             }
           }
-          if (!pick && forced) pick = cands[0];
-          if (!pick) continue;
-          grid.put({ x: pick.x, y: pick.y, w, h: ROW_H });
-          shown++;
-          placed.set(it.id, { text, ox: pick.ox, oy: pick.oy, anchor: pick.anchor, big: forced });
-        }
-        return { placed, shown };
+        };
+        for (const s of starts) walkFrom(s.id, [{ id: s.id, via: "" }], /* @__PURE__ */ new Set([s.id]));
+        return { paths, truncated };
       }
-      function relationLabelAnchor(a, b, focusEnd) {
-        const from = focusEnd === "b" ? b : a, to = focusEnd === "b" ? a : b;
-        let t = 0.5;
-        if (focusEnd) {
-          const len = Math.hypot(a.x - b.x, a.y - b.y) || 1;
-          t = Math.min(0.5, 110 / len);
-        }
-        return { from, to, t, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
-      }
-      module.exports = { placeLabels, relationLabelAnchor, SpatialGrid, ROW_H };
+      module.exports = {
+        FLOW_TYPES,
+        FLOW_LABELS,
+        MAX_BRANCHES,
+        DEFAULT_BRANCHES,
+        MAX_PATHS,
+        isFlow,
+        createFlow,
+        insertStepAfter,
+        addBranch,
+        setFlowType,
+        removeStep,
+        findStarts,
+        successors,
+        validateFlow,
+        listPaths,
+        typeOf
+      };
     }
   });
 
@@ -5865,6 +6112,91 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     }
   });
 
+  // ../core/flow-layout.js
+  var require_flow_layout = __commonJS({
+    "../core/flow-layout.js"(exports, module) {
+      "use strict";
+      var { textWidth } = require_layout();
+      var { typeOf } = require_flow();
+      var FONT = 13;
+      var MAX_TEXT_W = 190;
+      var GAP_X = 36;
+      var GAP_Y = 56;
+      var SIZE = {
+        start: { h: 40, padX: 26, min: 110 },
+        end: { h: 40, padX: 26, min: 110 },
+        step: { h: 44, padX: 22, min: 132 },
+        decision: { h: 66, padX: 44, min: 150 }
+        // losango: precisa de mais área para o texto caber
+      };
+      function wrapWords(text, size, maxW) {
+        const words = String(text || "").split(/\s+/).filter(Boolean);
+        if (!words.length) return ["Sem t\xEDtulo"];
+        const lines = [];
+        let cur = "";
+        for (const w of words) {
+          const t = cur ? `${cur} ${w}` : w;
+          if (cur && textWidth(t, size, false) > maxW) {
+            lines.push(cur);
+            cur = w;
+          } else cur = t;
+        }
+        if (cur) lines.push(cur);
+        return lines.slice(0, 4);
+      }
+      function boxFor(n) {
+        const t = typeOf(n);
+        const s = SIZE[t];
+        const lines = wrapWords(n.title, FONT, MAX_TEXT_W);
+        const tw = Math.max(...lines.map((l) => textWidth(l, FONT, false)));
+        const lh = FONT * 1.3;
+        const w = Math.max(s.min, Math.ceil(tw + s.padX * 2));
+        const h = Math.max(s.h, Math.ceil(lines.length * lh + 18));
+        return { id: n.id, type: t, title: n.title || "Sem t\xEDtulo", lines, lineHeight: lh, w, h, x: 0, y: 0, branch: n.branchLabel || "", sub: w, kids: [] };
+      }
+      function measure(n) {
+        const b = boxFor(n);
+        b.kids = n.children.map(measure);
+        if (b.kids.length > 1) b.sub = Math.max(b.w, b.kids.reduce((s, k) => s + k.sub, 0) + (b.kids.length - 1) * GAP_X);
+        else if (b.kids.length === 1) b.sub = Math.max(b.w, b.kids[0].sub);
+        return b;
+      }
+      function place(b, cx, y, boxes) {
+        b.x = cx - b.w / 2;
+        b.y = y;
+        boxes.set(b.id, b);
+        if (b.kids.length === 1) {
+          place(b.kids[0], cx, y + b.h + GAP_Y, boxes);
+        } else if (b.kids.length > 1) {
+          const total = b.kids.reduce((s, k) => s + k.sub, 0) + (b.kids.length - 1) * GAP_X;
+          let left = cx - total / 2;
+          for (const k of b.kids) {
+            place(k, left + k.sub / 2, y + b.h + GAP_Y, boxes);
+            left += k.sub + GAP_X;
+          }
+        }
+      }
+      function layoutFlow(map) {
+        const root = measure(map.root);
+        const boxes = /* @__PURE__ */ new Map();
+        place(root, 0, 0, boxes);
+        const edges = [];
+        for (const b of boxes.values()) for (const k of b.kids) edges.push({ from: b.id, to: k.id, label: k.branch });
+        const relations = map.meta.relations.filter((r) => boxes.has(r.from) && boxes.has(r.to)).map((r) => ({ id: r.id, from: r.from, to: r.to, label: r.label || "" }));
+        let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+        for (const b of boxes.values()) {
+          x1 = Math.min(x1, b.x);
+          y1 = Math.min(y1, b.y);
+          x2 = Math.max(x2, b.x + b.w);
+          y2 = Math.max(y2, b.y + b.h);
+        }
+        const bounds = { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+        return { boxes, edges, relations, bounds };
+      }
+      module.exports = { layoutFlow, wrapWords, GAP_X, GAP_Y };
+    }
+  });
+
   // ../core/text.js
   var require_text = __commonJS({
     "../core/text.js"(exports, module) {
@@ -5874,6 +6206,602 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         return String(s ?? "").replace(/[&<>"']/g, (c) => HTML_ESC[c]);
       }
       module.exports = { escapeHtml };
+    }
+  });
+
+  // ../core/print-style.js
+  var require_print_style = __commonJS({
+    "../core/print-style.js"(exports, module) {
+      "use strict";
+      var BASE = `
+    @page { size: A4; margin: 15mm 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #161616; font-size: 10pt; line-height: 1.35; margin: 0; }
+    h1 { font-size: 18pt; font-weight: 700; margin: 0 0 1mm; line-height: 1.2; }
+    h2 { font-size: 12.5pt; font-weight: 700; margin: 5mm 0 2mm; padding-bottom: 1mm; border-bottom: 0.6pt solid #999; break-after: avoid; }
+    h3 { font-size: 11pt; font-weight: 600; margin: 3mm 0 1mm; break-after: avoid; line-height: 1.25; }
+    h4, h5, h6 { font-size: 10pt; font-weight: 600; margin: 2mm 0 1mm; break-after: avoid; }
+    .sub { color: #555; font-size: 9pt; margin: 0 0 4mm; }
+    .num { color: #555; font-weight: 600; margin-right: 1.2mm; }
+    /* peso do t\xEDtulo pela prioridade do passo/t\xF3pico: p1 \xE9 o mais pesado */
+    .w3 > h2, .w3 > h3, .w3 > h4 { font-weight: 700; }
+    .w2 > h2, .w2 > h3, .w2 > h4 { font-weight: 600; }
+    .w1 > h2, .w1 > h3, .w1 > h4 { font-weight: 500; }
+    .pri { color: #fff; font-size: 7.5pt; font-weight: 700; padding: 0.3mm 1.6mm; border-radius: 2mm; vertical-align: middle; margin-left: 1.5mm; }
+    .meta { color: #555; font-size: 8.5pt; margin: 0 0 0.5mm; }
+    .src { font-size: 8.5pt; color: #333; font-style: italic; margin: 0.8mm 0; }
+    .links { font-size: 9pt; margin: 0.8mm 0; padding-left: 4mm; }
+    .links li { margin: 0; }
+    /* notas: mesma tipografia do texto, recuo pela borda da esquerda (sem caixa colorida) */
+    .notes { font-size: 9.5pt; border-left: 1.2pt solid #bbb; padding: 0 0 0 2.5mm; margin: 1mm 0 2mm; }
+    .notes p { margin: 0 0 1.5mm; }
+    .notes h1, .notes h2, .notes h3, .notes h4, .notes h5, .notes h6 { font-size: 9.5pt; font-weight: 700; margin: 1.5mm 0 0.5mm; border: 0; padding: 0; break-after: avoid; }
+    .notes ul, .notes ol { margin: 0 0 1.5mm 4mm; padding: 0; }
+    .notes li { margin: 0 0 0.5mm; }
+    .notes blockquote { margin: 1mm 0; padding-left: 2mm; border-left: 1pt solid #aaa; color: #333; }
+    .notes table { border-collapse: collapse; font-size: 9pt; margin: 1mm 0; }
+    .notes th, .notes td { border: 0.5pt solid #bbb; padding: 0.5mm 1.5mm; text-align: left; }
+    .notes img { max-width: 100%; height: auto; }
+    .notes.ai { border-left-color: #1e63c6; }
+    .ai-note { font-size: 8.5pt; color: #1e63c6; font-style: italic; margin: 0 0 1mm; }
+    code, .notes code { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; }
+    .cols { column-count: 2; column-gap: 8mm; column-fill: auto; }
+    .step, .topic { break-inside: avoid-column; }
+`;
+      function printCss(extra = "") {
+        return BASE + extra;
+      }
+      var weightClass = (priority) => ({ p1: "w3", p2: "w2", p3: "w1" })[priority] || "w0";
+      module.exports = { printCss, weightClass };
+    }
+  });
+
+  // ../core/flow-export.js
+  var require_flow_export = __commonJS({
+    "../core/flow-export.js"(exports, module) {
+      "use strict";
+      var { findStarts, successors, validateFlow, listPaths, typeOf, FLOW_LABELS } = require_flow();
+      var { layoutFlow } = require_flow_layout();
+      var { escapeHtml: esc } = require_text();
+      var { printCss } = require_print_style();
+      function toFlowMarkdown(map, opts = {}) {
+        const withNotes = opts.notes !== false;
+        const generated = opts.generated || /* @__PURE__ */ new Map();
+        const titleOf = /* @__PURE__ */ new Map();
+        map.walk((n) => titleOf.set(n.id, n.title || "Sem t\xEDtulo"));
+        const out = [];
+        const starts = findStarts(map);
+        const { paths, truncated } = listPaths(map);
+        out.push(`# ${map.meta.name || map.root.title}`, "", `Fluxograma \xB7 ${titleOf.size} passo(s) \xB7 ${paths.length}${truncated ? "+" : ""} caminho(s)`, "");
+        out.push("## Passos", "");
+        const visit = (n, num, depth) => {
+          const head = `${"#".repeat(Math.min(depth + 2, 6))} ${num} ${n.title || "Sem t\xEDtulo"} \xB7 ${FLOW_LABELS[typeOf(n)]}`;
+          out.push(head, "");
+          if (n.branchLabel) out.push(`*Ramo: ${n.branchLabel}*`, "");
+          if (withNotes && (n.notes || "").trim()) out.push(n.notes.trim(), "");
+          else if (withNotes && generated.get(n.id)) {
+            out.push("*Texto de revis\xE3o gerado pela IA (revise antes de usar):*", "");
+            for (const p of generated.get(n.id)) out.push(p, "");
+          }
+          n.children.forEach((c, i) => visit(c, `${num}.${i + 1}`, depth + 1));
+        };
+        for (const s of starts) visit(s, "1", 0);
+        const links = [];
+        map.walk((n) => {
+          for (const e of successors(map, n.id)) {
+            const to = titleOf.get(e.to) || "(passo removido)";
+            const via = e.label ? ` (${e.label})` : "";
+            links.push(`- **${titleOf.get(n.id)}** \u2192 ${to}${via}${e.kind === "rel" ? " \u2014 seta extra" : ""}`);
+          }
+        });
+        if (links.length) out.push("## Liga\xE7\xF5es", "", ...links, "");
+        out.push("## Caminhos poss\xEDveis", "");
+        if (!paths.length) out.push("Nenhum caminho do in\xEDcio ao fim. Veja os pontos de aten\xE7\xE3o.", "");
+        paths.forEach((p, i) => {
+          const parts = p.map((step, k) => {
+            const name = titleOf.get(step.id) || "(passo removido)";
+            if (k === 0) return name;
+            const via = step.via ? `\u2014(${step.via})\u2192` : "\u2192";
+            return `${via} ${name}${step.loopTo ? " \u21BA" : ""}`;
+          });
+          out.push(`${i + 1}. ${parts.join(" ")}`);
+        });
+        if (truncated) out.push("", `_Lista cortada: o fluxo tem mais caminhos do que o limite de ${paths.length}._`);
+        out.push("");
+        const warn = validateFlow(map);
+        if (warn.length) {
+          out.push("## Pontos de aten\xE7\xE3o", "");
+          for (const w of warn) out.push(`- ${w.level === "error" ? "Erro" : "Aviso"}: ${w.message}`);
+          out.push("");
+        }
+        return out.join("\n");
+      }
+      var SHAPE_FILL = { start: ["#2e7d4f", "#ffffff"], end: ["#2e7d4f", "#ffffff"], decision: ["#fff1c2", "#3a2a00"], step: ["#ffffff", "#1c1c1c"] };
+      function diagramSvg(map) {
+        const L = layoutFlow(map);
+        const b = L.bounds, pad = 20, shapes = [];
+        for (const e of L.edges) {
+          const a = L.boxes.get(e.from), c = L.boxes.get(e.to);
+          const x1 = a.x + a.w / 2, y1 = a.y + a.h, x2 = c.x + c.w / 2, y2 = c.y, my = (y1 + y2) / 2;
+          shapes.push(`<path d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" fill="none" stroke="#555" stroke-width="1.6" marker-end="url(#fa)"/>`);
+          if (e.label) shapes.push(`<text x="${(x1 + x2) / 2}" y="${my}" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#222">${esc(e.label)}</text>`);
+        }
+        for (const r of L.relations) {
+          const a = L.boxes.get(r.from), c = L.boxes.get(r.to);
+          const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = c.x + c.w, y2 = c.y + c.h / 2, cx = Math.max(x1, x2) + 90;
+          shapes.push(`<path d="M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}" fill="none" stroke="#1e63c6" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#fa)"/>`);
+          if (r.label) shapes.push(`<text x="${cx - 4}" y="${(y1 + y2) / 2}" font-size="12" text-anchor="middle" fill="#1e63c6">${esc(r.label)}</text>`);
+        }
+        for (const bx of L.boxes.values()) {
+          const cx = bx.x + bx.w / 2, cy = bx.y + bx.h / 2, [fill, ink] = SHAPE_FILL[bx.type] || SHAPE_FILL.step;
+          const pill = bx.type === "start" || bx.type === "end";
+          const stroke = pill ? "#2e7d4f" : "#666";
+          shapes.push(bx.type === "decision" ? `<polygon points="${cx},${bx.y} ${bx.x + bx.w},${cy} ${cx},${bx.y + bx.h} ${bx.x},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>` : `<rect x="${bx.x}" y="${bx.y}" width="${bx.w}" height="${bx.h}" rx="${pill ? bx.h / 2 : 10}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`);
+          const top = cy - (bx.lines.length - 1) * bx.lineHeight / 2;
+          bx.lines.forEach((l, i) => shapes.push(`<text x="${cx}" y="${top + i * bx.lineHeight}" font-size="13" text-anchor="middle" dominant-baseline="central" fill="${ink}">${esc(l)}</text>`));
+        }
+        return `<svg class="diagram" viewBox="${b.x - pad} ${b.y - pad} ${b.w + pad * 2} ${b.h + pad * 2}" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif"><defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>${shapes.join("")}</svg>`;
+      }
+      function toFlowHtml(map, opts = {}) {
+        const withNotes = opts.notes !== false;
+        const generated = opts.generated || /* @__PURE__ */ new Map();
+        const names = /* @__PURE__ */ new Map();
+        map.walk((n) => names.set(n.id, n.title || "Sem t\xEDtulo"));
+        const items = [];
+        const visit = (n, num, depth) => {
+          const body = [];
+          if (n.branchLabel) body.push(`<p class="meta">Ramo: ${esc(n.branchLabel)}</p>`);
+          if (withNotes && (n.notes || "").trim()) body.push(`<div class="notes">${esc(n.notes.trim()).replace(/\n/g, "<br>")}</div>`);
+          else if (withNotes && generated.get(n.id)) body.push(`<div class="notes ai"><p class="ai-note">Texto de revis\xE3o gerado pela IA (revise antes de usar)</p>${generated.get(n.id).map((p) => `<p>${esc(p)}</p>`).join("")}</div>`);
+          items.push(`<section class="step d${Math.min(depth, 5)}"><h3><span class="num">${esc(num)}</span> ${esc(n.title || "Sem t\xEDtulo")} <small>${esc(FLOW_LABELS[typeOf(n)])}</small></h3>${body.join("")}</section>`);
+          n.children.forEach((c, i) => visit(c, `${num}.${i + 1}`, depth + 1));
+        };
+        for (const st of findStarts(map)) visit(st, "1", 0);
+        const { paths, truncated } = listPaths(map);
+        const pathItems = paths.map((p) => `<li>${esc(p.map((s, k) => k === 0 ? names.get(s.id) || "" : `${s.via ? `\u2014(${s.via})\u2192` : "\u2192"} ${names.get(s.id) || ""}${s.loopTo ? " \u21BA" : ""}`).join(" "))}</li>`).join("");
+        const warn = validateFlow(map);
+        return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(map.meta.name || map.root.title)}</title><style>${printCss(`
+    .diagram { width: 100%; height: auto; max-height: 200mm; break-inside: avoid; }
+    .step { margin: 0 0 2mm; }
+    h3 small { color: #666; font-weight: normal; font-size: 8.5pt; }
+    .paths { font-size: 9pt; } .warn { font-size: 9pt; color: #6a4b00; }
+`)}</style></head><body>
+    <h1>${esc(map.meta.name || map.root.title)}</h1><p class="sub">Fluxograma \xB7 ${names.size} passo(s) \xB7 ${paths.length}${truncated ? "+" : ""} caminho(s)</p>
+    <h2>Diagrama</h2>${diagramSvg(map)}
+    <h2>Passos</h2><div class="cols">${items.join("")}</div>
+    <h2>Caminhos poss\xEDveis</h2><ol class="paths">${pathItems || "<li>Nenhum caminho do in\xEDcio ao fim.</li>"}</ol>
+    ${truncated ? `<p class="warn">Lista cortada: o fluxo tem mais caminhos do que o limite de ${paths.length}.</p>` : ""}
+    ${warn.length ? `<h2>Pontos de aten\xE7\xE3o</h2><ul class="warn">${warn.map((w) => `<li>${w.level === "error" ? "Erro" : "Aviso"}: ${esc(w.message)}</li>`).join("")}</ul>` : ""}
+  </body></html>`;
+      }
+      module.exports = { toFlowMarkdown, toFlowHtml };
+    }
+  });
+
+  // ../core/forcelayout.js
+  var require_forcelayout = __commonJS({
+    "../core/forcelayout.js"(exports, module) {
+      "use strict";
+      function mulberry32(a) {
+        return () => {
+          a |= 0;
+          a = a + 1831565813 | 0;
+          let t = Math.imul(a ^ a >>> 15, 1 | a);
+          t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+      }
+      function layoutComponent(m, edges, rnd, k, iterations) {
+        const px = new Float64Array(m), py = new Float64Array(m), dx = new Float64Array(m), dy = new Float64Array(m);
+        const golden = Math.PI * (3 - Math.sqrt(5));
+        for (let i = 0; i < m; i++) {
+          const a = i * golden + rnd() * 0.6, r = Math.sqrt(i + 0.5) * k * 0.55;
+          px[i] = Math.cos(a) * r;
+          py[i] = Math.sin(a) * r;
+        }
+        const its = Math.max(60, Math.min(iterations, Math.round(iterations * Math.min(1, 500 / m))));
+        let t = k * Math.min(3, 0.6 + Math.sqrt(m) * 0.12);
+        const cool = t / (its + 1), cut2 = k * 6 * (k * 6);
+        for (let it = 0; it < its; it++) {
+          dx.fill(0);
+          dy.fill(0);
+          for (let i = 0; i < m; i++) for (let j = i + 1; j < m; j++) {
+            let ddx = px[i] - px[j], ddy = py[i] - py[j], d2 = ddx * ddx + ddy * ddy;
+            if (d2 > cut2) continue;
+            if (d2 < 0.01) {
+              ddx = rnd() - 0.5;
+              ddy = rnd() - 0.5;
+              d2 = 0.01;
+            }
+            const d = Math.sqrt(d2), f = k * k / d, fx = ddx / d * f, fy = ddy / d * f;
+            dx[i] += fx;
+            dy[i] += fy;
+            dx[j] -= fx;
+            dy[j] -= fy;
+          }
+          for (const [a, b, w] of edges) {
+            const ddx = px[a] - px[b], ddy = py[a] - py[b], d = Math.sqrt(ddx * ddx + ddy * ddy) || 0.01, f = d * d / k * w;
+            dx[a] -= ddx / d * f;
+            dy[a] -= ddy / d * f;
+            dx[b] += ddx / d * f;
+            dy[b] += ddy / d * f;
+          }
+          let cx = 0, cy = 0;
+          for (let i = 0; i < m; i++) {
+            cx += px[i];
+            cy += py[i];
+          }
+          cx /= m;
+          cy /= m;
+          for (let i = 0; i < m; i++) {
+            dx[i] -= (px[i] - cx) * 0.03;
+            dy[i] -= (py[i] - cy) * 0.03;
+            const d = Math.sqrt(dx[i] * dx[i] + dy[i] * dy[i]) || 0.01, s = Math.min(d, t);
+            px[i] += dx[i] / d * s;
+            py[i] += dy[i] / d * s;
+          }
+          t -= cool;
+        }
+        let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+        for (let i = 0; i < m; i++) {
+          x1 = Math.min(x1, px[i]);
+          y1 = Math.min(y1, py[i]);
+          x2 = Math.max(x2, px[i]);
+          y2 = Math.max(y2, py[i]);
+        }
+        const pts = [];
+        for (let i = 0; i < m; i++) pts.push({ x: px[i] - x1, y: py[i] - y1 });
+        return { pts, w: x2 - x1, h: y2 - y1 };
+      }
+      function forceLayout(nodes, edges, { iterations = 300, seed = 7, maxNodes = 1500, spacing = 120 } = {}) {
+        const pos = /* @__PURE__ */ new Map();
+        if (!nodes.length) return pos;
+        const list = nodes.length > maxNodes ? [...nodes].sort((a, b) => b.deg - a.deg).slice(0, maxNodes) : nodes;
+        const n = list.length, idx = new Map(list.map((x3, i) => [x3.id, i]));
+        const E = [];
+        for (const e of edges) {
+          const a = idx.get(e.from), b = idx.get(e.to);
+          if (a !== void 0 && b !== void 0 && a !== b) E.push([a, b, e.type === "hierarchy" ? 0.5 : 1]);
+        }
+        const parent = Int32Array.from({ length: n }, (_, i) => i);
+        const find = (x3) => {
+          while (parent[x3] !== x3) {
+            parent[x3] = parent[parent[x3]];
+            x3 = parent[x3];
+          }
+          return x3;
+        };
+        for (const [a, b] of E) {
+          const ra = find(a), rb = find(b);
+          if (ra !== rb) parent[Math.max(ra, rb)] = Math.min(ra, rb);
+        }
+        const comps = /* @__PURE__ */ new Map();
+        for (let i = 0; i < n; i++) {
+          const r = find(i);
+          (comps.get(r) || comps.set(r, []).get(r)).push(i);
+        }
+        const real = [...comps.values()].filter((c) => c.length >= 2).sort((a, b) => b.length - a.length || a[0] - b[0]);
+        const orphans = [...comps.values()].filter((c) => c.length === 1).map((c) => c[0]);
+        const extra = nodes.length > n ? nodes.filter((x3) => !idx.has(x3.id)) : [];
+        const k = spacing * 0.8, gap = spacing * 0.9;
+        const blocks = real.map((c, ci) => {
+          const local = new Map(c.map((g, i) => [g, i])), ce = [];
+          for (const [a, b, w] of E) if (local.has(a) && local.has(b)) ce.push([local.get(a), local.get(b), w]);
+          const r = layoutComponent(c.length, ce, mulberry32(seed * 7919 + ci * 104729 + 13), k, iterations);
+          return { c, ...r };
+        });
+        const area = blocks.reduce((s, b) => s + (b.w + gap) * (b.h + gap), 0) + (orphans.length + extra.length) * (k * 0.75) * (k * 0.75);
+        const maxW = blocks.reduce((m, b) => Math.max(m, b.w), 0), target = Math.max(maxW, Math.sqrt(area) * 1.7);
+        let x = 0, y = 0, rowH = 0, usedW = 0;
+        const placed = [];
+        for (const b of blocks) {
+          if (x > 0 && x + b.w > target) {
+            x = 0;
+            y += rowH + gap;
+            rowH = 0;
+          }
+          placed.push({ b, ox: x, oy: y });
+          x += b.w + gap;
+          rowH = Math.max(rowH, b.h);
+          usedW = Math.max(usedW, x - gap);
+        }
+        const bottom = blocks.length ? y + rowH : 0;
+        for (const { b, ox, oy } of placed) b.c.forEach((g, i) => pos.set(list[g].id, { x: ox + b.pts[i].x, y: oy + b.pts[i].y }));
+        const lone = [...orphans.map((i) => list[i].id), ...extra.map((e) => e.id)];
+        if (lone.length) {
+          const cell = k * 0.75, cols = Math.max(3, Math.min(lone.length, Math.ceil(Math.max(usedW, cell * 6) / cell), Math.ceil(Math.sqrt(lone.length * 1.8))));
+          const top = blocks.length ? bottom + gap * 1.4 : 0;
+          lone.forEach((id, i) => pos.set(id, { x: i % cols * cell, y: top + Math.floor(i / cols) * cell }));
+        }
+        let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+        for (const p of pos.values()) {
+          x1 = Math.min(x1, p.x);
+          y1 = Math.min(y1, p.y);
+          x2 = Math.max(x2, p.x);
+          y2 = Math.max(y2, p.y);
+        }
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        for (const p of pos.values()) {
+          p.x -= mx;
+          p.y -= my;
+        }
+        return pos;
+      }
+      module.exports = { forceLayout };
+    }
+  });
+
+  // ../core/links.js
+  var require_links = __commonJS({
+    "../core/links.js"(exports, module) {
+      "use strict";
+      var norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+      var LINK_RE = /\[\[([^\[\]\n|#]{1,200})(?:#([^\[\]\n|]{0,200}))?(?:\|([^\[\]\n]{1,200}))?\]\]/g;
+      var stripCode = (s) => String(s ?? "").replace(/```[\s\S]*?```/g, " ").replace(/`[^`\n]*`/g, " ");
+      function parseLinks(text) {
+        const out = [];
+        for (const m of stripCode(text).matchAll(LINK_RE)) {
+          const a = m[1].trim(), b = m[2] === void 0 ? void 0 : m[2].trim();
+          if (!a) continue;
+          if (b === void 0) out.push({ raw: m[0], map: null, topic: a, alias: m[3] ? m[3].trim() : null });
+          else out.push({ raw: m[0], map: a, topic: b || null, alias: m[3] ? m[3].trim() : null });
+        }
+        return out;
+      }
+      function rewriteLinks(text, fn) {
+        const src = String(text ?? "");
+        const protectedRanges = [];
+        for (const m of src.matchAll(/```[\s\S]*?```|`[^`\n]*`/g)) protectedRanges.push([m.index, m.index + m[0].length]);
+        return src.replace(LINK_RE, (raw, a, b, alias, offset) => {
+          if (protectedRanges.some(([s, e]) => offset >= s && offset < e)) return raw;
+          const A = a.trim(), B = b === void 0 ? void 0 : b.trim();
+          const link = B === void 0 ? { raw, map: null, topic: A, alias: alias ? alias.trim() : null } : { raw, map: A, topic: B || null, alias: alias ? alias.trim() : null };
+          const r = fn(link);
+          return r == null ? raw : r;
+        });
+      }
+      var plainLinks = (text) => rewriteLinks(text, (lk) => lk.alias || lk.topic || lk.map);
+      module.exports = { norm, parseLinks, rewriteLinks, plainLinks, LINK_RE };
+    }
+  });
+
+  // ../core/graph.js
+  var require_graph = __commonJS({
+    "../core/graph.js"(exports, module) {
+      "use strict";
+      var { norm, parseLinks } = require_links();
+      function walkAll(map, fn) {
+        const visit = (node, level, parent) => {
+          fn(node, level, parent);
+          for (const c of node.children) visit(c, level + 1, node);
+        };
+        visit(map.root, 0, null);
+        for (const f of map.meta._momFloating || []) visit(f.node, 0, null);
+      }
+      function buildGraph(maps, { hierarchy = false } = {}) {
+        const nodes = [];
+        const byId = /* @__PURE__ */ new Map();
+        const edges = [];
+        const edgeKeys = /* @__PURE__ */ new Set();
+        const ghosts = /* @__PURE__ */ new Map();
+        const mapIndex = /* @__PURE__ */ new Map();
+        const add = (k, e) => {
+          if (!mapIndex.has(k)) mapIndex.set(k, []);
+          mapIndex.get(k).push(e);
+        };
+        const entries = maps.map((m) => {
+          const topics = /* @__PURE__ */ new Map();
+          const e = { ...m, topics, root: m.map.root };
+          walkAll(m.map, (n) => {
+            const k = norm(n.title);
+            if (!topics.has(k)) topics.set(k, []);
+            topics.get(k).push(n);
+          });
+          return e;
+        });
+        for (const e of entries) {
+          add(norm(e.name), e);
+          if (norm(e.map.root.title) !== norm(e.name)) add(norm(e.map.root.title), e);
+        }
+        const idOf = (e, n) => `${e.key}::${n.id}`;
+        for (const e of entries) {
+          walkAll(e.map, (n, level, parent) => {
+            const g = { id: idOf(e, n), kind: "topic", title: n.title, mapKey: e.key, mapName: e.name, topicId: n.id, isRoot: !parent, progress: n.progress ?? null, deg: 0, childCount: n.children.length, hasNote: !!(n.notes && String(n.notes).trim()), weight: 0 };
+            nodes.push(g);
+            byId.set(g.id, g);
+          });
+        }
+        const link = (from, to, type, extra = {}) => {
+          if (from === to) return;
+          const k = `${from}>${to}>${type}`;
+          if (edgeKeys.has(k)) return;
+          edgeKeys.add(k);
+          edges.push({ from, to, type, ...extra });
+        };
+        const ghost = (label, key) => {
+          const id = `ghost::${key}`;
+          if (!ghosts.has(id)) {
+            const g = { id, kind: "ghost", title: label, mapKey: null, mapName: null, topicId: null, isRoot: false, progress: null, deg: 0 };
+            ghosts.set(id, g);
+            nodes.push(g);
+            byId.set(id, g);
+          }
+          return id;
+        };
+        const resolve = (lk, from) => {
+          const t = lk.topic == null ? null : norm(lk.topic);
+          if (lk.map) {
+            const cands = mapIndex.get(norm(lk.map)) || [];
+            if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? "#" + t : "")) };
+            const e = cands.find((c) => c.key === from.key) || cands[0];
+            if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1 };
+            const hit = (e.topics.get(t) || [])[0];
+            return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1 } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + "#" + t) };
+          }
+          const own = (from.topics.get(t) || [])[0];
+          if (own) return { id: idOf(from, own) };
+          const asMap = (mapIndex.get(t) || []).filter((c) => c.key !== from.key);
+          const others = [];
+          for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))) {
+            if (e.key === from.key) continue;
+            const hit = (e.topics.get(t) || [])[0];
+            if (hit) others.push(idOf(e, hit));
+          }
+          for (const e of asMap) {
+            const id = idOf(e, e.root);
+            if (!others.includes(id)) others.push(id);
+          }
+          if (others.length) return { id: others[0], ambiguous: others.length > 1 };
+          return { id: ghost(lk.topic, t) };
+        };
+        for (const e of entries) {
+          walkAll(e.map, (n, level, parent) => {
+            const me = idOf(e, n);
+            if (hierarchy && parent) link(idOf(e, parent), me, "hierarchy");
+            for (const text of [n.title, n.notes]) {
+              for (const lk of parseLinks(text)) {
+                const r = resolve(lk, e);
+                link(me, r.id, "link", { ...r.ambiguous ? { ambiguous: true } : {}, ...lk.alias ? { alias: lk.alias } : {} });
+              }
+            }
+          });
+          for (const r of e.map.meta.relations || []) {
+            const a = e.map.find(r.from), b = e.map.find(r.to);
+            if (a && b) link(idOf(e, a.node), idOf(e, b.node), "relation", { label: r.label || "" });
+          }
+        }
+        for (const ed of edges) {
+          if (ed.type === "hierarchy") continue;
+          byId.get(ed.from).deg++;
+          byId.get(ed.to).deg++;
+        }
+        for (const g of nodes) g.weight = (g.childCount || 0) + (g.hasNote ? 1 : 0) + g.deg;
+        const out = /* @__PURE__ */ new Map(), inn = /* @__PURE__ */ new Map();
+        for (const ed of edges) {
+          if (!out.has(ed.from)) out.set(ed.from, []);
+          out.get(ed.from).push(ed);
+          if (!inn.has(ed.to)) inn.set(ed.to, []);
+          inn.get(ed.to).push(ed);
+        }
+        return {
+          nodes,
+          edges,
+          byId,
+          outgoing: (id) => (out.get(id) || []).filter((x) => x.type !== "hierarchy"),
+          incoming: (id) => (inn.get(id) || []).filter((x) => x.type !== "hierarchy"),
+          idOf: (mapKey, topicId) => `${mapKey}::${topicId}`,
+          /** Resolve um link escrito no mapa `fromKey` com o mesmo critério do grafo (usado pelo exportador do Obsidian). */
+          resolveLink: (lk, fromKey) => {
+            const e = entries.find((x) => x.key === fromKey);
+            return e ? resolve(lk, e) : null;
+          }
+        };
+      }
+      function neighborhood(g, id, depth = 1) {
+        if (!g.byId.has(id)) return { nodes: [], edges: [] };
+        const adj = /* @__PURE__ */ new Map();
+        for (const e of g.edges) {
+          if (!adj.has(e.from)) adj.set(e.from, []);
+          adj.get(e.from).push(e.to);
+          if (!adj.has(e.to)) adj.set(e.to, []);
+          adj.get(e.to).push(e.from);
+        }
+        const seen = /* @__PURE__ */ new Map([[id, 0]]);
+        let front = [id];
+        for (let d = 1; d <= depth; d++) {
+          const next = [];
+          for (const x of front) for (const y of adj.get(x) || []) if (!seen.has(y)) {
+            seen.set(y, d);
+            next.push(y);
+          }
+          front = next;
+        }
+        return { nodes: g.nodes.filter((n) => seen.has(n.id)), edges: g.edges.filter((e) => seen.has(e.from) && seen.has(e.to)), distance: seen };
+      }
+      module.exports = { buildGraph, neighborhood };
+    }
+  });
+
+  // ../core/graph-labels.js
+  var require_graph_labels = __commonJS({
+    "../core/graph-labels.js"(exports, module) {
+      "use strict";
+      var ROW_H = 15;
+      var CELL = 80;
+      var SpatialGrid = class {
+        constructor(cell = CELL) {
+          this.cell = cell;
+          this.cells = /* @__PURE__ */ new Map();
+        }
+        _key(cx, cy) {
+          return cx * 100003 + cy;
+        }
+        put(b) {
+          const c = this.cell;
+          for (let cx = Math.floor(b.x / c); cx <= Math.floor((b.x + b.w) / c); cx++) for (let cy = Math.floor(b.y / c); cy <= Math.floor((b.y + b.h) / c); cy++) {
+            const k = this._key(cx, cy);
+            (this.cells.get(k) || this.cells.set(k, []).get(k)).push(b);
+          }
+          return b;
+        }
+        /** `b` encosta (com folga `gap`) em algum retângulo guardado, exceto `skip`? */
+        hits(b, gap = 0, skip = null) {
+          const c = this.cell;
+          for (let cx = Math.floor((b.x - gap) / c); cx <= Math.floor((b.x + b.w + gap) / c); cx++) for (let cy = Math.floor((b.y - gap) / c); cy <= Math.floor((b.y + b.h + gap) / c); cy++) {
+            const l = this.cells.get(this._key(cx, cy));
+            if (!l) continue;
+            for (const o of l) if (o !== skip && b.x - gap < o.x + o.w && o.x < b.x + b.w + gap && b.y - gap < o.y + o.h && o.y < b.y + b.h + gap) return true;
+          }
+          return false;
+        }
+      };
+      function placeLabels(items, o) {
+        const { width, height, obstacles = [], mode = "auto", budget = Infinity, gap = 0, measure, fit } = o;
+        const placed = /* @__PURE__ */ new Map();
+        let shown = 0;
+        const grid = new SpatialGrid();
+        const order = items.map((it, n) => [it, n]).sort((a, b) => (b[0].score || 0) - (a[0].score || 0) || a[1] - b[1]).map((x) => x[0]);
+        const circ = /* @__PURE__ */ new Map();
+        for (const it of order) circ.set(it.id, grid.put({ x: it.x - it.r, y: it.y - it.r, w: it.r * 2, h: it.r * 2 }));
+        for (const b of obstacles) if (b.w > 0 && b.h > 0) grid.put({ ...b });
+        for (const it of order) {
+          const forced = !!it.forced;
+          const allowed = mode === "all" ? true : mode === "none" ? forced : mode === "relevant" ? forced || !!it.relevant : forced || shown < budget;
+          if (!allowed) continue;
+          const text = fit(it.text, forced ? 300 : 170), w = measure(text, it) + 6, off = it.r + 4;
+          const cands = [
+            { x: it.x - w / 2, y: it.y + off, anchor: "middle", ox: 0, oy: off + ROW_H / 2 },
+            { x: it.x + off, y: it.y - ROW_H / 2, anchor: "start", ox: off, oy: 0 },
+            { x: it.x - w / 2, y: it.y - off - ROW_H, anchor: "middle", ox: 0, oy: -off - ROW_H / 2 },
+            { x: it.x - off - w, y: it.y - ROW_H / 2, anchor: "end", ox: -off, oy: 0 }
+          ];
+          let pick = null;
+          if (mode === "all") pick = cands[0];
+          else for (const c of cands) {
+            const b = { x: c.x, y: c.y, w, h: ROW_H };
+            if (b.x >= -2 && b.x + w <= width + 2 && b.y >= 0 && b.y + ROW_H <= height + 2 && !grid.hits(b, gap, circ.get(it.id))) {
+              pick = c;
+              break;
+            }
+          }
+          if (!pick && forced) pick = cands[0];
+          if (!pick) continue;
+          grid.put({ x: pick.x, y: pick.y, w, h: ROW_H });
+          shown++;
+          placed.set(it.id, { text, ox: pick.ox, oy: pick.oy, anchor: pick.anchor, big: forced });
+        }
+        return { placed, shown };
+      }
+      function relationLabelAnchor(a, b, focusEnd) {
+        const from = focusEnd === "b" ? b : a, to = focusEnd === "b" ? a : b;
+        let t = 0.5;
+        if (focusEnd) {
+          const len = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+          t = Math.min(0.5, 110 / len);
+        }
+        return { from, to, t, x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
+      }
+      module.exports = { placeLabels, relationLabelAnchor, SpatialGrid, ROW_H };
     }
   });
 
@@ -6265,456 +7193,6 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         return String(md ?? "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean).map((p) => "<p>" + p.split("\n").map(inline).join("<br>") + "</p>").join("");
       }
       module.exports = { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml, parseFont, SHAPE };
-    }
-  });
-
-  // ../core/pdfrefs.js
-  var require_pdfrefs = __commonJS({
-    "../core/pdfrefs.js"(exports, module) {
-      "use strict";
-      var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-      var MAX_PDFS = 200;
-      var MAX_REFS = 500;
-      var MAX_RECTS = 40;
-      var MAX_QUOTE = 2e3;
-      var MAX_PAGE = 1e5;
-      var clamp01 = (n) => Math.min(1, Math.max(0, n));
-      function sanitizePdfs(list) {
-        const out = [], seen = /* @__PURE__ */ new Set();
-        for (const p of Array.isArray(list) ? list : []) {
-          if (out.length >= MAX_PDFS) break;
-          if (!p || typeof p.id !== "string" || !SAFE_ID.test(p.id) || seen.has(p.id) || typeof p.path !== "string" || !p.path) continue;
-          seen.add(p.id);
-          out.push({ id: p.id, name: String(p.name ?? "").slice(0, 200) || baseName(p.path), path: p.path.slice(0, 1e3) });
-        }
-        return out;
-      }
-      var baseName = (p) => String(p).split(/[\\/]/).pop().replace(/\.pdf$/i, "").slice(0, 200) || "PDF";
-      function sanitizeRefs(list) {
-        const out = [];
-        for (const r of Array.isArray(list) ? list : []) {
-          if (out.length >= MAX_REFS) break;
-          if (!r || typeof r.pdf !== "string" || !SAFE_ID.test(r.pdf) || !Number.isInteger(r.page) || r.page < 1 || r.page > MAX_PAGE) continue;
-          const rects = (Array.isArray(r.rects) ? r.rects : []).slice(0, MAX_RECTS).filter((q) => Array.isArray(q) && q.length === 4 && q.every((n) => Number.isFinite(n))).map((q) => q.map(clamp01)).filter((q) => q[2] > 0 && q[3] > 0);
-          out.push({ pdf: r.pdf, page: r.page, quote: String(r.quote ?? "").slice(0, MAX_QUOTE), rects });
-        }
-        return out;
-      }
-      var refLabel = (ref, pdfs) => {
-        const p = (pdfs || []).find((x) => x.id === ref.pdf);
-        return `${p ? p.name : "PDF n\xE3o vinculado"}, p. ${ref.page}`;
-      };
-      module.exports = { sanitizePdfs, sanitizeRefs, refLabel, baseName, SAFE_ID, MAX_REFS };
-    }
-  });
-
-  // ../core/model.js
-  var require_model = __commonJS({
-    "../core/model.js"(exports, module) {
-      "use strict";
-      var crypto = require_crypto();
-      var pdfrefs = require_pdfrefs();
-      var newId = () => crypto.randomBytes(16).toString("hex");
-      function createNode(title = "T\xF3pico", extra = {}) {
-        return { id: newId(), title, notes: "", collapsed: false, style: {}, markers: [], progress: null, children: [], ...extra };
-      }
-      var MAX_DEPTH = 100;
-      var MindMap = class _MindMap {
-        constructor(root = createNode("Mapa mental"), meta = {}) {
-          this.root = root;
-          this.meta = { name: root.title, theme: "ocean", ...meta };
-          if (!Array.isArray(this.meta.relations)) this.meta.relations = [];
-          this._undo = [];
-          this._redo = [];
-        }
-        /** Acha um tópico pelo id. Sem `node`, procura na árvore principal e também nos tópicos soltos do Mindomo (editáveis no lugar). */
-        find(id, node = null, parent = null) {
-          if (node) return this._findIn(id, node, parent);
-          const main = this._findIn(id, this.root, null);
-          if (main) return main;
-          for (const f of this.meta._momFloating || []) {
-            const r = this._findIn(id, f.node, null);
-            if (r) return r;
-          }
-          return null;
-        }
-        _findIn(id, node, parent) {
-          if (node.id === id) return { node, parent };
-          for (const c of node.children) {
-            const r = this._findIn(id, c, node);
-            if (r) return r;
-          }
-          return null;
-        }
-        walk(fn, node = this.root, level = 0, parent = null) {
-          fn(node, level, parent);
-          for (const c of node.children) this.walk(fn, c, level + 1, node);
-        }
-        // --- histórico (snapshots JSON; simples e robusto para mapas de tamanho normal) ---
-        _snapshot() {
-          if (this._inBatch) return;
-          this._undo.push(JSON.stringify({ root: this.root, meta: this.meta }));
-          if (this._undo.length > 200) this._undo.shift();
-          this._redo.length = 0;
-        }
-        _restore(json) {
-          const s = JSON.parse(json);
-          this.root = s.root;
-          this.meta = s.meta;
-        }
-        /** Há o que desfazer / refazer (a interface usa para habilitar os botões). */
-        canUndo() {
-          return this._undo.length > 0;
-        }
-        canRedo() {
-          return this._redo.length > 0;
-        }
-        undo() {
-          if (!this._undo.length) return false;
-          this._redo.push(JSON.stringify({ root: this.root, meta: this.meta }));
-          this._restore(this._undo.pop());
-          return true;
-        }
-        redo() {
-          if (!this._redo.length) return false;
-          this._undo.push(JSON.stringify({ root: this.root, meta: this.meta }));
-          this._restore(this._redo.pop());
-          return true;
-        }
-        /**
-         * Executa várias alterações como UMA ação desfazível. Se algo lançar erro, tudo é revertido
-         * (nenhuma alteração parcial fica no mapa).
-         */
-        batch(fn) {
-          if (this._inBatch) return fn();
-          const before = JSON.stringify({ root: this.root, meta: this.meta });
-          this._snapshot();
-          this._inBatch = true;
-          try {
-            return fn();
-          } catch (e) {
-            this._restore(before);
-            this._undo.pop();
-            throw e;
-          } finally {
-            this._inBatch = false;
-          }
-        }
-        /** Ids ordenados pela ordem do documento, sem repetidos, sem a raiz e sem descendentes de outro id da lista. */
-        topLevel(ids) {
-          const want = new Set(ids);
-          const out = [];
-          const rec = (n, covered) => {
-            if (want.has(n.id) && n !== this.root) {
-              if (!covered) out.push(n);
-              covered = true;
-            }
-            n.children.forEach((c) => rec(c, covered));
-          };
-          rec(this.root, false);
-          return out;
-        }
-        // --- edição ---
-        /** Profundidade de um tópico (raiz = 0), ou -1 se não existir. Iterativo: seguro em árvores muito fundas. */
-        depthOf(id) {
-          const stack = [[this.root, 0]];
-          while (stack.length) {
-            const [n, d] = stack.pop();
-            if (n.id === id) return d;
-            for (const c of n.children) stack.push([c, d + 1]);
-          }
-          return -1;
-        }
-        /** Altura de uma subárvore (nó sem filhos = 0). Iterativo. */
-        static heightOf(node) {
-          let h = 0;
-          const stack = [[node, 0]];
-          while (stack.length) {
-            const [n, d] = stack.pop();
-            if (d > h) h = d;
-            for (const c of n.children) stack.push([c, d + 1]);
-          }
-          return h;
-        }
-        /** Garante que um tópico (ou subárvore de altura `height`) pendurado em `parentId` não passe de MAX_DEPTH níveis. */
-        _checkDepth(parentId, height = 0) {
-          if (this.depthOf(parentId) + 1 + height > MAX_DEPTH) throw new Error(`Profundidade m\xE1xima: ${MAX_DEPTH} n\xEDveis de subt\xF3picos.`);
-        }
-        addChild(parentId, title = "T\xF3pico", index) {
-          const p = this.find(parentId);
-          if (!p) return null;
-          this._checkDepth(parentId);
-          this._snapshot();
-          const n = createNode(title);
-          p.node.collapsed = false;
-          if (index == null || index > p.node.children.length) p.node.children.push(n);
-          else p.node.children.splice(index, 0, n);
-          return n;
-        }
-        addSibling(id, title = "T\xF3pico") {
-          const r = this.find(id);
-          if (!r || !r.parent) return null;
-          return this.addChild(r.parent.id, title, r.parent.children.indexOf(r.node) + 1);
-        }
-        remove(id) {
-          const r = this.find(id);
-          if (!r || !r.parent) return false;
-          this._snapshot();
-          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
-          const gone = /* @__PURE__ */ new Set();
-          this.walk((n) => gone.add(n.id), r.node);
-          this.meta.relations = this.meta.relations.filter((x) => !gone.has(x.from) && !gone.has(x.to));
-          return true;
-        }
-        toggleMarker(id, marker) {
-          const r = this.find(id);
-          if (!r) return false;
-          this._snapshot();
-          const m = r.node.markers || (r.node.markers = []);
-          const i = m.indexOf(marker);
-          if (i >= 0) m.splice(i, 1);
-          else m.push(marker);
-          return true;
-        }
-        /** Relação (seta) entre dois tópicos quaisquer. Retorna a relação ou null se inválida/duplicada. */
-        addRelation(from, to, label = "") {
-          if (from === to || !this.find(from) || !this.find(to)) return null;
-          if (this.meta.relations.some((x) => x.from === from && x.to === to)) return null;
-          this._snapshot();
-          const rel = { id: newId(), from, to, label };
-          this.meta.relations.push(rel);
-          return rel;
-        }
-        updateRelation(id, patch) {
-          const r = this.meta.relations.find((x) => x.id === id);
-          if (!r) return false;
-          this._snapshot();
-          Object.assign(r, patch);
-          return true;
-        }
-        removeRelation(id) {
-          if (!this.meta.relations.some((x) => x.id === id)) return false;
-          this._snapshot();
-          this.meta.relations = this.meta.relations.filter((x) => x.id !== id);
-          return true;
-        }
-        /** Remove vários tópicos (e suas relações) como uma ação. Retorna quantos tópicos de topo saíram. */
-        /** Exclui um tópico solto do Mindomo (com tudo o que está dentro dele). Uma ação desfazível. */
-        removeFloating(id) {
-          const list = this.meta._momFloating;
-          const i = (list || []).findIndex((f) => f.node.id === id);
-          if (i < 0) return false;
-          this._snapshot();
-          list.splice(i, 1);
-          if (!list.length) delete this.meta._momFloating;
-          return true;
-        }
-        removeMany(ids) {
-          const tops = this.topLevel(ids);
-          if (!tops.length) return 0;
-          this.batch(() => tops.forEach((n) => this.remove(n.id)));
-          return tops.length;
-        }
-        updateMany(ids, patch) {
-          const list = ids.filter((id) => this.find(id));
-          if (!list.length) return false;
-          this.batch(() => list.forEach((id) => this.update(id, patch)));
-          return true;
-        }
-        toggleMarkerMany(ids, marker) {
-          const list = ids.map((id) => this.find(id)).filter(Boolean);
-          if (!list.length) return false;
-          const all = list.every((r) => (r.node.markers || []).includes(marker));
-          this.batch(() => list.forEach((r) => {
-            if ((r.node.markers || []).includes(marker) === all) this.toggleMarker(r.node.id, marker);
-          }));
-          return true;
-        }
-        /** Move vários tópicos (preservando a ordem do documento) para dentro de newParentId. */
-        moveMany(ids, newParentId, index) {
-          const tops = this.topLevel(ids);
-          if (!tops.length || !this.find(newParentId)) return false;
-          if (tops.some((n) => this.find(newParentId, n))) return false;
-          this.batch(() => tops.forEach((n, i) => this.move(n.id, newParentId, index == null ? void 0 : index + i)));
-          return true;
-        }
-        /**
-         * Mostra os tópicos até o nível `n` (0 = só a raiz; 1 = raiz + disciplinas…) e recolhe os mais profundos.
-         * `n = Infinity` expande tudo. Uma única ação desfazível. Retorna quantos tópicos mudaram de estado.
-         */
-        showLevels(n) {
-          const changes = [];
-          this.walk((node, level) => {
-            const want = node.children.length > 0 && level >= n;
-            if (!!node.collapsed !== want) changes.push([node, want]);
-          });
-          if (!changes.length) return 0;
-          this._snapshot();
-          for (const [node, want] of changes) node.collapsed = want;
-          return changes.length;
-        }
-        /**
-         * Põe os tópicos `ids` (em ordem de documento) ANTES ou DEPOIS do tópico `targetId`, como irmãos dele — é o "soltar entre irmãos" do arrastar.
-         * Serve para reordenar (mesmo pai) e para mudar de pai ao mesmo tempo. Uma única ação desfazível. A raiz não tem irmãos.
-         * @param where 'before' | 'after'
-         */
-        moveBeside(ids, targetId, where) {
-          const t = this.find(targetId);
-          if (!t || !t.parent || where !== "before" && where !== "after") return false;
-          const tops = this.topLevel(ids);
-          if (!tops.length || tops.some((n) => n.id === targetId || this.find(targetId, n))) return false;
-          const parentId = t.parent.id;
-          this.batch(() => {
-            let anchor = t.node;
-            for (const n of tops) {
-              const kids = t.parent.children.filter((c) => c !== n);
-              const at = kids.indexOf(anchor);
-              this.move(n.id, parentId, where === "before" && anchor === t.node ? at : at + 1);
-              anchor = n;
-            }
-          });
-          return true;
-        }
-        // ---- reordenar e mudar de nível (teclado: Alt+setas) ----
-        /** Troca de lugar com o irmão anterior (dir = -1) ou seguinte (dir = +1). */
-        moveSibling(id, dir) {
-          const r = this.find(id);
-          if (!r || !r.parent) return false;
-          const arr = r.parent.children, i = arr.indexOf(r.node), j = i + dir;
-          if (j < 0 || j >= arr.length) return false;
-          this._snapshot();
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-          return true;
-        }
-        /** Rebaixa: o tópico vira o último filho do irmão que vem logo antes dele. */
-        indent(id) {
-          const r = this.find(id);
-          if (!r || !r.parent) return false;
-          const arr = r.parent.children, i = arr.indexOf(r.node);
-          if (i <= 0) return false;
-          const prev = arr[i - 1];
-          this._snapshot();
-          arr.splice(i, 1);
-          prev.collapsed = false;
-          prev.children.push(r.node);
-          return true;
-        }
-        /** Promove: o tópico passa a ser irmão do pai, logo depois dele. Filhos diretos da raiz não podem subir. */
-        outdent(id) {
-          const r = this.find(id);
-          if (!r || !r.parent) return false;
-          const g = this.find(r.parent.id);
-          if (!g.parent) return false;
-          this._snapshot();
-          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
-          g.parent.children.splice(g.parent.children.indexOf(g.node) + 1, 0, r.node);
-          return true;
-        }
-        /**
-         * Escolhe sozinho o maior nível que mantém no máximo `maxVisible` tópicos visíveis (mínimo 1: as disciplinas sempre
-         * aparecem) e recolhe o resto. Serve para importações grandes (editais com centenas de tópicos). Retorna o nível usado.
-         */
-        autoLevels(maxVisible = 120) {
-          const per = [];
-          this.walk((n, l) => {
-            per[l] = (per[l] || 0) + 1;
-          });
-          let cum = 0, best = 1;
-          for (let l = 0; l < per.length; l++) {
-            cum += per[l];
-            if (cum <= maxVisible) best = Math.max(best, l);
-          }
-          this.showLevels(best);
-          return best;
-        }
-        /** Cópia profunda com ids novos. A cópia é um tópico novo: não leva os campos extras do arquivo original (_mcExtra). */
-        static cloneSubtree(node) {
-          const { children, ...rest } = node;
-          const c = { ...JSON.parse(JSON.stringify(rest)), id: newId() };
-          delete c._mom;
-          delete c._mcExtra;
-          c.children = node.children.map((k) => _MindMap.cloneSubtree(k));
-          return c;
-        }
-        /** Insere uma subárvore já com ids novos como filho de parentId. Retorna o nó inserido. */
-        addSubtree(parentId, tree, index) {
-          const p = this.find(parentId);
-          if (!p) return null;
-          this._checkDepth(parentId, _MindMap.heightOf(tree));
-          this._snapshot();
-          p.node.collapsed = false;
-          if (index == null || index > p.node.children.length) p.node.children.push(tree);
-          else p.node.children.splice(index, 0, tree);
-          return tree;
-        }
-        // --- PDFs vinculados e referências de trechos (core/pdfrefs.js) ---
-        /** Registra um PDF no mapa (mesmo caminho = mesmo registro). */
-        addPdf({ name, path: p }) {
-          if (!p || typeof p !== "string") throw new Error("Caminho do PDF inv\xE1lido.");
-          const cur = (this.meta.pdfs || []).find((x) => x.path.toLowerCase() === p.toLowerCase());
-          if (cur) return cur;
-          this._snapshot();
-          const pdf = { id: newId().slice(0, 16), name: String(name || "").slice(0, 200) || pdfrefs.baseName(p), path: p.slice(0, 1e3) };
-          (this.meta.pdfs = this.meta.pdfs || []).push(pdf);
-          return pdf;
-        }
-        /** Aponta um PDF registrado para outro arquivo (outro computador, arquivo movido). */
-        relinkPdf(id, p) {
-          const pdf = (this.meta.pdfs || []).find((x) => x.id === id);
-          if (!pdf || !p || typeof p !== "string") return false;
-          this._snapshot();
-          pdf.path = p.slice(0, 1e3);
-          return true;
-        }
-        /** Anexa uma referência (PDF, página, trecho e retângulos) a um tópico. */
-        addRef(nodeId, ref) {
-          const r = this.find(nodeId);
-          if (!r) return false;
-          const clean = pdfrefs.sanitizeRefs([ref])[0];
-          if (!clean) throw new Error("Refer\xEAncia de PDF inv\xE1lida.");
-          if (!(this.meta.pdfs || []).some((x) => x.id === clean.pdf)) throw new Error("O PDF da refer\xEAncia n\xE3o est\xE1 registrado no mapa.");
-          this._snapshot();
-          (r.node.refs = r.node.refs || []).push(clean);
-          return true;
-        }
-        removeRef(nodeId, index) {
-          const r = this.find(nodeId);
-          if (!r || !Array.isArray(r.node.refs) || !r.node.refs[index]) return false;
-          this._snapshot();
-          r.node.refs.splice(index, 1);
-          if (!r.node.refs.length) delete r.node.refs;
-          return true;
-        }
-        update(id, patch) {
-          const r = this.find(id);
-          if (!r) return false;
-          this._snapshot();
-          const { style, ...rest } = patch;
-          Object.assign(r.node, rest);
-          if (style) r.node.style = { ...r.node.style, ...style };
-          return true;
-        }
-        /** Move `id` para ser filho de `newParentId` na posição `index`. Impede ciclos. */
-        move(id, newParentId, index) {
-          const r = this.find(id);
-          const np = this.find(newParentId);
-          if (!r || !np || !r.parent) return false;
-          if (this.find(newParentId, r.node)) return false;
-          this._checkDepth(newParentId, _MindMap.heightOf(r.node));
-          this._snapshot();
-          r.parent.children.splice(r.parent.children.indexOf(r.node), 1);
-          const i = index == null ? np.node.children.length : Math.min(index, np.node.children.length);
-          np.node.children.splice(i, 0, r.node);
-          return true;
-        }
-        toJSON() {
-          return { meta: this.meta, root: this.root };
-        }
-        static fromJSON(j) {
-          return new _MindMap(j.root, j.meta);
-        }
-      };
-      module.exports = { MindMap, createNode, newId, MAX_DEPTH };
     }
   });
 
@@ -9160,7 +9638,8 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
       var MAX_NODES = 2e5;
       var MAX_DEPTH = 500;
       var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-      var KNOWN_MC = /* @__PURE__ */ new Set(["markers", "progress", "style", "collapsed", "refs"]);
+      var KNOWN_MC = /* @__PURE__ */ new Set(["markers", "progress", "style", "collapsed", "refs", "flow"]);
+      var FLOW_TYPES = ["start", "step", "decision", "end"];
       var stripTags = (s) => String(s ?? "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/?(?:b|i|u|em|strong|span|div|p|font|a)\b[^>]*>/gi, "");
       function readMom(source) {
         const zip = new AdmZip(source);
@@ -9207,6 +9686,8 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
               style: fromMindCraft ? sanitizeStyle(m.style) : convertNodeStyle(n.style, n.titleStyle, title),
               collapsed: m.collapsed === true,
               ...Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {},
+              ...m.flow && FLOW_TYPES.includes(m.flow.type) ? { flowType: m.flow.type } : {},
+              ...m.flow && typeof m.flow.branchLabel === "string" && m.flow.branchLabel ? { branchLabel: clean(m.flow.branchLabel).slice(0, 60) } : {},
               ...Object.keys(mcExtra).length ? { _mcExtra: mcExtra } : {}
             }),
             parentId: typeof parentId === "string" ? mapId(parentId) : null,
@@ -9304,7 +9785,8 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
           const raw = node._mom || {};
           const hasStyle = node.style && Object.keys(node.style).length;
           const hasExtra = !!(node._mcExtra && Object.keys(node._mcExtra).length);
-          const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || node.refs && node.refs.length || hasExtra;
+          const hasFlow = node.flowType && node.flowType !== "step" || !!node.branchLabel;
+          const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || node.refs && node.refs.length || hasExtra || hasFlow;
           list.push({
             version: 40,
             ...raw,
@@ -9327,7 +9809,8 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
               progress: node.progress,
               ...hasStyle ? { style: node.style } : {},
               ...node.collapsed ? { collapsed: true } : {},
-              ...node.refs && node.refs.length ? { refs: node.refs } : {}
+              ...node.refs && node.refs.length ? { refs: node.refs } : {},
+              ...hasFlow ? { flow: { type: node.flowType || "step", ...node.branchLabel ? { branchLabel: node.branchLabel } : {} } } : {}
             } } : {}
           });
           let prev = null;
@@ -9530,6 +10013,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
       var { mdToHtml } = require_markdown();
       var { MARKERS } = require_markers();
       var { escapeHtml: esc } = require_text();
+      var { printCss, weightClass } = require_print_style();
       var WEIGHT = { p1: 3, p2: 2, p3: 1 };
       var DEFAULTS = { notes: true, sources: true, links: true, byWeight: true, maxDepth: Infinity, bw: false };
       var weightOf = (n) => Math.max(0, ...(n.markers || []).map((m) => WEIGHT[m] || 0));
@@ -9631,7 +10115,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         const sec = (t) => {
           const h = Math.min(t.depth + 1, 5);
           const badge = t.priority ? `<span class="pri" style="background:${PRIORITY_COLOR(t.priority, doc.options.bw)}">P${esc(t.priority.slice(1))}</span>` : "";
-          const parts = [`<section class="topic d${t.depth}"><h${h}><span class="num">${esc(t.num)}</span> ${esc(t.title)} ${badge}</h${h}>`];
+          const parts = [`<section class="topic d${t.depth} ${weightClass(t.priority)}"><h${h}><span class="num">${esc(t.num)}</span> ${esc(t.title)} ${badge}</h${h}>`];
           if (t.progress !== null) parts.push(`<p class="meta">Progresso ${esc(String(t.progress))}%</p>`);
           if (t.notes) parts.push(`<div class="notes">${mdToHtml(t.notes)}</div>`);
           else if (t.generated.length) parts.push(`<div class="notes ai"><p class="ai-note">Texto de revis\xE3o gerado pela IA (revise antes de usar)</p>${t.generated.map((p) => `<p>${esc(p)}</p>`).join("")}</div>`);
@@ -9650,27 +10134,14 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         const toc = [];
         walkItems(doc.topics, (t) => toc.push(`<li class="l${t.depth}"><span class="num">${esc(t.num)}</span> ${esc(t.title)}</li>`));
         const srcs = doc.options.sources && doc.sources.length ? `<section class="sources"><h2>Fontes</h2><ul>${doc.sources.map((s) => `<li>${esc(s.name)}${s.uses ? ` (${s.uses} trecho(s))` : ""}</li>`).join("")}</ul></section>` : "";
-        return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>
-    @page { size: A4; margin: 18mm 16mm; }
-    body { font-family: "Segoe UI", Arial, sans-serif; color: #1c1c1c; font-size: 11pt; line-height: 1.45; }
-    h1 { font-size: 24pt; margin: 0 0 4px; } .sub { color: #555; margin: 0 0 18px; }
-    h2 { font-size: 15pt; border-bottom: 1px solid #bbb; padding-bottom: 3px; break-after: avoid; }
-    .toc { list-style: none; padding: 0; columns: 2; } .toc li { break-inside: avoid; padding: 1px 0; }
-    .toc .l2, .toc .l3 { padding-left: 14px; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 28px; color: #555; font-size: 10pt; }
-    .topic { break-inside: auto; margin-top: 10px; } .topic .topic { margin-left: 14px; border-left: 2px solid #ddd; padding-left: 10px; }
-    h2, h3, h4, h5, h6 { break-after: avoid; } h3 { font-size: 13.5pt; } h4 { font-size: 12pt; } h5 { font-size: 11pt; }
-    .num { color: #555; font-weight: 600; margin-right: 4px; }
-    .pri { color: #fff; font-size: 8.5pt; font-weight: 700; padding: 1px 6px; border-radius: 9px; vertical-align: middle; margin-left: 6px; }
-    .meta { color: #666; font-size: 9.5pt; margin: 2px 0; }
-    .notes { background: #f6f6f4; border-left: 3px solid #999; padding: 6px 10px; margin: 6px 0; }
-    .notes p { margin: 4px 0; } .notes blockquote { color: #444; border-left: 2px solid #aaa; margin: 4px 0; padding-left: 8px; }
-    .src { font-size: 9.5pt; color: #333; margin: 4px 0; font-style: italic; }
-    .links { font-size: 10pt; color: #333; margin: 4px 0; padding-left: 18px; }
-    .sources ul { font-size: 10.5pt; } code { font-size: 9.5pt; }
-    section.sources { break-before: auto; margin-top: 18px; }
-    /* o material sempre sai em duas colunas (o t\xEDtulo e o sum\xE1rio ficam na largura toda) */
-    .cols { column-count: 2; column-gap: 9mm; column-fill: auto; }
-  </style></head><body>
+        return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>${printCss(`
+    .toc { list-style: none; padding: 0; columns: 2; column-gap: 8mm; font-size: 9pt; }
+    .toc li { break-inside: avoid; padding: 0.3mm 0; }
+    .toc .l2, .toc .l3 { padding-left: 3mm; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 6mm; color: #555; }
+    .topic { margin-top: 2mm; }
+    .topic .topic { margin-left: 4mm; border-left: 0.6pt solid #ddd; padding-left: 3mm; }
+    section.sources { margin-top: 6mm; break-before: auto; } .sources ul { font-size: 9pt; }
+`)}</style></head><body>
     <h1>${esc(doc.title)}</h1><p class="sub">Material de estudo \xB7 ${esc(doc.date)} \xB7 ${doc.count} t\xF3pico(s)</p>
     <h2>Sum\xE1rio</h2><ul class="toc">${toc.join("")}</ul>
     <div class="cols">${doc.topics.map(sec).join("")}</div>
@@ -9841,6 +10312,9 @@ ${renderGroup(L, { logo: true })}
         "ai": require_ai(),
         "backup": require_backup(),
         "errorlog": require_errorlog(),
+        "flow": require_flow(),
+        "flow-export": require_flow_export(),
+        "flow-layout": require_flow_layout(),
         "forcelayout": require_forcelayout(),
         "graph": require_graph(),
         "graph-labels": require_graph_labels(),
@@ -9854,6 +10328,7 @@ ${renderGroup(L, { logo: true })}
         "model": require_model(),
         "mom": require_mom(),
         "pdfrefs": require_pdfrefs(),
+        "print-style": require_print_style(),
         "shapes": require_shapes(),
         "study-export": require_study_export(),
         "svg": require_svg(),

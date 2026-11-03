@@ -1,6 +1,6 @@
 {
   "name": "braniac-tablet",
-  "version": "0.1.19",
+  "version": "0.1.21",
   "private": true,
   "description": "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
   "scripts": {

@@ -4,9 +4,9 @@
 
 const MENU_BAR = [
   { label: 'Arquivo', items: [
-    ['new', 'Novo mapa', 'Ctrl+N'], ['open', 'Abrir…', 'Ctrl+O'], '-',
+    ['new', 'Novo mapa', 'Ctrl+N'], ['new-flow', 'Novo fluxograma', ''], ['open', 'Abrir…', 'Ctrl+O'], '-',
     ['save', 'Salvar', 'Ctrl+S'], ['saveAs', 'Salvar como…', 'Ctrl+Shift+S'], ['restore', 'Versões anteriores…', ''], '-',
-    ['export-study', 'Exportar material de estudo…', ''], '-',
+    ['export-study', 'Exportar material de estudo…', ''], ['share-study', 'Compartilhar material de estudo…', ''], '-',
     ['home', 'Tela inicial', 'Ctrl+Shift+H'],
   ] },
   { label: 'Editar', items: [
@@ -20,10 +20,12 @@ const MENU_BAR = [
     ['pdf', 'Leitor de PDF', 'Ctrl+Shift+P'], '-',
     ['ai-open', 'Assistente de IA', ''], ['ai-config', 'Configurar IA', ''],
   ] },
-  { label: 'Ajuda', items: [['help', 'Atalhos do teclado', 'F1']] },
+  { label: 'Ajuda', items: [['help', 'Atalhos do teclado', 'F1'], '-', ['about', 'Versão', '']] },
 ];
 
 const mbBar = document.getElementById('menubar');
+// versão da release: vem do processo principal (desktop) ou do APK (tablet); o item do menu Ajuda mostra "Versão X"
+(async () => { try { window.braniacVersion = await require('electron').ipcRenderer.invoke('app:version'); } catch { /* sem versão */ } })();
 let mbOpen = null;   // índice do menu aberto
 
 function mbClose() {
@@ -47,7 +49,8 @@ function mbOpenMenu(i, label) {
   drop.style.top = `${Math.round(r.bottom + 4)}px`;
   for (const it of MENU_BAR[i].items) {
     if (it === '-') { const sep = document.createElement('div'); sep.className = 'mb-sep'; drop.append(sep); continue; }
-    const [cmd, text, keys] = it;
+    const [cmd, text0, keys] = it;
+    const text = cmd === 'about' ? `Versão ${window.braniacVersion || '—'}` : text0;
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'mb-item'; b.setAttribute('role', 'menuitem'); b.dataset.cmd = cmd;
     const t = document.createElement('span'); t.textContent = text;

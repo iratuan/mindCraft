@@ -355,3 +355,34 @@ body.hand-pan #svg.panning, body.hand-pan #svg.panning .node { cursor: grabbing;
 /* legendas da barra lateral: cabem na largura do botão (sem vazar; cortam com reticências se a palavra for longa) */
 #rail .tool.has-cap { width: 100%; box-sizing: border-box; }
 #rail .tool-cap { font-size: 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Fluxograma (flow-ui.js): visão própria no mesmo palco do mapa ---------- */
+#flowpane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-stage); z-index: 2; }
+#flowpane[hidden] { display: none !important; }
+.flow-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid var(--line-soft); background: var(--bg-bar); }
+.flow-bar select { height: 28px; border-radius: 7px; }
+#flowSvg { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; user-select: none; cursor: grab; }
+#flowSvg:active { cursor: grabbing; }
+#flowSvg .flow-node rect, #flowSvg .flow-node polygon { fill: var(--bg-field); stroke: var(--line); stroke-width: 1.5; }
+#flowSvg .flow-node text { fill: var(--text-strong); font: 13px var(--font); pointer-events: none; }
+#flowSvg .flow-node { cursor: pointer; }
+#flowSvg .flow-node.start rect, #flowSvg .flow-node.end rect { fill: #2e7d4f; stroke: #2e7d4f; }
+#flowSvg .flow-node.start text, #flowSvg .flow-node.end text { fill: #ffffff; }
+#flowSvg .flow-node.decision polygon { fill: #fff1c2; stroke: #c98a00; }
+#flowSvg .flow-node.decision text { fill: #3a2a00; }
+#flowSvg .flow-node.sel rect, #flowSvg .flow-node.sel polygon { stroke: var(--accent); stroke-width: 3; }
+#flowSvg .flow-edge { fill: none; stroke: var(--text-dim); stroke-width: 1.6; }
+#flowSvg .flow-rel { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 4; }
+#flowSvg .flow-rel.sel { stroke-width: 3; }
+#flowSvg #flowArrow path { fill: var(--text-dim); }
+#flowSvg .flow-label rect { fill: var(--bg-panel); stroke: var(--line-soft); }
+#flowSvg .flow-label text { fill: var(--text); font: 12px var(--font); }
+.flow-edit { position: absolute; z-index: 5; font: 13px var(--font); padding: 4px 6px; border: 2px solid var(--accent); border-radius: 6px; background: var(--bg-field); color: var(--text-strong); }
+.flow-info { position: absolute; left: 10px; bottom: 40px; width: min(440px, 86%); max-height: 46%; overflow: auto; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); font-size: 12.5px; color: var(--text); }
+.flow-info h3 { font-size: 12px; margin: 8px 0 4px; color: var(--text-strong); }
+.flow-info ul, .flow-info ol { margin: 0 0 4px; padding-left: 18px; }
+.flow-info li { margin: 2px 0; }
+.flow-info li.error > button, .flow-info li.error { color: #e05a5a; }
+.flow-info li.warn > button, .flow-info li.warn { color: #c98a00; }
+.flow-info li > button { all: unset; cursor: pointer; text-decoration: underline; }
+.flow-foot { display: flex; justify-content: space-between; gap: 12px; padding: 4px 10px; border-top: 1px solid var(--line-soft); background: var(--bg-bar); font-size: 11.5px; color: var(--text-dim); }

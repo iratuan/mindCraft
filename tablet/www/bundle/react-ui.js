@@ -22031,6 +22031,7 @@
   // renderer/react/ShortcutsModal.jsx
   var import_jsx_runtime6 = __toESM(require_jsx_runtime());
   var GROUPS = [
+    ["Fluxograma", [["Enter", "passo seguinte (depois do selecionado)"], ["Tab", "novo ramo da decis\xE3o selecionada"], ["F2 ou duplo clique", "editar o t\xEDtulo do passo"], ["Delete", "excluir o passo (com o que vem depois)"], ["Esc", "limpar a sele\xE7\xE3o (volta ao in\xEDcio)"], ["Roda do mouse", "zoom"], ["Arrastar o fundo", "mover a vista"]]],
     ["Mapa", [
       ["Tab", "novo t\xF3pico filho"],
       ["Enter", "novo t\xF3pico irm\xE3o"],

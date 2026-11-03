@@ -92,6 +92,7 @@ async function shareFile(p) {
 /* ---------- canais (mesmos nomes e formatos do desktop) ---------- */
 const reg = (channel, fn) => handlers.set(channel, fn);
 reg('app:path', () => APP_DIR);
+reg('app:version', () => require('../package.json').version);   // a versão do APK (tablet/package.json)
 reg('app:start-override', () => null);
 
 reg('dialog:open', async () => {

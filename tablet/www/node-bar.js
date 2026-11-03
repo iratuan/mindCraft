@@ -25,7 +25,8 @@ function syncNodeBar() {
   const s = sel();
   const homeOpen = !!(window.MCReact && window.MCReact.homeIsOpen && window.MCReact.homeIsOpen());
   // só com o mapa em foco (não com o leitor de PDF ou a lousa ativos); tópicos soltos também contam
-  const show = !!map && !!s && !homeOpen && !dashOpenNow() && !document.body.classList.contains('focus-media');
+  const flow = typeof flowIsOn === 'function' && flowIsOn();   // no fluxograma, a barra do tópico do mapa não se aplica
+  const show = !!map && !!s && !homeOpen && !flow && !dashOpenNow() && !document.body.classList.contains('focus-media');
   nodeBarEl.hidden = !show;
   if (!show) return;
   if (!nodeBarEl.childElementCount) {
