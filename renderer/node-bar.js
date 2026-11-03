@@ -1,0 +1,49 @@
+'use strict';
+/* Barra flutuante do tópico selecionado: subtópico, expandir, contrair, nota, IA e excluir. Aparece no canto inferior da área
+   de trabalho só com um tópico selecionado. Cada ação usa a mesma função do menu e do teclado (act, openNotesFor, showPanel).
+   Carregado depois de renderer.js e context-ui.js (usa os globais deles). */
+
+const nodeBarEl = document.getElementById('nodebar');
+const NB_BUTTONS = [
+  { id: 'nbChild', icon: 'child', label: 'Novo subtópico', run: () => act.child() },
+  { id: 'nbExpand', icon: 'expand', label: 'Expandir filhos', run: () => setSelectedCollapsed(false) },
+  { id: 'nbCollapse', icon: 'collapse', label: 'Recolher filhos', run: () => setSelectedCollapsed(true) },
+  { id: 'nbNote', icon: 'note', label: 'Escrever nota', run: () => { const s = sel(); if (s) openNotesFor(s.node.id); } },
+  { id: 'nbAi', icon: 'spark', label: 'Assistente de IA', run: () => { showPanel('ai'); } },
+  { id: 'nbDelete', icon: 'bin', label: 'Excluir tópico', danger: true, run: () => act.delete() },
+];
+
+/** Expande ou contrai os filhos do tópico selecionado (uma ação desfazível). */
+function setSelectedCollapsed(v) {
+  const s = sel();
+  if (!s || !s.node.children.length) return;
+  change(() => map.update(s.node.id, { collapsed: v }));
+}
+
+function syncNodeBar() {
+  if (!nodeBarEl) return;
+  const s = sel();
+  const homeOpen = !!(window.MCReact && window.MCReact.homeIsOpen && window.MCReact.homeIsOpen());
+  // só com o mapa em foco (não com o leitor de PDF ou a lousa ativos); tópicos soltos também contam
+  const show = !!map && !!s && !homeOpen && !dashOpenNow() && !document.body.classList.contains('focus-media');
+  nodeBarEl.hidden = !show;
+  if (!show) return;
+  if (!nodeBarEl.childElementCount) {
+    for (const b of NB_BUTTONS) {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.id = b.id; btn.className = 'nb-btn' + (b.danger ? ' danger' : '');
+      btn.innerHTML = iconSvg(b.icon, 18);   // ícone plano: a cor vem do tema; o nome vai para o leitor de tela e a dica
+      btn.title = b.label; btn.setAttribute('aria-label', b.label);
+      btn.onclick = () => { b.run(); };
+      nodeBarEl.append(btn);
+    }
+  }
+  const hasKids = s.node.children.length > 0;
+  document.getElementById('nbExpand').disabled = !hasKids || !s.node.collapsed;
+  document.getElementById('nbCollapse').disabled = !hasKids || !!s.node.collapsed;
+  const floating = (map.meta._momFloating || []).some((f) => f.node.id === s.node.id);
+  document.getElementById('nbDelete').disabled = !s.parent && !floating;   // a raiz do mapa não pode ser excluída; tópico solto pode
+}
+
+/** O painel de mapas ocupa a área de trabalho: a barra não aparece sobre ele. */
+function dashOpenNow() { const d = document.getElementById('dash'); return !!d && !d.hidden; }

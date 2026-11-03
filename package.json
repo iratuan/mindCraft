@@ -1,40 +1,25 @@
 {
-  "name": "mindcraft",
-  "version": "0.7.1",
-  "author": "MindCraft",
+  "name": "braniac",
+  "version": "0.1.19",
+  "author": "BRANIAC",
   "license": "MIT",
-  "description": "Editor de mapas mentais multiplataforma, compatível com arquivos .mom",
+  "description": "Editor de mapas mentais compatível com o Mindomo (.mom), com rede de conhecimento, notas e leitor de PDF",
   "main": "electron/main.js",
-  "bin": {
-    "mindcraft": "bin/mindcraft.js",
-    "mindcraft-library": "bin/mindcraft-library.js"
-  },
   "scripts": {
     "start": "electron .",
+    "prestart": "node tools/build-ui.js",
     "test": "node --test test/*.test.js",
     "lint": "eslint . --max-warnings 0",
-    "check": "npm run lint && npm test && npm run test:web",
+    "check": "npm run lint && npm test",
     "e2e": "node tools/run-e2e.js",
-    "android": "node tablet/scripts/run-android.js",
-    "evidence": "electron test/evidence.js",
-    "dist": "electron-builder --publish never",
-    "qa": "electron test/qa-tour.js",
-    "build:ui": "node tools/build-ui.js",
-    "build:templates": "node tools/build-templates.js",
-    "prestart": "node tools/build-ui.js",
     "pree2e": "node tools/build-ui.js",
-    "preqa": "node tools/build-ui.js",
-    "preevidence": "node tools/build-ui.js",
-    "predist": "node tools/build-ui.js",
-    "monkey": "electron test/e2e-monkey.js",
-    "build:web": "node tools/build-web-core.js",
-    "test:web": "node tools/build-web-core.js parity && node --import ./test/web-parity-hook.mjs --test test/*.test.js",
-    "build:web-app": "node tools/build-web-app.js",
-    "test:web-app": "electron test/e2e-web.js"
+    "build:ui": "node tools/build-ui.js",
+    "dist": "electron-builder --publish never",
+    "predist": "node tools/build-ui.js"
   },
   "build": {
     "appId": "dev.mindcraft.app",
-    "productName": "MindCraft",
+    "productName": "BRANIAC",
     "directories": {
       "buildResources": "build"
     },
@@ -70,17 +55,16 @@
         "AppImage"
       ],
       "category": "Office"
+    },
+    "nsis": {
+      "installerSidebar": "build/installerSidebar.bmp",
+      "uninstallerSidebar": "build/installerSidebar.bmp",
+      "installerHeader": "build/installerHeader.bmp",
+      "installerHeaderIcon": "build/icon.png"
     }
-  },
-  "dependencies": {
-    "adm-zip": "^0.6.1",
-    "dejavu-fonts-ttf": "^2.37.3",
-    "docx": "^9.11.0",
-    "pdfkit": "^0.20.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "buffer": "^6.0.3",
     "electron": "^44.8.0",
     "electron-builder": "^26.15.3",
     "esbuild": "0.25.10",
@@ -88,7 +72,11 @@
     "globals": "^15.15.0",
     "pdfjs-dist": "4.10.38",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "sql.js": "^1.15.0"
+    "react-dom": "18.3.1"
+  },
+  "dependencies": {
+    "3d-force-graph": "1.80.1",
+    "adm-zip": "^0.6.1",
+    "three": "0.182.0"
   }
 }

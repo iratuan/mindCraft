@@ -7,6 +7,13 @@ const { norm, parseLinks } = require('./links');
  *
  * maps: [{ key, name, map }]  — `key` identifica o mapa (caminho do arquivo); `name` é como ele é citado em [[Mapa#Tópico]].
  */
+/** Percorre todos os tópicos do mapa: a árvore principal e os tópicos soltos do Mindomo (cada um é uma raiz própria). */
+function walkAll(map, fn) {
+  const visit = (node, level, parent) => { fn(node, level, parent); for (const c of node.children) visit(c, level + 1, node); };
+  visit(map.root, 0, null);
+  for (const f of map.meta._momFloating || []) visit(f.node, 0, null);
+}
+
 function buildGraph(maps, { hierarchy = false } = {}) {
   const nodes = [];
   const byId = new Map();
@@ -19,15 +26,15 @@ function buildGraph(maps, { hierarchy = false } = {}) {
   const entries = maps.map((m) => {
     const topics = new Map();                       // norm(título) -> [nós]
     const e = { ...m, topics, root: m.map.root };
-    m.map.walk((n) => { const k = norm(n.title); if (!topics.has(k)) topics.set(k, []); topics.get(k).push(n); });
+    walkAll(m.map, (n) => { const k = norm(n.title); if (!topics.has(k)) topics.set(k, []); topics.get(k).push(n); });
     return e;
   });
   for (const e of entries) { add(norm(e.name), e); if (norm(e.map.root.title) !== norm(e.name)) add(norm(e.map.root.title), e); }
   const idOf = (e, n) => `${e.key}::${n.id}`;
 
   for (const e of entries) {
-    e.map.walk((n, level, parent) => {
-      const g = { id: idOf(e, n), kind: 'topic', title: n.title, mapKey: e.key, mapName: e.name, topicId: n.id, isRoot: !parent, progress: n.progress ?? null, deg: 0 };
+    walkAll(e.map, (n, level, parent) => {
+      const g = { id: idOf(e, n), kind: 'topic', title: n.title, mapKey: e.key, mapName: e.name, topicId: n.id, isRoot: !parent, progress: n.progress ?? null, deg: 0, childCount: n.children.length, hasNote: !!(n.notes && String(n.notes).trim()), weight: 0 };
       nodes.push(g); byId.set(g.id, g);
     });
   }
@@ -68,7 +75,7 @@ function buildGraph(maps, { hierarchy = false } = {}) {
   };
 
   for (const e of entries) {
-    e.map.walk((n, level, parent) => {
+    walkAll(e.map, (n, level, parent) => {
       const me = idOf(e, n);
       if (hierarchy && parent) link(idOf(e, parent), me, 'hierarchy');
       for (const text of [n.title, n.notes]) {
@@ -85,6 +92,8 @@ function buildGraph(maps, { hierarchy = false } = {}) {
   }
 
   for (const ed of edges) { if (ed.type === 'hierarchy') continue; byId.get(ed.from).deg++; byId.get(ed.to).deg++; }
+  // peso (tamanho do ponto na rede 3D): filhos diretos + nota + ligações
+  for (const g of nodes) g.weight = (g.childCount || 0) + (g.hasNote ? 1 : 0) + g.deg;
   const out = new Map(), inn = new Map();
   for (const ed of edges) {
     if (!out.has(ed.from)) out.set(ed.from, []); out.get(ed.from).push(ed);

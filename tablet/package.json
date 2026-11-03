@@ -1,23 +1,29 @@
 {
-  "name": "mindcraft-tablet",
-  "version": "0.7.1",
+  "name": "braniac-tablet",
+  "version": "0.1.19",
   "private": true,
-  "description": "Empacotamento Android (Capacitor) do MindCraft: a mesma interface do desktop, gerada em ../build/web/app. Isolado do app desktop.",
+  "description": "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
   "scripts": {
-    "prepare:web": "node ../tools/build-web-app.js",
-    "sync": "npm run prepare:web && cap sync android",
-    "apk:debug": "npm run sync && node scripts/gradle.js assembleDebug",
-    "apk:release": "npm run sync && node scripts/gradle.js assembleRelease"
+    "build:www": "node scripts/build-www.js",
+    "sync": "npm run build:www && npx cap sync android && node scripts/patch-android.js",
+    "apk:debug": "cd android && gradlew assembleDebug"
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.3",
+    "@aparajita/capacitor-secure-storage": "^8.0.1",
+    "@capacitor/android": "^8.6.0",
     "@capacitor/app": "^8.1.2",
-    "@capacitor/core": "^8.5.3",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/clipboard": "^8.0.1",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/dialog": "^8.0.1",
     "@capacitor/filesystem": "^8.1.5",
-    "@capacitor/local-notifications": "^8.3.1",
-    "@capacitor/share": "^8.0.3"
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/share": "^8.0.3",
+    "@capawesome/capacitor-file-picker": "^8.1.1",
+    "buffer": "^6.0.3",
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.3"
+    "@capacitor/cli": "^8.6.0"
   }
 }

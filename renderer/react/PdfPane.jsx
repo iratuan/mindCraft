@@ -167,10 +167,11 @@ export function PdfPane({ initial }) {
           {src && !reg && <option value={src.path}>{src.name || h.baseName(src.path)}</option>}
           {pdfs.map((p) => <option key={p.id} value={p.path}>{p.name}</option>)}
         </select>
-        <button className="btn small" id="pdfHelp" data-manual="pdf" title="Manual: como usar o leitor de PDF" aria-label="Ajuda do leitor de PDF">?</button>
-        <button className="btn small" id="pdfOpen" onClick={onOpen} style={{ display: 'inline-flex', alignItems: 'center' }}>
-          <FlatIcon name="pdf" size={13} style={{ marginRight: '5px' }} /> Abrir PDF…
-        </button>
+        {src && (
+          <button className="btn small" id="pdfOpen" onClick={onOpen} style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <FlatIcon name="pdf" size={13} style={{ marginRight: '5px' }} /> Abrir outro PDF…
+          </button>
+        )}
         {(doc || src) && (
           <button
             className="btn small"

@@ -8,7 +8,7 @@ const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml, parseFon
 const { sanitizeTheme, sanitizeStyle, getTheme, resolveStyle } = require('../core/themes');
 const { layoutMap } = require('../core/layout');
 const { toSVG } = require('../core/svg');
-const { openLibrary, canonical } = require('../core/library');
+const { canonical } = require('./canonical');
 
 const { TID, themes, node, mindomo } = require('./mindomo-fixture');
 const find = (m, id) => m.find(id).node;
@@ -53,12 +53,6 @@ test('editar a nota no MindCraft atualiza o description (HTML escapado); apagar 
   find(m, 'a').notes = ''; assert.strictEqual(JSON.parse(new AdmZip(writeMom(m)).getEntry('nodes.json').getData().toString()).find((n) => n.id === 'a').description, '');
   m.meta.theme = 'dark'; const back = readMom(writeMom(m)); assert.strictEqual(back.meta.theme, 'dark'); assert.ok(back.meta.customTheme, 'o original continua disponível'); back.meta.theme = 'custom';
   assert.strictEqual(layoutMap(back).theme.background, '#f8f8f8');
-});
-
-test('o mapa guarda o tema original na biblioteca SQLite e nada muda ao gravar e ler', () => {
-  const lib = openLibrary(':memory:'); const m = readMom(mindomo()); const id = lib.saveMap(m, { snapshot: false }); const back = lib.loadMap(id);
-  assert.strictEqual(back.meta.theme, 'custom'); assert.deepStrictEqual(back.meta.customTheme, m.meta.customTheme); assert.deepStrictEqual(back.meta._momThemes, m.meta._momThemes);
-  assert.strictEqual(canonical(back), canonical(m)); assert.deepStrictEqual(find(back, 'a').style, find(m, 'a').style);
 });
 
 test('desenho: cores, borda, elipse, sem forma, fonte e linha própria saem no SVG; nada injeta atributos', () => {

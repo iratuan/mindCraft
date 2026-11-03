@@ -9,17 +9,24 @@
   if (!work || !panels || !pSplit || !pBtn || !dSplit) return;
 
   const MAP_MIN = 284;                    // largura mínima do mapa (260 úteis + as alças dos divisores) ao arrastar um divisor
-  const PANEL_MIN = 220, PANEL_MAX = 560, PDF_MIN = 280;
+  const PANEL_MIN = 220, PANEL_MAX = 560, PDF_MIN = 280, BOARD_MIN = 280;
   const cfg = () => { try { return loadCfg(); } catch { return {}; } };
   const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
   /** Na versão tablet com janela estreita o painel é uma GAVETA (☷); aí não há recolher nem divisor. */
-  const drawer = () => root.dataset.host === 'web' && window.innerWidth <= 1000;
+  // tablet em retrato (ou janela estreita) usa o painel como gaveta; a largura sozinha falha com densidades diferentes
+  const drawer = () => root.dataset.host === 'web' && (window.innerWidth <= 1000 || window.innerHeight > window.innerWidth);
   /** Em janelas estreitas com o leitor aberto o painel já sai da frente sozinho (regra de CSS): nada a recolher. */
   const autoHidden = () => body.classList.contains('pdf-open') && window.innerWidth <= 900;
   const workW = () => work.getBoundingClientRect().width;
   const railW = () => ($('#rail') ? $('#rail').getBoundingClientRect().width : 0);
 
   let collapsed = false;
+  // gaveta (tablet em retrato): o painel começa fechado e abre sobre o mapa; o recolher normal não vale nesse modo
+  let drawerOpen = false;
+  // PDF e lousa abertos juntos: o painel direito fica recolhido (o usuário pode abri-lo pelo botão da borda, até o próximo ajuste)
+  let override = false;
+  const bothOpen = () => body.classList.contains('pdf-open') && body.classList.contains('board-open');
+  const shownOff = () => (drawer() ? !drawerOpen : (bothOpen() ? !override : collapsed));
   let raf = 0;
   // rAF junta rajadas de movimento; o setTimeout garante o aviso mesmo com a janela oculta/ocluída (aí o rAF não dispara)
   const refit = () => {
@@ -32,7 +39,10 @@
   let painting = false;
   function paintToggle() {
     if (painting) return; painting = true;
-    const off = collapsed && !drawer();
+    if (!drawer()) drawerOpen = false;
+    if (!bothOpen()) override = false;
+    const off = shownOff();
+    placeToggle();
     body.classList.toggle('panels-collapsed', off);
     body.classList.toggle('panels-drawer', drawer());
     body.classList.toggle('panels-auto-hidden', autoHidden());
@@ -46,7 +56,7 @@
   }
   // O botão de recolher mora NO PRÓPRIO painel (cabeçalho das abas) enquanto ele está aberto; recolhido, o painel some e o botão
   // passa para a borda, onde é o único jeito de trazê-lo de volta. Mesmo elemento e mesmo id, então os atalhos e testes não mudam.
-  const placeToggle = () => { const host = collapsed ? pSplit : $('#ptabs'); if (host && pBtn.parentElement !== host) host.appendChild(pBtn); };
+  function placeToggle() { const host = shownOff() ? pSplit : $('#ptabs'); if (host && pBtn.parentElement !== host) host.appendChild(pBtn); }
   function setCollapsed(v, persist = true) {
     collapsed = !!v; if (persist) saveCfg({ panelsCollapsed: collapsed });
     if (collapsed) document.body.classList.remove('panel-max');   // recolhido não pode estar maximizado
@@ -54,8 +64,14 @@
     // adiado: o redesenho do mapa (resize) reescreve a barra de status
     if (typeof setStatus === 'function') setTimeout(() => setStatus(collapsed ? 'Painel lateral recolhido. Use o botão ‹ na borda direita (ou Ctrl+\\) para voltar.' : 'Painel lateral expandido.'), 60);
   }
+  // botão do painel: na gaveta abre/fecha a folha sobre o mapa; no resto, recolhe/expande
+  function togglePanel() {
+    if (drawer()) { drawerOpen = !drawerOpen; placeToggle(); paintToggle(); refit(); return; }
+    if (bothOpen()) { override = !override; placeToggle(); paintToggle(); refit(); return; }
+    setCollapsed(!collapsed);
+  }
   placeToggle();
-  pBtn.addEventListener('click', (e) => { e.stopPropagation(); setCollapsed(!(collapsed && !drawer())); pBtn.blur(); });
+  pBtn.addEventListener('click', (e) => { e.stopPropagation(); togglePanel(); pBtn.blur(); });
   pBtn.addEventListener('pointerdown', (e) => e.stopPropagation());       // clicar no botão nunca inicia um arrasto do divisor
   // chamado por showPanel (renderer.js): quem pede uma aba precisa ver o painel
   window.expandPanels = () => { if (collapsed) setCollapsed(false); };
@@ -78,7 +94,7 @@
   }
   window.toggleDockMax = () => toggleMax('dock');
   if (pMax) pMax.addEventListener('click', () => toggleMax('panel'));
-  act.panelsToggle = () => setCollapsed(!(collapsed && !drawer()));
+  act.panelsToggle = togglePanel;
   if (root.dataset.host === 'web') window.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === '\\') { e.preventDefault(); act.panelsToggle(); } }, true);   // no desktop o atalho vem do menu Exibir
 
   // ---------- divisores arrastáveis ----------
@@ -123,7 +139,7 @@
     name: 'Largura do painel lateral (setas ← → ajustam; Enter restaura)', grow: -1,
     read: () => panels.getBoundingClientRect().width,
     write: (v) => root.style.setProperty('--panels-w', v + 'px'),
-    bounds: () => [PANEL_MIN, Math.min(PANEL_MAX, workW() - railW() - MAP_MIN - (pdfpane.hidden ? 0 : pdfpane.getBoundingClientRect().width))],
+    bounds: () => [PANEL_MIN, Math.min(PANEL_MAX, workW() - railW() - MAP_MIN - 0 - (pdfpane.hidden ? 0 : pdfpane.getBoundingClientRect().width))],
     save: (v) => saveCfg({ panelsWidth: v }),
     reset: () => { panelsDefault(); saveCfg({ panelsWidth: null }); },
   });
@@ -132,10 +148,11 @@
     name: 'Largura do leitor de PDF (setas ← → ajustam; Enter restaura)', grow: 1,
     read: () => pdfpane.getBoundingClientRect().width,
     write: (v) => { pdfpane.style.width = v + 'px'; },
-    bounds: () => [PDF_MIN, Math.min(Math.floor(workW() * 0.7), workW() - railW() - MAP_MIN - (collapsed || drawer() || autoHidden() ? 0 : panels.getBoundingClientRect().width))],
+    bounds: () => [PDF_MIN, Math.min(Math.floor(workW() * 0.7), workW() - railW() - MAP_MIN - 0 - (collapsed || drawer() || autoHidden() ? 0 : panels.getBoundingClientRect().width))],
     save: (v) => saveCfg({ pdfWidth: v }),
     reset: () => { pdfpane.style.width = Math.round(workW() * 0.46) + 'px'; saveCfg({ pdfWidth: null }); },
   });
+  // a lousa é uma janela flutuante (não ocupa coluna): não tem divisor nem desconta largura do mapa
   dSplit.tabIndex = 0; pSplit.tabIndex = 0;
   dSplit.title = 'Arraste para ajustar a largura do leitor (← → no teclado; duplo clique restaura)';
   pSplit.title = 'Arraste para ajustar a largura do painel (← → no teclado; duplo clique restaura)';
@@ -152,7 +169,7 @@
   waitCfg();
   const keepFit = () => {
     paintToggle();
-    if (!pdfpane.hidden && !drawer()) { const [lo, hi] = [PDF_MIN, Math.min(Math.floor(workW() * 0.7), workW() - railW() - MAP_MIN - (collapsed || autoHidden() ? 0 : panels.getBoundingClientRect().width))]; const w = pdfpane.getBoundingClientRect().width; if (w > Math.max(lo, hi) && pdfpane.style.width) pdfpane.style.width = Math.max(lo, hi) + 'px'; }
+    if (!pdfpane.hidden && !drawer()) { const [lo, hi] = [PDF_MIN, Math.min(Math.floor(workW() * 0.7), workW() - railW() - MAP_MIN - 0 - (collapsed || autoHidden() ? 0 : panels.getBoundingClientRect().width))]; const w = pdfpane.getBoundingClientRect().width; if (w > Math.max(lo, hi) && pdfpane.style.width) pdfpane.style.width = Math.max(lo, hi) + 'px'; }
   };
   window.addEventListener('resize', keepFit);
   new MutationObserver(paintToggle).observe(body, { attributes: true, attributeFilter: ['class'] });

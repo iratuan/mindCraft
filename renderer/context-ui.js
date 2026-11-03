@@ -47,41 +47,7 @@ function setWorkspaceFocus(f) {
   document.body.classList.toggle('focus-media', f === 'media');
   const tabMap = $('#tabMap');
   if (tabMap) { tabMap.classList.toggle('on', f === 'map'); tabMap.setAttribute('aria-selected', String(f === 'map')); }
-  document.querySelectorAll('#tabMedia .tab').forEach((el) => {
-    const on = f === 'media' && el.dataset.id === mediaActiveId;
-    el.classList.toggle('on', on);
-    el.setAttribute('aria-selected', String(on));
-  });
   if (typeof syncContextUI === 'function') syncContextUI();
-}
-
-// Abas das mídias abertas (PDF, vídeo, navegador): a bancada da esquerda avisa a lista; aqui só se desenha e se pede ativar/fechar.
-let mediaActiveId = null;
-function renderMediaTabs(detail) {
-  const box = $('#tabMedia');
-  if (!box) return;
-  const tabs = (detail && detail.tabs) || [];
-  mediaActiveId = (detail && detail.active) || null;
-  box.textContent = '';
-  for (const t of tabs) {
-    const el = document.createElement('div');
-    el.className = 'tab'; el.dataset.id = t.id; el.setAttribute('role', 'tab'); el.title = t.title;
-    const name = document.createElement('span'); name.textContent = t.title;     // textContent: o título nunca vira HTML
-    const x = document.createElement('button');
-    x.className = 'tab-x'; x.title = 'Fechar ' + t.title; x.setAttribute('aria-label', 'Fechar ' + t.title);
-    x.innerHTML = '<svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3.5" y1="3.5" x2="12.5" y2="12.5"/><line x1="12.5" y1="3.5" x2="3.5" y2="12.5"/></svg>';
-    el.append(name, x);
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('.tab-x')) return;
-      document.dispatchEvent(new CustomEvent('mc:media-activate', { detail: { id: t.id } }));
-      setWorkspaceFocus('media');
-    });
-    x.addEventListener('click', (e) => { e.stopPropagation(); document.dispatchEvent(new CustomEvent('mc:media-close', { detail: { id: t.id } })); });
-    box.append(el);
-  }
-  // sem mídias abertas, não há o que estar em foco: volta ao mapa
-  if (!tabs.length && workspaceFocus === 'media') setWorkspaceFocus('map');
-  else setWorkspaceFocus(workspaceFocus);
 }
 
 // O menu do desktop (electron/main.js) habilita/desabilita os próprios comandos conforme esta informação. Só avisa quando muda.
@@ -99,10 +65,10 @@ function syncNoMapUI() {
   const tabMap = $('#tabMap');
   if (tabMap) tabMap.hidden = true;
   // ferramentas que dependem do mapa (edição, rede, painel de estudos e as mídias que alimentam o mapa): desabilitadas sem mapa
-  for (const a of ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate', 'fit', 'graph', 'dash', 'pdf', 'video', 'browser']) setToolBtn($(`[data-act="${a}"]`), false, NO_MAP_TITLE);
+  for (const a of ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate', 'fit', 'graph', 'dash', 'pdf']) setToolBtn($(`[data-act="${a}"]`), false, NO_MAP_TITLE);
   // Início só faz sentido com a tela inicial aberta: sem mapa, não há para onde voltar
   setToolBtn($('[data-act="home"]'), home, home ? '' : 'Tela inicial');
-  for (const id of ['#search', '#export', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) { const el = $(id); if (el) el.disabled = true; }
+  for (const id of ['#search', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) { const el = $(id); if (el) el.disabled = true; }
   const st = $('#status'); if (st && home) st.textContent = '';
   notifyMapState(false);
   const options = $('#options'); if (options) { options.setAttribute('data-context', 'none'); options.hidden = true; }
@@ -119,10 +85,8 @@ function syncContextUI() {
   setToolBtn($('[data-act="graph"]'), inUse, inUse ? 'Rede de conhecimento (Ctrl+G)' : NO_MAP_TITLE);   // rede é do mapa: só com o mapa ativo
   setToolBtn($('[data-act="home"]'), true, 'Tela inicial (Ctrl+Shift+H)');
   // ferramentas que alimentam o mapa: habilitadas com um mapa aberto (o caminho sem mapa as desabilita; aqui precisam voltar)
-  setToolBtn($('[data-act="dash"]'), true, 'Painel de estudos (Ctrl+E)');
+  setToolBtn($('[data-act="dash"]'), true, 'Painel de mapas (Ctrl+E)');
   setToolBtn($('[data-act="pdf"]'), true, 'Leitor de PDF ao lado do mapa (Ctrl+Shift+P)');
-  setToolBtn($('[data-act="video"]'), true, 'Player de vídeo para videoaulas (Ctrl+Shift+V)');
-  setToolBtn($('[data-act="browser"]'), true, 'Navegador web para questões e leis (Ctrl+Shift+W)');
   notifyMapState(inUse);
   const sel = inUse && selectedId && map.find(selectedId);
   const rel = inUse && selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
@@ -155,11 +119,11 @@ function syncContextUI() {
   setToolBtn(
     $('[data-act="relate"]'),
     !!sel && !multi,
-    multi ? 'Selecione um único tópico para criar relação' : sel ? 'Relação entre tópicos (R)' : pick('Selecione um tópico para iniciar relação')
+    multi ? 'Selecione um único tópico para criar relação' : sel ? 'Seta de relação entre tópicos (R)' : pick('Selecione um tópico para iniciar relação')
   );
   setToolBtn($('[data-act="fit"]'), inUse, inUse ? 'Ajustar à tela (Ctrl+0)' : NO_MAP_TITLE);
   // Cabeçalho e barra de status também são do mapa: busca, exportação, fechar mapa e zoom
-  for (const id of ['#search', '#export', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) {
+  for (const id of ['#search', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) {
     const el = $(id);
     if (el) el.disabled = !inUse;
   }
@@ -198,7 +162,10 @@ function syncContextUI() {
 
       const lbl = $('#optTopicLabel');
       if (lbl) {
-        lbl.textContent = isRoot ? 'Ideia central' : multi ? `${selIds.size} tópicos` : 'Tópico';
+        // mostra o título do tópico selecionado (do mapa atual), não um rótulo fixo: evita confundir com o mapa anterior
+        const t = String(sel.node.title || '').replace(/\s+/g, ' ').trim();
+        lbl.textContent = multi ? `${selIds.size} tópicos` : (t.length > 28 ? t.slice(0, 27) + '…' : (t || (isRoot ? 'Ideia central' : 'Tópico')));
+        lbl.title = t;
       }
     } else {
       options.setAttribute('data-context', 'canvas');
@@ -213,7 +180,8 @@ function syncContextUI() {
 }
 
 let closingMap = false;
-async function closeCurrentMap() {
+// fecha o último mapa aberto (sem abas restantes): descarrega o mapa e volta à tela inicial
+async function closeLastMap() {
   if (closingMap) return false;
   closingMap = true;
   try {
@@ -234,12 +202,8 @@ async function closeCurrentMap() {
       try { removeDraft(); } catch { /* ignora */ }
     }
 
-    // Fecha painéis divididos de estudo (PDF, Vídeo, Navegador)
-    if (window.MCReact && typeof window.MCReact.closeMedia === 'function') {
-      try { window.MCReact.closeMedia(); } catch { /* ignora */ }
-    } else if (typeof closePdf === 'function') {
-      try { closePdf(); } catch { /* ignora */ }
-    }
+    // Fecha o leitor de PDF ao lado do mapa
+    if (window.MCReact) window.MCReact.closePdf();
 
     // Fecha painéis auxiliares
     if (typeof closeDash === 'function') closeDash();
@@ -275,10 +239,16 @@ async function closeCurrentMap() {
     closingMap = false;
   }
 }
-window.closeCurrentMap = closeCurrentMap;
-if (typeof act !== 'undefined') {
-  act.closeMap = closeCurrentMap;
+// o ✕ de uma aba fecha essa aba; o último mapa fecha pela tela inicial
+async function closeCurrentMap() {
+  if (tabs.length > 1 && activeIdx >= 0) return closeTab(activeIdx);
+  const ok = await closeLastMap();
+  if (ok) { tabs = []; activeIdx = -1; if (typeof renderTabs === 'function') renderTabs(); }
+  return ok;
 }
+window.closeCurrentMap = closeCurrentMap;
+// a única entrada que fecha o mapa é o botão ✕ da aba (data-act="closeMap")
+if (typeof act !== 'undefined') act.closeMap = closeCurrentMap;
 
 // Inicializa controles interativos da relação na barra de opções
 function initContextUIEvents() {
@@ -341,26 +311,14 @@ function initContextUIEvents() {
     });
   }
 
-  // Atalhos de teclado adicionais para mídia de estudo e fechar mapa
+  // Atalho para fechar o mapa (Ctrl+Shift+M)
   window.addEventListener('keydown', (e) => {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
-      if (e.key.toLowerCase() === 'v' && typeof act !== 'undefined' && act.video) {
-        e.preventDefault();
-        act.video();
-      } else if (e.key.toLowerCase() === 'w' && typeof act !== 'undefined' && act.browser) {
-        e.preventDefault();
-        act.browser();
-      } else if (e.key.toLowerCase() === 'm') {
-        e.preventDefault();
-        closeCurrentMap();
-      }
-    }
   });
 
-  // Faixa de abas (0.6.0): a aba do mapa e as mídias; um clique no mapa devolve o foco a ele (o clique segue normalmente)
-  document.addEventListener('mc:media-tabs', (e) => renderMediaTabs(e.detail));
+  // Um clique no mapa devolve o foco a ele (o clique segue normalmente)
   document.addEventListener('mc:media-focus', () => setWorkspaceFocus('media'));
+  document.addEventListener('mc:map-focus', () => setWorkspaceFocus('map'));
   const tabMap = $('#tabMap');
   if (tabMap) tabMap.addEventListener('click', (e) => { if (!e.target.closest('#closeMapBtn')) setWorkspaceFocus('map'); });
   const reveal = $('#panelsReveal');

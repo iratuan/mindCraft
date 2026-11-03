@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "app.mindcraft.estudos"
+    namespace = "app.braniac.estudos"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.mindcraft.estudos"
+        applicationId "app.braniac.estudos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 701
-        versionName "0.7.1"
+        versionCode 20
+        versionName "0.1.19"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // BRANIAC: assinatura
+    signingConfigs {
+        release {
+            def senhaFile = file('../../keystore/senha.txt')
+            if (senhaFile.exists()) {
+                def senha = senhaFile.readLines()[0].trim()
+                storeFile file('../../keystore/mindcraft.jks')
+                storePassword senha
+                keyAlias 'mindcraft'
+                keyPassword senha
+            }
+        }
+    }
     buildTypes {
         release {
+            if (file('../../keystore/senha.txt').exists()) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

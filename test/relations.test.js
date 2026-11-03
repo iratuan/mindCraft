@@ -7,8 +7,6 @@ const path = require('path');
 const AdmZip = require('adm-zip');
 const { MindMap, createNode } = require('../core/model');
 const { buildGraph, neighborhood } = require('../core/graph');
-const { exportObsidian } = require('../core/obsidian');
-const { toDOCX, toMarkdown } = require('../core/export');
 const { writeMom, readMom } = require('../core/mom');
 
 function mk() {
@@ -36,19 +34,4 @@ test('apagar a relação desfaz a conexão (e desfazer a traz de volta); nada fi
 test('relação + [[link]] entre o mesmo par: duas arestas de tipos diferentes (a interface as junta numa só linha)', () => {
   const { m, a, b } = mk(); m.addRelation(a.id, b.id, 'x'); m.update(a.id, { notes: 'ver [[Regência]]' });
   assert.deepEqual(g1(m).edges.map((e) => e.type).sort(), ['link', 'relation']);
-});
-
-test('a relação é exportada ao Obsidian como [[link]] com o rótulo; o formato .mom guarda e recupera a relação', () => {
-  const { m, a, b } = mk(); m.addRelation(a.id, b.id, 'depende de');
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-rel-')); exportObsidian([{ key: 'k', name: 'Direito', map: m }], out);
-  const text = fs.readFileSync(path.join(out, 'Direito.md'), 'utf8'); fs.rmSync(out, { recursive: true, force: true });
-  assert.match(text, /- Relacionado: \[\[Direito#Regência\]\] \(depende de\)/);
-  const back = readMom(writeMom(m)); assert.equal(back.meta.relations.length, 1); assert.equal(g1(back).edges[0].type, 'relation');
-});
-
-test('Word: notas em Markdown saem como texto limpo (sem ** # - [ ] ...); Markdown exportado mantém o original', async () => {
-  const { m, a } = mk(); m.update(a.id, { notes: '# Atenção\n**crase** antes de *palavra* feminina\n- [x] ler\n- [ ] revisar\n[[Regência]]' });
-  const zip = new AdmZip(await toDOCX(m)); const xml = zip.readAsText('word/document.xml');
-  assert.doesNotMatch(xml, /\*\*|# Atenção|\[ \]|\[x\]|\[\[/); assert.match(xml, /Atenção/); assert.match(xml, /crase antes de palavra feminina/); assert.match(xml, /☑ ler/); assert.match(xml, /☐ revisar/);
-  assert.match(toMarkdown(m), /\*\*crase\*\*/);
 });

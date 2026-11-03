@@ -1,19 +1,12 @@
-// Interface em React, adotada por fatias: cada tela portada mantém os MESMOS ids, classes e atributos da versão clássica,
-// de modo que os testes existentes (e2e e QA) valem como prova de equivalência. A ponte com o app é window.MC (ver library-ui.js).
+// Interface em React (versão enxuta): tela inicial, painel de mapas, conexões, estrutura, leitor de PDF e atalhos.
+// A ponte com o app é window.MC (ver react-bridge.js).
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { LibraryModal } from './LibraryModal.jsx';
-import { VersionsModal } from './VersionsModal.jsx';
-import { CsvModal } from './CsvModal.jsx';
-import { PlanModal } from './PlanModal.jsx';
 import { Dashboard } from './Dashboard.jsx';
 import { Connections, Outline, RefsBox } from './Panels.jsx';
 import { PdfPane } from './PdfPane.jsx';
-import { ReviewMode } from './ReviewMode.jsx';
 import { ShortcutsModal } from './ShortcutsModal.jsx';
-import { ManualModal } from './ManualModal.jsx';
 import { Home } from './Home.jsx';
-import { SimuladoModal } from './SimuladoModal.jsx';
 
 let cur = null;
 function unmount() { if (cur) { try { cur.root.unmount(); } catch { /* o nó já foi removido por outro código */ } cur = null; } }
@@ -66,12 +59,12 @@ function mount(Component, props) {
   initialFocus(m);
 }
 
-// Painel de estudos: uma raiz permanente em #dash, redesenhada a cada renderDash() (mesmos gatilhos da versão clássica).
+// Painel de mapas (dashboard): uma raiz permanente em #dash, redesenhada a cada renderDash().
 let dashRoot = null;
 function renderDash() {
   const box = document.getElementById('dash');
   if (!dashRoot) { box.textContent = ''; dashRoot = createRoot(box); }
-  flushSync(() => dashRoot.render(<Dashboard />));
+  flushSync(() => dashRoot.render(<Dashboard onClose={() => window.MC.closeDash()} />));
 }
 function unmountDash() {
   if (!dashRoot) return;
@@ -92,42 +85,49 @@ function unmountPanel(id) {
   delete panels[id]; const box = document.getElementById(id); if (box) { box.textContent = ''; delete box.dataset.ui; }
 }
 
-import { MediaPane } from './MediaPane.jsx';
-
-// Painel de estudo dividido (PDF / Vídeo / Navegador): uma raiz em #pdfpane enquanto estiver aberto.
-let mediaRoot = null;
-let activeMediaTab = 'pdf';
+// Leitor de PDF ao lado do mapa: uma raiz em #pdfpane enquanto estiver aberto.
+let pdfRoot = null;
 const resizeSoon = () => setTimeout(() => window.dispatchEvent(new Event('resize')), 0);   // o mapa se ajusta à nova largura
 
-function openMedia(tab = 'pdf', opts = {}) {
+function PdfHost({ initial, onClose }) {
+  return (
+    <>
+      <div className="media-head">
+        <span>Leitor de PDF</span>
+        <span className="media-tools">
+        <button type="button" className="icon-btn sm" id="pdfMax" title="Maximizar o leitor (ocupa a área de trabalho)" aria-label="Maximizar o leitor de PDF" onClick={() => window.toggleDockMax && window.toggleDockMax()}><span aria-hidden="true">⤢</span></button>
+        <button type="button" className="icon-btn sm" id="pdfClose" title="Fechar o leitor de PDF (Ctrl+Shift+P)" aria-label="Fechar o leitor de PDF" onClick={onClose}><span aria-hidden="true">✕</span></button>
+        </span>
+      </div>
+      <PdfPane initial={initial} />
+    </>
+  );
+}
+
+function openPdf(opts = {}) {
   const pane = document.getElementById('pdfpane'), split = document.getElementById('pdfsplit');
-  activeMediaTab = tab;
-  document.dispatchEvent(new CustomEvent('mc:media-focus'));   // abrir uma mídia leva o foco para ela (faixa de abas, context-ui.js)
-  if (mediaRoot) {
-    document.dispatchEvent(new CustomEvent('mc:media-switch', { detail: { tab, pdfOpts: opts } }));
+  document.dispatchEvent(new CustomEvent('mc:media-focus'));
+  if (pdfRoot) {
     if (opts.path || opts.page) document.dispatchEvent(new CustomEvent('mc:pdf-open', { detail: opts }));
     return;
   }
   pane.hidden = false; split.hidden = false; pane.textContent = '';
   const cfg = (window.MC && typeof window.MC.loadCfg === 'function') ? window.MC.loadCfg() : {};
   const w = cfg.pdfWidth; if (w) pane.style.width = w + 'px';
-  mediaRoot = createRoot(pane);
-  flushSync(() => mediaRoot.render(<MediaPane initialTab={tab} pdfOpts={opts} onClose={closeMedia} />));
+  pdfRoot = createRoot(pane);
+  flushSync(() => pdfRoot.render(<PdfHost initial={opts} onClose={closePdf} />));
   document.body.classList.add('pdf-open'); resizeSoon();
 }
 
-function closeMedia() {
-  if (!mediaRoot) return;
-  try { mediaRoot.unmount(); } catch { /* nó já removido */ }
-  mediaRoot = null;
+function closePdf() {
+  if (!pdfRoot) return;
+  try { pdfRoot.unmount(); } catch { /* nó já removido */ }
+  pdfRoot = null;
   const pane = document.getElementById('pdfpane'); pane.textContent = ''; pane.hidden = true; document.getElementById('pdfsplit').hidden = true;
   document.body.classList.remove('pdf-open'); resizeSoon();
+  document.dispatchEvent(new CustomEvent('mc:map-focus'));   // fechado o leitor, o mapa volta a ser o foco (barra, desfazer e busca)
 }
 
-function openPdf(opts = {}) { openMedia('pdf', opts); }
-function closePdf() { closeMedia(); }
-function openVideo(opts = {}) { openMedia('video', opts); }
-function openBrowser(opts = {}) { openMedia('browser', opts); }
 const refsRoot = { r: null };
 function renderRefs() {
   const box = document.getElementById('refsBox'); if (!box) return;
@@ -156,19 +156,10 @@ function closeHome() {
 }
 
 window.MCReact = {
-  version: 1,
-  openLibrary: (tab = 'maps') => mount(LibraryModal, { initialTab: tab }),
-  openVersions: (id, opts = {}) => mount(VersionsModal, { mapId: id, back: opts.back !== false }),
-  openCsv: () => mount(CsvModal, {}),
-  openPlan: () => mount(PlanModal, {}),
-  openReview: () => mount(ReviewMode, {}),
-  openSimulado: () => mount(SimuladoModal, {}),
+  version: 2,
   openShortcuts: () => mount(ShortcutsModal, {}),
-  openManual: (section) => mount(ManualModal, { initialSection: section }),
   openHome, closeHome, homeIsOpen: () => !!homeRoot, renderDash, unmountDash,
-  openMedia, openPdf, closePdf, closeMedia, togglePdf: () => (mediaRoot && activeMediaTab === 'pdf' ? closeMedia() : openPdf({})), pdfIsOpen: () => !!mediaRoot && activeMediaTab === 'pdf',
-  openVideo, toggleVideo: () => (mediaRoot && activeMediaTab === 'video' ? closeMedia() : openVideo({})), videoIsOpen: () => !!mediaRoot && activeMediaTab === 'video',
-  openBrowser, toggleBrowser: () => (mediaRoot && activeMediaTab === 'browser' ? closeMedia() : openBrowser({})), browserIsOpen: () => !!mediaRoot && activeMediaTab === 'browser',
+  openPdf, closePdf, togglePdf: () => (pdfRoot ? closePdf() : openPdf({})), pdfIsOpen: () => !!pdfRoot,
   renderRefs,
   renderLinks: (model) => renderPanel('linksBody', <Connections model={model} />), unmountLinks: () => unmountPanel('linksBody'),
   renderOutline: (rows) => renderPanel('outline', <Outline rows={rows} />), unmountOutline: () => unmountPanel('outline'),

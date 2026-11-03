@@ -8,8 +8,6 @@ const path = require('path');
 const { MindMap, createNode } = require('../core/model');
 const { readMom, writeMom } = require('../core/mom');
 const { sanitizePdfs, sanitizeRefs, refLabel } = require('../core/pdfrefs');
-const { openLibrary, canonical } = require('../core/library');
-const { exportObsidian } = require('../core/obsidian');
 
 const mk = () => { const m = new MindMap(createNode('Direito')); const a = m.addChild(m.root.id, 'Crase'); return { m, a }; };
 const REF = { page: 12, quote: 'Emprega-se a crase antes de palavras femininas.', rects: [[0.1, 0.2, 0.5, 0.03], [0.1, 0.23, 0.4, 0.03]] };
@@ -51,18 +49,4 @@ test('.mom: PDFs e referências sobrevivem a salvar/abrir; arquivo adulterado é
   zip.updateFile('nodes.json', Buffer.from(JSON.stringify(nodes)));
   const doc = JSON.parse(zip.readAsText('document.json')); doc.mcPdfs = [{ id: '..', path: 'x' }, ...doc.mcPdfs]; zip.updateFile('document.json', Buffer.from(JSON.stringify(doc)));
   const sane = readMom(zip.toBuffer()); assert.equal(sane.root.children[0].refs.length, 1); assert.equal(sane.root.children[0].refs[0].page, 7); assert.equal(sane.meta.pdfs.length, 1);
-});
-
-test('biblioteca SQLite guarda PDFs e referências sem perda (ida e volta idêntica)', () => {
-  const { m, a } = mk(); const p = m.addPdf({ path: '/x/lei.pdf' }); m.addRef(a.id, { pdf: p.id, ...REF });
-  const lib = openLibrary(':memory:'); const id = lib.saveMap(m, { verify: true }); const back = lib.loadMap(id);
-  assert.equal(canonical(back), canonical(m)); assert.deepEqual(back.root.children[0].refs, m.find(a.id).node.refs); assert.deepEqual(back.meta.pdfs, m.meta.pdfs);
-});
-
-test('copiar subárvore leva as referências; Obsidian recebe "Fonte: PDF, p. N — trecho"', () => {
-  const { m, a } = mk(); const p = m.addPdf({ path: '/x/lei.pdf', name: 'Lei 8.112' }); m.addRef(a.id, { pdf: p.id, ...REF });
-  const c = MindMap.cloneSubtree(m.find(a.id).node); assert.equal(c.refs.length, 1); assert.notEqual(c.id, a.id);
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-pdf-')); exportObsidian([{ key: 'k', name: 'Direito', map: m }], out);
-  const md = fs.readFileSync(path.join(out, 'Direito.md'), 'utf8'); fs.rmSync(out, { recursive: true, force: true });
-  assert.match(md, /- Fonte: Lei 8\.112, p\. 12 — “Emprega-se a crase antes de palavras femininas\.”/);
 });

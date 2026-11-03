@@ -1,8 +1,6 @@
 'use strict';
 const crypto = require('crypto');
-const study = require('./study');
 const pdfrefs = require('./pdfrefs');
-const simulados = require('./simulados');
 
 const newId = () => crypto.randomBytes(16).toString('hex');
 
@@ -23,10 +21,18 @@ class MindMap {
     this._redo = [];
   }
 
-  find(id, node = this.root, parent = null) {
+  /** Acha um tópico pelo id. Sem `node`, procura na árvore principal e também nos tópicos soltos do Mindomo (editáveis no lugar). */
+  find(id, node = null, parent = null) {
+    if (node) return this._findIn(id, node, parent);
+    const main = this._findIn(id, this.root, null);
+    if (main) return main;
+    for (const f of this.meta._momFloating || []) { const r = this._findIn(id, f.node, null); if (r) return r; }
+    return null;
+  }
+  _findIn(id, node, parent) {
     if (node.id === id) return { node, parent };
     for (const c of node.children) {
-      const r = this.find(id, c, node);
+      const r = this._findIn(id, c, node);
       if (r) return r;
     }
     return null;
@@ -49,6 +55,9 @@ class MindMap {
     this.root = s.root;
     this.meta = s.meta;
   }
+  /** Há o que desfazer / refazer (a interface usa para habilitar os botões). */
+  canUndo() { return this._undo.length > 0; }
+  canRedo() { return this._redo.length > 0; }
   undo() {
     if (!this._undo.length) return false;
     this._redo.push(JSON.stringify({ root: this.root, meta: this.meta }));
@@ -169,6 +178,16 @@ class MindMap {
   }
 
   /** Remove vários tópicos (e suas relações) como uma ação. Retorna quantos tópicos de topo saíram. */
+  /** Exclui um tópico solto do Mindomo (com tudo o que está dentro dele). Uma ação desfazível. */
+  removeFloating(id) {
+    const list = this.meta._momFloating;
+    const i = (list || []).findIndex((f) => f.node.id === id);
+    if (i < 0) return false;
+    this._snapshot();
+    list.splice(i, 1);
+    if (!list.length) delete this.meta._momFloating;
+    return true;
+  }
   removeMany(ids) {
     const tops = this.topLevel(ids);
     if (!tops.length) return 0;
@@ -284,13 +303,13 @@ class MindMap {
     return best;
   }
 
-  /** Cópia profunda com ids novos. Por padrão descarta o histórico de estudo (a cópia é um tópico novo). */
-  static cloneSubtree(node, { keepStudy = false } = {}) {
+  /** Cópia profunda com ids novos. A cópia é um tópico novo: não leva os campos extras do arquivo original (_mcExtra). */
+  static cloneSubtree(node) {
     const { children, ...rest } = node;   // sem serializar a subárvore inteira a cada nível (era quadrático)
     const c = { ...JSON.parse(JSON.stringify(rest)), id: newId() };
     delete c._mom;
-    if (!keepStudy) delete c.study;
-    c.children = node.children.map((k) => MindMap.cloneSubtree(k, { keepStudy }));
+    delete c._mcExtra;
+    c.children = node.children.map((k) => MindMap.cloneSubtree(k));
     return c;
   }
   /** Insere uma subárvore já com ids novos como filho de parentId. Retorna o nó inserido. */
@@ -303,23 +322,6 @@ class MindMap {
     if (index == null || index > p.node.children.length) p.node.children.push(tree);
     else p.node.children.splice(index, 0, tree);
     return tree;
-  }
-
-  // --- estudo (revisão espaçada, tempo, questões, prova) ---
-  /** Aplica uma função pura de core/study.js ao estudo do tópico. Erros de validação lançam antes de qualquer alteração. */
-  mutateStudy(id, fn) {
-    const r = this.find(id);
-    if (!r) return false;
-    const next = fn(study.normalizeStudy(r.node.study));
-    this._snapshot();
-    r.node.study = next;
-    return true;
-  }
-  setExam(exam) {
-    if (exam !== null && (!exam || !study.isDateStr(exam.date))) throw new Error('Data da prova inválida.');
-    this._snapshot();
-    if (exam === null) delete this.meta.exam; else this.meta.exam = { name: String(exam.name || '').slice(0, 120), date: exam.date };
-    return true;
   }
 
   // --- PDFs vinculados e referências de trechos (core/pdfrefs.js) ---
@@ -358,37 +360,6 @@ class MindMap {
     return true;
   }
 
-  // --- simulados (core/simulados.js) ---
-  /**
-   * Registra um simulado (uma ação desfazível). Com `addToQuestions`, soma as questões de cada disciplina que tenha `nodeId`
-   * ao histórico de questões daquele tópico (na data do simulado) — alimenta acerto e pontos fracos.
-   */
-  addSimulado(sim, { addToQuestions = false } = {}) {
-    if ((this.meta.simulados || []).length >= simulados.MAX_SIMS) throw new Error(`O mapa já tem ${simulados.MAX_SIMS} simulados.`);
-    const s = simulados.checkSimulado(sim); s.id = newId().slice(0, 16);
-    this.batch(() => {
-      this._snapshot();
-      (this.meta.simulados = this.meta.simulados || []).push(s);
-      if (addToQuestions) for (const r of s.rows) if (r.nodeId && this.find(r.nodeId)) this.mutateStudy(r.nodeId, (st) => study.addQuestions(st, r.done, r.correct, s.d));
-    });
-    return s;
-  }
-  removeSimulado(id) {
-    if (!(this.meta.simulados || []).some((x) => x.id === id)) return false;
-    this._snapshot(); this.meta.simulados = this.meta.simulados.filter((x) => x.id !== id);
-    if (!this.meta.simulados.length) delete this.meta.simulados;
-    return true;
-  }
-
-  /** Metas semanais (minutos e questões em 7 dias). null ou zeros = sem metas. */
-  setGoals(goals) {
-    if (goals !== null && (typeof goals !== 'object')) throw new Error('Metas inválidas.');
-    const g = goals === null ? null : study.sanitizeGoals(goals);
-    if (goals && !g && (goals.minutesWeek || goals.questionsWeek)) throw new Error('Informe números inteiros positivos (horas por semana e/ou questões por semana).');
-    this._snapshot();
-    if (g) this.meta.goals = g; else delete this.meta.goals;
-    return true;
-  }
 
   update(id, patch) {
     const r = this.find(id);

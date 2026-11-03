@@ -1,0 +1,18 @@
+'use strict';
+/* Comandos de menu: o menu nativo do desktop e a barra de menus da interface chamam runMenuCommand(). Usa as globais de renderer.js. */
+
+// comandos de menu (menu nativo do desktop e barra de menus da interface compartilham este caminho)
+async function runMenuCommand(c) {
+  const field = ['TEXTAREA', 'INPUT'].includes(document.activeElement && document.activeElement.tagName);
+  if (['copy', 'cut', 'paste', 'selectAll'].includes(c)) return editCommand(c);
+  if ((c === 'undo' || c === 'redo') && field) return document.execCommand(c); // desfazer texto digitado
+  if (c === 'new') { newMap(); }
+  if (c === 'organize') return organizeMap();
+  else if (c === 'open') { const p = await ipcRenderer.invoke('dialog:open'); if (p) await openPath(p); }
+  else if (c === 'save-and-close') { if (await save(false)) ipcRenderer.send('close-now'); }
+  else if (c === 'restore') restoreVersion();
+  else if (c === 'save') save(false);
+  else if (c === 'saveAs') save(true);
+  else act[c]?.();
+}
+window.runMenuCommand = runMenuCommand;

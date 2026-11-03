@@ -5,39 +5,35 @@ const path = require('path');
 const core = path.join(__dirname, '..', 'core');
 const { MindMap, createNode } = require(path.join(core, 'model'));
 const { readMom, writeMom } = require(path.join(core, 'mom'));
-const { fromMarkdown, fromOPML } = require(path.join(core, 'import'));
 const { layoutMap, textWidth } = require(path.join(core, 'layout'));
 const { toSVG, renderGroup } = require(path.join(core, 'svg'));
-const { toMarkdown, toOPML } = require(path.join(core, 'export')); // PDF/Word: ver 'render-export' em electron/main.js
 const { THEMES } = require(path.join(core, 'themes'));
 
 const $ = (s) => document.querySelector(s);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const svg = $('#svg'), view = $('#view'), editor = $('#editor'), notes = $('#notes'), stage = $('#stage');
 
 const { MARKERS } = require(path.join(core, 'markers'));
 
-const S = require(path.join(core, 'study'));
 const { backupBefore, backupDirFor, listBackups } = require(path.join(core, 'backup'));
 const { logError } = require(path.join(core, 'errorlog'));
-const { textToNodes } = require(path.join(core, 'edital'));
-/** "Hoje" no formato AAAA-MM-DD; `window.__today` permite fixar a data nos testes. */
-const nowStr = () => window.__today || S.todayStr();
 
 let map, filePath = null, dirty = false, selectedId = null, selectedRel = null, L = null;
 let selIds = new Set();     // seleção múltipla; selectedId é sempre o "primário" e pertence ao conjunto
 let rev = 0;                // contador de alterações (usado pelo autosave)
-let dashOpen = false;       // painel de estudos aberto (ver study-ui.js)
 let graphOpen = false;      // rede de conhecimento aberta (ver graph-ui.js)
 let relateFrom = null;      // modo "criar relação": id do tópico de origem
 let hits = null;            // Set de ids encontrados pela busca
 let pan = { x: 0, y: 0, k: 1 };
+// zoom escolhido pelo usuário: enquanto for falso, o mapa é reajustado à área visível a cada mudança de layout
+let userZoomed = false;
 let notesOwner = null;      // { rel: bool, id } — a quem pertence o texto exibido no painel lateral
 
 // ---------- ciclo de vida ----------
 function newMap() {
+  beginTab(true);   // mapa novo sempre abre aba própria
   if (typeof closeHome === 'function') closeHome();
   selectedRel = null; relateFrom = null; hits = null; selIds = new Set(); document.body.classList.remove('relating');
-  if (typeof resetStudyUI === 'function') resetStudyUI();
   const root = createNode('Ideia central');
   map = new MindMap(root, { name: 'Novo mapa', theme: $('#theme').value || 'ocean' });
   ['Tópico 1', 'Tópico 2', 'Tópico 3'].forEach((t) => map.addChild(root.id, t));
@@ -51,7 +47,14 @@ function setStatus(msg) { $('#status').textContent = msg; }
 /** Quantos tópicos existem abaixo de `node` (todos os níveis). */
 function descendantCount(node) { let n = 0; for (const c of node.children) n += 1 + descendantCount(c); return n; }
 function render() {
-  L = layoutMap(map, { today: nowStr() });
+  L = layoutMap(map);
+  // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
+  L.floats = placeFloating();
+  // As caixas dos soltos entram no mesmo desenho: clicáveis e editáveis no lugar (a estrutura no arquivo não muda)
+  for (const { fl, dx, dy } of L.floats) {
+    for (const b of fl.boxes.values()) { b.x += dx; b.y += dy; L.boxes.set(b.id, b); }
+    L.edges.push(...fl.edges);
+  }
   // a seleção pode ter desaparecido (desfazer/refazer, exclusão, restaurar versão): volta para a raiz em vez de ficar apontando para o nada
   if (selectedId && !map.find(selectedId)) { selectedId = map.root.id; selIds = new Set([selectedId]); }
   if (selectedRel && !map.meta.relations.some((r) => r.id === selectedRel)) selectedRel = null;
@@ -65,16 +68,7 @@ function render() {
   if (!selectedId) selIds = new Set(); else if (!selIds.has(selectedId)) selIds = new Set([selectedId]);
   for (const id of [...selIds]) if (!map.find(id)) selIds.delete(id);
   svg.setAttribute('font-family', L.theme.font);
-  // O mapa fica numa "prancheta" sobre a mesa escura.
-  const bb = L.bounds;
-  const board = `<defs><filter id="abs" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="3" stdDeviation="9" flood-color="#000" flood-opacity=".5"/></filter></defs>`
-    + `<rect x="${bb.x}" y="${bb.y}" width="${bb.w}" height="${bb.h}" rx="3" fill="${L.theme.background}" filter="url(#abs)"/>`;
-  // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
-  L.floats = placeFloating();
-  const floatSvg = L.floats.map(({ fl, dx, dy }) => `<g transform="translate(${dx} ${dy})">`
-    + `<rect x="${fl.bounds.x - 12}" y="${fl.bounds.y - 12}" width="${fl.bounds.w + 24}" height="${fl.bounds.h + 24}" rx="8" fill="none" stroke="#8a8a8a" stroke-width="1.2" stroke-dasharray="6 5" opacity=".7"/>`
-    + `<g opacity=".6">${renderGroup(fl, { interactive: false })}</g></g>`).join('');
-  view.innerHTML = board + renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits }) + floatSvg;
+  view.innerHTML = renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits, logo: true });
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
   syncCustomTheme();
   $('#theme').value = map.meta.theme;
@@ -88,12 +82,12 @@ function render() {
   }
   if (typeof refreshNotesView === 'function') refreshNotesView();
   $('#progress').value = sel && sel.node.progress != null ? String(sel.node.progress) : '';
-  document.title = `${dirty ? '• ' : ''}${map.root.title} — MindCraft`;
+  document.title = `${dirty ? '• ' : ''}${map.root.title} — BRANIAC`;
   let count = 0; map.walk(() => count++);
   // na barra de status só o nome do arquivo (o caminho completo fica no tooltip): a área de trabalho é o que importa
-  setStatus(`${count} tópicos · ${map.meta.libId ? 'na biblioteca' : filePath ? path.basename(filePath) : 'sem arquivo'}`);
+  setStatus(`${count} tópicos · ${filePath ? path.basename(filePath) : 'sem arquivo'}`);
   { const st = $('#status'); if (st) st.title = filePath || ''; }
-  ipcRenderer.send('dirty', { dirty, timing: typeof timer !== 'undefined' && !!timer });
+  ipcRenderer.send('dirty', dirty);
   syncChrome(sel);
   autosaveTick();
   window.dispatchEvent(new Event('mc:render'));          // quem precisa refletir o estado (ex.: botões da barra do tablet) escuta isto
@@ -101,6 +95,9 @@ function render() {
 
 // ---------- interface (barras e painéis) ----------
 function syncChrome(sel) {
+  if (typeof renderTabs === 'function') renderTabs();   // faixa de abas acompanha o mapa ativo
+  $('#undoBtn').disabled = !(map && map.canUndo && map.canUndo());   // botões da barra superior seguem o histórico
+  $('#redoBtn').disabled = !(map && map.canRedo && map.canRedo());
   $('#docTitle').textContent = (filePath ? path.basename(filePath) : map.root.title || 'Sem título');
   $('#dirtyDot').hidden = !dirty;
   const pct = Math.round(pan.k * 100);
@@ -115,10 +112,11 @@ function syncChrome(sel) {
     const st = L.boxes.get(sel.node.id).style;
     if (/^#[0-9a-f]{6}$/i.test(st.fill)) fillIn.value = st.fill;
     shapeIn.value = sel.node.style.shape || '';
+    $('#align').value = sel.node.style.align || 'auto';
   }
   buildOutline();
-  if (typeof syncStudy === 'function') syncStudy(sel); // study-ui.js (carregado depois)
   if (typeof syncLinks === 'function') syncLinks();    // graph-ui.js
+  if (typeof syncNodeBar === 'function') syncNodeBar();   // barra flutuante do tópico selecionado (node-bar.js)
   if (typeof syncContextUI === 'function') syncContextUI(); // context-ui.js (barra de opções e rail)
   document.dispatchEvent(new Event('mc:render'));     // painéis React (leitor de PDF, fontes) se atualizam
 }
@@ -131,7 +129,7 @@ function buildOutline() {
   if (sig === outlineSig) return;
   outlineSig = sig;
   const box = $('#outline');
-  if (typeof useReactUi === 'function' && useReactUi()) {                  // interface React: monta o modelo de linhas e deixa o React pintar
+  if (window.MCReact) {                                                    // interface React: monta o modelo de linhas e deixa o React pintar
     const rows = [];
     const addRow = (n, depth, branch) => {
       rows.push({ id: n.id, depth, branch, sel: n.id === selectedId, hit: !!(hits && hits.has(n.id)), title: n.title, progress: n.progress, hasChildren: n.children.length > 0, collapsed: n.collapsed });
@@ -193,7 +191,7 @@ function showPanel(name) {
   try { localStorage.setItem('mc-tab', name); } catch { /* sem storage */ }
 }
 document.querySelectorAll('#ptabs .ptab').forEach((b) => b.addEventListener('click', () => { showPanel(b.dataset.tab); b.blur(); }));
-{ let t = 'study'; try { t = localStorage.getItem('mc-tab') || 'study'; } catch { /* sem storage */ } showPanel(t); }
+{ let t = 'props'; try { t = localStorage.getItem('mc-tab') || 'props'; } catch { /* sem storage */ } if (!['props', 'notes', 'links', 'outline'].includes(t)) t = 'props'; showPanel(t); }
 
 /** Grava no modelo o texto do painel (notas/rótulo) para o dono ORIGINAL, mesmo que a seleção já tenha mudado. */
 function commitNotes() {
@@ -248,7 +246,7 @@ function placeFloating() {
   let y = L.bounds.y;
   const x0 = L.bounds.x + L.bounds.w + 140;
   for (const f of list) {
-    const fl = layoutMap({ root: f.node, meta: map.meta }, { today: nowStr() });
+    const fl = layoutMap({ root: f.node, meta: map.meta });
     out.push({ fl, dx: x0 - fl.bounds.x, dy: y - fl.bounds.y });
     y += fl.bounds.h + 80;
   }
@@ -256,6 +254,7 @@ function placeFloating() {
 }
 
 function fit() {
+  userZoomed = false;   // ajustar devolve o zoom ao modo automático (acompanha a área visível)
   const r = svg.getBoundingClientRect();
   // enquadra a árvore principal e os tópicos soltos (se houver)
   let { x, y, w, h } = L.bounds;
@@ -265,8 +264,8 @@ function fit() {
     x = x1; y = y1; w = x2 - x1; h = y2 - y1;
   }
   const raw = Math.min((r.width * 0.92) / w, (r.height * 0.92) / h, 1.5); // folga em volta da prancheta
-  pan.k = Math.max(0.25, raw);
-  if (raw < 0.25) { // mapa enorme: abaixo de 25% nada se lê; mantém 25% centrado na raiz (use "Níveis" para recolher)
+  pan.k = Math.max(0.08, raw);   // enquadra o mapa INTEIRO na tela (mesmo grande); só abaixo de 8% centraliza a raiz
+  if (raw < 0.08) {
     const rb = L.boxes.get(map.root.id);
     pan.x = r.width / 2 - (rb.x + rb.w / 2) * pan.k; pan.y = r.height / 2 - (rb.y + rb.h / 2) * pan.k;
   } else {
@@ -277,20 +276,31 @@ function fit() {
 }
 
 // ---------- arquivos ----------
+/** Mapa grande abre organizado: se há muitos tópicos visíveis, os ramos mais profundos são recolhidos para caber na tela.
+    É uma ação desfazível (Ctrl+Z) e o mapa passa a constar como alterado, para você saber que mudou algo. */
+const AUTO_ORGANIZE_LIMIT = 120;
+
+function autoOrganize() {
+  const visible = (n) => 1 + (n.collapsed ? 0 : n.children.reduce((s, c) => s + visible(c), 0));
+  if (!map || visible(map.root) <= AUTO_ORGANIZE_LIMIT) return false;
+  const level = change(() => map.autoLevels(AUTO_ORGANIZE_LIMIT) || false);
+  if (level) setStatus(`Mapa grande: os ramos mais profundos foram recolhidos para caber na tela (nível ${level}). Ctrl+Z desfaz.`);
+  return !!level;
+}
 async function openPath(p, { silent = false } = {}) {
   try {
-    const ext = path.extname(p).slice(1).toLowerCase(), name = path.basename(p, path.extname(p));
-    if (typeof resetStudyUI === 'function') resetStudyUI();
-    map = ext === 'md' ? fromMarkdown(fs.readFileSync(p, 'utf8'), name)
-      : ext === 'opml' ? fromOPML(fs.readFileSync(p, 'utf8'), name) : readMom(fs.readFileSync(p));
-    // md/opml são importações: o "Salvar" pede um .mom novo em vez de sobrescrever o original
-    filePath = ext === 'mom' ? p : null; dirty = ext !== 'mom'; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
+    const already = tabIndexOfPath(p);
+    if (already >= 0) { switchTab(already); return true; }   // arquivo já aberto em outra aba: só vai até ela
+    const loaded = readMom(fs.readFileSync(p));
+    beginTab();   // o mapa atual continua na sua aba (com alterações, se houver)
+    map = loaded;
+    filePath = p; dirty = false; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
     if (typeof closeHome === 'function') closeHome();
-    render(); fit();
-    // tópicos soltos do Mindomo: avisa uma vez, na barra de status (o bloco fica à direita do mapa)
+    render(); autoOrganize(); fit();
+    // tópicos soltos do Mindomo: avisa na barra de status (o bloco fica à direita do mapa)
     const soltos = (map.meta._momFloating || []).length;
     if (soltos) setStatus(`${soltos} tópico(s) solto(s) do Mindomo à direita do mapa. Editar → Trazer tópicos soltos para o mapa.`);
-    if (ext === 'mom') { ipcRenderer.invoke('recent:add', p).catch(() => {}); saveCfg({ lastKind: 'file' }); }
+    ipcRenderer.invoke('recent:add', p).catch(() => {});
     return true;
   } catch (e) {
     logOnly('Não foi possível abrir ' + p + ': ' + e.message);   // falha esperada (arquivo ruim): só no registro, sem console.error
@@ -298,26 +308,18 @@ async function openPath(p, { silent = false } = {}) {
     return false;
   }
 }
-/** Retorna true se salvou, false se cancelou ou falhou. */
 /** Caminho inicial do "Salvar como": pasta do arquivo atual (ou a última usada) + nome sugerido. O diálogo do sistema deixa mudar nome e pasta. */
 function saveDefaultPath(name) {
   try { const dir = filePath ? path.dirname(filePath) : loadCfg().lastSaveDir; if (dir && fs.existsSync(dir)) return path.join(dir, name); } catch { /* sem pasta: só o nome */ }
   return name;
 }
 const rememberSaveDir = (target) => { try { if (typeof target === 'string' && target) saveCfg({ lastSaveDir: path.dirname(target) }); } catch { /* preferência é opcional */ } };
-/**
- * Só considera "salvo" depois que o armazenamento do aparelho confirmou a gravação. No desktop o arquivo já está no disco quando a escrita
- * volta (nada a esperar); no tablet o navegador grava no IndexedDB de forma assíncrona e, se o app fosse encerrado nessa janela, o último
- * Salvar se perderia: o host (platform/web) define window.__mcDurable para esperar essa gravação.
- */
-async function durable() { if (typeof window.__mcDurable === 'function') { try { await window.__mcDurable(); } catch { /* a falha de armazenamento já foi avisada (mc:storage-error) */ } } }
+/** Retorna true se salvou, false se cancelou ou falhou. A gravação é atômica (writeMom: temporário + renomear). */
 async function save(as) {
   commitNotes();
-  if (inLibrary()) return as ? exportCopyMom() : saveToLibrary();            // casa = biblioteca (SQLite); "Salvar como" exporta uma cópia .mom
-  if (!filePath && !as && loadCfg().newInLibrary && getLibrary()) return saveToLibrary();   // opção: mapas novos já nascem na biblioteca
   let target = filePath;
   if (!target || as) {
-    target = await ipcRenderer.invoke('dialog:save', 'mom', saveDefaultPath((map.root.title || 'mapa') + '.mom'));
+    target = await ipcRenderer.invoke('dialog:save', saveDefaultPath((map.root.title || 'mapa') + '.mom'));
     if (!target) return false;
     if (!/\.mom$/i.test(target)) target += '.mom';
   }
@@ -327,42 +329,9 @@ async function save(as) {
     if (userDataDir) { try { backupBefore(target, path.join(userDataDir, 'backups')); } catch (e) { report('Backup falhou (o salvamento continua): ' + e.message); } }   // guarda a versão anterior
     writeMom(map, target);
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
-  filePath = target; await durable(); if (rev === r0) dirty = false; render(); rememberSaveDir(target);
+  filePath = target; if (rev === r0) dirty = false; render(); rememberSaveDir(target);
   ipcRenderer.invoke('recent:add', target).catch(() => {});
-  saveCfg({ lastKind: 'file' });
   return true;
-}
-const rasterize = (size = 2) => new Promise((resolve, reject) => {
-  const L2 = layoutMap(map), b = L2.bounds;
-  size = Math.min(size, 8000 / Math.max(b.w, b.h)); // evita estourar o limite do canvas em mapas gigantes
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement('canvas');
-    c.width = b.w * size; c.height = b.h * size;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, c.width, c.height);
-    c.toBlob(async (bl) => resolve({ buf: Buffer.from(await bl.arrayBuffer()), width: b.w, height: b.h }), 'image/png');
-  };
-  img.onerror = reject;
-  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(toSVG(map));
-});
-async function doExport(fmt) {
-  if (!fmt) return;
-  commitNotes();
-  const p = await ipcRenderer.invoke('dialog:save', fmt, saveDefaultPath((map.root.title || 'mapa') + '.' + fmt));
-  if (!p) return; rememberSaveDir(p);
-  try {
-    let data;
-    if (fmt === 'pdf') data = await ipcRenderer.invoke('render-export', 'pdf', map.toJSON(), { outline: true });
-    else if (fmt === 'docx') { const img = await rasterize(2); data = await ipcRenderer.invoke('render-export', 'docx', map.toJSON(), { image: img.buf, imageSize: { width: img.width, height: img.height } }); }
-    else if (fmt === 'png') data = (await rasterize(2)).buf;
-    else if (fmt === 'svg') data = toSVG(map);
-    else if (fmt === 'md') data = toMarkdown(map);
-    else if (fmt === 'opml') data = toOPML(map);
-    fs.writeFileSync(p, data);
-    setStatus('Exportado: ' + p);
-    return p;
-  } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao exportar: ' + e.message); }
 }
 
 // ---------- ações de edição ----------
@@ -384,8 +353,14 @@ const act = {
     if (selectedRel) { const id = selectedRel; selectedRel = null; return change(() => map.removeRelation(id)); }
     const s = sel(); if (!s) return;
     const ids = targets();
+    // tópico solto (veio do Mindomo, sem pai na árvore): excluído com o que está dentro dele, em uma ação desfazível
+    if (ids.length === 1 && (map.meta._momFloating || []).some((f) => f.node.id === s.node.id)) {
+      change(() => map.removeFloating(s.node.id));
+      selectedId = null; selIds = new Set(); render();
+      return setStatus('Tópico solto excluído, com o que estava dentro dele. Ctrl+Z desfaz.');
+    }
     const keep = ids.length > 1 ? (map.topLevel(ids)[0] && map.find(map.topLevel(ids)[0].id).parent) : s.parent; // quem fica selecionado
-    if (!keep) return setStatus('A raiz do mapa não pode ser excluída.');
+    if (!keep) return setStatus((map.meta._momFloating || []).some((f) => f.node.id === s.node.id) ? 'Este tópico está solto (veio do Mindomo): traga-o para o mapa em Editar → Trazer tópicos soltos antes de excluir.' : 'A raiz do mapa não pode ser excluída.');
     selectedId = keep.id;
     change(() => map.removeMany(ids));
     setStatus(ids.length > 1 ? `${ids.length} tópicos excluídos (Ctrl+Z desfaz tudo de uma vez)` : '');
@@ -403,7 +378,6 @@ const act = {
     change(() => map.updateMany(ids, { collapsed: v }));
     setStatus(v ? `Ramo recolhido: ${hidden} subtópico(s) escondido(s). Toque de novo para expandir.` : 'Ramo expandido.');
   },
-  closeMap() { if (typeof closeCurrentMap === 'function') return closeCurrentMap(); },
   /** Traz os tópicos soltos do Mindomo para o mapa, como filhos da raiz. Um único Ctrl+Z desfaz tudo. */
   attachFloating() {
     const list = (map.meta._momFloating || []).slice();
@@ -521,6 +495,7 @@ for (const [v, label] of [['', '—'], ['0', '0%'], ['25', '25%'], ['50', '50%']
 
 // zoom pela barra de status (mantém o centro da vista)
 function zoomTo(k) {
+  userZoomed = true;
   const r = svg.getBoundingClientRect(), cx = r.width / 2, cy = r.height / 2;
   k = Math.min(4, Math.max(0.1, k));
   pan.x = cx - ((cx - pan.x) / pan.k) * k; pan.y = cy - ((cy - pan.y) / pan.k) * k; pan.k = k;
@@ -531,11 +506,38 @@ $('#zoomIn').addEventListener('click', () => zoomTo(pan.k * 1.2));
 $('#zoomOut').addEventListener('click', () => zoomTo(pan.k / 1.2));
 
 // tema claro/escuro da interface (preferência por usuário)
-const setLight = (on) => { document.body.classList.toggle('light', on); try { localStorage.setItem('mc-light', on ? '1' : '0'); } catch { /* sem storage */ } };
-try { if (localStorage.getItem('mc-light') === '1') document.body.classList.add('light'); } catch { /* sem storage */ }
-$('#lightToggle').addEventListener('click', () => setLight(!document.body.classList.contains('light')));
+// Tema da INTERFACE (barras, painéis, botões): escuro, claro ou desenho à mão. É independente do tema do mapa.
+const UI_THEMES = {
+  dark: { label: 'Escuro', icon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>' },
+  light: { label: 'Claro', icon: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' },
+  draw: { label: 'Desenho (à mão)', icon: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>' },
+};
+function uiThemeGet() {
+  try {
+    const v = localStorage.getItem('mc-ui-theme');
+    if (UI_THEMES[v]) return v;
+    if (localStorage.getItem('mc-light') === '1') return 'light';   // preferência antiga (claro/escuro)
+  } catch { /* sem storage */ }
+  return 'dark';
+}
+function setUiTheme(name) {
+  if (!UI_THEMES[name]) name = 'dark';
+  document.body.classList.toggle('light', name === 'light');
+  document.body.classList.toggle('ui-draw', name === 'draw');
+  try { localStorage.setItem('mc-ui-theme', name); } catch { /* sem storage */ }
+  const b = $('#lightToggle');
+  if (b) {
+    b.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${UI_THEMES[name].icon}</svg>`;
+    b.title = `Tema da interface: ${UI_THEMES[name].label}. Clique para trocar`; b.setAttribute('aria-label', b.title);
+  }
+  const sel = $('#uiTheme'); if (sel) sel.value = name;
+}
+setUiTheme(uiThemeGet());
+$('#lightToggle').addEventListener('click', () => { const keys = Object.keys(UI_THEMES); setUiTheme(keys[(keys.indexOf(uiThemeGet()) + 1) % keys.length]); });
+$('#uiTheme').addEventListener('change', (e) => setUiTheme(e.target.value));
 $('#fill').addEventListener('input', (e) => { const s = sel(); if (s) change(() => map.updateMany(targets(), { style: { fill: e.target.value, color: contrast(e.target.value) } })); });
 $('#shape').addEventListener('change', (e) => { const s = sel(); if (s) change(() => map.updateMany(targets(), { style: { shape: e.target.value || undefined } })); });
+$('#align').addEventListener('change', (e) => { const s = sel(); if (s) change(() => map.updateMany(targets(), { style: { align: e.target.value } })); });
 // Níveis: recolhe/expande por profundidade (essencial em editais com centenas de tópicos); uma ação desfazível
 $('#levelSel').addEventListener('change', (e) => {
   const v = e.target.value; e.target.value = '';
@@ -545,7 +547,6 @@ $('#levelSel').addEventListener('change', (e) => {
   fit();
   setStatus(changed ? `${changed} ramo(s) ${n === Infinity ? 'expandido(s)' : 'recolhido(s)/expandido(s)'}` : 'Os níveis já estavam assim.');
 });
-$('#export').addEventListener('change', async (e) => { await doExport(e.target.value); e.target.value = ''; });
 // o painel edita o rótulo quando uma relação está selecionada; senão, as notas do tópico
 notes.addEventListener('change', commitNotes);
 notes.addEventListener('blur', () => { commitNotes(); render(); }); // re-render: o painel passa a mostrar a nova seleção
@@ -625,6 +626,7 @@ const nodeAt = (el) => el && el.closest && el.closest('.node');
 let drag = null;
 svg.addEventListener('mousedown', (e) => {
   if (document.activeElement === notes) commitNotes(); // o blur só ocorre depois do mousedown; grava antes de trocar a seleção
+  if (handPan && e.button === 0) { drag = { sx: e.clientX, sy: e.clientY, ox: pan.x, oy: pan.y, id: null, moved: false, target: null, marquee: false, hand: true }; return; }   // ferramenta Mover: arrasta a vista mesmo sobre um tópico
   const n = nodeAt(e.target);
   if (relateFrom) { // segundo clique do modo relação
     const from = relateFrom;
@@ -636,6 +638,10 @@ svg.addEventListener('mousedown', (e) => {
     }
     return;
   }
+  if (n && e.target.closest && e.target.closest('.note-icon') && e.button === 0) { openNotesFor(n.dataset.id); return; }   // ícone de nota: abre a nota do tópico
+  const badge = e.target.closest && e.target.closest('.fold-badge');   // botão do próprio tópico: expande (se recolhido) ou recolhe (se aberto)
+  if (badge && e.button === 0) { const f = map.find(badge.dataset.fold); if (f) change(() => map.update(f.node.id, { collapsed: !f.node.collapsed })); return; }
+  if (n && e.altKey && !e.ctrlKey && !e.metaKey) { linkDrag = { from: n.dataset.id, sx: e.clientX, sy: e.clientY, moved: false }; return; }   // Alt + arrastar: liga a outro tópico
   const rl = e.target.closest && e.target.closest('.rel');
   if (rl) { selectedRel = rl.dataset.rel; selectedId = null; showPanel('notes'); render(); return; }
   selectedRel = null;
@@ -657,7 +663,30 @@ svg.addEventListener('mousedown', (e) => {
     if (e.detail === 2) setTimeout(() => { if (selectedId === id) startEdit(); }, 0);
   }
 });
+let linkDrag = null;   // Alt + arrastar de um tópico até outro: cria a ligação (ver linkEnd)
+function linkMove(e) {
+  const d = linkDrag;
+  if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < 5) return;
+  d.moved = true;
+  const t = nodeAt(document.elementFromPoint(e.clientX, e.clientY));
+  view.querySelectorAll('.link-target').forEach((el) => el.classList.remove('link-target'));
+  const ok = !!t && t.dataset.id !== d.from;
+  if (ok) t.classList.add('link-target');
+  setStatus(ok ? 'Solte para ligar a este tópico (Esc cancela).' : 'Arraste até outro tópico para ligar (Esc cancela).');
+}
+function linkEnd(e) {
+  const d = linkDrag; linkDrag = null;
+  view.querySelectorAll('.link-target').forEach((el) => el.classList.remove('link-target'));
+  if (!d.moved) { selectedId = d.from; selIds = new Set([d.from]); render(); return; }   // Alt + clique sem arrastar: só seleciona
+  const t = nodeAt(document.elementFromPoint(e.clientX, e.clientY));
+  if (!t || t.dataset.id === d.from) return setStatus('Nada ligado: solte sobre outro tópico.');
+  const r = change(() => map.addRelation(d.from, t.dataset.id));
+  if (!r) return setStatus('Esses tópicos já estão ligados.');
+  selectedRel = r.id; selectedId = null; selIds = new Set(); showPanel('notes'); render();
+  setStatus('Ligação criada. Digite um rótulo no painel, se quiser.');
+}
 window.addEventListener('mousemove', (e) => {
+  if (linkDrag) { linkMove(e); return; }
   if (!drag) return;
   const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
   if (!drag.moved && Math.hypot(dx, dy) < 5) return;
@@ -700,6 +729,7 @@ function showDropLine(targetId, mode) {
   view.append(g);
 }
 window.addEventListener('mouseup', (e) => {
+  if (linkDrag) { linkEnd(e); return; }
   if (!drag) return;
   svg.classList.remove('panning');
   const d = drag; drag = null;
@@ -723,7 +753,7 @@ window.addEventListener('mouseup', (e) => {
     const ok = change(() => (beside ? map.moveBeside(ids, d.target, d.mode) : map.moveMany(ids, d.target)));
     if (!ok) { if (ok === false) setStatus('Movimento inválido.'); } else setStatus(beside ? 'Tópico reposicionado.' : 'Tópico movido para dentro do tópico escolhido.');
   } else if (d.moved && d.id) render();
-  else if (!d.id && !d.moved && !d.marquee) { selectedId = null; render(); }
+  else if (!d.id && !d.moved && !d.marquee && !d.hand) { selectedId = null; render(); }
   else if (d.id && !d.moved && selIds.size > 1) { selIds = new Set([d.id]); selectedId = d.id; render(); } // clique simples reduz o grupo a um
   else if (d.marquee) { $('#marquee').hidden = true; }
 });
@@ -735,6 +765,7 @@ svg.addEventListener('wheel', (e) => {
 }, { passive: false });
 /** Zoom do mapa em torno de um ponto (coordenadas relativas ao #svg): roda do mouse e pinça compartilham esta fórmula. */
 function zoomMapAt(mx, my, factor) {
+  userZoomed = true;
   const k = Math.min(4, Math.max(0.1, pan.k * factor));
   pan.x = mx - ((mx - pan.x) / pan.k) * k; pan.y = my - ((my - pan.y) / pan.k) * k; pan.k = k;
   render();
@@ -763,7 +794,7 @@ async function pasteSelection() {
   if (!text.trim()) { setStatus('A área de transferência está vazia.'); return; }
   const parent = selectedId || map.root.id;
   const fromInternal = clip && clip.text === text;
-  const trees = fromInternal ? clip.trees.map((t) => MindMap.cloneSubtree(t, { keepStudy: false })) : textToNodes(text);
+  const trees = fromInternal ? clip.trees.map((t) => MindMap.cloneSubtree(t)) : textToNodes(text);
   const total = countNodes(trees);
   if (!total) { setStatus('Nada para colar.'); return; }
   if (total > MAX_PASTE_NODES) { setStatus(`Texto grande demais para colar (${total} tópicos; limite ${MAX_PASTE_NODES}).`); return; }
@@ -776,7 +807,7 @@ async function pasteSelection() {
 
 // ---------- teclado ----------
 window.addEventListener('keydown', (e) => {
-  if (dashOpen || graphOpen) return; // com um painel em tela cheia aberto, os atalhos do mapa ficam desligados (Esc fecha: study-ui.js)
+  if (graphOpen) return; // com a rede em tela cheia aberta, os atalhos do mapa ficam desligados (Esc fecha: graph-ui.js)
   // O teclado é de quem está na frente: com uma janela ou a tela inicial abertas, e dentro dos painéis/leitor/barras, Tab, Delete, Enter e setas
   // pertencem ao controle focado (antes, Tab numa janela criava tópicos no mapa de baixo e Delete podia apagar o selecionado).
   if (!$('#modal').hidden || (window.MCReact && window.MCReact.homeIsOpen())) return;
@@ -793,11 +824,12 @@ window.addEventListener('keydown', (e) => {
   // e chegam pelo canal 'menu' — ver editCommand() abaixo.
   if (e.altKey && !e.ctrlKey && !e.metaKey) { // Alt+setas: reordenar / mudar de nível · Alt+1…5: abas do painel lateral
     const ops = { ArrowUp: 'moveUp', ArrowDown: 'moveDown', ArrowLeft: 'outdent', ArrowRight: 'indent' };
-    const tabs = { 1: 'props', 2: 'study', 3: 'notes', 4: 'links', 5: 'outline' };
+    const tabs = { 1: 'props', 2: 'notes', 3: 'links', 4: 'ai', 5: 'outline' };   // mesma ordem das abas do painel
     if (ops[e.key]) { e.preventDefault(); return act[ops[e.key]](); }
     if (tabs[e.key]) { e.preventDefault(); return showPanel(tabs[e.key]); }
   }
   if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); return act.relate(); }
+  if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && sel()) { e.preventDefault(); return openNotesFor(selectedId); }   // N: adicionar/editar a nota do tópico
   const s = sel();
   const nav = (fn) => { e.preventDefault(); const t = fn(); if (t) { selectedId = t.id; render(); reveal(t.id); } };
   switch (e.key) {
@@ -824,22 +856,9 @@ async function editCommand(c) {
   else if (c === 'paste') await pasteSelection();
 }
 
-ipcRenderer.on('menu', async (_e, c) => {
-  const field = ['TEXTAREA', 'INPUT'].includes(document.activeElement && document.activeElement.tagName);
-  if (['copy', 'cut', 'paste', 'selectAll'].includes(c)) return editCommand(c);
-  if ((c === 'undo' || c === 'redo') && field) return document.execCommand(c); // desfazer texto digitado
-  if (c === 'new') { if (await confirmDiscard()) newMap(); }
-  else if (c === 'open') { if (await confirmDiscard()) { const p = await ipcRenderer.invoke('dialog:open'); if (p) await openPath(p); } }
-  else if (c === 'save-and-close') { if (typeof timer !== 'undefined' && timer) stopTimer(); if (await save(false)) ipcRenderer.send('close-now'); }   // o tempo do cronômetro entra no arquivo salvo
-  else if (c === 'restore') restoreVersion();
-  else if (c === 'save') save(false);
-  else if (c === 'saveAs') save(true);
-  else if (c === 'closeMap') { if (typeof closeCurrentMap === 'function') closeCurrentMap(); }
-  else if (c.startsWith('export:')) doExport(c.slice(7));
-  else act[c]?.();
-});
-ipcRenderer.on('open-path', async (_e, p) => { await ready; if (await confirmDiscard()) openPath(p); });
-window.addEventListener('resize', () => map && render());
+ipcRenderer.on('menu', (_e, c) => runMenuCommand(c));
+ipcRenderer.on('open-path', async (_e, p) => { await ready; openPath(p); });
+window.addEventListener('resize', () => { if (!map) return; if (userZoomed) render(); else fit(); });   // mapa acompanha a área visível (painéis, PDF, rotação)
 // erros inesperados nunca devem passar em silêncio
 const logOnly = (m) => { try { if (userDataDir) logError(path.join(userDataDir, 'logs'), m); } catch { /* o registro nunca pode causar outro erro */ } };
 const report = (m) => {
@@ -861,20 +880,7 @@ function saveCfg(patch) {
   const p = cfgPath(); if (!p) return;
   try { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, JSON.stringify({ ...loadCfg(), ...patch })); } catch (e) { report('Não foi possível salvar a configuração: ' + e.message); }
 }
-/** Preferências que viajam no pacote .mcpack (nunca caminhos do computador). */
-function portableSettings() {
-  const c = loadCfg();
-  return { startScreen: c.startScreen || (c.reopenLast === true ? 'last' : c.reopenLast === false ? 'blank' : 'home'), dashOnStart: !!c.dashOnStart, newInLibrary: !!c.newInLibrary, notifyDaily: c.notifyDaily === true, ...(typeof c.notifyAt === 'string' ? { notifyAt: c.notifyAt } : {}),
-    ...(c.pdfScale !== undefined ? { pdfScale: c.pdfScale } : {}), ...(c.pdfWidth !== undefined ? { pdfWidth: c.pdfWidth } : {}), light: document.body.classList.contains('light') };
-}
-/** Aplica as preferências vindas de um pacote (já validadas pelo núcleo; validadas de novo aqui). Devolve quantas aplicou. */
-function applyPortableSettings(raw) {
-  const s = require(path.join(core, 'settings')).sanitizeSettings(raw), { light, ...cfgPart } = s;
-  if (Object.keys(cfgPart).length) saveCfg(cfgPart);
-  if (typeof light === 'boolean') setLight(light);
-  return Object.keys(s).length;
-}
-/** Pasta do vault: a escolhida pelo usuário, ou a pasta do arquivo aberto (somente leitura, limitada). */
+/** Pasta de mapas da rede de conhecimento: a escolhida pelo usuário, ou a pasta do arquivo aberto (somente leitura, limitada). */
 const vaultDirEff = () => { const c = loadCfg(); return c.vaultDir || (filePath ? path.dirname(filePath) : null); };
 /** Arquivo mais recente da lista de recentes que ainda existe. */
 function lastRecent() {
@@ -886,7 +892,6 @@ function lastRecent() {
 
 /** Versões anteriores (backups automáticos) do arquivo aberto: o escolhido abre como mapa NOVO (o original não é tocado). */
 async function restoreVersion() {
-  if (inLibrary()) return openVersionsModal(map.meta.libId, { back: false });
   if (!filePath) return setStatus('Salve o mapa primeiro: as versões anteriores são guardadas por arquivo.');
   const dir = backupDirFor(path.join(userDataDir, 'backups'), filePath);
   if (!listBackups(dir).length) return setStatus('Ainda não há versões anteriores deste arquivo (o backup é feito ao salvar por cima de um arquivo existente).');
@@ -894,7 +899,10 @@ async function restoreVersion() {
   const p = await ipcRenderer.invoke('dialog:open-at', dir);
   if (!p) return;
   try {
-    adopt(readMom(fs.readFileSync(p)));
+    // a versão vira um mapa NOVO (sem arquivo): o original não é tocado
+    map = readMom(fs.readFileSync(p)); filePath = null; dirty = true; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
+    if (typeof closeHome === 'function') closeHome();
+    render(); fit();
     setStatus('Versão anterior aberta como mapa novo — use "Salvar como…". O arquivo original não foi alterado.');
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Não foi possível abrir a versão: ' + e.message); }
 }
@@ -930,13 +938,13 @@ async function recoverSession() {
     const d = JSON.parse(fs.readFileSync(p, 'utf8'));
     if (!d || !d.map || !d.map.root || typeof d.map.root.id !== 'string' || !Array.isArray(d.map.root.children)) throw new Error('rascunho inválido');
     const when = new Date(d.savedAt).toLocaleString('pt-BR');
+    dismissSplash();   // o diálogo de recuperação não pode ficar escondido sob a abertura
     const c = await ipcRenderer.invoke('dialog:confirm', {
       message: 'Encontrei um trabalho não salvo da sessão anterior.',
       detail: `${d.filePath || 'Mapa sem arquivo'} — salvo automaticamente em ${when}.`, buttons: ['Restaurar', 'Descartar'],
     });
     if (c === 0) {
       map = MindMap.fromJSON(d.map);
-      if (typeof resetStudyUI === 'function') resetStudyUI();
       filePath = d.filePath || null; dirty = true; rev++; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null;
       render(); fit(); setStatus('Sessão anterior restaurada — salve para não perder.');
     } else removeDraft();
@@ -946,54 +954,45 @@ async function recoverSession() {
   }
 }
 
-function setSplashStatus(txt) {
-  const el = document.getElementById('splashStatus');
-  if (el) el.textContent = txt;
+// a abertura sai depois que o vídeo tocou até o fim (ou após o limite em index.html); dismissSplash() sai já
+function nativeSplashHide() {
+  try {
+    if (window.Capacitor?.Plugins?.SplashScreen?.hide) window.Capacitor.Plugins.SplashScreen.hide();
+  } catch { /* plugin não disponível */ }
 }
-
+function dismissSplash() {
+  nativeSplashHide();
+  const s = document.getElementById('splash');
+  if (!s || s.hidden) return;
+  s.classList.add('splash-hide');
+  setTimeout(() => { s.hidden = true; s.style.display = 'none'; }, 380);
+}
 function hideSplash(delay = 180) {
-  setTimeout(() => {
-    const s = document.getElementById('splash');
-    if (!s) return;
-    s.classList.add('splash-hide');
-    setTimeout(() => {
-      s.hidden = true;
-      s.style.display = 'none';
-      try {
-        if (window.Capacitor?.Plugins?.SplashScreen?.hide) {
-          window.Capacitor.Plugins.SplashScreen.hide();
-        }
-      } catch { /* plugin não disponível */ }
-    }, 380);
-  }, delay);
+  const gate = window.splashVideoPlayed || Promise.resolve();
+  gate.then(() => setTimeout(dismissSplash, delay));
 }
+// rede de segurança: nenhuma abertura fica na frente da tela mais de 25 s
+setTimeout(dismissSplash, 5000);
 window.hideSplash = hideSplash;
-window.setSplashStatus = setSplashStatus;
-
-let today0 = nowStr();
-setInterval(() => { if (nowStr() !== today0) { today0 = nowStr(); if (map) render(); } }, 30000); // virou o dia: atualiza selos de revisão
-window.addEventListener('focus', () => { if (map && nowStr() !== today0) { today0 = nowStr(); render(); } });
 
 let firstInit = true;
-async function init() {
-  setSplashStatus('Carregando preferências…');
+async function initStartup() {
   let forced; if (firstInit) { try { forced = await ipcRenderer.invoke('app:start-override'); } catch { forced = null; } } firstInit = false;   // só a 1ª inicialização (testes)
   try { userDataDir = await ipcRenderer.invoke('app:path', 'userData'); } catch { userDataDir = null; }
-  setSplashStatus('Recuperando sessão anterior…');
   await recoverSession();
   if (dirty) { hideSplash(); return; }                                    // um rascunho foi restaurado: não mexe
   await new Promise((r) => (document.readyState === 'complete' ? r() : window.addEventListener('load', r, { once: true })));   // espera os demais scripts
   const cfg = loadCfg();
-  setSplashStatus('Iniciando biblioteca e mapas…');
-  const start = forced || cfg.startScreen || (cfg.reopenLast === true ? 'last' : cfg.reopenLast === false ? 'blank' : 'home');   // padrão: tela inicial
+  const start = forced || cfg.startScreen || 'home';   // padrão: tela inicial
   if (start === 'home' && window.MCReact && typeof act.home === 'function') { act.home(true); hideSplash(); return; }
-  if (start === 'last') {
-    if (cfg.lastKind === 'lib' && cfg.lastLib && libraryExists()) { if (!(await openFromLibrary(cfg.lastLib, { confirm: false, silent: true }))) { const last = lastRecent(); if (last) await openPath(last, { silent: true }); } }
-    else { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
-  }   // app de estudo diário: volta de onde parou
+  if (start === 'last') { const last = lastRecent(); if (last) await openPath(last, { silent: true }); }
   if (!map) newMap();   // início em branco (ou nada a reabrir): só aqui nasce um mapa vazio
-    if (cfg.dashOnStart && typeof act.dash === 'function') act.dash();
   hideSplash();
 }
 // nenhum mapa é criado no boot: a tela inicial aparece antes; um mapa só existe quando o usuário abre ou cria um (ver init)
+async function init() {
+  try { await initStartup(); }
+  catch (e) { report('Falha ao iniciar: ' + e.message); }
+  finally { hideSplash(); }   // mesmo se algum passo falhar, a tela não fica presa na abertura
+}
 const ready = init(); // aberturas por linha de comando esperam a restauração (ver 'open-path')

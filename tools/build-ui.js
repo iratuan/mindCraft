@@ -18,6 +18,8 @@ esbuild.build({
   const from = css.findIndex((l) => l.startsWith('.textLayer{')), to = css.findIndex((l) => l.startsWith('.annotationLayer{'));
   if (from < 0 || to < from) throw new Error('CSS da camada de texto do PDF.js não encontrado (versão diferente?)');
   fs.writeFileSync(path.join(path.dirname(out), 'pdf.css'), css.slice(from, to).join('\n'));
+  // rede 3D: 3d-force-graph (com three.js) em pacote próprio, carregado só quando a janela da Rede existe
+  await esbuild.build({ entryPoints: [path.join(root, 'renderer', 'react', 'graph3d.js')], bundle: true, outfile: path.join(path.dirname(out), 'graph3d.js'), format: 'iife', platform: 'browser', target: 'chrome130', define: { 'process.env.NODE_ENV': '"production"' }, legalComments: 'none', logLevel: 'warning' });
   const kb = Math.round(fs.statSync(out).size / 1024);
   console.log(`interface React empacotada: ${path.relative(root, out)} (${kb} KB)`);
 }, () => process.exit(1));

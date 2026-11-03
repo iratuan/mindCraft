@@ -1,6 +1,7 @@
 'use strict';
 const { layoutMap, edgePoints } = require('./layout');
 const { MARKERS } = require('./markers');
+const { logoSize, logoVariant, logoMarkup } = require('./logo');
 
 const { escapeHtml: esc } = require('./text');
 const REL_COLOR = '#e5484d';
@@ -20,9 +21,17 @@ function edgePath(e, curve) {
  *  selectedId / selectedRel — destaque; interactive — adiciona data-id/data-rel para o editor;
  *  hits — Set de ids achados na busca.
  */
-function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hits } = {}) {
+/** Alinhamento do texto de um tópico: o do estilo, ou (auto) para fora do centro. A raiz fica centralizada. */
+function textAlign(b, s) {
+  if (s.align && s.align !== 'auto') return s.align;
+  if (b.level === 0) return 'center';
+  return b.side < 0 ? 'right' : 'left';
+}
+const SKETCH_DEFS = '<defs><filter id="mc-sketch" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G"/></filter></defs>';
+function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hits, logo } = {}) {
   const { theme } = L;
   const out = [];
+  if (theme.sketch) out.push(SKETCH_DEFS);   // tema à mão: o desenho inteiro recebe um tremor leve de traço (sem sombras)
 
   for (const e of L.edges) {
     const w = e.to.style.edgeWidth || theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
@@ -52,39 +61,55 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hit
     } else if (s.shape === 'ellipse') {
       shape = `<ellipse cx="${b.x + b.w / 2}" cy="${b.y + b.h / 2}" rx="${b.w / 2}" ry="${b.h / 2}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ''}/>`;
     } else {
-      const r = s.shape === 'pill' ? b.h / 2 : s.shape === 'round' ? 8 : 2;
+      const r = s.shape === 'pill' ? Math.min(b.h / 2, 8) : s.shape === 'round' ? 5 : 2;   // pílula: cantos menos arredondados que a semicircunferência   // arredondado: cantos suaves, sem virar pílula
       shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ''}/>`;
     }
+    // logomarca ao lado do tópico principal (só na tela: o arquivo do mapa não guarda o ícone)
+    if (logo && b.level === 0) {
+      const ls = logoSize(s.size);
+      const variant = logoVariant({ fill: s.fill, mono: !!theme.sketch });
+      shape += logoMarkup({ x: b.x + s.padX * 0.7, y: b.y + b.h / 2 - ls.h / 2, fontSize: s.size, variant, color: s.color });
+    }
     const startY = b.y + b.h / 2 - ((b.lines.length - 1) * b.lineHeight) / 2;
+    const align = textAlign(b, s);
+    const txA = align === 'left' ? b.x + s.padX * 0.7 + b.markerW : align === 'right' ? b.x + b.w - s.padX : tx;
+    const anchor = align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle';
     const text = b.lines.map((l, i) =>
-      `<text x="${tx}" y="${startY + i * b.lineHeight}" text-anchor="middle" dominant-baseline="central" fill="${s.color}" font-size="${s.size}"${s.font ? ` font-family="${esc(`'${s.font}', ${theme.font}`)}"` : ''} font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ''}>${esc(l)}</text>`).join('');
+      `<text x="${txA}" y="${startY + i * b.lineHeight}" text-anchor="${anchor}" dominant-baseline="central" fill="${s.color}" font-size="${s.size}"${s.font ? ` font-family="${esc(`'${s.font}', ${theme.font}`)}"` : ''} font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ''}>${esc(l)}</text>`).join('');
 
     const markers = b.markers.map((m, i) => {
-      const d = b.markerD, cx = b.x + s.padX * 0.7 + d / 2 + i * (d + 4), cy = b.y + b.h / 2;
+      const d = b.markerD, cx = b.x + s.padX * 0.7 + (b.logoW || 0) + d / 2 + i * (d + 4), cy = b.y + b.h / 2;
       return `<circle cx="${cx}" cy="${cy}" r="${d / 2}" fill="${MARKERS[m].color}"/><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="${d * 0.62}" font-weight="700">${MARKERS[m].glyph}</text>`;
     }).join('');
 
     const progress = b.progress != null
       ? `<rect x="${b.x}" y="${b.y + b.h + 4}" width="${b.w}" height="4" rx="2" fill="#8a94a633"/><rect x="${b.x}" y="${b.y + b.h + 4}" width="${(b.w * b.progress) / 100}" height="4" rx="2" fill="${b.progressAuto ? '#4c9aff' : '#43a047'}"/>` : '';
-    const due = b.due ? `<circle cx="${b.x - 2}" cy="${b.y - 2}" r="9" fill="#e5484d" stroke="${theme.background}" stroke-width="2"/><text x="${b.x - 2}" y="${b.y - 1.5}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="${b.due > 1 ? 10 : 11}" font-weight="700">${b.due > 1 ? b.due : '↻'}</text>` : '';
 
     const hit = hits && hits.has(b.id) ? `<rect x="${b.x - 6}" y="${b.y - 6}" width="${b.w + 12}" height="${b.h + 12}" rx="12" fill="#ffeb3b55" stroke="#fbc02d" stroke-width="2"/>` : '';
     const sel = (selectedIds ? selectedIds.has(b.id) : selectedId === b.id)
       ? `<rect x="${b.x - 4}" y="${b.y - 4}" width="${b.w + 8}" height="${b.h + 8}" rx="10" fill="none" stroke="#ff9800" stroke-width="2.5" stroke-dasharray="5 3"/>` : '';
     const fx = b.side > 0 ? b.x + b.w + 10 : b.x - 10;
-    const fold = n.children.length && n.collapsed
-      ? `<circle cx="${fx}" cy="${b.y + b.h / 2}" r="9" fill="${b.branch}"/><text x="${fx}" y="${b.y + b.h / 2}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="11" font-weight="700">${n.children.length}</text>` : '';
-    const note = n.notes ? `<g class="note-icon" transform="translate(${b.x + b.w - 8} ${b.y - 13})"><rect width="9" height="11" rx="1.7" fill="${theme.background}" stroke="${s.branch}" stroke-width="1.3"/><path d="M2.3 3.5h4.4M2.3 5.6h4.4M2.3 7.7h2.7" stroke="${s.branch}" stroke-width="1" stroke-linecap="round" fill="none"/></g>` : '';
-    out.push(`<g${interactive ? ` data-id="${esc(b.id)}" class="node"` : ''}>${hit}${shape}<g pointer-events="none">${progress}${markers}${text}${sel}${fold}${note}${due}</g>${interactive ? `<rect class="hitarea" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="transparent" pointer-events="all"/>` : ''}</g>`);
+    // número de filhos de um tópico recolhido: clicável (pointer-events) e expande o tópico
+    const foldAttr = interactive ? ` data-fold="${esc(b.id)}" style="pointer-events:all;cursor:pointer"` : '';
+    // botão de expandir/contrair no próprio tópico: "−" com o ramo aberto, o número de filhos com o ramo fechado.
+    // Na exportação (sem interação) só aparece o número, para o desenho impresso ficar limpo.
+    const hasKids = n.children.length > 0;
+    const fold = hasKids && (interactive || n.collapsed)
+      ? `<g class="fold-badge${n.collapsed ? ' collapsed' : ''}"${foldAttr}><title>${n.collapsed ? `Clique para expandir (${n.children.length} subtópicos)` : 'Clique para recolher os subtópicos'}</title>`
+        + `<circle cx="${fx}" cy="${b.y + b.h / 2}" r="11" fill="${b.branch}"/>`
+        + `<text x="${fx}" y="${b.y + b.h / 2}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="${n.collapsed ? 11 : 15}" font-weight="700" pointer-events="none">${n.collapsed ? n.children.length : '−'}</text></g>` : '';
+    const noteTip = interactive ? '<title>Nota do tópico: clique para ver ou editar</title>' : '';
+    const note = n.notes ? `<g class="note-icon"${interactive ? ' style="cursor:pointer"' : ''} transform="translate(${b.x + b.w - 8} ${b.y - 13})"><rect width="9" height="11" rx="1.7" fill="${theme.background}" stroke="${s.branch}" stroke-width="1.3"/><path d="M2.3 3.5h4.4M2.3 5.6h4.4M2.3 7.7h2.7" stroke="${s.branch}" stroke-width="1" stroke-linecap="round" fill="none"/>${noteTip}</g>` : '';
+    out.push(`<g${interactive ? ` data-id="${esc(b.id)}" class="node"` : ''}>${hit}${shape}<g pointer-events="none">${progress}${markers}${text}${sel}${fold}</g>${note}${interactive ? `<rect class="hitarea" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="transparent" pointer-events="all"/>` : ''}</g>`);
   }
-  return out.join('\n');
+  return theme.sketch ? '<g filter="url(#mc-sketch)">' + out.join('\n') + '</g>' : out.join('\n');
 }
 
 /** SVG completo e autônomo (usa o mesmo desenho do editor). */
 function toSVG(map, opts = {}) {
   const L = layoutMap(map, opts);
   const { x, y, w, h } = L.bounds;
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w)}" height="${Math.ceil(h)}" viewBox="${x} ${y} ${w} ${h}" font-family="${esc(L.theme.font)}">\n<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${L.theme.background}"/>\n${renderGroup(L)}\n</svg>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w)}" height="${Math.ceil(h)}" viewBox="${x} ${y} ${w} ${h}" font-family="${esc(L.theme.font)}">\n<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${L.theme.background}"/>\n${renderGroup(L, { logo: true })}\n</svg>`;
 }
 
 module.exports = { toSVG, renderGroup };

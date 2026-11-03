@@ -2,18 +2,19 @@
 const fs = require('fs');
 const AdmZip = require('adm-zip');
 const { MindMap, createNode, newId } = require('./model');
-const { normalizeStudy, isDateStr, sanitizeGoals } = require('./study');
 const { sanitizeStyle, sanitizeTheme, THEMES } = require('./themes');
 const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml } = require('./mindomo');
 const { MARKERS } = require('./markers');
 const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
-const { sanitizeSimulados } = require('./simulados');
 
 // Limites contra arquivos corrompidos ou maliciosos (o .mom é um ZIP vindo de fora).
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
 const MAX_NODES = 200000;
 const MAX_DEPTH = 500;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+// Campos do bloco "mc" que o MindCraft entende. Qualquer outro campo (ex.: estudo de versões antigas, vídeos) é guardado
+// como veio em _mcExtra e regravado igual: o app não mostra, mas nunca apaga.
+const KNOWN_MC = new Set(['markers', 'progress', 'style', 'collapsed', 'refs']);
 
 // Remove apenas tags de formatação conhecidas; texto literal como "<C>" é preservado.
 const stripTags = (s) => String(s ?? '')
@@ -56,6 +57,7 @@ function readMom(source) {
     const { id, parentId, previousId, title, index, mc, ...raw } = n;
     const nid = mapId(id);
     const m = mc && typeof mc === 'object' ? mc : {};
+    const mcExtra = Object.fromEntries(Object.entries(m).filter(([k]) => !KNOWN_MC.has(k)));
     byId.set(nid, {
       node: createNode(clean(title), {
         id: nid, notes: clean(n.notes?.text ?? (typeof n.notes === 'string' ? n.notes : (!fromMindCraft && typeof n.description === 'string' ? htmlToMarkdown(n.description) : ''))),
@@ -64,9 +66,8 @@ function readMom(source) {
         progress: Number.isFinite(m.progress) ? Math.min(100, Math.max(0, m.progress)) : null,
         style: fromMindCraft ? sanitizeStyle(m.style) : convertNodeStyle(n.style, n.titleStyle, title),
         collapsed: m.collapsed === true,
-        ...(m.study ? { study: normalizeStudy(m.study) } : {}),
         ...(Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {}),
-        ...(m.videoRef && typeof m.videoRef.time === 'number' ? { mcVideoRef: { videoId: String(m.videoRef.videoId || ''), time: m.videoRef.time, title: String(m.videoRef.title || '') } } : {}),
+        ...(Object.keys(mcExtra).length ? { _mcExtra: mcExtra } : {}),
       }),
       parentId: typeof parentId === 'string' ? mapId(parentId) : null, index: Number.isFinite(index) ? index : 0, raw: { ...raw },
       prev: typeof previousId === 'string' ? mapId(previousId) : null,
@@ -126,7 +127,7 @@ function readMom(source) {
     if (!floatTops.has(top.node.id)) floatTops.set(top.node.id, top);
   }
   for (const top of floatTops.values()) (function walk(n) { floatIds.add(n.id); n.children.forEach(walk); })(top.node);
-  if (floatTops.size) map.meta._momFloating = [...floatTops.values()].map((t) => ({ node: t.node, index: t.index, previousId: t.prev }));
+  if (floatTops.size) map.meta._momFloating = [...floatTops.values()].map((t) => ({ node: t.node, index: t.index, previousId: t.prev, parentId: t.parentId }));
   const hidden = nodes.filter((n) => {
     if (!n || typeof n !== 'object') return false;
     if (typeof n.id !== 'string') return true;                                     // inválido para o app: volta como estava
@@ -138,21 +139,7 @@ function readMom(source) {
   if (custom) map.meta.customTheme = custom;
   // todos os temas do arquivo voltam ao themes.json (o Mindomo tem uma biblioteca de temas, não só o que está em uso)
   if (themes && typeof themes === 'object' && !Array.isArray(themes) && JSON.stringify(themes).length < 4000000) map.meta._momThemes = themes;
-  if (doc.mcExam && isDateStr(doc.mcExam.date)) map.meta.exam = { name: String(doc.mcExam.name || '').slice(0, 120), date: doc.mcExam.date };
-  if (sanitizeGoals(doc.mcGoals)) map.meta.goals = sanitizeGoals(doc.mcGoals);
-  { const sims = sanitizeSimulados(doc.mcSimulados, newId); if (sims.length) map.meta.simulados = sims; }
   if (Array.isArray(doc.mcPdfs) && sanitizePdfs(doc.mcPdfs).length) map.meta.pdfs = sanitizePdfs(doc.mcPdfs);
-  if (Array.isArray(doc.mcVideos)) {
-    map.meta.videos = doc.mcVideos
-      .filter((v) => v && typeof v === 'object' && (v.url || v.path))
-      .map((v) => ({
-        id: String(v.id || ''),
-        name: String(v.name || v.title || 'Vídeo').slice(0, 150),
-        ...(typeof v.path === 'string' && v.path ? { path: v.path } : {}),
-        ...(typeof v.url === 'string' && v.url ? { url: v.url } : {}),
-        ...(typeof v.dur === 'number' && v.dur >= 0 ? { dur: Math.floor(v.dur) } : {})
-      }));
-  }
   // Mindomo guarda o histórico (changes.json) e as relações dele (relations.json). O MindCraft ainda não mostra as relações do Mindomo,
   // mas elas NÃO podem ser perdidas: guardamos o conteúdo original (com os ids já mapeados) e regravamos no mesmo formato.
   const changes = get('changes.json');
@@ -179,7 +166,8 @@ function writeMom(map, target) {
   const visit = (node, parentId, previousId, index) => {
     const raw = node._mom || {};
     const hasStyle = node.style && Object.keys(node.style).length;
-    const hasMc = (node.markers || []).length || node.progress != null || node.study || hasStyle || node.collapsed || (node.refs && node.refs.length) || node.mcVideoRef;
+    const hasExtra = !!(node._mcExtra && Object.keys(node._mcExtra).length);
+    const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || (node.refs && node.refs.length) || hasExtra;
     list.push({
       version: 40, ...raw, id: node.id, originalId: node.id,
       ...(parentId ? { parentId } : {}), ...(previousId ? { previousId } : {}),
@@ -190,11 +178,10 @@ function writeMom(map, target) {
       // notas do Mindomo (HTML): só reescreve se o texto mudou aqui; senão o HTML original segue intacto
       ...(typeof raw.description === 'string' && node.notes !== htmlToMarkdown(raw.description) ? { description: node.notes ? markdownToHtml(node.notes) : '' } : {}),
       ...(hasMc ? { mc: {
+        ...(hasExtra ? node._mcExtra : {}),
         markers: node.markers || [], progress: node.progress,
         ...(hasStyle ? { style: node.style } : {}), ...(node.collapsed ? { collapsed: true } : {}),
-        ...(node.study ? { study: node.study } : {}),
         ...(node.refs && node.refs.length ? { refs: node.refs } : {}),
-        ...(node.mcVideoRef && typeof node.mcVideoRef.time === 'number' ? { videoRef: { videoId: String(node.mcVideoRef.videoId || ''), time: node.mcVideoRef.time, title: String(node.mcVideoRef.title || '') } } : {}),
       } } : {}),
     });
     let prev = null;
@@ -202,7 +189,8 @@ function writeMom(map, target) {
   };
   visit(map.root, null, null, 0);
   // tópicos soltos (sem pai) voltam à posição que tinham; a lixeira e os duplicados voltam como estavam
-  for (const f of map.meta._momFloating || []) visit(f.node, null, f.previousId || null, Number.isFinite(f.index) ? f.index : 0);
+  // o pai original do tópico solto (que não existe no arquivo) é regravado como estava: nada se perde ao salvar
+  for (const f of map.meta._momFloating || []) visit(f.node, f.parentId || null, f.previousId || null, Number.isFinite(f.index) ? f.index : 0);
   for (const raw of map.meta._momHidden || []) list.push(raw);
 
   const doc = map.meta._momDoc || {
@@ -218,11 +206,7 @@ function writeMom(map, target) {
   doc.mcRelations = map.meta.relations || [];
   doc.mcTheme = map.meta.theme || 'ocean';
   if (map.meta.customTheme) doc.mcCustomTheme = map.meta.customTheme; else delete doc.mcCustomTheme;
-  if (map.meta.exam) doc.mcExam = map.meta.exam; else delete doc.mcExam;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;
-  if (map.meta.videos && map.meta.videos.length) doc.mcVideos = map.meta.videos; else delete doc.mcVideos;
-  if (map.meta.goals) doc.mcGoals = map.meta.goals; else delete doc.mcGoals;
-  if (map.meta.simulados && map.meta.simulados.length) doc.mcSimulados = map.meta.simulados; else delete doc.mcSimulados;
   doc.mapInfo.name = map.meta.name || map.root.title;
   doc.mapInfo.rootId = map.root.id;
   doc.mapInfo.modificationDate = now;

@@ -26,6 +26,13 @@ function setNotesMode(mode) {
   refreshNotesView();
   if (mode === 'edit' && !notes.disabled) notes.focus();
 }
+/** Abre a nota de um tópico: seleciona o tópico, mostra o painel Notas em modo de edição e põe o cursor no texto. */
+function openNotesFor(id) {
+  if (!map || !map.find(id)) return;
+  if (!selIds.has(id) || selectedId !== id) { selIds = new Set([id]); selectedId = id; selectedRel = null; render(); }
+  showPanel('notes'); setNotesMode('edit');
+  setTimeout(() => { notes.focus(); notes.setSelectionRange(notes.value.length, notes.value.length); }, 0);
+}
 $('#nmEdit').addEventListener('click', () => setNotesMode('edit'));
 $('#nmView').addEventListener('click', () => setNotesMode('view'));
 

@@ -8,7 +8,7 @@ const THEMES = {
     name: 'Oceano', background: '#f3f7ff', font: 'Segoe UI, Roboto, Helvetica, Arial, sans-serif',
     branches: ['#0073e6', '#00a896', '#f4a261', '#e76f51', '#8e6bd8', '#2a9d8f', '#d6336c'],
     levels: [
-      { shape: 'pill', fill: '#0b3d91', color: '#ffffff', size: 22, bold: true, padX: 22, padY: 12 },
+      { shape: 'round', fill: '#0b3d91', color: '#ffffff', size: 22, bold: true, padX: 22, padY: 12 },
       { shape: 'round', fill: 'branch', color: '#ffffff', size: 16, bold: true, padX: 14, padY: 8 },
       { shape: 'underline', fill: 'none', color: '#1c2b3a', size: 13, bold: false, padX: 8, padY: 5 },
     ],
@@ -18,7 +18,7 @@ const THEMES = {
     name: 'Escuro', background: '#14161c', font: 'Segoe UI, Roboto, Helvetica, Arial, sans-serif',
     branches: ['#4cc9f0', '#f72585', '#b5e48c', '#ffd166', '#9b5de5', '#ff9f1c', '#06d6a0'],
     levels: [
-      { shape: 'pill', fill: '#262b38', color: '#ffffff', size: 22, bold: true, padX: 22, padY: 12, stroke: 'branch' },
+      { shape: 'round', fill: '#262b38', color: '#ffffff', size: 22, bold: true, padX: 22, padY: 12, stroke: 'branch' },
       { shape: 'round', fill: '#1d212b', color: '#ffffff', size: 16, bold: true, padX: 14, padY: 8, stroke: 'branch' },
       { shape: 'underline', fill: 'none', color: '#d7dbe6', size: 13, bold: false, padX: 8, padY: 5 },
     ],
@@ -38,11 +38,22 @@ const THEMES = {
     name: 'Neon', background: '#0a0612', font: '"Trebuchet MS", Verdana, sans-serif',
     branches: ['#00f5d4', '#fee440', '#f15bb5', '#9b5de5', '#00bbf9', '#ff6b35'],
     levels: [
-      { shape: 'pill', fill: '#1a1030', color: '#ffffff', size: 22, bold: true, padX: 24, padY: 12, stroke: '#00f5d4' },
-      { shape: 'pill', fill: '#150d26', color: '#ffffff', size: 16, bold: true, padX: 14, padY: 8, stroke: 'branch' },
+      { shape: 'round', fill: '#1a1030', color: '#ffffff', size: 22, bold: true, padX: 24, padY: 12, stroke: '#00f5d4' },
+      { shape: 'round', fill: '#150d26', color: '#ffffff', size: 16, bold: true, padX: 14, padY: 8, stroke: 'branch' },
       { shape: 'underline', fill: 'none', color: '#e9e2ff', size: 13, bold: false, padX: 8, padY: 5 },
     ],
     line: { width: [4, 3, 2], curve: 'bezier' },
+  },
+  // Desenho à mão: monocromático e flat (sem sombras nem gradientes). `sketch` faz o desenho tremer levemente, como traço de caneta.
+  draw: {
+    name: 'Desenho (à mão)', background: '#f4f4f4', font: 'Segoe Print, Comic Sans MS, cursive', sketch: true,
+    branches: ['#111111', '#444444', '#666666'],
+    levels: [
+      { shape: 'ellipse', fill: '#ffffff', color: '#111111', size: 20, bold: true, padX: 22, padY: 12, stroke: '#111111', strokeWidth: 2 },
+      { shape: 'rect', fill: '#ffffff', color: '#111111', size: 16, bold: false, padX: 14, padY: 8, stroke: '#111111', strokeWidth: 1.6 },
+      { shape: 'underline', fill: 'none', color: '#111111', size: 14, bold: false, padX: 8, padY: 5 },
+    ],
+    line: { width: [2, 1.6, 1.2], curve: 'bezier' },
   },
   mono: {
     name: 'Monocromático (impressão)', background: '#ffffff', font: 'Arial, Helvetica, sans-serif',
@@ -57,6 +68,7 @@ const THEMES = {
 };
 
 const SHAPES = new Set(['pill', 'rect', 'round', 'underline', 'ellipse', 'none']);
+const ALIGNS = new Set(['auto', 'left', 'center', 'right']);   // auto: para fora do centro (direita à esquerda, esquerda à direita); raiz: centro
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const FONT_NAME = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,39}$/;
 const num = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi;
@@ -70,6 +82,7 @@ function sanitizeStyle(s) {
   if (typeof s.fill === 'string' && (HEX.test(s.fill) || s.fill === 'none')) o.fill = s.fill;
   if (typeof s.color === 'string' && HEX.test(s.color)) o.color = s.color;
   if (typeof s.shape === 'string' && SHAPES.has(s.shape)) o.shape = s.shape;
+  if (typeof s.align === 'string' && ALIGNS.has(s.align)) o.align = s.align;
   if (Number.isFinite(s.size) && s.size >= 6 && s.size <= 96) o.size = s.size;
   if (typeof s.bold === 'boolean') o.bold = s.bold;
   if (typeof s.italic === 'boolean') o.italic = s.italic;
@@ -116,7 +129,7 @@ function getTheme(id, custom) {
 function resolveStyle(theme, level, branchColor, nodeStyle = {}) {
   const base = theme.levels[Math.min(level, theme.levels.length - 1)];
   const clean = sanitizeStyle(nodeStyle); // defesa em profundidade: nunca interpola valor não validado
-  const s = { ...base, ...pick(clean, ['shape', 'color', 'size', 'bold', 'italic', 'edge', 'edgeWidth', 'font']) };
+  const s = { ...base, ...pick(clean, ['shape', 'align', 'color', 'size', 'bold', 'italic', 'edge', 'edgeWidth', 'font']) };
   const fill = clean.fill || base.fill;
   s.fill = fill === 'branch' ? branchColor : fill;
   s.stroke = clean.stroke || (base.stroke === 'branch' ? branchColor : base.stroke);

@@ -1,62 +1,42 @@
 'use strict';
-/* Rede de conhecimento (estilo Obsidian): links [[ ]] entre tópicos/mapas, retrolinks, menções sem link,
-   grafo interativo e exportação para o Obsidian. Carregado depois de study-ui.js (usa os globais dele e de renderer.js). */
+/* Rede de conhecimento: links [[ ]] entre tópicos e mapas, retrolinks, menções sem link e grafo interativo.
+   Os mapas vêm do mapa aberto ou da pasta escolhida (vault). Carregado depois de renderer.js (usa os globais dele). */
 const { buildGraph, neighborhood } = require(path.join(core, 'graph'));
 const { forceLayout } = require(path.join(core, 'forcelayout'));
 const { placeLabels, relationLabelAnchor } = require(path.join(core, 'graph-labels'));
 const { loadVault } = require(path.join(core, 'vault'));
+const { getTheme } = require(path.join(core, 'themes'));
 const { unlinkedMentions, linkify } = require(path.join(core, 'mentions'));
-const { exportObsidian } = require(path.join(core, 'obsidian'));
 const { norm } = require(path.join(core, 'links'));
 
 const { escapeHtml: gesc } = require(path.join(core, 'text'));
 
 // ---------- coleta dos mapas ----------
-const curKey = () => (map.meta.libId ? libMapKey(map.meta.libId) : filePath ? path.resolve(filePath) : '(mapa atual)');
-const curName = () => (map.meta.libId ? map.root.title || 'Mapa atual' : filePath ? path.basename(filePath, path.extname(filePath)) : map.root.title || 'Mapa atual');
+const curKey = () => (filePath ? path.resolve(filePath) : '(mapa atual)');
+const curName = () => (filePath ? path.basename(filePath, path.extname(filePath)) : map.root.title || 'Mapa atual');
 /** O mapa aberto entra SEMPRE pela memória (com edições não salvas); os demais vêm do disco. */
 function gatherMaps(scope) {
   const me = { key: curKey(), name: curName(), map, file: filePath || null };
   const base = { maps: [me], errors: [], truncated: false };
   if (scope !== 'vault') return base;
   const dir = vaultDirEff();
-  const libMaps = libraryNetworkMaps();                    // mapas da biblioteca (SQLite) entram na rede junto com os arquivos da pasta
-  if (!dir && !libMaps.length) return { ...base, noDir: true };
-  const v = dir ? loadVault(dir) : { maps: [], errors: [], truncated: false };
+  if (!dir) return { ...base, noDir: true };
+  const v = loadVault(dir);
   const mine = filePath ? path.resolve(filePath).toLowerCase() : null;
-  const migrated = new Set(libMaps.map((m) => m.source && path.resolve(m.source).toLowerCase()).filter(Boolean));   // arquivo já migrado: vale a cópia da biblioteca
-  const others = v.maps.filter((m) => path.resolve(m.file).toLowerCase() !== mine && !migrated.has(path.resolve(m.file).toLowerCase())).map((m) => ({ key: path.resolve(m.file), name: m.name, map: m.map, file: m.file }));
-  return { maps: [me, ...others, ...libMaps], errors: v.errors, truncated: v.truncated, dir: dir || null };
+  const others = v.maps.filter((m) => path.resolve(m.file).toLowerCase() !== mine).map((m) => ({ key: path.resolve(m.file), name: m.name, map: m.map, file: m.file }));
+  return { maps: [me, ...others], errors: v.errors, truncated: v.truncated, dir };
 }
-const activeScope = () => (loadCfg().scope === 'vault' && (vaultDirEff() || libraryExists()) ? 'vault' : 'map');
+const activeScope = () => (loadCfg().scope === 'vault' && vaultDirEff() ? 'vault' : 'map');
 
 /** Revisões pendentes nos OUTROS mapas da pasta do vault (somente leitura). */
-function vaultDue(today) {
-  const info = gatherMaps('vault');
-  const maps = [];
-  for (const mp of info.maps.slice(1)) {
-    const sm = S.summary(mp.map, { today });
-    if (sm.due.length) maps.push({ name: mp.name, key: mp.key, count: sm.due.length, items: sm.due.slice(0, 6) });
-  }
-  maps.sort((x, y) => y.count - x.count || x.name.localeCompare(y.name, 'pt-BR'));
-  return { maps, scanned: info.maps.length - 1, dir: info.dir || null };
-}
 
 // ---------- navegação ----------
 /** Vai até um tópico, abrindo outro mapa (com confirmação de alterações pendentes) se preciso. */
 async function openTopic(n) {
   if (!n || n.kind !== 'topic') return;
-  if (n.mapKey === curKey()) { closeGraph(); closeDash(); goTo(n.topicId); return true; }
-  const lid = libIdOfKey(n.mapKey);
-  if (lid) {                                               // mapa da biblioteca
-    closeGraph(); closeDash();
-    if (!(await openFromLibrary(lid))) return false;
-    if (map.find(n.topicId)) goTo(n.topicId); else setStatus('O tópico não foi encontrado no mapa aberto.');
-    return true;
-  }
+  if (n.mapKey === curKey()) { closeGraph(); goTo(n.topicId); return true; }
   if (!fs.existsSync(n.mapKey)) { setStatus('O arquivo do mapa não existe mais: ' + n.mapKey); return false; }
-  closeGraph(); closeDash();
-  if (!(await confirmDiscard())) return false;
+  closeGraph();
   await openPath(n.mapKey);
   if (map.find(n.topicId)) goTo(n.topicId); else setStatus('O tópico não foi encontrado no mapa aberto.');
   return true;
@@ -96,39 +76,6 @@ function lkRow(g, n, { meta, ghostBtn, onClick, type, label } = {}) {
   if (ghostBtn) { const b = el('button', 'go', '＋'); b.title = 'Criar este tópico'; b.dataset.create = n.title; b.onclick = (e) => { e.stopPropagation(); ghostBtn(); }; r.append(b); }
   if (onClick) r.onclick = onClick;
   return r;
-}
-function renderLinksClassic() {
-  const box = $('#linksBody'); if (!box) return;
-  box.textContent = '';
-  const sel = primary();
-  if (!sel) { box.append(el('div', 'muted', 'Selecione um tópico. Escreva [[Título]] nas notas para ligar conteúdos.')); return; }
-  const info = gatherMaps(activeScope());
-  const g = buildGraph(info.maps);
-  const me = g.idOf(curKey(), sel.node.id);
-  const out = mergeEdges(g.outgoing(me), (e) => e.to), inn = mergeEdges(g.incoming(me), (e) => e.from);
-  const here = (n) => (n.mapKey === curKey() ? '' : n.mapName);
-
-  box.append(el('h4', '', `Links deste tópico (${out.length})`));
-  if (!out.length) box.append(el('div', 'muted', 'Nenhum. Digite [[ nas notas para ligar a outro tópico.'));
-  for (const { e, rel, label } of out) {
-    const n = g.byId.get(e.to);
-    box.append(lkRow(g, n, { meta: n.kind === 'ghost' ? 'não existe' : here(n), type: rel ? 'relation' : 'link', label, onClick: () => openTopic(n), ghostBtn: n.kind === 'ghost' && !/#/.test(n.title) ? () => createTopicFromLink(n.title) : null }));
-  }
-  box.append(el('h4', '', `Citado em (${inn.length})`));
-  if (!inn.length) box.append(el('div', 'muted', 'Nenhum tópico cita este.'));
-  for (const { e, rel, label } of inn) { const n = g.byId.get(e.from); box.append(lkRow(g, n, { meta: here(n), type: rel ? 'relation' : 'link', label, onClick: () => openTopic(n) })); }
-
-  const men = unlinkedMentions(info.maps, curKey(), sel.node);
-  if (men.length) {
-    box.append(el('h4', '', `Menções sem link (${men.length})`));
-    for (const m of men) {
-      const row = lkRow(g, { ...m, kind: 'topic' }, { meta: m.mapKey === curKey() ? '' : m.mapName, onClick: () => openTopic({ ...m, kind: 'topic' }) });
-      const b = el('button', 'go', '[[ ]]'); b.title = 'Transformar em link'; b.style.width = 'auto'; b.style.padding = '0 6px'; b.dataset.linkify = m.id;
-      b.onclick = (e) => { e.stopPropagation(); linkifyMention(sel.node, m); };
-      row.append(b); box.append(row);
-    }
-  }
-  if (info.noDir === undefined && activeScope() === 'map' && loadCfg().scope !== 'vault') box.append(el('div', 'muted', 'Dica: no grafo, escolha a pasta do vault para ligar este mapa a outros.'));
 }
 /** Troca a 1ª menção por [[link]] (nas notas; se só aparece no título, no título). */
 function linkifyMention(node, m) {
@@ -209,7 +156,7 @@ notes.addEventListener('keydown', (e) => {
 
 // ---------- grafo ----------
 let gBuilt = false;
-const gOpt = { hier: true, orphans: true, local: false, depth: 1, q: '', density: 'normal', labels: 'auto', group: false, focus: false };   // hierarquia ligada: cada mapa vira uma constelação
+const gOpt = { hier: true, orphans: true, local: false, depth: 1, q: '', density: 'auto', labels: 'auto', group: false, focus: false };   // hierarquia ligada: cada mapa vira uma constelação
 let gSel = null;                                  // id do nó selecionado no grafo
 const gTrans = { x: 0, y: 0, k: 1 };
 let gPinned = new Map();                          // posições arrastadas à mão
@@ -220,14 +167,26 @@ let gHover = null;                                // índice do nó sob o mouse 
 let gHoverId = null;                              // id do mesmo nó: sobrevive ao redesenho; o índice é refeito a partir dele
 let gSideSel = null;                              // seleção para a qual o painel de detalhes já foi mostrado
 let gMatchPos = -1;                               // resultado da busca em foco (Enter percorre; -1 = ainda nenhum)
-let lastExportDir = null;
 const PALETTE = (i) => `hsl(${(i * 67 + 205) % 360} 68% 60%)`;
 const colorIdx = new Map();
 function mapColor(key) { if (!colorIdx.has(key)) colorIdx.set(key, colorIdx.size); return PALETTE(colorIdx.get(key)); }
 
 /** Densidade: escala dos pontos, folga entre rótulos, quantos rótulos cabem por área e a partir de que zoom as folhas agrupadas se abrem. */
 const DENS = { compact: { rs: 0.8, gap: 10, budget: 0.5, open: 1.6 }, normal: { rs: 1, gap: 4, budget: 1, open: 1.1 }, detailed: { rs: 1.2, gap: 1, budget: 2.2, open: 0.7 } };
-const gDens = () => DENS[gOpt.density] || DENS.normal;
+// densidade pela quantidade de tópicos: poucos pontos ganham folga e rótulos; muitos, compactação para caber na tela
+const densFor = (n) => (n <= 40 ? 'detailed' : n <= 150 ? 'normal' : 'compact');
+const gDens = () => DENS[gOpt.density === 'auto' ? densFor(gLast ? gLast.nodes.length : 0) : gOpt.density] || DENS.normal;
+/** Cores do tema do mapa, por tópico: cada ramo do mapa usa a cor do seu ramo no tema (a mesma do desenho do mapa). */
+function themeBranchColors(map) {
+  const t = getTheme(map.meta.theme, map.meta.customTheme), out = new Map(), pal = t.branches;
+  out.set(map.root.id, pal[0]);
+  map.root.children.forEach((c, i) => { const col = pal[i % pal.length]; (function walk(n) { out.set(n.id, col); n.children.forEach(walk); })(c); });
+  // tópicos soltos do Mindomo: cada um é uma raiz própria, com a cor do primeiro ramo do tema
+  for (const f of map.meta._momFloating || []) (function walk(n) { out.set(n.id, pal[0]); n.children.forEach(walk); })(f.node);
+  return out;
+}
+/** Luminância simples: texto escuro sobre fundo claro e claro sobre escuro. */
+const isDarkHex = (hex) => { const n = parseInt(String(hex).slice(1), 16) || 0, r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) < 140; };
 const gR = (n) => (Math.min(20, 6 + Math.sqrt(n.deg) * 3.2) + (n.isRoot ? 3 : 0)) * gDens().rs;
 const gView = () => (loadCfg().graphView || {});
 
@@ -242,40 +201,46 @@ function fitText(s, max) {
 
 function buildGraphUI() {
   const root = $('#graph'); if (!root) return; root.textContent = ''; root.tabIndex = -1;
-  const v = gView(); if (['compact', 'normal', 'detailed'].includes(v.density)) gOpt.density = v.density; if (['auto', 'all', 'relevant', 'none'].includes(v.labels)) gOpt.labels = v.labels; gOpt.group = !!v.group; gOpt.focus = !!v.focus;
+  const v = gView(); if (['auto', 'compact', 'normal', 'detailed'].includes(v.density)) gOpt.density = v.density; if (['auto', 'all', 'relevant', 'none'].includes(v.labels)) gOpt.labels = v.labels; gOpt.group = !!v.group; gOpt.focus = !!v.focus;
+  if (typeof v.hier === 'boolean') gOpt.hier = v.hier; if (typeof v.orphans === 'boolean') gOpt.orphans = v.orphans;
+  if (typeof v.local === 'boolean') gOpt.local = v.local; if ([1, 2, 3].includes(v.depth)) gOpt.depth = v.depth;
   const bar = el('div', 'g-bar');
   const sc = el('select'); sc.id = 'gScope'; sc.title = 'De onde vêm os tópicos'; sc.append(new Option('Este mapa', 'map'), new Option('Vault (pasta)', 'vault'));
   const dirTxt = el('div', 'path'); dirTxt.id = 'gDir';
   const pick = el('button', 'btn', 'Pasta…'); pick.id = 'gPick'; pick.title = 'Escolher a pasta com seus mapas (.mom)';
-  const remember = () => saveCfg({ graphView: { density: gOpt.density, labels: gOpt.labels, group: gOpt.group, focus: gOpt.focus } });
+  const remember = () => saveCfg({ graphView: { density: gOpt.density, labels: gOpt.labels, group: gOpt.group, focus: gOpt.focus, hier: gOpt.hier, orphans: gOpt.orphans, local: gOpt.local, depth: gOpt.depth } });
   const chk = (id, label, key, after) => { const l = el('label'); const i = el('input'); i.type = 'checkbox'; i.id = id; i.checked = gOpt[key]; i.onchange = () => { gOpt[key] = i.checked; if (after) after(); else renderGraph(true); }; l.append(i, document.createTextNode(label)); return l; };
   const depth = el('select'); depth.id = 'gDepth'; depth.title = 'Quantos saltos a partir do tópico selecionado'; for (const d of [1, 2, 3]) depth.append(new Option(`${d} salto${d > 1 ? 's' : ''}`, d));
-  depth.onchange = () => { gOpt.depth = +depth.value; renderGraph(true); };
+  depth.value = String(gOpt.depth);
+  depth.onchange = () => { gOpt.depth = +depth.value; remember(); renderGraph(true); };
+  // o alcance só faz sentido com "Só a vizinhança": aparece junto dela
+  const depthRow = el('div', 'g-depth-row'); depthRow.append(el('span', '', 'Alcance: '), depth); depthRow.hidden = !gOpt.local;
   const q = el('input'); q.type = 'search'; q.id = 'gSearch'; q.placeholder = 'Buscar no grafo…';
   const cnt = el('span', 'g-count'); cnt.id = 'gSearchCount';
   q.oninput = () => { gOpt.q = q.value; gMatchPos = -1; renderGraph(false); };
   q.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); centerOnMatch(e.shiftKey ? -1 : 1); } e.stopPropagation(); };
-  const dens = el('select'); dens.id = 'gDensity'; dens.title = 'Densidade: tamanho dos pontos, folga e quantidade de rótulos'; dens.append(new Option('Densidade: compacta', 'compact'), new Option('Densidade: normal', 'normal'), new Option('Densidade: detalhada', 'detailed')); dens.value = gOpt.density;
+  const dens = el('select'); dens.id = 'gDensity'; dens.title = 'Densidade: tamanho dos pontos, folga e quantidade de rótulos'; dens.append(new Option('Densidade: automática', 'auto'), new Option('Densidade: compacta', 'compact'), new Option('Densidade: normal', 'normal'), new Option('Densidade: detalhada', 'detailed')); dens.value = gOpt.density;
   dens.onchange = () => { gOpt.density = dens.value; remember(); renderGraph(false); };
   const lab = el('select'); lab.id = 'gLabels'; lab.title = 'Rótulos dos pontos'; lab.append(new Option('Rótulos: automáticos', 'auto'), new Option('Rótulos: todos', 'all'), new Option('Rótulos: só relevantes', 'relevant'), new Option('Rótulos: nenhum', 'none')); lab.value = gOpt.labels;
   lab.onchange = () => { gOpt.labels = lab.value; remember(); updateLabels(); };
   const refresh = el('button', 'btn', 'Atualizar'); refresh.id = 'gRefresh'; refresh.title = 'Recalcula as posições (as que você arrastou são mantidas)'; refresh.onclick = () => renderGraph(true);
-  const exp = el('button', 'btn', 'Exportar p/ Obsidian…'); exp.id = 'gExport'; exp.onclick = () => { closePops(); exportVault(); };
-  const obs = el('button', 'btn', 'Abrir no Obsidian'); obs.id = 'gObsidian'; obs.onclick = () => { closePops(); openInObsidian(); };
   const close = el('button', 'btn primary', 'Fechar'); close.id = 'gClose'; close.onclick = closeGraph;
   sc.onchange = () => { saveCfg({ scope: sc.value }); renderGraph(true); };
   pick.onclick = pickVaultDir;
   // menus (<details>): "Exibir" guarda as opções de visualização; "⋯" guarda o que se usa pouco. Fecham ao clicar fora ou com Esc.
   const pop = (id, label, title, ...kids) => { const d = el('details', 'g-pop'); d.id = id; const s = el('summary', 'btn', label); s.title = title; const b = el('div', 'g-popbox'); b.append(...kids); d.append(s, b); return d; };
-  const viewPop = pop('gViewPop', 'Exibir ▾', 'Opções de exibição da rede', chk('gHier', 'Hierarquia dos mapas', 'hier'), chk('gOrph', 'Pontos sem ligações', 'orphans'), chk('gLocal', 'Só a vizinhança do selecionado', 'local'), el('label', '', 'Alcance'), depth,
+  const reshape = () => { remember(); renderGraph(true); };
+  const viewPop = pop('gViewPop', 'Exibir ▾', 'Opções de exibição da rede', chk('gHier', 'Hierarquia dos mapas', 'hier', reshape), chk('gOrph', 'Pontos sem ligações', 'orphans', reshape), chk('gLocal', 'Só a vizinhança do selecionado', 'local', () => { depthRow.hidden = !gOpt.local; reshape(); }), depthRow,
     chk('gGroup', 'Agrupar folhas (+N)', 'group', () => { remember(); renderGraph(false); }), chk('gFocus', 'Focar a seleção', 'focus', () => { remember(); paintDim(); updateLabels(); }));
-  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick, exp, obs);
+  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick);
   function closePops() { for (const d of bar.querySelectorAll('details[open]')) d.open = false; }
   document.addEventListener('mousedown', (e) => { if (!bar.contains(e.target)) closePops(); }, true);
   bar.addEventListener('toggle', (e) => { if (e.target.open) for (const d of bar.querySelectorAll('details[open]')) if (d !== e.target) d.open = false; }, true);
-  bar.append(sc, q, cnt, dens, lab, viewPop, refresh, el('span', 'grow'), menuPop, close);
+  const b3 = el('button', 'btn', '3D'); b3.id = 'g3dBtn'; b3.title = 'Rede em 3D: o tamanho do ponto mostra o peso (filhos, notas e ligações)'; b3.setAttribute('aria-pressed', 'false');
+  b3.onclick = () => setGraph3d(!gMode3d);
+  bar.append(sc, q, cnt, dens, lab, viewPop, b3, refresh, el('span', 'grow'), menuPop, close);
   const main = el('div', 'g-main'), wrap = el('div', 'g-wrap');
-  wrap.innerHTML = '<svg id="gsvg"><g id="gview"></g></svg>';
+  wrap.innerHTML = '<svg id="gsvg"><g id="gview"></g></svg><div id="g3d" hidden></div>';
   const lg = el('div', 'g-legend'); lg.id = 'gLegend'; const st = el('div', 'g-stat'); st.id = 'gStat';
   const zoom = el('div', 'g-zoom'); zoom.id = 'gZoom';
   const zb = (id, txt, title, fn) => { const b = el('button', 'btn', txt); b.id = id; b.title = title; b.setAttribute('aria-label', title); b.onclick = fn; return b; };
@@ -295,16 +260,73 @@ function buildGraphUI() {
   gBuilt = true;
 }
 
+/** Rede em 3D (three.js via 3d-force-graph, em renderer/bundle/graph3d.js). O peso de cada tópico dá o tamanho do ponto. */
+let gMode3d = false, g3 = null;
+function setGraph3d(on) {
+  if (on && !window.ForceGraph3D) { setStatus('A rede 3D não carregou neste aparelho.'); return; }
+  gMode3d = on;
+  const b = $('#g3dBtn'); if (b) b.setAttribute('aria-pressed', String(on));
+  $('#gsvg').hidden = on; $('#g3d').hidden = !on;
+  if (on) render3d(); else if (g3) g3.pauseAnimation();
+}
+/** Textura radial com um anel: transparente no centro (onde fica o nó), um pico em `peak` e desvanece até a borda. */
+function ringTexture3d(peak, width, rgb) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  const a = (k) => `rgba(${rgb}, ${k})`;
+  gr.addColorStop(0, a(0)); gr.addColorStop(peak - width, a(0)); gr.addColorStop(peak, a(1)); gr.addColorStop(Math.min(1, peak + width * 1.6), a(0)); gr.addColorStop(1, a(0));
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+  return new window.THREE.CanvasTexture(c);
+}
+/** A cor do tema vem como hsl(205 68% 60%), que o three.js não lê: o navegador converte para #rrggbb. */
+let colorCtx3d = null;
+function cssToHex3d(css) {
+  if (!colorCtx3d) colorCtx3d = document.createElement('canvas').getContext('2d');
+  colorCtx3d.fillStyle = '#888888'; colorCtx3d.fillStyle = css;
+  return colorCtx3d.fillStyle;
+}
+let contourTex3d = null, glowTex3d = null;
+/** Um tópico na rede 3D: esfera colorida, contorno branco fino e um brilho colorido que cresce com o peso (val = 1 + peso). */
+function node3d(n) {
+  const T = window.THREE, w = Math.max(0, n.val - 1);
+  const r = 3 + Math.sqrt(n.val) * 1.8, col = new T.Color(cssToHex3d(n.color));
+  contourTex3d = contourTex3d || ringTexture3d(0.44, 0.025, '255,255,255');
+  glowTex3d = glowTex3d || ringTexture3d(0.6, 0.15, '255,255,255');   // o anel do brilho começa logo fora da esfera (somar por cima do nó saturava a cor)
+  const group = new T.Group();
+  // o sprite tem 5 raios de lado: o nó ocupa 40% da metade, então o anel fica logo fora da esfera
+  const contour = new T.Sprite(new T.SpriteMaterial({ map: contourTex3d, color: 0xffffff, transparent: true, depthWrite: false, opacity: 0.9 }));
+  contour.scale.setScalar(r * 5);
+  const glow = new T.Sprite(new T.SpriteMaterial({ map: glowTex3d, color: col, blending: T.AdditiveBlending, transparent: true, depthWrite: false, opacity: Math.min(0.9, 0.35 + w / 40) }));
+  glow.scale.setScalar(r * (5 + Math.min(6, w / 6)));
+  const body = new T.Mesh(new T.SphereGeometry(r, 24, 16), new T.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.08 + Math.min(0.35, w / 80), roughness: 0.5, metalness: 0.0 }));
+  group.add(glow, contour, body);
+  return group;
+}
+function render3d() {
+  if (!gMode3d || !gLast || !window.ForceGraph3D) return;
+  const host = $('#g3d');
+  const data = {
+    nodes: gLast.nodes.map((n) => ({ id: n.id, name: n.title + (n.kind === 'ghost' ? ' (sem tópico)' : ''), val: 1 + (n.weight || 0), color: n.kind === 'ghost' ? '#8a8f98' : mapColor(n.mapKey || '') })),
+    links: gLast.edges.map((e) => ({ source: e.from, target: e.to })),
+  };
+  if (!g3) {
+    g3 = window.ForceGraph3D()(host).nodeLabel('name').nodeThreeObject(node3d).nodeThreeObjectExtend(false)
+      .linkColor(() => '#ffffff').linkOpacity(0.55).linkWidth(0.4)
+      .onNodeClick((n) => { gSel = n.id; setStatus(`Selecionado: ${n.name}. No mapa 2D, duplo clique abre o tópico.`); });
+  }
+  g3.backgroundColor('#06080d').width(host.clientWidth || 600).height(host.clientHeight || 400).graphData(data).resumeAnimation();
+}
+
 function openGraph() {
   if (typeof closeHome === 'function') closeHome();
-  commitNotes(); if (dashOpen) closeDash();
+  commitNotes();
   if (!gBuilt) buildGraphUI();
   graphOpen = true; $('#graph').hidden = false; document.querySelector('[data-act="graph"]').classList.add('on');
   const c = loadCfg(); $('#gScope').value = c.scope === 'vault' ? 'vault' : 'map';
   gSel = selectedId ? `${curKey()}::${selectedId}` : null; gHover = null; gHoverId = null; gSideSel = gSel;
   renderGraph(true); fitGraph();
 }
-function closeGraph() { graphOpen = false; const g = $('#graph'); if (g) g.hidden = true; const b = document.querySelector('[data-act="graph"]'); if (b) b.classList.remove('on'); }
+function closeGraph() { graphOpen = false; if (g3) g3.pauseAnimation(); const g = $('#graph'); if (g) g.hidden = true; const b = document.querySelector('[data-act="graph"]'); if (b) b.classList.remove('on'); }
 act.graph = () => { if (graphOpen) return closeGraph(); if (!needMap()) return; return openGraph(); };
 
 async function pickVaultDir() {
@@ -317,8 +339,15 @@ function djb(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5)
 
 /** Calcula o conjunto visível, o layout (em cache) e desenha. relayout=false mantém as posições (busca/seleção). */
 function renderGraph(relayout) {
-  const scope = $('#gScope').value === 'vault' && (vaultDirEff() || libraryExists()) ? 'vault' : 'map';
+  const scope = $('#gScope').value === 'vault' && vaultDirEff() ? 'vault' : 'map';
   const info = gatherMaps(scope);
+  // cores do tema: por tópico (ramo do próprio mapa) e o fundo/texto seguem o tema do mapa aberto
+  const gColor = new Map();
+  for (const mp of info.maps) for (const [id, col] of themeBranchColors(mp.map)) gColor.set(`${mp.key}::${id}`, col);
+  const curTheme = getTheme(map.meta.theme, map.meta.customTheme), gBg = curTheme.background;
+  const relCol = isDarkHex(gBg) ? '#ff8a8f' : '#c62828';   // seta de relação: cor de contraste com o fundo do tema
+  const gRoot = document.getElementById('graph');
+  if (gRoot) { gRoot.style.setProperty('--g-bg', gBg); gRoot.style.setProperty('--g-text', isDarkHex(gBg) ? '#f2f2f2' : '#1c1c1c'); }
   const g = buildGraph(info.maps, { hierarchy: gOpt.hier });
   let nodes = g.nodes, edges = g.edges;
   if (gOpt.local) {
@@ -345,16 +374,18 @@ function renderGraph(relayout) {
   nodes.forEach((n, i) => { if (inc[i].length === 1) { const e = edges[inc[i][0]]; if (e.type === 'hierarchy' && idx.get(e.to) === i) { leafParent[i] = idx.get(e.from); leafCount[leafParent[i]]++; } } });
   const R = gR;
   gLast = { g, nodes, edges, idx, P, adj, inc, R, match, leafParent, leafCount, info };
+  render3d();
 
   const parts = [];
   edges.forEach((e, i) => {
-    const st = e.type === 'relation' ? 'stroke="#e5484d" stroke-dasharray="6 4" stroke-width="1.6" opacity=".9"' : e.type === 'hierarchy' ? 'stroke="#8a94a6" stroke-width=".9" opacity=".32"' : 'stroke="#b7c3dd" stroke-width="1.8" opacity=".85"';
+    const ec = gColor.get(e.to) || curTheme.branches[0];   // a ligação leva a cor do ramo do tópico de chegada
+    const st = e.type === 'relation' ? `stroke="${relCol}" stroke-dasharray="6 4" stroke-width="1.6" opacity=".9"` : e.type === 'hierarchy' ? `stroke="${ec}" stroke-width=".9" opacity=".45"` : `stroke="${ec}" stroke-width="1.8" opacity=".85"`;
     parts.push(`<line class="edge" data-e="${i}" vector-effect="non-scaling-stroke" ${st}/>`);
   });
   edges.forEach((e, i) => { if (e.type === 'relation' && e.label) parts.push(`<text class="elabel" data-e="${i}" text-anchor="middle" dominant-baseline="central" style="display:none">${gesc(e.label.length > 40 ? e.label.slice(0, 39) + '…' : e.label)}</text>`); });
   nodes.forEach((n, i) => {
     const ghost = n.kind === 'ghost', hit = q && match[i], sel = n.id === gSel, r = R(n);
-    const fill = ghost ? 'none' : mapColor(n.mapKey), stroke = ghost ? 'var(--text-dim)' : sel ? '#ff9800' : 'rgba(255,255,255,.25)';
+    const fill = ghost ? 'none' : (gColor.get(n.id) || mapColor(n.mapKey)), stroke = ghost ? 'var(--text-dim)' : sel ? '#ff9800' : 'var(--g-text, #fff)';
     const prog = n.progress != null && !ghost ? `<circle class="gprog" r="${r + 3.5}" fill="none" stroke="#43a047" stroke-width="2.2" pathLength="100" stroke-dasharray="${Math.max(0, Math.min(100, n.progress))} 100" transform="rotate(-90)"/>` : '';
     parts.push(`<g class="gn${q && !match[i] ? ' dim' : ''}" data-i="${i}"><circle r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sel ? 3 : ghost ? 1.4 : 1}"${ghost ? ' stroke-dasharray="3 2"' : ''}/>`
       + `<circle class="ghit" style="--r:${r}px" fill="transparent" stroke="none"/>` + prog
@@ -591,6 +622,39 @@ function bindGraphEvents() {
     gTrans.x = mx - ((mx - gTrans.x) / gTrans.k) * k; gTrans.y = my - ((my - gTrans.y) / gTrans.k) * k; gTrans.k = k;
     applyT();
   }, { passive: false });
+  // toque: um dedo arrasta a vista; dois dedos dão pinça (zoom no meio entre eles) e movem a vista junto
+  const gTouch = new Map();
+  let gPinch = null;
+  const gRel = (e) => { const r = svgEl.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const gPinchState = () => {
+    const [a, b] = [...gTouch.values()];
+    return { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, k: gTrans.k, mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
+  };
+  svgEl.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    gTouch.set(e.pointerId, gRel(e));
+    try { svgEl.setPointerCapture(e.pointerId); } catch { /* sem captura, o gesto segue pelos eventos da rede */ }
+    gPinch = gTouch.size === 2 ? gPinchState() : null;
+  });
+  svgEl.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'touch' || !gTouch.has(e.pointerId)) return;
+    const prev = gTouch.get(e.pointerId), cur = gRel(e);
+    gTouch.set(e.pointerId, cur);
+    if (gTouch.size === 1) { gTrans.x += cur.x - prev.x; gTrans.y += cur.y - prev.y; applyT(); }
+    else if (gTouch.size === 2 && gPinch) {
+      const st = gPinchState();
+      const k = Math.min(6, Math.max(0.1, gPinch.k * st.dist / gPinch.dist));
+      const mx = st.mid.x, my = st.mid.y;
+      gTrans.x = mx - ((mx - gTrans.x) / gTrans.k) * k; gTrans.y = my - ((my - gTrans.y) / gTrans.k) * k; gTrans.k = k;
+      applyT();
+    }
+  });
+  const gTouchEnd = (e) => {
+    if (e.pointerType !== 'touch' || !gTouch.delete(e.pointerId)) return;
+    gPinch = gTouch.size === 2 ? gPinchState() : null;
+  };
+  svgEl.addEventListener('pointerup', gTouchEnd);
+  svgEl.addEventListener('pointercancel', gTouchEnd);
   // destaque dos vizinhos ao passar o mouse (sem redesenhar)
   svgEl.addEventListener('mouseover', (e) => {
     const nd = e.target.closest('.gn'); if (!nd || drag) return;
@@ -602,26 +666,7 @@ function bindGraphEvents() {
   });
 }
 
-// ---------- exportar / abrir no Obsidian ----------
 function sideMsg(text, cls) { const s = $('#gSide'); const m = el('div', 'msg ' + (cls || ''), text); m.id = 'gMsg'; s.prepend(m); }
-async function exportVault() {
-  const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta de destino (será criada a subpasta "MindCraft")');
-  if (!dir) return;
-  try {
-    const info = gatherMaps(activeScope());
-    const r = exportObsidian(info.maps, path.join(dir, 'MindCraft'));
-    lastExportDir = r.dir;
-    renderGraphSide();
-    sideMsg(`${r.files.length} nota(s) exportada(s) para ${r.dir}.${r.warnings.length ? ' Avisos: ' + r.warnings.join(' ') : ''}`, 'ok');
-    setStatus('Exportado para o Obsidian: ' + r.dir);
-  } catch (e) { sideMsg('Falha ao exportar: ' + e.message, 'err'); }
-}
-async function openInObsidian() {
-  const dir = lastExportDir || (activeScope() === 'vault' ? vaultDirEff() : null);
-  if (!dir) { sideMsg('Exporte primeiro (ou escolha a pasta do vault).', 'err'); return; }
-  const r = await ipcRenderer.invoke('obsidian:open', dir);
-  sideMsg(r.ok ? (r.method === 'skipped' ? 'Abriria no Obsidian: ' + r.url : 'Abrindo no Obsidian…') : 'Não consegui abrir o Obsidian: ' + (r.error || ''), r.ok ? 'ok' : 'err');
-}
 
 window.addEventListener('keydown', (e) => {
   if (!graphOpen) return;

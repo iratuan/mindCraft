@@ -20,7 +20,7 @@ const rules = {
 };
 
 module.exports = [
-  { ignores: ['node_modules/**', 'dist/**', 'build/**', '_extracted/**', 'renderer/bundle/**', 'tablet/android/**', 'tablet/node_modules/**', 'tablet/dist/**', 'tablet/keystore/**', 'evidencias/**', '**/*.min.js'] },
+  { ignores: ['node_modules/**', 'dist/**', 'build/**', '_extracted/**', 'renderer/bundle/**', 'tablet/android/**', 'tablet/node_modules/**', 'tablet/dist/**', 'tablet/www/**', 'tablet/build/**', 'tablet/keystore/**', 'evidencias/**', '**/*.min.js'] },
   // núcleo, Electron, ferramentas e scripts: Node puro (CommonJS)
   { files: ['core/**/*.js', 'electron/**/*.js', 'tools/**/*.js', 'tablet/scripts/**/*.js', 'eslint.config.js'], languageOptions: { ecmaVersion: 2023, sourceType: 'commonjs', globals: { ...globals.node } }, rules },
   // plataforma web/tablet: roda no navegador mas é escrita como módulo CommonJS empacotado pelo esbuild

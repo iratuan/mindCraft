@@ -1,10 +1,9 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
+const { MindMap, createNode } = require('../core/model')
+const { toSVG } = require('../core/svg');;
 const { layoutMap } = require('../core/layout');
-const { toSVG } = require('../core/svg');
-const { toDOCX, toPDF } = require('../core/export');
 const { plainLinks } = require('../core/links');
 
 function tree() {
@@ -29,16 +28,6 @@ test('showLevels: recolhe por profundidade, expande tudo, uma única ação desf
   assert.equal(m._undo.length, 3, 'só 3 pontos de desfazer (a chamada sem efeito não cria nenhum)');
   m.showLevels(1); assert.ok(m.undo()); assert.equal(visible(m).length, 7, 'um desfazer reverte a ação inteira');
   assert.equal(m.showLevels(0) > 0, true); assert.deepEqual(visible(m), ['R'], 'nível 0: só a raiz');
-});
-
-test('plainLinks: [[ ]] viram texto legível em documentos de leitura (Word/PDF), mas o Markdown mantém', async () => {
-  assert.equal(plainLinks('Veja [[Mapa#Tópico|aquilo]], [[Outro#Alvo]], [[Raiz]] e `[[código]]`.'), 'Veja aquilo, Alvo, Raiz e `[[código]]`.');
-  assert.equal(plainLinks(''), ''); assert.equal(plainLinks(null), '');
-  const { m, a } = tree(); m.update(a.id, { notes: 'base: [[Direito#Legalidade|legalidade]] e [[B]]' });
-  const docx = new (require('adm-zip'))(await toDOCX(m)).getEntry('word/document.xml').getData().toString();
-  assert.match(docx, /base: legalidade e B/); assert.doesNotMatch(docx, /\[\[/, 'sem colchetes no Word');
-  assert.match(require('../core/export').toMarkdown(m), /\[\[Direito#Legalidade\|legalidade\]\]/, 'Markdown preserva os links');
-  assert.equal((await toPDF(m, { outline: true })).subarray(0, 5).toString(), '%PDF-');
 });
 
 test('indicador de nota é um ícone vetorial (não um glifo de fonte) e só aparece com nota', () => {

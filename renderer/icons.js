@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Catálogo centralizado de Ícones Flat Vetoriais (SVG) para o MindCraft.
+ * Catálogo centralizado de Ícones Flat Vetoriais (SVG) para o BRANIAC.
  * Grid base uniforme: 24x24 (ações principais) e 16x16 (ações compactas).
  * Traço e estilo: stroke="currentColor", stroke-width="2", stroke-linecap="round", stroke-linejoin="round", fill="none".
  */

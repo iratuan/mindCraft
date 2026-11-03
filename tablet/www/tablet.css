@@ -1,0 +1,20 @@
+/* o navegador não dá zoom na página inteira: a pinça é dos elementos do app (mapa, rede, lousa) */
+html { touch-action: pan-x pan-y; }
+/* Camada do Android: diálogos próprios, menu do tablet e botão de menu. Usa as mesmas variáveis de tema do desktop. */
+.tab-dialog-wrap { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, .45); padding: 16px; }
+.tab-dialog { width: min(460px, 100%); background: var(--bg-panel, #2c2c2e); color: var(--text, #f5f5f7);
+  border: 1px solid var(--line-soft, rgba(255, 255, 255, .12)); border-radius: 14px; padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); }
+.tab-dialog h2 { font-size: 17px; margin: 0 0 8px; }
+.tab-dialog p { margin: 0 0 10px; font-size: 15px; line-height: 1.4; }
+.tab-dialog-detail { color: var(--muted, #98989d); font-size: 13px; }
+.tab-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.tab-btn { min-height: 44px; min-width: 96px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line-soft, rgba(255, 255, 255, .15));
+  background: var(--bg-field, #3a3a3c); color: var(--text, #f5f5f7); font-size: 15px; }
+.tab-btn.primary { background: var(--accent, #0a84ff); border-color: var(--accent, #0a84ff); color: #fff; }
+.tab-sheet { position: fixed; inset: 0; z-index: 900; background: rgba(0, 0, 0, .35); display: flex; justify-content: flex-start; align-items: flex-start; }
+.tab-sheet-list { width: min(340px, 86vw); max-height: 100vh; overflow-y: auto; background: var(--bg-panel, #2c2c2e); color: var(--text, #f5f5f7);
+  padding: 8px; box-shadow: 6px 0 30px rgba(0, 0, 0, .35); }
+.tab-sheet-item { display: block; width: 100%; min-height: 48px; text-align: left; padding: 0 14px; border: 0; background: transparent;
+  color: inherit; font-size: 16px; border-radius: 10px; }
+.tab-sheet-item:hover, .tab-sheet-item:focus-visible { background: var(--bg-field, #3a3a3c); outline: none; }

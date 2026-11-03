@@ -1,21 +1,20 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, Notification } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 // O app só carrega arquivos locais (renderer/index.html), por isso o renderer usa nodeIntegration.
-const OPENABLE = /\.(mom|md|opml)$/i;
+const OPENABLE = /\.mom$/i;
 const isMac = process.platform === 'darwin';
 let win = null;
 let dirty = false;        // espelho do estado "alterações não salvas" do renderer
-let timing = false;       // cronômetro de estudo em andamento
 let forceClose = false;
 let pendingFile = argvFile(process.argv, app.isPackaged);
 
-// Comandos que só fazem sentido com um mapa de trabalho na tela (a tela inicial cobre o mapa). Começam desabilitados: a tela inicial abre primeiro.
-// O renderer informa a situação ('map-state', ver context-ui.js) e aqui só se aplica; reconstruir o menu reaplica o último estado.
-const MAP_COMMANDS = ['m-closeMap', 'm-restore', 'm-save', 'm-saveAs', 'm-libAdd', 'm-export', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent', 'm-attach',
-  'cut', 'copy', 'paste', 'selectAll', 'm-fit'];
+// Comandos que só fazem sentido com um mapa aberto (a tela inicial cobre o mapa). Começam desabilitados.
+// O renderer informa a situação ('map-state') e aqui só se aplica; reconstruir o menu reaplica o último estado.
+const MAP_COMMANDS = ['m-save', 'm-saveAs', 'm-exportStudy', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
+  'cut', 'copy', 'paste', 'selectAll', 'm-fit', 'm-organize'];
 let mapInUse = false;
 function applyMapCommands() {
   const menu = Menu.getApplicationMenu();
@@ -47,10 +46,9 @@ function addRecent(p) {
   buildMenu();
 }
 
-/** Abre uma subpasta fixa de userData no gerenciador de arquivos (só 'backups' e 'logs'). */
-function openUserSub(name) {
-  if (!['backups', 'logs'].includes(name)) return;
-  const dir = path.join(app.getPath('userData'), name);
+/** Abre a pasta de cópias de segurança (backups) no gerenciador de arquivos. */
+function openBackups() {
+  const dir = path.join(app.getPath('userData'), 'backups');
   try { fs.mkdirSync(dir, { recursive: true }); require('electron').shell.openPath(dir); } catch { /* sem pasta, sem problema */ }
 }
 
@@ -60,32 +58,18 @@ function buildMenu() {
     ...(isMac ? [{ role: 'appMenu' }] : []),
     { label: 'Arquivo', submenu: [
       { label: 'Tela inicial', accelerator: 'CmdOrCtrl+Shift+H', click: send('home') },
-      { label: 'Novo', accelerator: 'CmdOrCtrl+N', click: send('new') },
+      { label: 'Novo mapa', accelerator: 'CmdOrCtrl+N', click: send('new') },
       { label: 'Abrir…', accelerator: 'CmdOrCtrl+O', click: send('open') },
-      { id: 'm-closeMap', label: 'Fechar mapa', accelerator: 'CmdOrCtrl+Shift+M', click: send('closeMap') },
-      { id: 'm-restore', label: 'Restaurar versão anterior…', click: send('restore') },
-      { label: 'Abrir pasta de backups', click: () => openUserSub('backups') },
-      { label: 'Abrir pasta de registros de erro', click: () => openUserSub('logs') },
-      { type: 'separator' },
       { label: 'Abrir recente', submenu: (() => {
         const items = loadRecent().filter((p) => fs.existsSync(p)).map((p) => ({ label: p, click: () => win && win.webContents.send('open-path', p) }));
         return items.length ? [...items, { type: 'separator' }, { label: 'Limpar lista', click: () => { saveRecent([]); buildMenu(); } }] : [{ label: '(vazio)', enabled: false }];
       })() },
+      { type: 'separator' },
       { id: 'm-save', label: 'Salvar', accelerator: 'CmdOrCtrl+S', click: send('save') },
+      { id: 'm-exportStudy', label: 'Exportar material de estudo (PDF e Markdown)…', click: send('export-study') },
       { id: 'm-saveAs', label: 'Salvar como…', accelerator: 'CmdOrCtrl+Shift+S', click: send('saveAs') },
-      { label: 'Biblioteca de mapas…', accelerator: 'CmdOrCtrl+Shift+B', click: send('lib') },
-      { id: 'm-libAdd', label: 'Guardar este mapa na biblioteca', click: send('libAdd') },
-      { type: 'separator' },
-      { label: 'Novo mapa de concurso…', click: send('template') },
-      { label: 'Importar edital (colar texto)…', click: send('edital') },
-      { label: 'Importar CSV de edital (gerado por IA)…', click: send('csv') },
-      { label: 'Planilha de planejamento (exportar / importar)…', click: send('plan') },
-      { type: 'separator' },
-      { id: 'm-export', label: 'Exportar', submenu: [
-        { label: 'Mindomo (.mom)', click: send('saveAs') },
-        { type: 'separator' },
-        ...['pdf', 'docx', 'png', 'svg', 'md', 'opml'].map((f) => ({ label: f.toUpperCase(), click: send('export:' + f) })),
-      ] },
+      { label: 'Versões anteriores…', click: send('restore') },
+      { label: 'Abrir pasta de cópias de segurança', click: openBackups },
       { type: 'separator' },
       isMac ? { role: 'close', label: 'Fechar' } : { role: 'quit', label: 'Sair' },
     ] },
@@ -97,7 +81,6 @@ function buildMenu() {
       { id: 'm-moveDown', label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
       { id: 'm-outdent', label: 'Promover — subir um nível (Alt+←)', click: send('outdent') },
       { id: 'm-indent', label: 'Rebaixar — virar filho do irmão de cima (Alt+→)', click: send('indent') },
-      { id: 'm-attach', label: 'Trazer tópicos soltos para o mapa', click: send('attachFloating') },
       { type: 'separator' },
       // itens próprios (não 'role'): em campos de texto agem no texto; no mapa, nos tópicos (ver editCommand no renderer)
       { id: 'cut', label: 'Recortar', accelerator: 'CmdOrCtrl+X', click: send('cut') },
@@ -107,18 +90,20 @@ function buildMenu() {
     ] },
     { label: 'Exibir', submenu: [
       { id: 'm-fit', label: 'Ajustar à tela', accelerator: 'CmdOrCtrl+0', click: send('fit') },
-      { label: 'Painel de estudos', accelerator: 'CmdOrCtrl+E', click: send('dash') },
+      { id: 'm-organize', label: 'Auto-organizar mapa', click: send('organize') },
+      { label: 'Painel de mapas (dashboard)', accelerator: 'CmdOrCtrl+E', click: send('dash') },
       { label: 'Painel lateral (recolher/expandir)', accelerator: 'CmdOrCtrl+\\', click: send('panelsToggle') },
+      { label: 'Lousa de resolução', click: send('board') },
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
-      { label: 'Revisão do dia', accelerator: 'CmdOrCtrl+Shift+R', click: send('review') },
       { label: 'Leitor de PDF (dividir a tela)', accelerator: 'CmdOrCtrl+Shift+P', click: send('pdf') },
-      { label: 'Player de vídeo (videoaulas)', accelerator: 'CmdOrCtrl+Shift+V', click: send('video') },
-      { label: 'Navegador web (questões e leis)', accelerator: 'CmdOrCtrl+Shift+W', click: send('browser') },
       { type: 'separator' },
       { role: 'togglefullscreen', label: 'Tela cheia' },
     ] },
+    { label: 'IA', submenu: [
+      { label: 'Configurar provedor e modelo…', click: send('ai-config') },
+      { label: 'Abrir o Assistente', click: send('ai-open') },
+    ] },
     { label: 'Ajuda', submenu: [
-      { label: 'Manual de uso', click: send('manual') },
       { label: 'Atalhos do teclado', accelerator: 'F1', click: send('help') },
     ] },
   ];
@@ -128,9 +113,9 @@ function buildMenu() {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280, height: 800, minWidth: 720, minHeight: 480, title: 'MindCraft', backgroundColor: '#f3f7ff',
+    width: 1280, height: 800, minWidth: 720, minHeight: 480, title: 'BRANIAC', backgroundColor: '#f3f7ff',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
-    webPreferences: { nodeIntegration: true, contextIsolation: false, webviewTag: true },
+    webPreferences: { nodeIntegration: true, contextIsolation: false, webviewTag: false },
   });
   // a janela só mostra o app: soltar um arquivo ou clicar num link nunca a leva para outra página (perderia o trabalho aberto)
   win.webContents.on('will-navigate', (e) => e.preventDefault());
@@ -143,12 +128,11 @@ function createWindow() {
 
   // Fechar com alterações pendentes: Salvar / Descartar / Cancelar
   win.on('close', (e) => {
-    if (forceClose || !(dirty || timing)) return;
+    if (forceClose || !dirty) return;
     e.preventDefault();
     const choice = dialog.showMessageBoxSync(win, {
       type: 'warning', buttons: ['Salvar', 'Descartar', 'Cancelar'], defaultId: 0, cancelId: 2,
-      title: 'MindCraft', message: dirty ? 'Há alterações não salvas.' : 'O cronômetro de estudo está rodando.',
-      detail: timing ? 'Salvar registra o tempo do cronômetro no tópico e grava o arquivo. Descartar perde esse tempo.' : 'Deseja salvar antes de sair?',
+      title: 'BRANIAC', message: 'Há alterações não salvas.', detail: 'Deseja salvar antes de sair?',
     });
     if (choice === 0) win.webContents.send('menu', 'save-and-close');
     else if (choice === 1) { try { fs.rmSync(draftFile(), { force: true }); } catch { /* sem rascunho */ } forceClose = true; win.close(); }
@@ -156,83 +140,62 @@ function createWindow() {
   buildMenu();
 }
 
-const FILTERS = {
-  mom: [{ name: 'Mapa mental (.mom)', extensions: ['mom'] }],
-  pdf: [{ name: 'PDF', extensions: ['pdf'] }], docx: [{ name: 'Word', extensions: ['docx'] }],
-  png: [{ name: 'PNG', extensions: ['png'] }], svg: [{ name: 'SVG', extensions: ['svg'] }],
-  csv: [{ name: 'CSV (edital)', extensions: ['csv', 'txt'] }], ics: [{ name: 'Agenda (iCalendar)', extensions: ['ics'] }],
-  mcpack: [{ name: 'Pacote MindCraft (.mcpack)', extensions: ['mcpack'] }], db: [{ name: 'Banco SQLite (.db)', extensions: ['db'] }],
-  md: [{ name: 'Markdown', extensions: ['md'] }], opml: [{ name: 'OPML', extensions: ['opml'] }],
-};
-// cópia de segurança com destino lembrado: só existe no tablet (no desktop o diálogo do sistema já começa na última pasta); canais presentes para a interface não falhar
-ipcMain.handle('backup:write-direct', () => { throw new Error('Destino lembrado só existe no tablet.'); });
-ipcMain.handle('backup:clear', () => true);
+// Só .mom: o formato do Mindomo é a única forma de salvar e abrir o mapa
+const MOM = [{ name: 'Mapa mental (.mom)', extensions: ['mom'] }];
+const PDF = [{ name: 'PDF', extensions: ['pdf'] }];
 ipcMain.handle('dialog:open', async () => {
-  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: [
-    { name: 'Mapas e outlines', extensions: ['mom', 'md', 'opml'] }, ...FILTERS.mom, ...FILTERS.md, ...FILTERS.opml] });
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters: MOM });
   return r.canceled ? null : r.filePaths[0];
 });
-ipcMain.handle('dialog:save', async (_e, kind, defaultName) => {
-  const r = await dialog.showSaveDialog(win, { filters: FILTERS[kind], defaultPath: defaultName });
+ipcMain.handle('dialog:save', async (_e, defaultName) => {
+  const r = await dialog.showSaveDialog(win, { filters: MOM, defaultPath: defaultName });
   return r.canceled ? null : r.filePath;
 });
-ipcMain.handle('dialog:error', (_e, msg) => { dialog.showErrorBox('MindCraft', String(msg)); });
+ipcMain.handle('dialog:error', (_e, msg) => { dialog.showErrorBox('BRANIAC', String(msg)); });
 // 0 = Salvar, 1 = Descartar, 2 = Cancelar
 ipcMain.handle('dialog:confirm-discard', async () => (await dialog.showMessageBox(win, {
   type: 'warning', buttons: ['Salvar', 'Descartar', 'Cancelar'], defaultId: 0, cancelId: 2,
-  title: 'MindCraft', message: 'Há alterações não salvas.', detail: 'Deseja salvar antes de continuar?',
+  title: 'BRANIAC', message: 'Há alterações não salvas.', detail: 'Deseja salvar antes de continuar?',
 })).response);
-// PDF e Word são gerados aqui: o pdfkit/docx dependem da resolução de módulos "de Node", que no renderer
-// (nodeIntegration) usa condições de navegador e falha (ex.: '#standard-fonts/Helvetica').
-ipcMain.handle('render-export', async (_e, fmt, data, opts = {}) => {
-  const { MindMap } = require('../core/model');
-  const { toPDF, toDOCX } = require('../core/export');
-  const map = MindMap.fromJSON(data);
-  if (fmt === 'pdf') return toPDF(map, opts);
-  if (fmt === 'docx') return toDOCX(map, { ...opts, image: opts.image ? Buffer.from(opts.image) : undefined });
-  if (fmt === 'study-docx') return require('../core/report').toStudyDOCX(map, opts);
-  throw new Error('formato não suportado: ' + fmt);
-});
 // Área de transferência: o Electron 40+ removeu clipboard do renderer e tornou a API assíncrona no processo principal.
 ipcMain.handle('clip:read', async () => String((await clipboard.readText()) ?? ''));
 ipcMain.handle('clip:write', async (_e, text) => { await clipboard.writeText(String(text)); });
-ipcMain.handle('dialog:open-csv', async () => {
-  const r = await dialog.showOpenDialog(win, { title: 'CSV do edital', properties: ['openFile'], filters: FILTERS.csv });
-  return r.canceled ? null : r.filePaths[0];
-});
 ipcMain.handle('dialog:open-pdf', async () => {
-  const r = await dialog.showOpenDialog(win, { title: 'Abrir PDF', properties: ['openFile'], filters: FILTERS.pdf });
-  return r.canceled ? null : r.filePaths[0];
-});
-ipcMain.handle('dialog:open-pack', async () => {
-  const r = await dialog.showOpenDialog(win, { title: 'Pacote MindCraft', properties: ['openFile'], filters: FILTERS.mcpack });
+  const r = await dialog.showOpenDialog(win, { title: 'Abrir PDF', properties: ['openFile'], filters: PDF });
   return r.canceled ? null : r.filePaths[0];
 });
 ipcMain.handle('dialog:open-at', async (_e, dir) => {
-  const r = await dialog.showOpenDialog(win, { title: 'Versões anteriores', defaultPath: String(dir), properties: ['openFile'], filters: FILTERS.mom });
+  const r = await dialog.showOpenDialog(win, { title: 'Versões anteriores', defaultPath: String(dir), properties: ['openFile'], filters: MOM });
   return r.canceled ? null : r.filePaths[0];
 });
+// resultado { ok, path } ou { ok:false, error } para a interface (sem expor detalhes internos)
+// Exportação do material de estudo: o diálogo escolhe o local; o PDF é impresso a partir do HTML do núcleo
+ipcMain.handle('dialog:save-export', async (_e, kind, defaultName) => {
+  const filters = kind === 'pdf' ? [{ name: 'PDF', extensions: ['pdf'] }] : kind === 'png' ? [{ name: 'Imagem PNG', extensions: ['png'] }] : [{ name: 'Markdown', extensions: ['md'] }];
+  const r = await dialog.showSaveDialog(win, { filters, defaultPath: defaultName });
+  return r.canceled ? null : r.filePath;
+});
+// o progresso chega à janela de exportação pelo canal 'export:progress' (percentual e etapa)
+ipcMain.handle('export:pdf', async (e, html, target) => {
+  const send = (pct, label) => { if (!e.sender.isDestroyed()) e.sender.send('export:progress', { pct, label }); };
+  try { return { ok: true, path: await require('./export-pdf').writePdf(html, target, send) }; }
+  catch (err) { return { ok: false, error: err.message || 'Falha ao exportar.' }; }
+});
+// Pasta de mapas (.mom) para a rede de conhecimento entre mapas
 ipcMain.handle('dialog:folder', async (_e, title) => {
   const r = await dialog.showOpenDialog(win, { title: title || 'Escolher pasta', properties: ['openDirectory', 'createDirectory'] });
   return r.canceled ? null : r.filePaths[0];
 });
-// Abre uma pasta no Obsidian (protocolo obsidian://). No Windows, se o executável do usuário existir, ele é usado diretamente;
-// MINDCRAFT_NO_LAUNCH=1 (testes) só devolve a URL, sem abrir nada.
-ipcMain.handle('obsidian:open', async (_e, dir) => {
-  const { obsidianUrl } = require('../core/obsidian');
-  const url = obsidianUrl(String(dir));
-  if (process.env.MINDCRAFT_NO_LAUNCH === '1') return { ok: true, method: 'skipped', url };
-  try {
-    const exe = process.platform === 'win32' ? path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Obsidian', 'Obsidian.exe')
-      : process.platform === 'darwin' ? '/Applications/Obsidian.app/Contents/MacOS/Obsidian' : null;
-    if (exe && fs.existsSync(exe)) {
-      require('child_process').spawn(exe, [url], { detached: true, stdio: 'ignore' }).unref();
-      return { ok: true, method: 'exe', url };
-    }
-    await require('electron').shell.openExternal(url);
-    return { ok: true, method: 'protocol', url };
-  } catch (e) { return { ok: false, error: e.message, url }; }
-});
+// Assistente de IA (Claude): a chave fica cifrada no disco (ver ai-service.js); os canais devolvem { ok, error } com mensagem para o usuário
+const aiService = require('./ai-service');
+// o primeiro argumento de um canal IPC é sempre o evento do Electron: não pode chegar à função de negócio
+const aiCall = (fn) => async (_event, ...args) => { try { return { ok: true, ...(await fn(...args)) }; } catch (e) { return { ok: false, error: e.message || 'Falha no assistente.' }; } };
+ipcMain.handle('ai:key-status', (_e, provider) => aiService.keyStatus(app.getPath('userData'), provider));
+ipcMain.handle('ai:key-save', aiCall((provider, key) => aiService.saveKey(app.getPath('userData'), provider, key)));
+ipcMain.handle('ai:key-clear', (_e, provider) => aiService.clearKey(app.getPath('userData'), provider));
+ipcMain.handle('ai:ask', aiCall((req) => aiService.ask(app.getPath('userData'), req || {})));
+ipcMain.handle('ai:test', aiCall((provider, model) => aiService.test(app.getPath('userData'), provider, model)));
+ipcMain.handle('ai:models', aiCall((provider) => aiService.models(app.getPath('userData'), provider)));
 // Links http(s)/mailto das notas: abre no navegador padrão (nunca navega a janela do app). Em testes só valida.
 ipcMain.handle('open-external', async (_e, url) => {
   const u = String(url || '');
@@ -240,16 +203,8 @@ ipcMain.handle('open-external', async (_e, url) => {
   if (process.env.MINDCRAFT_NO_LAUNCH === '1') return { ok: true, url: u, method: 'skipped' };
   try { await require('electron').shell.openExternal(u); return { ok: true, url: u }; } catch (e) { return { ok: false, error: e.message }; }
 });
-// Testes: força o modo de início ('home' | 'last' | 'blank') só na 1ª inicialização; no uso normal é sempre null.
+// Testes: força o modo de início ('home' | 'blank') só na 1ª inicialização; no uso normal é sempre null.
 ipcMain.handle('app:start-override', () => process.env.MINDCRAFT_START || null);
-// Aviso diário de revisões: o renderer decide quando; aqui só validamos e mostramos. Clicar abre a Revisão do dia.
-ipcMain.handle('notify:show', (_e, n) => {
-  const m = require('../core/notify').sanitizeNotice(n);
-  if (!m || !Notification.isSupported()) return false;
-  const note = new Notification({ title: m.title, body: m.body, silent: false });
-  note.on('click', () => { if (!win) return; if (win.isMinimized()) win.restore(); win.show(); win.focus(); win.webContents.send('menu', 'review'); });
-  note.show(); return true;
-});
 ipcMain.handle('app:path', (_e, name) => app.getPath(name));
 // Tela inicial: lista (com existência e data), remover um e limpar. Só devolve caminhos que o próprio app registrou.
 ipcMain.handle('recent:list', () => loadRecent().map((p) => { let st = null; try { st = fs.statSync(p); } catch { /* sumiu */ } return { path: p, exists: !!st && st.isFile(), mtime: st ? st.mtimeMs : null }; }));
@@ -257,9 +212,9 @@ ipcMain.handle('recent:remove', (_e, p) => { saveRecent(loadRecent().filter((x) 
 ipcMain.handle('recent:clear', () => { saveRecent([]); buildMenu(); });
 ipcMain.handle('recent:add', (_e, p) => { if (typeof p === 'string') addRecent(p); });
 ipcMain.handle('dialog:confirm', async (_e, o) => (await dialog.showMessageBox(win, {
-  type: 'question', buttons: o.buttons, defaultId: 0, cancelId: o.buttons.length - 1, title: 'MindCraft', message: o.message, detail: o.detail,
+  type: 'question', buttons: o.buttons, defaultId: 0, cancelId: o.buttons.length - 1, title: 'BRANIAC', message: o.message, detail: o.detail,
 })).response);
-ipcMain.on('dirty', (_e, v) => { if (v && typeof v === 'object') { dirty = !!v.dirty; timing = !!v.timing; } else { dirty = !!v; timing = false; } });
+ipcMain.on('dirty', (_e, v) => { dirty = !!v; });
 ipcMain.on('close-now', () => { forceClose = true; if (win) win.close(); });
 
 // instância única: abrir um .mom com o app já aberto reaproveita a janela

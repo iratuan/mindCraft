@@ -1,22 +1,20 @@
 'use strict';
 const { getTheme, resolveStyle } = require('./themes');
+const { logoSize } = require('./logo');
 const { MARKERS } = require('./markers');
-const { todayStr, isDue } = require('./study');
 
-/** Uma passada: progresso agregado pelas folhas (ponderado por peso) e quantas revisões vencem em cada subárvore. */
-function studyViews(root, today) {
+/** Uma passada: progresso de cada ramo = média dos progressos das folhas (folha sem valor conta como 0). Sem valor próprio, o ramo mostra esta média. */
+function progressViews(root) {
   const out = new Map();
   const rec = (n) => {
-    const selfDue = isDue(n.study, today) ? 1 : 0;
     if (!n.children.length) {
-      const w = (n.study && n.study.weight) || 1;
-      const v = { w, p: w * (Number.isFinite(n.progress) ? n.progress : 0), any: n.progress != null, subDue: selfDue, selfDue };
-      out.set(n.id, { ...v, roll: v.any ? Number.isFinite(n.progress) ? n.progress : 0 : null });
-      return v;
+      const has = Number.isFinite(n.progress);
+      out.set(n.id, { roll: has ? n.progress : null });
+      return { w: 1, p: has ? n.progress : 0, any: has };
     }
-    const acc = { w: 0, p: 0, any: false, subDue: selfDue, selfDue };
-    for (const c of n.children) { const v = rec(c); acc.w += v.w; acc.p += v.p; acc.any = acc.any || v.any; acc.subDue += v.subDue; }
-    out.set(n.id, { ...acc, roll: acc.any && acc.w ? acc.p / acc.w : null });
+    const acc = { w: 0, p: 0, any: false };
+    for (const c of n.children) { const v = rec(c); acc.w += v.w; acc.p += v.p; acc.any = acc.any || v.any; }
+    out.set(n.id, { roll: acc.any && acc.w ? acc.p / acc.w : null });
     return acc;
   };
   rec(root);
@@ -24,6 +22,8 @@ function studyViews(root, today) {
 }
 
 const H_GAP = [70, 46, 32]; // distância horizontal pai→filho por nível
+const GRID_MIN = 40;      // filhos-folha em colunas só acima disso (listas enormes, ex.: edital); abaixo, um embaixo do outro
+const GRID_COL_GAP = 28;
 const V_GAP = 12;
 
 /** Estimativa de largura de texto (sem depender de canvas, para funcionar em Node puro). */
@@ -56,27 +56,28 @@ function layoutMap(map, opts = {}) {
   const theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
   const maxW = opts.maxTextWidth || 260;
   const boxes = new Map();
-  const views = studyViews(map.root, opts.today || todayStr());
+  const views = progressViews(map.root);
 
-  const measure = (node, level, branch) => {
+  const measure = (node, level, branch, temp = false) => {
     const st = resolveStyle(theme, level, branch, node.style);
     const lines = wrap(node.title, st.size, st.bold, maxW);
     const tw = Math.max(...lines.map((l) => textWidth(l, st.size, st.bold)));
     const lh = st.size * 1.25;
     const nm = (node.markers || []).filter((m) => MARKERS[m]).length;
     const md = Math.round(st.size * 1.05);
-    const markerW = nm ? Math.ceil(nm * (md + 4) + st.padX * 0.3) : 0;
+    // o tópico principal reserva espaço à esquerda para a logomarca (sempre visível, ver svg.js)
+    const logoW = level === 0 ? logoSize(st.size).w + 8 : 0;
+    const markerW = (nm ? Math.ceil(nm * (md + 4) + st.padX * 0.3) : 0) + logoW;
     const box = {
       id: node.id, node, level, style: st, lines, lineHeight: lh,
-      markerW, markerD: md, markers: (node.markers || []).filter((m) => MARKERS[m]),
+      markerW, logoW, markerD: md, markers: (node.markers || []).filter((m) => MARKERS[m]),
       // progresso: o do próprio tópico, ou o agregado pelas folhas (azul na tela) quando ele não tem valor próprio
       progress: node.progress != null ? node.progress : views.get(node.id).roll,
       progressAuto: node.progress == null && views.get(node.id).roll != null,
-      due: node.collapsed ? views.get(node.id).subDue : views.get(node.id).selfDue,
       w: Math.ceil(tw + st.padX * 2 + markerW), h: Math.ceil(lines.length * lh + st.padY * 2),
       x: 0, y: 0, side: 1, branch, subtreeH: 0,
     };
-    boxes.set(node.id, box);
+    if (!temp) boxes.set(node.id, box);   // medição temporária não entra nas caixas do mapa
     return box;
   };
 
@@ -85,12 +86,20 @@ function layoutMap(map, opts = {}) {
     const b = measure(node, level, branch);
     const kids = node.collapsed ? [] : node.children;
     b.kids = kids.map((c, i) => prep(c, level + 1, level === 0 ? theme.branches[i % theme.branches.length] : branch));
-    const kh = b.kids.reduce((s, k) => s + k.subtreeH, 0) + Math.max(0, b.kids.length - 1) * V_GAP;
-    b.subtreeH = Math.max(b.h, kh);
+    // muitos filhos que são folhas (ex.: 40 itens de um edital) não cabem numa coluna só: viram colunas, para o mapa continuar na tela
+    if (b.kids.length > GRID_MIN && b.kids.every((k) => !k.kids.length)) {
+      const cw = Math.max(...b.kids.map((k) => k.w)) + GRID_COL_GAP, rh = Math.max(...b.kids.map((k) => k.h)) + V_GAP;
+      const rows = Math.max(4, Math.ceil(Math.sqrt(b.kids.length * 0.6 * cw / rh)));   // proporção próxima de uma tela
+      b.grid = { rows, cw, rh };
+      b.subtreeH = Math.max(b.h, rows * rh - V_GAP);
+    } else {
+      const kh = b.kids.reduce((s, k) => s + k.subtreeH, 0) + Math.max(0, b.kids.length - 1) * V_GAP;
+      b.subtreeH = Math.max(b.h, kh);
+    }
+    b.leaves = b.kids.length ? b.kids.reduce((s, k) => s + k.leaves, 0) : 1;   // folhas da subárvore: dividem o setor angular
     return b;
   };
   const root = prep(map.root, 0, theme.branches[0]);
-
   // 2ª passada: posicionar. Raiz ao centro; filhos divididos em dois lados equilibrados pela altura.
   const place = (b, x, centerY, side) => {
     b.side = side;
@@ -100,6 +109,11 @@ function layoutMap(map, opts = {}) {
     const total = b.kids.reduce((s, k) => s + k.subtreeH, 0) + Math.max(0, b.kids.length - 1) * V_GAP;
     let y = centerY - total / 2;
     const childX = side > 0 ? b.x + b.w + gap : b.x - gap;
+    if (b.grid) {   // folhas em colunas: a ordem vai de cima para baixo e depois para o lado
+      const g = b.grid, top = centerY - (g.rows * g.rh - V_GAP) / 2;
+      b.kids.forEach((k, i) => place(k, childX + side * Math.floor(i / g.rows) * g.cw, top + (i % g.rows) * g.rh + k.h / 2, side));
+      return;
+    }
     for (const k of b.kids) {
       place(k, childX, y + k.subtreeH / 2, side);
       y += k.subtreeH + V_GAP;
@@ -115,7 +129,10 @@ function layoutMap(map, opts = {}) {
     for (const k of root.kids) { place(k, root.w + H_GAP[0], y + k.subtreeH / 2, 1); y += k.subtreeH + V_GAP; }
   } else {
     // divide em direita/esquerda minimizando a diferença de altura (ordem preservada)
-    const hs = root.kids.map((k) => k.subtreeH);
+    // equilibra pelo NÚMERO de nós de cada ramo (não pela altura): as duas colunas ficam com quantidades parecidas.
+    // Conta todos os nós (também os recolhidos), para que recolher ou expandir nunca troque um ramo de lado.
+    const countAll = (node) => 1 + node.children.reduce((s, c) => s + countAll(c), 0);
+    const hs = map.root.children.map((c) => countAll(c));   // mesma ordem de root.kids
     const sum = hs.reduce((a, b) => a + b, 0);
     let acc = 0, cut = 0;
     for (let i = 0; i < hs.length; i++) { if (acc + hs[i] / 2 <= sum / 2) { acc += hs[i]; cut = i + 1; } }

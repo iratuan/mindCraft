@@ -7,10 +7,9 @@ const path = require('path');
 const { MindMap, createNode } = require('../core/model');
 const { writeMom } = require('../core/mom');
 const { norm, parseLinks, rewriteLinks } = require('../core/links');
+const { listMoms, loadVault, clearVaultCache } = require('../core/vault');
 const { buildGraph, neighborhood } = require('../core/graph');
 const { forceLayout } = require('../core/forcelayout');
-const { listMoms, loadVault, clearVaultCache } = require('../core/vault');
-const { exportObsidian, safeFileName, headingText, obsidianUrl } = require('../core/obsidian');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mc-net-'));
 const T = (m, title) => { let r; m.walk((n) => { if (n.title === title && !r) r = n; }); return r; };
@@ -146,51 +145,6 @@ test('vault: lista .mom (ignora ocultos/temporários/node_modules, respeita prof
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('Obsidian: nomes seguros, cabeçalhos compatíveis e URL do protocolo', () => {
-  assert.equal(safeFileName('a/b\\c:d*e?"f<g>h|i#j^k[l]m'), 'a b c d e f g h i j k l m');
-  assert.equal(safeFileName('../../etc/passwd'), 'etc passwd'); assert.equal(safeFileName('CON'), '_CON'); assert.equal(safeFileName('  ...  '), 'Mapa');
-  assert.equal(safeFileName('x'.repeat(300)).length, 120); assert.equal(safeFileName(null), 'Mapa');
-  assert.equal(headingText('Art. 5º: caput #1 | [x]'), 'Art. 5º caput 1 x'); assert.equal(headingText('###'), '(sem título)');
-  assert.equal(obsidianUrl('C:\\Meu Vault\\Estudos ç'), 'obsidian://open?path=C%3A%5CMeu%20Vault%5CEstudos%20%C3%A7');
-});
-
-test('Obsidian: exporta um .md por mapa com [[Mapa#Tópico]] resolvido, alias, fantasmas, relações, notas e metadados', () => {
-  const [dc, da] = twoMaps();
-  dc.map.update(T(dc.map, 'Legalidade').id, { progress: 80 }); dc.map.toggleMarker(T(dc.map, 'Legalidade').id, 'star');
-  dc.map.setExam({ name: 'TRF "2026"', date: '2026-10-30' });
-  const parent = tmp(), out = path.join(parent, 'vault ç');
-  const r = exportObsidian([dc, da], out);
-  assert.deepEqual(fs.readdirSync(parent), ['vault ç'], 'nada escrito fora da pasta de saída');
-  assert.deepEqual(fs.readdirSync(out).sort(), ['Direito Administrativo.md', 'Direito Constitucional.md']);
-  const c = fs.readFileSync(path.join(out, 'Direito Constitucional.md'), 'utf8'), a = fs.readFileSync(path.join(out, 'Direito Administrativo.md'), 'utf8');
-  assert.match(c, /^---\nmindcraft: true\nmapa: "Direito Constitucional"\nprova: "TRF '2026'"\ndata_prova: 2026-10-30\ntags: \[mindcraft\]\n---\n/);
-  assert.match(c, /^# Direito Constitucional$/m); assert.match(c, /^## Legalidade$/m);
-  assert.match(c, /\[\[Direito Administrativo#Princípios da Administração\]\] e \[\[Direito Constitucional#Legalidade\]\]\./, 'links normalizados para Mapa#Tópico');
-  assert.match(c, /_Progresso: 80% · Favorito_/);
-  assert.match(c, /`\[\[ignorado\]\]`/, 'código intocado'); assert.match(c, /\[\[tambem ignorado\]\]/);
-  assert.match(a, /\[\[Direito Constitucional#Legalidade\|legalidade constitucional\]\]/, 'alias preservado');
-  assert.match(a, /\[\[Tópico inexistente\]\]/, 'fantasma segue como [[Título]]');
-  assert.match(a, /\[\[Direito Constitucional#Princípios\]\]/, '[[principios]] resolveu para outro mapa');
-  assert.match(a, /- Relacionado: \[\[Direito Administrativo#Atos\]\] \(fundamenta\)/);
-  assert.deepEqual(r.warnings, []);
-  assert.throws(() => exportObsidian([], out), /Não há mapas/);
-  fs.rmSync(parent, { recursive: true, force: true });
-});
-
-test('Obsidian: colisão de nomes, nomes perigosos, cabeçalhos duplicados e título com link', () => {
-  const m1 = new MindMap(createNode('x')), m2 = new MindMap(createNode('y')), m3 = new MindMap(createNode('z'));
-  m1.addChild(m1.root.id, 'Repetido'); m1.addChild(m1.root.id, 'Repetido'); m1.addChild(m1.root.id, 'Veja [[Destino|o destino]]: item #1');
-  const dest = m2.addChild(m2.root.id, 'Destino');
-  const dir = tmp();
-  const r = exportObsidian([{ key: '1', name: '../Plano', map: m1 }, { key: '2', name: 'Plano', map: m2 }, { key: '3', name: 'con', map: m3 }], dir);
-  assert.deepEqual(fs.readdirSync(dir).sort(), ['Plano (2).md', 'Plano.md', '_con.md'].sort());
-  assert.ok(r.warnings.some((w) => w.includes('"Repetido"')), 'aviso de cabeçalho duplicado');
-  const md = fs.readFileSync(path.join(dir, 'Plano.md'), 'utf8');
-  assert.match(md, /^## Veja o destino item 1$/m, 'cabeçalho sem [[ ]] nem : #');
-  assert.match(md, /Ligações do título: Veja \[\[Plano \(2\)#Destino\|o destino\]\]: item #1/);
-  void dest; fs.rmSync(dir, { recursive: true, force: true });
-});
-
 test('menções sem link: acha títulos citados como palavra inteira (sem acento/caixa) e ignora os já ligados', () => {
   const { unlinkedMentions, linkify } = require('../core/mentions');
   const [dc, da] = twoMaps();
@@ -214,19 +168,6 @@ test('linkify: envolve a 1ª ocorrência preservando os caracteres originais; ig
   assert.equal(linkify('nada aqui', 'Legalidade'), null); assert.equal(linkify('', 'x'), null); assert.equal(linkify('x', '***'), null);
   assert.equal(linkify('Art. 5.º (C.F.) vale', 'Art. 5.º (C.F.)'), '[[Art. 5.º (C.F.)]] vale', 'pontuação no título não quebra a expressão regular');
   assert.equal(linkify('açaí ÇA vale', 'ça'), 'açaí [[ÇA]] vale', 'acentos e maiúsculas');
-});
-
-test('Obsidian: não sobrescreve nota que não é do MindCraft; atualiza a que é', () => {
-  const [dc] = twoMaps(); const dir = tmp();
-  fs.writeFileSync(path.join(dir, 'Direito Constitucional.md'), '# minha nota pessoal\nconteúdo importante\n');
-  const r1 = exportObsidian([dc], dir);
-  assert.equal(fs.readFileSync(path.join(dir, 'Direito Constitucional.md'), 'utf8'), '# minha nota pessoal\nconteúdo importante\n', 'nota pessoal intacta');
-  assert.ok(fs.existsSync(path.join(dir, 'Direito Constitucional (MindCraft).md'))); assert.equal(r1.warnings.length, 1);
-  dc.map.root.title = 'Direito Constitucional'; dc.map.update(T(dc.map, 'Legalidade').id, { progress: 10 });
-  const r2 = exportObsidian([dc], dir);                                   // 2ª exportação: atualiza o arquivo do MindCraft
-  assert.ok(fs.readFileSync(path.join(dir, 'Direito Constitucional (MindCraft).md'), 'utf8').includes('Progresso: 10%'));
-  assert.equal(fs.readdirSync(dir).length, 2, 'não cria um arquivo novo a cada exportação'); assert.equal(r2.warnings.length, 1);
-  fs.rmSync(dir, { recursive: true, force: true });
 });
 
 test('layout de forças: componentes empacotados sem se sobrepor, órfãos em grade compacta, centrado na origem, excedentes sem pilha', () => {

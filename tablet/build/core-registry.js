@@ -1,0 +1,26 @@
+'use strict';
+// Gerado por tablet/scripts/build-www.js: não editar.
+module.exports = {
+  "ai": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/ai.js"),
+  "backup": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/backup.js"),
+  "errorlog": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/errorlog.js"),
+  "forcelayout": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/forcelayout.js"),
+  "graph": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/graph.js"),
+  "graph-labels": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/graph-labels.js"),
+  "layout": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/layout.js"),
+  "links": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/links.js"),
+  "logo": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/logo.js"),
+  "markdown": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/markdown.js"),
+  "markers": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/markers.js"),
+  "mentions": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/mentions.js"),
+  "mindomo": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/mindomo.js"),
+  "model": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/model.js"),
+  "mom": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/mom.js"),
+  "pdfrefs": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/pdfrefs.js"),
+  "shapes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/shapes.js"),
+  "study-export": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/study-export.js"),
+  "svg": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/svg.js"),
+  "text": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/text.js"),
+  "themes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/themes.js"),
+  "vault": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/vault.js"),
+};

@@ -3,17 +3,11 @@
 // e o limite (MAX_DEPTH) precisa barrar criação/movimentação/colagem sem corromper nada.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { MindMap, createNode, MAX_DEPTH } = require('../core/model');
+const { MindMap, createNode, MAX_DEPTH } = require('../core/model')
+const { toSVG } = require('../core/svg');;
 const { writeMom, readMom } = require('../core/mom');
-const { openLibrary } = require('../core/library');
 const { layoutMap } = require('../core/layout');
-const { toSVG } = require('../core/svg');
-const S = require('../core/study');
 const { buildGraph } = require('../core/graph');
-const { toMarkdown, toOPML } = require('../core/export');
-const { fromMarkdown, fromOPML } = require('../core/import');
-const { exportPlan } = require('../core/planner');
-const R = require('../core/report');
 
 const TODAY = '2026-10-20';
 /** Corrente de `n` níveis abaixo da raiz, criada pela API pública (respeita o limite). */
@@ -93,14 +87,6 @@ test('.mom: corrente de 400 níveis grava e relê idêntica; acima de 500 o arqu
   assert.throws(() => readMom(writeMom(raw(600))), /mais de 500 níveis/);
 });
 
-test('biblioteca SQLite: corrente de 100 e de 400 níveis salva com verificação, relê igual e entra na busca', () => {
-  const lib = openLibrary(':memory:'); const { m } = chain(MAX_DEPTH, (i) => (i === 77 ? 'agulha-profunda' : 'Nível ' + i));
-  m.meta.name = 'Fundo'; const id = lib.saveMap(m, { verify: true });
-  const volta = lib.loadMap(id); assert.equal(JSON.stringify(volta.root.children), JSON.stringify(m.root.children));
-  const achou = lib.searchTopics('agulha-profunda'); assert.ok(achou.length >= 1, 'busca encontra tópico no nível 77');
-  const g = raw(400); g.meta.name = 'Gigante'; const gid = lib.saveMap(g, { verify: true }); assert.ok(lib.loadMap(gid));
-});
-
 test('rede de conhecimento: cada nível vira um nó, com aresta ao pai; relações entre níveis distantes viram conexões', () => {
   const { m, ids } = chain(MAX_DEPTH); m.meta.name = 'Fundo';
   m.addRelation(ids[0], ids[ids.length - 1], 'liga topo e fundo');
@@ -112,27 +98,6 @@ test('rede de conhecimento: cada nível vira um nó, com aresta ao pai; relaçõ
   assert.ok(so.nodes.length <= g.nodes.length);
 });
 
-test('estudo: resumo, revisões e agenda enxergam tópicos em qualquer profundidade', () => {
-  const { m, ids } = chain(MAX_DEPTH);
-  m.mutateStudy(ids[ids.length - 1], (st) => S.setNext(st, S.addDays(TODAY, -3)));
-  m.mutateStudy(ids[49], (st) => S.setNext(st, S.addDays(TODAY, 0)));
-  const sum = S.summary(m, { today: TODAY });
-  assert.ok(sum.due.some((d) => d.title === 'Nível ' + MAX_DEPTH && d.overdue === 3), 'revisão atrasada no nível mais fundo aparece');
-  assert.ok(sum.due.some((d) => d.title === 'Nível 50' && d.path.length === 49), 'o caminho (breadcrumb) tem 49 ancestrais');
-  const plan = exportPlan(m, { today: TODAY }); assert.ok(JSON.stringify(plan).includes('Nível ' + MAX_DEPTH), 'o planejamento inclui o tópico mais fundo');
-});
-
-test('exportações: Markdown/OPML do mapa fundo voltam com a mesma profundidade e os mesmos títulos', () => {
-  const { m } = chain(MAX_DEPTH);
-  for (const volta of [fromMarkdown(toMarkdown(m), 'x'), fromOPML(toOPML(m), 'x')]) {
-    let n = 0, p = volta.root; while (p.children[0]) { p = p.children[0]; n++; }
-    assert.equal(n, MAX_DEPTH); assert.equal(p.title, 'Nível ' + MAX_DEPTH);
-  }
-  // progresso da folha mais funda entra no cálculo geral do relatório
-  let f = m.root; while (f.children[0]) f = f.children[0]; f.progress = 100;
-  assert.match(R.toStudyMarkdown(m, { today: TODAY }), /1 de 1 tópicos concluídos/);
-});
-
 test('layout e SVG: mapa fundo e largo (100 níveis × ramos) não quebra nem gera coordenadas inválidas', () => {
   const m = new MindMap(createNode('Raiz')); let p = m.root;
   for (let i = 0; i < MAX_DEPTH - 1; i++) { p = m.addChild(p.id, 'Nível ' + i); for (let j = 0; j < 3; j++) m.addChild(p.id, `folha ${i}.${j}`); }
@@ -140,13 +105,4 @@ test('layout e SVG: mapa fundo e largo (100 níveis × ramos) não quebra nem ge
   const lista = Array.isArray(pos) ? pos : Object.values(pos);
   for (const b of lista) for (const k of ['x', 'y']) if (k in b) assert.ok(Number.isFinite(b[k]), 'coordenada inválida em ' + b.id);
   const svg = toSVG(m); assert.ok(svg.length > 1000 && !/NaN|undefined/.test(svg), 'SVG sem NaN/undefined');
-});
-
-test('árvore LARGA e funda: 3000 tópicos distribuídos (ramificação 4) passa por salvar/ler/estudo/rede em tempo razoável', () => {
-  const m = new MindMap(createNode('Raiz')); let frente = [m.root], total = 0, t0 = Date.now();
-  m.batch(() => { for (let nivel = 0; nivel < 6 && total < 3000; nivel++) { const prox = []; for (const pai of frente) for (let k = 0; k < 4 && total < 3000; k++) { prox.push(m.addChild(pai.id, `n${nivel}-${total}`)); total++; } frente = prox; } });
-  assert.equal(total, 3000);
-  readMom(writeMom(m)); S.summary(m, { today: TODAY }); buildGraph([{ key: 'k', name: 'L', map: m }], { hierarchy: true }); toSVG(m);
-  const lib = openLibrary(':memory:'); m.meta.name = 'Larga'; lib.loadMap(lib.saveMap(m, { verify: true }));
-  assert.ok(Date.now() - t0 < 15000, 'demorou ' + (Date.now() - t0) + ' ms');
 });
