@@ -7,15 +7,28 @@ const { toFlowHtml } = require('../core/flow-export');
 const f = require('../core/flow');
 const { printCss, weightClass } = require('../core/print-style');
 
-test('estilo: escala de tamanhos única (texto 10pt, notas 9,5pt, títulos decrescentes)', () => {
+test('estilo: escala de tamanhos única (títulos 16/12/10,5; texto 10; secundário 9)', () => {
   const css = printCss();
   assert.match(css, /body \{[^}]*font-size: 10pt/);
-  assert.match(css, /h1 \{ font-size: 18pt/);
-  assert.match(css, /h2 \{ font-size: 12\.5pt/);
-  assert.match(css, /h3 \{ font-size: 11pt/);
-  assert.match(css, /\.notes \{ font-size: 9\.5pt/);
-  assert.match(css, /\.notes h1, \.notes h2[^}]*font-size: 9\.5pt/, 'títulos dentro das notas ficam no tamanho do texto');
-  assert.doesNotMatch(css, /font-size: 1[4-9]pt[^}]*\.notes/, 'nenhuma nota com fonte grande');
+  assert.match(css, /h1 \{ font-size: 16pt/);
+  assert.match(css, /h2 \{ font-size: 12pt/);
+  assert.match(css, /h3 \{ font-size: 10\.5pt/);
+  assert.match(css, /\.meta, \.src, \.links, \.ai-note, code, \.notes, \.notes table \{ font-size: 9pt/, 'notas e secundários no mesmo tamanho');
+  assert.match(css, /\.notes h1, \.notes h2[^}]*font-size: 9pt/, 'títulos dentro das notas ficam no tamanho secundário');
+  // só estes tamanhos aparecem no documento
+  const sizes = new Set([...css.matchAll(/font-size:\s*([\d.]+)pt/g)].map((m) => m[1]));
+  for (const s of sizes) assert.ok(['16', '12', '10.5', '10', '9'].includes(s) || s === '9', `tamanho fora da escala: ${s}pt`);
+});
+
+test('recuo: nenhum tópico aninhado acumula margem; listas dentro das notas têm recuo fixo por nível', () => {
+  const css = printCss();
+  assert.doesNotMatch(css, /\.topic \.topic \{[^}]*margin-left: [1-9]/, 'sem escada de recuo nos tópicos');
+  assert.match(css, /\.notes ol ol \{ margin: 0; padding-left: 2\.5mm/, 'segundo nível de lista com recuo menor');
+  assert.match(css, /\.notes ul ul ul[^}]*padding-left: 0/, 'a partir do terceiro nível o recuo não cresce');
+  const m = new MindMap(createNode('Raiz'));
+  const a = m.addChild(m.root.id, 'A'); const b = m.addChild(a.id, 'B'); m.addChild(b.id, 'C');
+  const html = toHtml(buildStudyDoc({ root: m.root, meta: m.meta }, {}));
+  assert.match(html, /\.topic \.topic \{ margin-left: 0; padding-left: 0; border-left: 0; \}/, 'estilo do material sem recuo acumulado');
 });
 
 test('peso do título: prioridade 1 é o mais pesado; sem prioridade, peso normal', () => {

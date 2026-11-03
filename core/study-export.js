@@ -127,12 +127,15 @@ function toHtml(doc) {
   const srcs = doc.options.sources && doc.sources.length
     ? `<section class="sources"><h2>Fontes</h2><ul>${doc.sources.map((s) => `<li>${esc(s.name)}${s.uses ? ` (${s.uses} trecho(s))` : ''}</li>`).join('')}</ul></section>` : '';
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>${printCss(`
-    .toc { list-style: none; padding: 0; columns: 2; column-gap: 8mm; font-size: 9pt; }
-    .toc li { break-inside: avoid; padding: 0.3mm 0; }
-    .toc .l2, .toc .l3 { padding-left: 3mm; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 6mm; color: #555; }
-    .topic { margin-top: 2mm; }
-    .topic .topic { margin-left: 4mm; border-left: 0.6pt solid #ddd; padding-left: 3mm; }
-    section.sources { margin-top: 6mm; break-before: auto; } .sources ul { font-size: 9pt; }
+    .toc { list-style: none; padding: 0; columns: 2; column-gap: 7mm; font-size: 9pt; margin: 0 0 2mm; }
+    .toc li { break-inside: avoid; padding: 0; margin: 0; }
+    /* sumário nivelado à esquerda: o número (1.1.2) já mostra a hierarquia, sem recuo crescente */
+    .toc .l3, .toc .l4, .toc .l5, .toc .l6 { color: #444; }
+    .topic { margin-top: 1.5mm; }
+    /* tópicos filhos: sem recuo acumulado; a hierarquia aparece pelo título e pelo número */
+    .topic .topic { margin-left: 0; padding-left: 0; border-left: 0; }
+    section.sources { margin-top: 4mm; break-before: auto; }
+    .sources ul { font-size: 9pt; margin: 0 0 0 4mm; padding: 0; }
 `)}</style></head><body>
     <h1>${esc(doc.title)}</h1><p class="sub">Material de estudo · ${esc(doc.date)} · ${doc.count} tópico(s)</p>
     <h2>Sumário</h2><ul class="toc">${toc.join('')}</ul>

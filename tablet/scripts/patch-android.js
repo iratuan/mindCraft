@@ -60,9 +60,9 @@ if (fs.existsSync(iconSrc) && fs.existsSync(stylesFile)) {
   }
 }
 
-// 3) versão do APK: nome 0.1.21 (código 22); sempre reaplicada, pois o `cap sync` regenera o build.gradle
+// 3) versão do APK: nome 0.1.22 (código 23); sempre reaplicada, pois o `cap sync` regenera o build.gradle
 const gradleVersion = fs.readFileSync(gradle, 'utf8');
-fs.writeFileSync(gradle, gradleVersion.replace(/versionCode \d+/, 'versionCode 22').replace(/versionName "[^"]*"/, 'versionName "0.1.21"'));
+fs.writeFileSync(gradle, gradleVersion.replace(/versionCode \d+/, 'versionCode 23').replace(/versionName "[^"]*"/, 'versionName "0.1.22"'));
 
 // 2) e 3) assinatura e versão
 let g = fs.readFileSync(gradle, 'utf8');
@@ -88,4 +88,4 @@ if (!g.includes('// BRANIAC: assinatura')) {
   g = g.replace(/versionCode \d+/, 'versionCode 80').replace(/versionName "[^"]*"/, 'versionName "0.8.0"');
   fs.writeFileSync(gradle, g);
 }
-console.log('Android: compartilhamento liberado, assinatura de release e versão 0.1.21 (código 22).');
+console.log('Android: compartilhamento liberado, assinatura de release e versão 0.1.22 (código 23).');

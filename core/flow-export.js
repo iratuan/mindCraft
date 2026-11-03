@@ -127,7 +127,7 @@ function toFlowHtml(map, opts = {}) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(map.meta.name || map.root.title)}</title><style>${printCss(`
     .diagram { width: 100%; height: auto; max-height: 200mm; break-inside: avoid; }
     .step { margin: 0 0 2mm; }
-    h3 small { color: #666; font-weight: normal; font-size: 8.5pt; }
+    h3 small { color: #666; font-weight: normal; font-size: 9pt; }
     .paths { font-size: 9pt; } .warn { font-size: 9pt; color: #6a4b00; }
 `)}</style></head><body>
     <h1>${esc(map.meta.name || map.root.title)}</h1><p class="sub">Fluxograma · ${names.size} passo(s) · ${paths.length}${truncated ? '+' : ''} caminho(s)</p>

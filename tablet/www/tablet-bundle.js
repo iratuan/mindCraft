@@ -4132,7 +4132,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     "package.json"(exports, module) {
       module.exports = {
         name: "braniac-tablet",
-        version: "0.1.21",
+        version: "0.1.22",
         private: true,
         description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
         scripts: {
@@ -6217,35 +6217,40 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     @page { size: A4; margin: 15mm 14mm; }
     * { box-sizing: border-box; }
     body { font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #161616; font-size: 10pt; line-height: 1.35; margin: 0; }
-    h1 { font-size: 18pt; font-weight: 700; margin: 0 0 1mm; line-height: 1.2; }
-    h2 { font-size: 12.5pt; font-weight: 700; margin: 5mm 0 2mm; padding-bottom: 1mm; border-bottom: 0.6pt solid #999; break-after: avoid; }
-    h3 { font-size: 11pt; font-weight: 600; margin: 3mm 0 1mm; break-after: avoid; line-height: 1.25; }
-    h4, h5, h6 { font-size: 10pt; font-weight: 600; margin: 2mm 0 1mm; break-after: avoid; }
-    .sub { color: #555; font-size: 9pt; margin: 0 0 4mm; }
-    .num { color: #555; font-weight: 600; margin-right: 1.2mm; }
+    h1 { font-size: 16pt; font-weight: 700; margin: 0 0 1mm; line-height: 1.2; }
+    h2 { font-size: 12pt; font-weight: 700; margin: 4mm 0 1.5mm; padding-bottom: 0.8mm; border-bottom: 0.6pt solid #999; break-after: avoid; }
+    h3 { font-size: 10.5pt; font-weight: 600; margin: 2.5mm 0 0.8mm; break-after: avoid; line-height: 1.25; }
+    h4, h5, h6 { font-size: 10pt; font-weight: 600; margin: 2mm 0 0.6mm; break-after: avoid; }
+    .sub { color: #555; font-size: 9pt; margin: 0 0 3mm; }
+    .num { color: #555; font-weight: 600; margin-right: 1mm; }
     /* peso do t\xEDtulo pela prioridade do passo/t\xF3pico: p1 \xE9 o mais pesado */
     .w3 > h2, .w3 > h3, .w3 > h4 { font-weight: 700; }
     .w2 > h2, .w2 > h3, .w2 > h4 { font-weight: 600; }
     .w1 > h2, .w1 > h3, .w1 > h4 { font-weight: 500; }
-    .pri { color: #fff; font-size: 7.5pt; font-weight: 700; padding: 0.3mm 1.6mm; border-radius: 2mm; vertical-align: middle; margin-left: 1.5mm; }
-    .meta { color: #555; font-size: 8.5pt; margin: 0 0 0.5mm; }
-    .src { font-size: 8.5pt; color: #333; font-style: italic; margin: 0.8mm 0; }
-    .links { font-size: 9pt; margin: 0.8mm 0; padding-left: 4mm; }
+    .pri { color: #fff; font-size: 9pt; font-weight: 700; padding: 0 1.5mm; border-radius: 2mm; vertical-align: 0.1mm; margin-left: 1mm; }
+    .meta, .src, .links, .ai-note, code, .notes, .notes table { font-size: 9pt; }
+    .meta { color: #555; margin: 0 0 0.4mm; }
+    .src { color: #333; font-style: italic; margin: 0.6mm 0; }
+    .links { margin: 0.6mm 0; padding-left: 4mm; }
     .links li { margin: 0; }
-    /* notas: mesma tipografia do texto, recuo pela borda da esquerda (sem caixa colorida) */
-    .notes { font-size: 9.5pt; border-left: 1.2pt solid #bbb; padding: 0 0 0 2.5mm; margin: 1mm 0 2mm; }
-    .notes p { margin: 0 0 1.5mm; }
-    .notes h1, .notes h2, .notes h3, .notes h4, .notes h5, .notes h6 { font-size: 9.5pt; font-weight: 700; margin: 1.5mm 0 0.5mm; border: 0; padding: 0; break-after: avoid; }
-    .notes ul, .notes ol { margin: 0 0 1.5mm 4mm; padding: 0; }
-    .notes li { margin: 0 0 0.5mm; }
-    .notes blockquote { margin: 1mm 0; padding-left: 2mm; border-left: 1pt solid #aaa; color: #333; }
-    .notes table { border-collapse: collapse; font-size: 9pt; margin: 1mm 0; }
-    .notes th, .notes td { border: 0.5pt solid #bbb; padding: 0.5mm 1.5mm; text-align: left; }
+    /* notas: texto de 9 pt, recuo fixo pela borda da esquerda (sem caixa colorida) */
+    .notes { border-left: 1pt solid #bbb; padding: 0 0 0 2.5mm; margin: 0.8mm 0 1.6mm; }
+    .notes p { margin: 0 0 1.2mm; }
+    .notes h1, .notes h2, .notes h3, .notes h4, .notes h5, .notes h6 { font-size: 9pt; font-weight: 700; margin: 1mm 0 0.4mm; border: 0; padding: 0; break-after: avoid; }
+    /* listas: um recuo s\xF3, e os n\xEDveis seguintes n\xE3o empurram mais o texto (evita a escada de tabula\xE7\xE3o) */
+    .notes ul, .notes ol { margin: 0 0 1mm; padding-left: 4mm; }
+    .notes ul ul, .notes ul ol, .notes ol ul, .notes ol ol { margin: 0; padding-left: 2.5mm; }
+    .notes ul ul ul, .notes ul ol ol, .notes ol ul ul, .notes ol ol ol { padding-left: 0; }
+    .notes li { margin: 0 0 0.4mm; }
+    .notes blockquote { margin: 0.8mm 0; padding-left: 2mm; border-left: 0.8pt solid #aaa; color: #333; }
+    .notes table { border-collapse: collapse; margin: 0.8mm 0; }
+    .notes th, .notes td { border: 0.5pt solid #bbb; padding: 0.4mm 1.2mm; text-align: left; }
+    .notes pre { margin: 0.8mm 0; white-space: pre-wrap; word-break: break-word; }
     .notes img { max-width: 100%; height: auto; }
     .notes.ai { border-left-color: #1e63c6; }
-    .ai-note { font-size: 8.5pt; color: #1e63c6; font-style: italic; margin: 0 0 1mm; }
-    code, .notes code { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; }
-    .cols { column-count: 2; column-gap: 8mm; column-fill: auto; }
+    .ai-note { color: #1e63c6; font-style: italic; margin: 0 0 0.8mm; }
+    code, .notes code { font-family: Consolas, "Courier New", monospace; }
+    .cols { column-count: 2; column-gap: 7mm; column-fill: auto; }
     .step, .topic { break-inside: avoid-column; }
 `;
       function printCss(extra = "") {
@@ -6363,7 +6368,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(map.meta.name || map.root.title)}</title><style>${printCss(`
     .diagram { width: 100%; height: auto; max-height: 200mm; break-inside: avoid; }
     .step { margin: 0 0 2mm; }
-    h3 small { color: #666; font-weight: normal; font-size: 8.5pt; }
+    h3 small { color: #666; font-weight: normal; font-size: 9pt; }
     .paths { font-size: 9pt; } .warn { font-size: 9pt; color: #6a4b00; }
 `)}</style></head><body>
     <h1>${esc(map.meta.name || map.root.title)}</h1><p class="sub">Fluxograma \xB7 ${names.size} passo(s) \xB7 ${paths.length}${truncated ? "+" : ""} caminho(s)</p>
@@ -10135,12 +10140,15 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         walkItems(doc.topics, (t) => toc.push(`<li class="l${t.depth}"><span class="num">${esc(t.num)}</span> ${esc(t.title)}</li>`));
         const srcs = doc.options.sources && doc.sources.length ? `<section class="sources"><h2>Fontes</h2><ul>${doc.sources.map((s) => `<li>${esc(s.name)}${s.uses ? ` (${s.uses} trecho(s))` : ""}</li>`).join("")}</ul></section>` : "";
         return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>${printCss(`
-    .toc { list-style: none; padding: 0; columns: 2; column-gap: 8mm; font-size: 9pt; }
-    .toc li { break-inside: avoid; padding: 0.3mm 0; }
-    .toc .l2, .toc .l3 { padding-left: 3mm; } .toc .l4, .toc .l5, .toc .l6 { padding-left: 6mm; color: #555; }
-    .topic { margin-top: 2mm; }
-    .topic .topic { margin-left: 4mm; border-left: 0.6pt solid #ddd; padding-left: 3mm; }
-    section.sources { margin-top: 6mm; break-before: auto; } .sources ul { font-size: 9pt; }
+    .toc { list-style: none; padding: 0; columns: 2; column-gap: 7mm; font-size: 9pt; margin: 0 0 2mm; }
+    .toc li { break-inside: avoid; padding: 0; margin: 0; }
+    /* sum\xE1rio nivelado \xE0 esquerda: o n\xFAmero (1.1.2) j\xE1 mostra a hierarquia, sem recuo crescente */
+    .toc .l3, .toc .l4, .toc .l5, .toc .l6 { color: #444; }
+    .topic { margin-top: 1.5mm; }
+    /* t\xF3picos filhos: sem recuo acumulado; a hierarquia aparece pelo t\xEDtulo e pelo n\xFAmero */
+    .topic .topic { margin-left: 0; padding-left: 0; border-left: 0; }
+    section.sources { margin-top: 4mm; break-before: auto; }
+    .sources ul { font-size: 9pt; margin: 0 0 0 4mm; padding: 0; }
 `)}</style></head><body>
     <h1>${esc(doc.title)}</h1><p class="sub">Material de estudo \xB7 ${esc(doc.date)} \xB7 ${doc.count} t\xF3pico(s)</p>
     <h2>Sum\xE1rio</h2><ul class="toc">${toc.join("")}</ul>
