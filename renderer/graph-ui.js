@@ -232,7 +232,11 @@ function buildGraphUI() {
   const reshape = () => { remember(); renderGraph(true); };
   const viewPop = pop('gViewPop', 'Exibir ▾', 'Opções de exibição da rede', chk('gHier', 'Hierarquia dos mapas', 'hier', reshape), chk('gOrph', 'Pontos sem ligações', 'orphans', reshape), chk('gLocal', 'Só a vizinhança do selecionado', 'local', () => { depthRow.hidden = !gOpt.local; reshape(); }), depthRow,
     chk('gGroup', 'Agrupar folhas (+N)', 'group', () => { remember(); renderGraph(false); }), chk('gFocus', 'Focar a seleção', 'focus', () => { remember(); paintDim(); updateLabels(); }));
-  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick);
+  // Obsidian: a pasta é o vault que o usuário abre no Obsidian; a exportação só grava em <vault>/MindCraft
+  const obsDirTxt = el('div', 'path'); obsDirTxt.id = 'gObsDir'; obsDirTxt.textContent = loadCfg().obsidianDir || '(nenhuma pasta escolhida)'; obsDirTxt.title = loadCfg().obsidianDir || '';
+  const obsPick = el('button', 'btn', 'Escolher pasta…'); obsPick.id = 'gObsPick'; obsPick.title = 'Escolher o vault do Obsidian (a pasta que você abre no Obsidian)'; obsPick.onclick = () => { closePops(); chooseObsidianDir(); };
+  const obsExp = el('button', 'btn', 'Exportar para o Obsidian'); obsExp.id = 'gObsExport'; obsExp.title = 'Grava uma nota por tópico em <vault>/MindCraft (o Obsidian lê a rede como grafo)'; obsExp.onclick = () => { closePops(); exportObsidian(); };
+  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick, el('div', 'muted', 'Obsidian'), obsDirTxt, obsPick, obsExp);
   function closePops() { for (const d of bar.querySelectorAll('details[open]')) d.open = false; }
   document.addEventListener('mousedown', (e) => { if (!bar.contains(e.target)) closePops(); }, true);
   bar.addEventListener('toggle', (e) => { if (e.target.open) for (const d of bar.querySelectorAll('details[open]')) if (d !== e.target) d.open = false; }, true);
@@ -333,6 +337,37 @@ async function pickVaultDir() {
   const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta com os seus mapas (.mom)');
   if (!dir) return;
   saveCfg({ vaultDir: dir, scope: 'vault' }); $('#gScope').value = 'vault'; renderGraph(true); fitGraph();
+}
+
+/** Escolhe o vault do Obsidian (pasta que o usuário abre no Obsidian). Devolve o caminho ou null. */
+async function chooseObsidianDir() {
+  const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta do seu vault do Obsidian');
+  if (!dir) return null;
+  saveCfg({ obsidianDir: dir });
+  const t = $('#gObsDir'); if (t) { t.textContent = dir; t.title = dir; }
+  return dir;
+}
+
+/** Exporta os mapas (o aberto + os da pasta do vault, se houver) como notas do Obsidian. Nunca apaga nada. */
+async function exportObsidian() {
+  let dir = loadCfg().obsidianDir;
+  if (!dir || !fs.existsSync(dir)) dir = await chooseObsidianDir();
+  if (!dir) return;
+  let mod;
+  try { mod = { build: require(path.join(core, 'obsidian')).buildObsidianVault, write: require(path.join(core, 'obsidian-write')).writeObsidianVault }; }
+  catch { setStatus('A exportação para o Obsidian não está disponível neste aparelho.'); return; }
+  try {
+    const info = gatherMaps(vaultDirEff() ? 'vault' : 'map');
+    const built = mod.build(info.maps);
+    const r = mod.write(dir, built.files);
+    const parts = [`Obsidian: ${r.written.length} nota(s) gravada(s)`, `${r.unchanged.length} já em dia`];
+    if (r.skipped.length) parts.push(`${r.skipped.length} não sobrescrita(s) (${r.skipped[0].reason}${r.skipped.length > 1 ? ' e outras' : ''})`);
+    if (r.obsolete) parts.push(`${r.obsolete} antiga(s) sem tópico correspondente (mantida(s))`);
+    if (info.errors && info.errors.length) parts.push(`${info.errors.length} mapa(s) com erro de leitura ficaram de fora`);
+    setStatus(parts.join(' · ') + '. Abra a pasta ' + dir + ' no Obsidian.');
+  } catch (e) {
+    setStatus('Não consegui exportar para o Obsidian: ' + (e.message || e));
+  }
 }
 
 function djb(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h; }
