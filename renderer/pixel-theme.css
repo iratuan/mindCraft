@@ -70,3 +70,17 @@ body.ui-pixel .btn.primary svg, body.ui-pixel .ptab.on svg, body.ui-pixel .tool.
 
 body.ui-pixel .panel-h, body.ui-pixel .ctx-title, body.ui-pixel .field-label { color: var(--text-strong); }
 body.ui-pixel .ctx-item:hover, body.ui-pixel .ctx-item:focus-visible { background-color: var(--accent); color: var(--bg-app); }
+
+/* Retrô: linhas de varredura de monitor de tubo, vinheta leve, barras de rolagem em degrau e logo sem suavização.
+   Só olhos: o overlay não recebe cliques (pointer-events: none). */
+body.ui-pixel::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, .35) 100%);
+}
+body.ui-pixel ::-webkit-scrollbar { width: 12px; height: 12px; }
+body.ui-pixel ::-webkit-scrollbar-track { background: var(--bg-field); border: 2px solid var(--line); }
+body.ui-pixel ::-webkit-scrollbar-thumb { background: var(--bg-hover); border: 2px solid var(--line); box-shadow: inset -2px -2px 0 var(--line), inset 2px 2px 0 var(--line-soft); }
+body.ui-pixel .brand img { image-rendering: pixelated; }
