@@ -4,6 +4,10 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
+## 0.7.3 — 07/11/2026
+- **Tema Pixel (8 bits) com cores mais suaves:** a paleta saturada foi trocada por tons de cinza-azulado e âmbar apagado, para não cansar a vista. Mesmo desenho (bordas em degrau, cantos retos, linhas de varredura), menos contraste de cor.
+- **Release com instaladores:** Windows (`BRANIAC Setup 0.7.3.exe`), macOS (`.dmg`) e Android (`BRANIAC-0.7.3.apk`, código 25).
+
 ## 0.7.2 — 06/11/2026
 - **Nova abertura:** o vídeo de abertura do BRANIAC (`braniac_video.mp4`) substitui o anterior.
 - **Nova logomarca:** `logo.svg` substitui a anterior no cabeçalho, na tela inicial e no tópico raiz do mapa (`core/logo.js`, com as mesmas três variantes de cor).

@@ -10,10 +10,10 @@
 }
 
 body.ui-pixel {
-  --bg-app: #1a1c2c; --bg-bar: #262b44; --bg-panel: #29366f; --bg-panel-h: #3b5dc9; --bg-stage: #1a1c2c;
-  --bg-field: #0f1124; --bg-hover: #3b5dc9; --bg-active: #41a6f6;
-  --line: #0f1124; --line-soft: #566c86; --text: #f4f4f4; --text-dim: #94b0c2; --text-strong: #ffcd75;
-  --accent: #ffcd75; --accent-hover: #ffe6a8; --accent-soft: rgba(255, 205, 117, .25); --danger: #ef7d57;
+  --bg-app: #1c1f26; --bg-bar: #252932; --bg-panel: #2c313c; --bg-panel-h: #3a4150; --bg-stage: #1c1f26;
+  --bg-field: #161920; --bg-hover: #485163; --bg-active: #5a6478;
+  --line: #14171d; --line-soft: #5d6679; --text: #d9dce3; --text-dim: #959cab; --text-strong: #e6c98f;
+  --accent: #c9a86a; --accent-hover: #dbbd85; --accent-soft: rgba(201, 168, 106, .2); --danger: #b87262;
   --shadow: 4px 4px 0 #0f1124;
   color-scheme: dark;
 }
@@ -45,7 +45,7 @@ body.ui-pixel .modal-box, body.ui-pixel .ctx-menu {
 }
 body.ui-pixel #stage {
   background-color: var(--bg-stage) !important;
-  background-image: linear-gradient(rgba(255, 255, 255, .04) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, .04) 2px, transparent 2px) !important;
+  background-image: linear-gradient(rgba(255, 255, 255, .03) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, .04) 2px, transparent 2px) !important;
   background-size: 16px 16px !important;
 }
 
