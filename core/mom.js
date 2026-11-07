@@ -6,6 +6,7 @@ const { sanitizeStyle, sanitizeTheme, THEMES } = require('./themes');
 const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml } = require('./mindomo');
 const { MARKERS } = require('./markers');
 const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
+const { sanitizeReview } = require('./revisao');
 
 // Limites contra arquivos corrompidos ou maliciosos (o .mom é um ZIP vindo de fora).
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
@@ -14,7 +15,7 @@ const MAX_DEPTH = 500;
 const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 // Campos do bloco "mc" que o MindCraft entende. Qualquer outro campo (ex.: estudo de versões antigas, vídeos) é guardado
 // como veio em _mcExtra e regravado igual: o app não mostra, mas nunca apaga.
-const KNOWN_MC = new Set(['markers', 'progress', 'style', 'collapsed', 'refs', 'flow']);
+const KNOWN_MC = new Set(['markers', 'progress', 'style', 'collapsed', 'refs', 'flow', 'review']);
 // Fluxograma: tipo do passo e rótulo do ramo (ex.: "Sim") ficam no bloco mc.flow; mapas mentais não gravam nada disso
 const FLOW_TYPES = ['start', 'step', 'decision', 'end'];
 
@@ -69,6 +70,7 @@ function readMom(source) {
         style: fromMindCraft ? sanitizeStyle(m.style) : convertNodeStyle(n.style, n.titleStyle, title),
         collapsed: m.collapsed === true,
         ...(Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {}),
+        ...(sanitizeReview(m.review) ? { review: sanitizeReview(m.review) } : {}),
         ...(m.flow && FLOW_TYPES.includes(m.flow.type) ? { flowType: m.flow.type } : {}),
         ...(m.flow && typeof m.flow.branchLabel === 'string' && m.flow.branchLabel ? { branchLabel: clean(m.flow.branchLabel).slice(0, 60) } : {}),
         ...(Object.keys(mcExtra).length ? { _mcExtra: mcExtra } : {}),
@@ -172,7 +174,8 @@ function writeMom(map, target) {
     const hasStyle = node.style && Object.keys(node.style).length;
     const hasExtra = !!(node._mcExtra && Object.keys(node._mcExtra).length);
     const hasFlow = (node.flowType && node.flowType !== 'step') || !!node.branchLabel;
-    const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || (node.refs && node.refs.length) || hasExtra || hasFlow;
+    const hasReview = !!sanitizeReview(node.review);
+    const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || (node.refs && node.refs.length) || hasExtra || hasFlow || hasReview;
     list.push({
       version: 40, ...raw, id: node.id, originalId: node.id,
       ...(parentId ? { parentId } : {}), ...(previousId ? { previousId } : {}),
@@ -187,6 +190,7 @@ function writeMom(map, target) {
         markers: node.markers || [], progress: node.progress,
         ...(hasStyle ? { style: node.style } : {}), ...(node.collapsed ? { collapsed: true } : {}),
         ...(node.refs && node.refs.length ? { refs: node.refs } : {}),
+        ...(hasReview ? { review: sanitizeReview(node.review) } : {}),
         ...(hasFlow ? { flow: { type: node.flowType || 'step', ...(node.branchLabel ? { branchLabel: node.branchLabel } : {}) } } : {}),
       } } : {}),
     });

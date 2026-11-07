@@ -23,6 +23,7 @@ module.exports = {
   "obsidian-write": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/obsidian-write.js"),
   "pdfrefs": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/pdfrefs.js"),
   "print-style": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/print-style.js"),
+  "revisao": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/revisao.js"),
   "shapes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/shapes.js"),
   "study-export": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/study-export.js"),
   "svg": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/svg.js"),

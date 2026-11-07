@@ -12,11 +12,13 @@ const MENU_BAR = [
   { label: 'Editar', items: [
     ['undo', 'Desfazer', 'Ctrl+Z'], '-',
     ['cut', 'Recortar', 'Ctrl+X'], ['copy', 'Copiar', 'Ctrl+C'], ['paste', 'Colar', 'Ctrl+V'], '-',
-    ['selectAll', 'Selecionar tudo', 'Ctrl+A'],
+    ['selectAll', 'Selecionar tudo', 'Ctrl+A'], '-',
+    ['review-mark', 'Marcar tópico como revisado', ''],
   ] },
   { label: 'Visualizar', items: [
     ['fit', 'Ajustar mapa à tela', 'Ctrl+0'], ['organize', 'Auto-organizar mapa', ''], ['panelsToggle', 'Recolher ou expandir painel lateral', 'Ctrl+' + String.fromCharCode(92)], '-',
     ['dash', 'Painel de mapas', 'Ctrl+E'], ['graph', 'Rede de conhecimento', 'Ctrl+G'], ['board', 'Lousa de resolução', ''],
+    ['reviews', 'Revisões de hoje…', ''],
     ['pdf', 'Leitor de PDF', 'Ctrl+Shift+P'], '-',
     ['ai-open', 'Assistente de IA', ''], ['ai-config', 'Configurar IA', ''],
   ] },

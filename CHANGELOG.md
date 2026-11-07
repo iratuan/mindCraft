@@ -7,6 +7,8 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 - **Nova logomarca:** `logo.svg` substitui a anterior no cabeçalho, na tela inicial e no tópico raiz do mapa (`core/logo.js`, com as mesmas três variantes de cor).
 - **Tema "Pixel (8 bits)":** nova opção em Tema da interface, com paleta de console, bordas em degrau e cantos retos. Títulos e menu usam a fonte pixel (Press Start 2P, licença OFL, incluída no app); os rótulos densos seguem na fonte normal, porque a fonte pixel cortaria o texto.
 - **Logomarca no tema escuro:** a logo preta do cabeçalho e da tela inicial fica clara no tema escuro (no desenho à mão continua preta).
+- **Revisão espaçada:** o tópico pode ser marcado como revisado (Editar › Marcar tópico como revisado). A próxima revisão segue os intervalos 1-7-15-30-60-120 dias. Visualizar › Revisões de hoje… lista as revisões de hoje e as atrasadas, com o botão Revisado e a previsão dos próximos 7 dias. A revisão fica no arquivo do mapa e pode ser desfeita (Ctrl+Z).
+- **Aviso diário de revisões:** no desktop, uma vez por dia, quando há revisões pendentes, um aviso do sistema com a contagem. A barra de status mostra a contagem em qualquer aparelho.
 - **Obsidian (fase 1):** exportação da rede para o vault e abertura do vault no Obsidian (ver `docs/OBSIDIAN.md`).
 
 ## 0.7.1

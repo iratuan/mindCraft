@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, shell, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -77,6 +77,7 @@ function buildMenu() {
     ] },
     { label: 'Editar', submenu: [
       { id: 'm-undo', label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
+      { label: 'Marcar tópico como revisado', click: send('review-mark') },
       { id: 'm-redo', label: 'Refazer', accelerator: isMac ? 'Shift+Cmd+Z' : 'Ctrl+Y', click: send('redo') },
       { type: 'separator' },
       { id: 'm-moveUp', label: 'Subir tópico (Alt+↑)', click: send('moveUp') },
@@ -96,6 +97,7 @@ function buildMenu() {
       { label: 'Painel de mapas (dashboard)', accelerator: 'CmdOrCtrl+E', click: send('dash') },
       { label: 'Painel lateral (recolher/expandir)', accelerator: 'CmdOrCtrl+\\', click: send('panelsToggle') },
       { label: 'Lousa de resolução', click: send('board') },
+      { label: 'Revisões de hoje…', click: send('reviews') },
       { label: 'Rede de conhecimento', accelerator: 'CmdOrCtrl+G', click: send('graph') },
       { label: 'Leitor de PDF (dividir a tela)', accelerator: 'CmdOrCtrl+Shift+P', click: send('pdf') },
       { type: 'separator' },
@@ -155,6 +157,14 @@ ipcMain.handle('dialog:save', async (_e, defaultName) => {
   return r.canceled ? null : r.filePath;
 });
 ipcMain.handle('dialog:error', (_e, msg) => { dialog.showErrorBox('BRANIAC', String(msg)); });
+// aviso do sistema (ex.: revisões do dia). Texto curto e limitado; sem suporte do sistema, só não mostra.
+ipcMain.handle('notify:show', (_e, o) => {
+  try {
+    if (!Notification.isSupported()) return false;
+    new Notification({ title: String(o?.title || 'BRANIAC').slice(0, 100), body: String(o?.body || '').slice(0, 300) }).show();
+    return true;
+  } catch { return false; }
+});
 // 0 = Salvar, 1 = Descartar, 2 = Cancelar
 ipcMain.handle('dialog:confirm-discard', async () => (await dialog.showMessageBox(win, {
   type: 'warning', buttons: ['Salvar', 'Descartar', 'Cancelar'], defaultId: 0, cancelId: 2,

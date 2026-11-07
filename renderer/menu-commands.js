@@ -9,6 +9,8 @@ async function runMenuCommand(c) {
   if (c === 'new') { newMap(); }
   if (c === 'organize') return organizeMap();
   if (c === 'new-flow') return newFlow();
+  if (c === 'reviews') return openReviewsModal();
+  if (c === 'review-mark') return markTopicReviewed(selectedId);
   if (c === 'about') return setStatus(`BRANIAC · versão ${window.braniacVersion || 'desconhecida'}`);
   else if (c === 'open') { const p = await ipcRenderer.invoke('dialog:open'); if (p) await openPath(p); }
   else if (c === 'save-and-close') { if (await save(false)) ipcRenderer.send('close-now'); }

@@ -742,3 +742,12 @@ body.no-map #panels, body.no-map #panelsSplit, body.no-map #panelsReveal { displ
 /* o mapa trata os gestos de toque (arrastar, pinça); o navegador não rola nem amplia a página por cima */
 #svg { touch-action: none; }
 #gsvg { touch-action: none; }   /* a Rede: um dedo arrasta, dois dedos dão pinça (ver graph-ui.js) */
+
+/* Revisões de hoje (renderer/review-ui.js) */
+.review-box { width: min(520px, 92vw); max-height: 80vh; overflow: auto; padding: 16px; }
+.review-box h3 { margin: 0 0 10px; font-size: 15px; }
+.review-box h4 { margin: 14px 0 6px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.review-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.review-title { font-weight: 600; color: var(--text-strong); }
+.review-path, .review-empty, .review-upcoming { font-size: 11px; color: var(--text-dim); }
+.review-empty { margin: 8px 0; }

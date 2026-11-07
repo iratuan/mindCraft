@@ -9342,6 +9342,72 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
     }
   });
 
+  // ../core/revisao.js
+  var require_revisao = __commonJS({
+    "../core/revisao.js"(exports, module) {
+      "use strict";
+      var INTERVALS = [1, 7, 15, 30, 60, 120];
+      var KEY = /^\d{4}-\d{2}-\d{2}$/;
+      function dayKey(d = /* @__PURE__ */ new Date()) {
+        const p = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      }
+      function addDays(key, n) {
+        const [y, m, d] = key.split("-").map(Number);
+        const t = new Date(Date.UTC(y, m - 1, d + n));
+        return t.toISOString().slice(0, 10);
+      }
+      function diffDays(a, b) {
+        const [ya, ma, da] = a.split("-").map(Number), [yb, mb, db] = b.split("-").map(Number);
+        return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 864e5);
+      }
+      function sanitizeReview(r) {
+        if (!r || typeof r !== "object") return null;
+        if (!Number.isInteger(r.done) || r.done < 0) return null;
+        if (typeof r.next !== "string" || !KEY.test(r.next)) return null;
+        const last = typeof r.last === "string" && KEY.test(r.last) ? r.last : null;
+        return { done: r.done, last, next: r.next };
+      }
+      function markReviewed(review, today) {
+        const done = (review && Number.isInteger(review.done) ? review.done : 0) + 1;
+        const step = INTERVALS[Math.min(done - 1, INTERVALS.length - 1)];
+        return { done, last: today, next: addDays(today, step) };
+      }
+      function collectReviews(root, today, horizon = 7) {
+        const due = [];
+        const upcoming = Array.from({ length: horizon }, (_, i) => ({ date: addDays(today, i + 1), count: 0 }));
+        const walk2 = (node, trail) => {
+          const path2 = [...trail, node.title];
+          const r = sanitizeReview(node.review);
+          if (r) {
+            const diff = diffDays(today, r.next);
+            if (diff <= 0) due.push({ id: node.id, title: node.title, path: path2.join(" \u203A "), next: r.next, overdueDays: -diff });
+            else {
+              const slot = upcoming[diff - 1];
+              if (slot) slot.count++;
+            }
+          }
+          for (const c of node.children || []) walk2(c, path2);
+        };
+        walk2(root, []);
+        const today_ = due.filter((d) => d.overdueDays === 0).length;
+        const overdue = due.length - today_;
+        return { due, counts: { today: today_, overdue, total: due.length }, upcoming };
+      }
+      function shouldNotify({ lastDay, today, total }) {
+        return total > 0 && lastDay !== today;
+      }
+      function notificationText(today, overdue) {
+        const r = (n) => n === 1 ? "revis\xE3o" : "revis\xF5es";
+        const a = (n) => n === 1 ? "atrasada" : "atrasadas";
+        if (today > 0 && overdue > 0) return `Hoje: ${today} ${r(today)}. Al\xE9m disso, ${overdue} ${a(overdue)}.`;
+        if (today > 0) return `Hoje: ${today} ${r(today)}.`;
+        return `${overdue} ${r(overdue)} ${a(overdue)}.`;
+      }
+      module.exports = { INTERVALS, dayKey, addDays, diffDays, sanitizeReview, markReviewed, collectReviews, shouldNotify, notificationText };
+    }
+  });
+
   // ../core/mom.js
   var require_mom = __commonJS({
     "../core/mom.js"(exports, module) {
@@ -9353,11 +9419,12 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
       var { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml } = require_mindomo();
       var { MARKERS } = require_markers();
       var { sanitizePdfs, sanitizeRefs } = require_pdfrefs();
+      var { sanitizeReview } = require_revisao();
       var MAX_ENTRY_BYTES = 64 * 1024 * 1024;
       var MAX_NODES = 2e5;
       var MAX_DEPTH = 500;
       var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
-      var KNOWN_MC = /* @__PURE__ */ new Set(["markers", "progress", "style", "collapsed", "refs", "flow"]);
+      var KNOWN_MC = /* @__PURE__ */ new Set(["markers", "progress", "style", "collapsed", "refs", "flow", "review"]);
       var FLOW_TYPES = ["start", "step", "decision", "end"];
       var stripTags = (s) => String(s ?? "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/?(?:b|i|u|em|strong|span|div|p|font|a)\b[^>]*>/gi, "");
       function readMom(source) {
@@ -9405,6 +9472,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
               style: fromMindCraft ? sanitizeStyle(m.style) : convertNodeStyle(n.style, n.titleStyle, title),
               collapsed: m.collapsed === true,
               ...Array.isArray(m.refs) && sanitizeRefs(m.refs).length ? { refs: sanitizeRefs(m.refs) } : {},
+              ...sanitizeReview(m.review) ? { review: sanitizeReview(m.review) } : {},
               ...m.flow && FLOW_TYPES.includes(m.flow.type) ? { flowType: m.flow.type } : {},
               ...m.flow && typeof m.flow.branchLabel === "string" && m.flow.branchLabel ? { branchLabel: clean(m.flow.branchLabel).slice(0, 60) } : {},
               ...Object.keys(mcExtra).length ? { _mcExtra: mcExtra } : {}
@@ -9505,7 +9573,8 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
           const hasStyle = node.style && Object.keys(node.style).length;
           const hasExtra = !!(node._mcExtra && Object.keys(node._mcExtra).length);
           const hasFlow = node.flowType && node.flowType !== "step" || !!node.branchLabel;
-          const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || node.refs && node.refs.length || hasExtra || hasFlow;
+          const hasReview = !!sanitizeReview(node.review);
+          const hasMc = (node.markers || []).length || node.progress != null || hasStyle || node.collapsed || node.refs && node.refs.length || hasExtra || hasFlow || hasReview;
           list.push({
             version: 40,
             ...raw,
@@ -9529,6 +9598,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
               ...hasStyle ? { style: node.style } : {},
               ...node.collapsed ? { collapsed: true } : {},
               ...node.refs && node.refs.length ? { refs: node.refs } : {},
+              ...hasReview ? { review: sanitizeReview(node.review) } : {},
               ...hasFlow ? { flow: { type: node.flowType || "step", ...node.branchLabel ? { branchLabel: node.branchLabel } : {} } } : {}
             } } : {}
           });
@@ -10315,6 +10385,7 @@ ${renderGroup(L, { logo: true })}
         "obsidian-write": require_obsidian_write(),
         "pdfrefs": require_pdfrefs(),
         "print-style": require_print_style(),
+        "revisao": require_revisao(),
         "shapes": require_shapes(),
         "study-export": require_study_export(),
         "svg": require_svg(),
