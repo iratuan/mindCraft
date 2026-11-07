@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.3**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.4**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Telas
 
@@ -47,9 +47,9 @@ Versão atual: **0.7.3**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe `BRANIAC Setup 0.7.3.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
+**Windows:** baixe `BRANIAC Setup 0.7.4.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
 
-**Android:** baixe `BRANIAC-0.7.3.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
+**Android:** baixe `BRANIAC-0.7.4.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
 
 **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 

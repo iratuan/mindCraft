@@ -1,7 +1,8 @@
-/* Tema da interface "Pixel (8 bits)": paleta de console retrô, cantos retos, bordas em degrau e fonte pixel.
-   Ativo com a classe body.ui-pixel (escolhido em Tema da interface). Só muda a casca (barras, painéis, botões);
-   o mapa segue o tema próprio dele. A fonte Press Start 2P (licença OFL, ver assets/fonts) fica no próprio app:
-   nada é baixado em tempo de execução, então funciona sem internet no desktop e no tablet. */
+/* Tema da interface "Pixel (8 bits)": paleta de console discreta, cantos retos, bordas em degrau e fonte pixel nos títulos.
+   Ativo com a classe body.ui-pixel (escolhido em Tema da interface). Só muda a casca (barras, painéis, botões).
+   Duas áreas de leitura ficam claras e sem efeito retro: o leitor de PDF (#pdfpane) e a lousa (#boardpane).
+   O canvas do mapa fica claro para que o texto dos tópicos tenha contraste. A fonte Press Start 2P (licença OFL,
+   ver assets/fonts) fica no próprio app: nada é baixado em tempo de execução, então funciona sem internet. */
 
 @font-face {
   font-family: "PixelBR";
@@ -10,11 +11,10 @@
 }
 
 body.ui-pixel {
-  --bg-app: #1c1f26; --bg-bar: #252932; --bg-panel: #2c313c; --bg-panel-h: #3a4150; --bg-stage: #1c1f26;
+  --bg-app: #1c1f26; --bg-bar: #252932; --bg-panel: #2c313c; --bg-panel-h: #3a4150; --bg-stage: #eeeff2;
   --bg-field: #161920; --bg-hover: #485163; --bg-active: #5a6478;
   --line: #14171d; --line-soft: #5d6679; --text: #d9dce3; --text-dim: #959cab; --text-strong: #e6c98f;
   --accent: #c9a86a; --accent-hover: #dbbd85; --accent-soft: rgba(201, 168, 106, .2); --danger: #b87262;
-  --shadow: 4px 4px 0 #0f1124;
   color-scheme: dark;
 }
 
@@ -43,9 +43,11 @@ body.ui-pixel .modal-box, body.ui-pixel .ctx-menu {
   border-color: var(--line) !important;
   box-shadow: none !important;
 }
+
+/* canvas do mapa: claro, com grade discreta, para o texto dos tópicos ter contraste */
 body.ui-pixel #stage {
-  background-color: var(--bg-stage) !important;
-  background-image: linear-gradient(rgba(255, 255, 255, .03) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, .04) 2px, transparent 2px) !important;
+  background-color: #eeeff2 !important;
+  background-image: linear-gradient(rgba(20, 23, 29, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 23, 29, .06) 1px, transparent 1px) !important;
   background-size: 16px 16px !important;
 }
 
@@ -60,7 +62,7 @@ body.ui-pixel input, body.ui-pixel select, body.ui-pixel textarea { background: 
 body.ui-pixel .btn:hover, body.ui-pixel button:hover, body.ui-pixel .chip:hover { background: var(--bg-hover); color: var(--text-strong); }
 body.ui-pixel .btn:active, body.ui-pixel button:active, body.ui-pixel .chip:active { box-shadow: inset 2px 2px 0 var(--line); transform: translate(1px, 1px); }
 
-/* o que está ativo fica amarelo, como uma seleção de menu de jogo */
+/* o que está ativo fica em destaque, como uma seleção de menu */
 body.ui-pixel .btn.primary, body.ui-pixel .chip.active, body.ui-pixel .seg .chip.active, body.ui-pixel .tool.on, body.ui-pixel .ptab.on {
   background: var(--accent) !important;
   color: var(--bg-app) !important;
@@ -71,15 +73,24 @@ body.ui-pixel .btn.primary svg, body.ui-pixel .ptab.on svg, body.ui-pixel .tool.
 body.ui-pixel .panel-h, body.ui-pixel .ctx-title, body.ui-pixel .field-label { color: var(--text-strong); }
 body.ui-pixel .ctx-item:hover, body.ui-pixel .ctx-item:focus-visible { background-color: var(--accent); color: var(--bg-app); }
 
-/* Retrô: linhas de varredura de monitor de tubo, vinheta leve, barras de rolagem em degrau e logo sem suavização.
-   Só olhos: o overlay não recebe cliques (pointer-events: none). */
-body.ui-pixel::after {
-  content: "";
-  position: fixed; inset: 0; pointer-events: none; z-index: 9000;
-  background:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, .16) 0 1px, transparent 1px 3px),
-    radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, .35) 100%);
+/* áreas de leitura (PDF e lousa): claras, sem bordas em degrau e sem efeito retro.
+   As variáveis são redefinidas só dentro desses painéis; os botões deles herdam as cores claras. */
+body.ui-pixel #pdfpane, body.ui-pixel #boardpane {
+  --bg-app: #ffffff; --bg-bar: #f1f3f6; --bg-panel: #f6f7f9; --bg-panel-h: #e9ecf1; --bg-stage: #ffffff;
+  --bg-field: #ffffff; --bg-hover: #dde3ec; --bg-active: #cfd7e3;
+  --line: #b9c0cc; --line-soft: #d8dde6; --text: #1c1f26; --text-dim: #4b5262; --text-strong: #111418;
+  --accent: #2d6fd6; --accent-hover: #4a86e4; --accent-soft: rgba(45, 111, 214, .15); --danger: #c0432f;
+  color-scheme: light;
+  background: var(--bg-panel);
+  color: var(--text);
 }
+body.ui-pixel #pdfpane button, body.ui-pixel #pdfpane input, body.ui-pixel #pdfpane select,
+body.ui-pixel #boardpane button, body.ui-pixel #boardpane input, body.ui-pixel #boardpane select {
+  box-shadow: none;
+}
+body.ui-pixel #pdfpane .pdf-scroll { background: #e6e9ee !important; }
+
+/* barras de rolagem em degrau (dentro das áreas claras usam as mesmas variáveis, então ficam claras também) */
 body.ui-pixel ::-webkit-scrollbar { width: 12px; height: 12px; }
 body.ui-pixel ::-webkit-scrollbar-track { background: var(--bg-field); border: 2px solid var(--line); }
 body.ui-pixel ::-webkit-scrollbar-thumb { background: var(--bg-hover); border: 2px solid var(--line); box-shadow: inset -2px -2px 0 var(--line), inset 2px 2px 0 var(--line-soft); }

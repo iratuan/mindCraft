@@ -1,6 +1,6 @@
 {
   "name": "braniac",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "author": "BRANIAC",
   "license": "MIT",
   "description": "Editor de mapas mentais compatível com o Mindomo (.mom), com rede de conhecimento, notas e leitor de PDF",

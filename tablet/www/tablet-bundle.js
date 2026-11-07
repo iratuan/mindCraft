@@ -4132,7 +4132,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     "package.json"(exports, module) {
       module.exports = {
         name: "braniac-tablet",
-        version: "0.7.3",
+        version: "0.7.4",
         private: true,
         description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
         scripts: {
