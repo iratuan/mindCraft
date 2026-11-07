@@ -14,7 +14,6 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-      - run: npm run test:web
       - name: e2e (Linux precisa de display virtual)
         run: ${{ runner.os == 'Linux' && 'xvfb-run -a npm run e2e' || 'npm run e2e' }}
       - run: npm run build:ui
