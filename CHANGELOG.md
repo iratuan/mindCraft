@@ -5,6 +5,8 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 ## 0.7.2 (não lançada)
 - **Nova abertura:** o vídeo de abertura do BRANIAC (`braniac_video.mp4`) substitui o anterior.
 - **Nova logomarca:** `logo.svg` substitui a anterior no cabeçalho, na tela inicial e no tópico raiz do mapa (`core/logo.js`, com as mesmas três variantes de cor).
+- **Tema "Pixel (8 bits)":** nova opção em Tema da interface, com paleta de console, bordas em degrau e cantos retos. Títulos e menu usam a fonte pixel (Press Start 2P, licença OFL, incluída no app); os rótulos densos seguem na fonte normal, porque a fonte pixel cortaria o texto.
+- **Logomarca no tema escuro:** a logo preta do cabeçalho e da tela inicial fica clara no tema escuro (no desenho à mão continua preta).
 - **Obsidian (fase 1):** exportação da rede para o vault e abertura do vault no Obsidian (ver `docs/OBSIDIAN.md`).
 
 ## 0.7.1

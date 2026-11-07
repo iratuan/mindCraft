@@ -469,6 +469,7 @@ const UI_THEMES = {
   dark: { label: 'Escuro', icon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>' },
   light: { label: 'Claro', icon: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' },
   draw: { label: 'Desenho (à mão)', icon: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>' },
+  pixel: { label: 'Pixel (8 bits)', icon: '<path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM4 16h4v4H4zM16 16h4v4h-4z"/>' },
 };
 function uiThemeGet() {
   try {
@@ -482,6 +483,7 @@ function setUiTheme(name) {
   if (!UI_THEMES[name]) name = 'dark';
   document.body.classList.toggle('light', name === 'light');
   document.body.classList.toggle('ui-draw', name === 'draw');
+  document.body.classList.toggle('ui-pixel', name === 'pixel');
   try { localStorage.setItem('mc-ui-theme', name); } catch { /* sem storage */ }
   const b = $('#lightToggle');
   if (b) {

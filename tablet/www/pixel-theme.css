@@ -1,0 +1,72 @@
+/* Tema da interface "Pixel (8 bits)": paleta de console retrô, cantos retos, bordas em degrau e fonte pixel.
+   Ativo com a classe body.ui-pixel (escolhido em Tema da interface). Só muda a casca (barras, painéis, botões);
+   o mapa segue o tema próprio dele. A fonte Press Start 2P (licença OFL, ver assets/fonts) fica no próprio app:
+   nada é baixado em tempo de execução, então funciona sem internet no desktop e no tablet. */
+
+@font-face {
+  font-family: "PixelBR";
+  src: url("assets/fonts/PressStart2P-Regular.ttf") format("truetype");
+  font-display: block;
+}
+
+body.ui-pixel {
+  --bg-app: #1a1c2c; --bg-bar: #262b44; --bg-panel: #29366f; --bg-panel-h: #3b5dc9; --bg-stage: #1a1c2c;
+  --bg-field: #0f1124; --bg-hover: #3b5dc9; --bg-active: #41a6f6;
+  --line: #0f1124; --line-soft: #566c86; --text: #f4f4f4; --text-dim: #94b0c2; --text-strong: #ffcd75;
+  --accent: #ffcd75; --accent-hover: #ffe6a8; --accent-soft: rgba(255, 205, 117, .25); --danger: #ef7d57;
+  --shadow: 4px 4px 0 #0f1124;
+  color-scheme: dark;
+}
+
+/* a fonte pixel é larga: nos rótulos densos (ferramentas, abas, campos) cortaria o texto, então fica só nos títulos
+   e no menu, onde as palavras são curtas. Os rótulos continuam na fonte normal do app. */
+body.ui-pixel #menubar, body.ui-pixel #menubar *, body.ui-pixel .panel-h, body.ui-pixel .ctx-title, body.ui-pixel .hm-title {
+  font-family: "PixelBR", "Courier New", monospace;
+  font-size: 8px;
+  letter-spacing: 0;
+}
+
+/* sem arredondamento e sem desfoque: tudo com borda reta */
+body.ui-pixel *, body.ui-pixel *::before, body.ui-pixel *::after {
+  border-radius: 0 !important;
+  text-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+}
+
+/* barras e painéis: faixa sólida com borda escura */
+body.ui-pixel #appbar, body.ui-pixel #statusbar, body.ui-pixel #panels, body.ui-pixel .right-panel,
+body.ui-pixel .modal-box, body.ui-pixel .ctx-menu {
+  background: var(--bg-panel) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+body.ui-pixel #stage {
+  background-color: var(--bg-stage) !important;
+  background-image: linear-gradient(rgba(255, 255, 255, .04) 2px, transparent 2px), linear-gradient(90deg, rgba(255, 255, 255, .04) 2px, transparent 2px) !important;
+  background-size: 16px 16px !important;
+}
+
+/* botões, campos e chips em relevo de degrau (luz em cima e à esquerda, sombra embaixo e à direita) */
+body.ui-pixel .btn, body.ui-pixel button, body.ui-pixel select, body.ui-pixel input, body.ui-pixel textarea, body.ui-pixel .chip {
+  background: var(--bg-panel-h);
+  color: var(--text);
+  border: 2px solid var(--line);
+  box-shadow: inset -2px -2px 0 var(--line), inset 2px 2px 0 var(--line-soft);
+}
+body.ui-pixel input, body.ui-pixel select, body.ui-pixel textarea { background: var(--bg-field); }
+body.ui-pixel .btn:hover, body.ui-pixel button:hover, body.ui-pixel .chip:hover { background: var(--bg-hover); color: var(--text-strong); }
+body.ui-pixel .btn:active, body.ui-pixel button:active, body.ui-pixel .chip:active { box-shadow: inset 2px 2px 0 var(--line); transform: translate(1px, 1px); }
+
+/* o que está ativo fica amarelo, como uma seleção de menu de jogo */
+body.ui-pixel .btn.primary, body.ui-pixel .chip.active, body.ui-pixel .seg .chip.active, body.ui-pixel .tool.on, body.ui-pixel .ptab.on {
+  background: var(--accent) !important;
+  color: var(--bg-app) !important;
+  border-color: var(--line) !important;
+}
+body.ui-pixel .btn.primary svg, body.ui-pixel .ptab.on svg, body.ui-pixel .tool.on svg { color: var(--bg-app); }
+
+body.ui-pixel .panel-h, body.ui-pixel .ctx-title, body.ui-pixel .field-label { color: var(--text-strong); }
+body.ui-pixel .ctx-item:hover, body.ui-pixel .ctx-item:focus-visible { background-color: var(--accent); color: var(--bg-app); }
