@@ -22103,7 +22103,7 @@
     return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm", children: [
       /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-start", children: [
         /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-brand", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", { className: "hm-logo", src: "assets/braniac.svg", alt: "", height: "40" }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", { className: "hm-logo", src: "assets/logo.svg", alt: "", height: "40" }),
           /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h1", { children: "BRANIAC" })
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("p", { className: "hm-lead", children: "Seu grande c\xE9rebro para mapas mentais. Abre e salva no formato do Mindomo." }),

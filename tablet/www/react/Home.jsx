@@ -20,7 +20,7 @@ export function Home() {
     <div className="hm">
       <div className="hm-start">
         <div className="hm-brand">
-          <img className="hm-logo" src="assets/braniac.svg" alt="" height="40" />
+          <img className="hm-logo" src="assets/logo.svg" alt="" height="40" />
           <h1>BRANIAC</h1>
         </div>
         <p className="hm-lead">Seu grande cérebro para mapas mentais. Abre e salva no formato do Mindomo.</p>
