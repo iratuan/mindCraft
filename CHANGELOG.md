@@ -2,6 +2,11 @@
 
 Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS.md`.
 
+## 0.7.2 (não lançada)
+- **Nova abertura:** o vídeo de abertura do BRANIAC (`braniac_video.mp4`) substitui o anterior.
+- **Nova logomarca:** `logo.svg` substitui a anterior no cabeçalho, na tela inicial e no tópico raiz do mapa (`core/logo.js`, com as mesmas três variantes de cor).
+- **Obsidian (fase 1):** exportação da rede para o vault e abertura do vault no Obsidian (ver `docs/OBSIDIAN.md`).
+
 ## 0.7.1
 - **Ações do tópico na barra:** ao selecionar um tópico, a barra mostra de novo preenchimento, forma, negrito, níveis e o botão **Renomear** (F2 continua valendo). Antes, os controles de estilo ficavam só no painel Estilo.
 - **Tela inicial sem painel:** sem mapa aberto, o painel lateral e o divisor somem, e a tela inicial ocupa a janela.
