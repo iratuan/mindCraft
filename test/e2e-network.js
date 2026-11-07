@@ -21,6 +21,8 @@ const { writeMom, readMom } = require('../core/mom');
   await js(`window.__gn = (title) => [...document.querySelectorAll('#gview .gn')].find((x) => x.querySelector('title').textContent.split(' — ')[0].replace(' (não existe)', '') === title);
     window.__gclick = (title) => { const n = __gn(title); n.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 5, clientY: 5 })); window.dispatchEvent(new MouseEvent('mouseup')); };
     window.__gcount = () => ({ nodes: document.querySelectorAll('#gview .gn').length, edges: document.querySelectorAll('#gview .edge').length });
+    // torna um mapa montado pelo teste o mapa aberto (mesmo estado que openPath deixa: sem arquivo, sem seleção antiga, sem busca)
+    window.adopt = (m) => { map = m; filePath = null; selectedId = m.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++; render(); return true; };
     window.__setup = () => { const m = new MindMap(createNode('Estudos')); const p = m.addChild(m.root.id, 'Princípios'), l = m.addChild(m.root.id, 'Legalidade'), mo = m.addChild(m.root.id, 'Moralidade'); m.addChild(m.root.id, 'Isolado');
       m.update(p.id, { notes: 'Base: [[Legalidade]] e [[Inexistente]].' }); m.update(mo.id, { notes: 'Parente da legalidade, mas sem a impessoalidade.' }); m._undo.length = 0; adopt(m); dirty = false; selectedId = m.root.id; render(); return true; };
     true`);
@@ -180,21 +182,24 @@ const { writeMom, readMom } = require('../core/mom');
     eq(fs.readFileSync(fDc).length > 0, true);
   });
 
-  await t('exportar para o Obsidian: um .md por mapa com [[Mapa#Tópico]], sem sobrescrever notas pessoais; abrir no Obsidian (sem lançar)', async () => {
+  await t('exportar para o Obsidian: uma pasta por mapa, links [[Mapa/Tópico]], nota sua com o mesmo nome intacta; abrir o vault', async () => {
     await js(`openPath(${JSON.stringify(fDc)})`); await wait(300);
-    const out = path.join(TMP, 'saida obsidian');
-    fs.mkdirSync(path.join(out, 'MindCraft'), { recursive: true });
-    fs.writeFileSync(path.join(out, 'MindCraft', 'Informática.md'), '# minha nota pessoal\n');
+    const vaultOut = path.join(TMP, 'saida obsidian');
+    fs.mkdirSync(path.join(vaultOut, 'MindCraft', 'Direito Administrativo'), { recursive: true });
+    const pessoal = path.join(vaultOut, 'MindCraft', 'Direito Administrativo', 'Atos.md');
+    fs.writeFileSync(pessoal, '# minha nota pessoal\n');
     await click('[data-act="graph"]'); await c.waitFor(() => js(`document.querySelectorAll('#gview .gn').length > 0`));
-    await js(`window.__dlg.folder = ${JSON.stringify(out)}`); await click('#gExport'); await c.waitFor(() => js(`!!document.querySelector('#gMsg')`));
-    const dir = path.join(out, 'MindCraft');
-    eq(fs.readdirSync(dir).sort(), ['Direito Administrativo.md', 'Direito Constitucional.md', 'Informática (MindCraft).md', 'Informática.md']);
-    eq(fs.readFileSync(path.join(dir, 'Informática.md'), 'utf8'), '# minha nota pessoal\n', 'nota pessoal intacta');
-    const adm = fs.readFileSync(path.join(dir, 'Direito Administrativo.md'), 'utf8');
-    ok(adm.includes('[[Direito Constitucional#Legalidade|legalidade]]') && adm.includes('[[Informática#Segurança]]'), 'links entre mapas'); ok(adm.startsWith('---\nmindcraft: true'));
-    ok((await txt('#gMsg')).includes('3 nota(s) exportada(s)') && (await txt('#gMsg')).includes('não é do MindCraft'), await txt('#gMsg'));
-    await click('#gObsidian'); await c.waitFor(async () => (await txt('#gMsg')).includes('obsidian://'));
-    ok((await txt('#gMsg')).includes('obsidian://open?path=' + encodeURIComponent(dir)), await txt('#gMsg'));
+    await js(`window.__dlg.folder = ${JSON.stringify(vaultOut)}`); await click('#gMenu > summary'); await click('#gObsPick');
+    await click('#gExport'); await c.waitFor(async () => (await txt('#gMsg')).includes('gravada'));
+    ok((await txt('#gMsg')).includes('nota(s) gravada(s)'), await txt('#gMsg'));
+    eq(fs.readFileSync(pessoal, 'utf8'), '# minha nota pessoal\n', 'nota pessoal intacta');
+    eq((await txt('#gMsg')).includes('não sobrescrita'), true, 'avisa que a nota sua foi preservada: ' + (await txt('#gMsg')));
+    const adm = fs.readFileSync(path.join(vaultOut, 'MindCraft', 'Direito Administrativo', 'Princípios da Administração.md'), 'utf8');
+    ok(adm.includes('mindcraft-id:') && adm.startsWith('---\n'), 'nota gerada tem o cabeçalho do MindCraft');
+    ok(adm.includes('[[MindCraft/Direito Constitucional/Legalidade|legalidade]]'), 'link entre mapas com caminho completo');
+    ok(adm.includes('[[MindCraft/Informática/Segurança|Segurança]]'), 'link para outro mapa do vault');
+    await click('#gMenu > summary'); await click('#gObsidian'); await c.waitFor(async () => (await txt('#gMsg')).includes('obsidian://'));
+    ok((await txt('#gMsg')).includes('obsidian://open?path=' + encodeURIComponent(vaultOut)), await txt('#gMsg'));
     await click('#gClose');
   });
 

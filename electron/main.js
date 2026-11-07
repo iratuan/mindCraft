@@ -195,6 +195,16 @@ ipcMain.handle('export:pdf', async (e, html, target) => {
   try { return { ok: true, path: await require('./export-pdf').writePdf(html, target, send) }; }
   catch (err) { return { ok: false, error: err.message || 'Falha ao exportar.' }; }
 });
+// Abre o vault no Obsidian. A URL é montada aqui (não vem do aparelho), e só para uma pasta que existe.
+ipcMain.handle('obsidian:open', async (_e, dir) => {
+  const { obsidianOpenUrl } = require('../core/obsidian');
+  let url;
+  try { url = obsidianOpenUrl(dir); } catch (e) { return { ok: false, error: e.message }; }
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return { ok: false, error: 'A pasta do vault não existe mais. Escolha de novo.' };
+  if (process.env.MINDCRAFT_NO_LAUNCH === '1') return { ok: true, url, method: 'skipped' };
+  try { await shell.openExternal(url); return { ok: true, url }; }
+  catch (e) { return { ok: false, error: 'Não consegui abrir o Obsidian. Ele está instalado?' }; }
+});
 // Pasta de mapas (.mom) para a rede de conhecimento entre mapas
 ipcMain.handle('dialog:folder', async (_e, title) => {
   const r = await dialog.showOpenDialog(win, { title: title || 'Escolher pasta', properties: ['openDirectory', 'createDirectory'] });

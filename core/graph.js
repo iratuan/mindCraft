@@ -5,7 +5,7 @@ const { norm, parseLinks } = require('./links');
  * Rede de conhecimento: nós = tópicos (de um ou vários mapas); arestas = links [[...]], relações (setas do mapa)
  * e, opcionalmente, a hierarquia pai→filho. Links sem destino viram nós "fantasma" (como no Obsidian).
  *
- * maps: [{ key, name, map }]  — `key` identifica o mapa (caminho do arquivo); `name` é como ele é citado em [[Mapa#Tópico]].
+ * maps: [{ key, name, map }]  — `key` identifica o mapa (caminho do arquivo); `name` é como ele é citado em [[Mapa/Tópico]].
  */
 /** Percorre todos os tópicos do mapa: a árvore principal e os tópicos soltos do Mindomo (cada um é uma raiz própria). */
 function walkAll(map, fn) {
@@ -50,19 +50,26 @@ function buildGraph(maps, { hierarchy = false } = {}) {
     return id;
   };
 
-  /** Resolve um link escrito dentro do mapa `from`. Devolve { id, ambiguous }. */
+  /**
+   * Resolve um link escrito dentro do mapa `from`. Devolve { id, ambiguous, heading }: `heading` é a seção do
+   * link ([[Nota#Seção]]), que o exportador do Obsidian leva junto; o grafo em si aponta só para a nota.
+   */
   const resolve = (lk, from) => {
     const t = lk.topic == null ? null : norm(lk.topic);
-    if (lk.map) {                                   // [[Mapa#Tópico]] ou [[Mapa]]
+    const heading = lk.hashForm ? null : (lk.heading ?? null);
+    if (lk.map) {                                   // [[Mapa/Tópico]], [[Mapa]] ou [[Mapa#Tópico]] (legado)
       const cands = (mapIndex.get(norm(lk.map)) || []);
-      if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? '#' + t : '')) };
+      if (!cands.length && lk.hashForm && lk.note) {  // [[Nota#Seção]]: não há mapa com esse nome, então é a nota
+        return resolve({ map: null, topic: lk.note, note: lk.note, heading: lk.heading, hashForm: false }, from);
+      }
+      if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? '#' + t : '')), heading };
       const e = cands.find((c) => c.key === from.key) || cands[0];
-      if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1 };
+      if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1, heading };
       const hit = (e.topics.get(t) || [])[0];
-      return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1 } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + '#' + t) };
+      return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1, heading } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + '#' + t), heading };
     }
     const own = (from.topics.get(t) || [])[0];       // 1º: neste mapa
-    if (own) return { id: idOf(from, own) };
+    if (own) return { id: idOf(from, own), heading };
     const asMap = (mapIndex.get(t) || []).filter((c) => c.key !== from.key);
     const others = [];                              // 2º: em outros mapas (tópicos ou raízes de mapas com esse nome)
     for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))) {
@@ -70,8 +77,8 @@ function buildGraph(maps, { hierarchy = false } = {}) {
       const hit = (e.topics.get(t) || [])[0]; if (hit) others.push(idOf(e, hit));
     }
     for (const e of asMap) { const id = idOf(e, e.root); if (!others.includes(id)) others.push(id); }
-    if (others.length) return { id: others[0], ambiguous: others.length > 1 };
-    return { id: ghost(lk.topic, t) };
+    if (others.length) return { id: others[0], ambiguous: others.length > 1, heading };
+    return { id: ghost(lk.topic, t), heading };
   };
 
   for (const e of entries) {

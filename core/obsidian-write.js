@@ -86,4 +86,23 @@ function writeObsidianVault(vaultDir, files, { folder = FOLDER } = {}) {
   return result;
 }
 
-module.exports = { writeObsidianVault, readOurs };
+/** Quantas notas .md já existem no vault FORA da pasta MindCraft (suas). Usado para avisar sobre nomes iguais. */
+function countForeignNotes(vaultDir, folder = FOLDER, limit = 5000) {
+  const skip = path.resolve(vaultDir, folder);
+  let n = 0, seen = 0;
+  const walk = (d) => {
+    let items;
+    try { items = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const it of items) {
+      if (++seen > limit) return;
+      if (it.name.startsWith('.')) continue;
+      const full = path.join(d, it.name);
+      if (it.isDirectory()) { if (path.resolve(full) !== skip) walk(full); }
+      else if (/\.md$/i.test(it.name)) n++;
+    }
+  };
+  walk(path.resolve(vaultDir));
+  return n;
+}
+
+module.exports = { writeObsidianVault, readOurs, countForeignNotes };

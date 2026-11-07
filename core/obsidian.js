@@ -3,7 +3,7 @@
  * Exportação para o Obsidian (puro: devolve arquivos, não grava nada — a gravação é em obsidian-write.js).
  *
  * Um tópico = uma nota .md. A rede do MindCraft vira o grafo do Obsidian:
- *   - [[Tópico]] / [[Mapa#Tópico]] do texto viram [[pasta/mapa/Título|texto]]: caminho completo, então títulos
+ *   - [[Tópico]], [[Mapa/Tópico]] e [[Tópico#Seção]] do texto viram [[pasta/mapa/Título|texto]]: caminho completo, então títulos
  *     repetidos em mapas diferentes (ex.: "Atos administrativos" em dois concursos) não se confundem;
  *   - hierarquia (pai/filhos) e relações (setas do mapa) viram links no fim da nota;
  *   - a nota guarda a origem em `mindcraft-id` (para o gravador saber que é nossa) e um hash do conteúdo
@@ -12,7 +12,7 @@
  * Só usa dados puros (sem fs/crypto), para rodar também no navegador/tablet.
  */
 const { buildGraph } = require('./graph');
-const { rewriteLinks, plainLinks } = require('./links');
+const { norm, rewriteLinks, plainLinks } = require('./links');
 
 const FOLDER = 'MindCraft';
 const ID_KEY = 'mindcraft-id';
@@ -26,9 +26,12 @@ function fingerprint(s) {
   return (h >>> 0).toString(16).padStart(8, '0') + s.length.toString(16);
 }
 
-/** Nome de arquivo seguro no Windows, macOS e Linux, sem caracteres que quebram [[ ]] do Obsidian. */
-function safeName(s, fallback = 'Sem título') {
-  let t = String(s ?? '').replace(/[\\/:*?"<>|#^[\]\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').replace(/^[.\s]+|[.\s]+$/g, '').slice(0, 120).trim();
+/**
+ * Nome de arquivo seguro no Windows, macOS e Linux, sem caracteres que quebram [[ ]] do Obsidian.
+ * `max` mantém o caminho completo abaixo do limite de 260 caracteres do Windows (pasta do vault + MindCraft/ + mapa + título).
+ */
+function safeName(s, fallback = 'Sem título', max = 80) {
+  let t = String(s ?? '').replace(/[\\/:*?"<>|#^[\]\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').replace(/^[.\s]+|[.\s]+$/g, '').slice(0, max).trim();
   if (!t) t = fallback;
   if (RESERVED.test(t)) t += ' (nota)';
   return t;
@@ -59,7 +62,7 @@ function buildObsidianVault(maps, { folder = FOLDER } = {}) {
   // pasta por mapa e caminho por tópico (sem extensão), todos únicos
   const usedFolders = new Set();
   const folderOf = new Map();
-  for (const m of maps) folderOf.set(m.key, unique(safeName(plainLinks(m.name), 'Mapa'), usedFolders));
+  for (const m of maps) folderOf.set(m.key, unique(safeName(plainLinks(m.name), 'Mapa', 50), usedFolders));
   const pathOf = new Map();
   const topics = [];
   for (const m of maps) {
@@ -72,13 +75,31 @@ function buildObsidianVault(maps, { folder = FOLDER } = {}) {
     });
   }
 
+  // Seção (cabeçalho) de uma nota: o Obsidian só liga a cabeçalhos que existem; se não existe, o link vai para a nota.
+  const notesOf = new Map(topics.map((t) => [t.id, String(t.n.notes || '')]));
+  const headingCount = { missing: 0 };
+  const hasHeading = (id, heading) => {
+    const want = norm(heading);
+    for (const line of (notesOf.get(id) || '').split('\n')) {
+      const h = /^#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
+      if (h && norm(h[1]) === want) return true;
+    }
+    return false;
+  };
+  const headingText = (h) => String(h ?? '').replace(/[[\]|^]/g, ' ').replace(/\s+/g, ' ').trim();
+
   // alvo de um link: nota (caminho completo) ou, se não existe, um link "fantasma" como no Obsidian
-  const wiki = (id, alias) => {
+  const wiki = (id, alias, heading = null) => {
     const node = g.byId.get(id);
     if (!node) return `[[${safeName(alias)}]]`;
     if (node.kind === 'ghost') return `[[${safeName(node.title)}|${aliasText(alias || node.title)}]]`;
     const shown = aliasText(alias || plainLinks(node.title)) || 'Sem título';
-    return `[[${pathOf.get(id)}|${shown}]]`;
+    let sec = '';
+    if (heading) {
+      if (hasHeading(id, heading)) sec = '#' + headingText(heading);
+      else headingCount.missing++;
+    }
+    return `[[${pathOf.get(id)}${sec}|${shown}]]`;
   };
 
   const childrenOf = new Map(), relOut = new Map(), relIn = new Map();
@@ -100,10 +121,11 @@ function buildObsidianVault(maps, { folder = FOLDER } = {}) {
       const r = g.resolveLink(lk, m.key);
       if (!r) return null;
       if (r.ambiguous) ambiguous++;
-      // mostra o texto como o usuário escreveu (fantasma: "Mapa#Tópico" inteiro, pois não há nota para ver)
+      // texto de exibição: o que o usuário escreveu, como no Obsidian. Seção e fantasma mostram o alvo inteiro
+      // ("Atos#Conceitos"); tópico comum mostra só o título ("Princípios da Administração").
       const ghost = g.byId.get(r.id)?.kind === 'ghost';
-      const typed = ghost && lk.map && lk.topic ? `${lk.map}#${lk.topic}` : (lk.topic || lk.map);
-      return wiki(r.id, lk.alias || typed);
+      const shown = lk.alias || ((r.heading || ghost) ? lk.typed : (lk.topic || lk.map));
+      return wiki(r.id, shown, r.heading);
     }).trim();
 
     const sec = [];
@@ -129,7 +151,18 @@ function buildObsidianVault(maps, { folder = FOLDER } = {}) {
   for (const node of g.nodes) if (node.kind === 'ghost') ghostCount++;
 
   const links = files.reduce((acc, f) => acc + (f.content.match(/\[\[/g) || []).length, 0);
-  return { files, stats: { maps: maps.length, notes: files.length, links, ghosts: ghostCount, ambiguous } };
+  return { files, stats: { maps: maps.length, notes: files.length, links, ghosts: ghostCount, ambiguous, headingsMissing: headingCount.missing } };
 }
 
 module.exports = { buildObsidianVault, safeName, fingerprint, FOLDER, ID_KEY, HASH_KEY };
+
+/**
+ * URI que abre o vault no Obsidian (obsidian://open?path=…). O caminho vai inteiro e codificado: espaços,
+ * acentos e "#" no nome da pasta não quebram o link. Só monta o texto; quem abre é o processo principal.
+ */
+function obsidianOpenUrl(vaultDir) {
+  const dir = String(vaultDir || '').trim();
+  if (!dir) throw new Error('Escolha primeiro a pasta do vault do Obsidian.');
+  return `obsidian://open?path=${encodeURIComponent(dir)}`;
+}
+module.exports.obsidianOpenUrl = obsidianOpenUrl;

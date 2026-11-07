@@ -19,6 +19,8 @@ module.exports = {
   "mindomo": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/mindomo.js"),
   "model": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/model.js"),
   "mom": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/mom.js"),
+  "obsidian": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/obsidian.js"),
+  "obsidian-write": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/obsidian-write.js"),
   "pdfrefs": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/pdfrefs.js"),
   "print-style": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/print-style.js"),
   "shapes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/shapes.js"),

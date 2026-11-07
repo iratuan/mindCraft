@@ -4,7 +4,7 @@ const path = require('path');
 const { readMom } = require('./mom');
 
 /**
- * "Vault" = uma pasta com arquivos .mom. Os links [[Mapa#Tópico]] entre eles formam a rede de conhecimento.
+ * "Vault" = uma pasta com arquivos .mom. Os links [[Mapa/Tópico]] (sintaxe do Obsidian) entre eles formam a rede de conhecimento.
  * A leitura usa cache por (tamanho, data de modificação): reabrir o vault só relê o que mudou.
  */
 const cache = new Map();

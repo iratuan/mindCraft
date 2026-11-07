@@ -288,6 +288,7 @@ async function save(as) {
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
   filePath = target; if (rev === r0) dirty = false; render(); rememberSaveDir(target);
   ipcRenderer.invoke('recent:add', target).catch(() => {});
+  if (typeof autoObsidian === 'function') autoObsidian();   // o Obsidian acompanha o que foi salvo (falha não afeta o salvamento)
   return true;
 }
 

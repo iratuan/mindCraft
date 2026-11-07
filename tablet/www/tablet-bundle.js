@@ -6543,13 +6543,27 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
       var norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
       var LINK_RE = /\[\[([^\[\]\n|#]{1,200})(?:#([^\[\]\n|]{0,200}))?(?:\|([^\[\]\n]{1,200}))?\]\]/g;
       var stripCode = (s) => String(s ?? "").replace(/```[\s\S]*?```/g, " ").replace(/`[^`\n]*`/g, " ");
+      function shapeLink(raw, targetRaw, headingRaw, aliasRaw) {
+        const target = targetRaw.trim();
+        const hasHash = headingRaw !== void 0;
+        const heading = hasHash ? headingRaw.trim() || null : null;
+        const alias = aliasRaw ? aliasRaw.trim() : null;
+        const typed = hasHash ? `${target}#${headingRaw.trim()}` : target;
+        const parts = target.split("/").map((s) => s.trim()).filter(Boolean);
+        if (parts.length > 1) {
+          const note = parts[parts.length - 1];
+          return { raw, target, typed, note, heading, map: parts[parts.length - 2], topic: note, hashForm: false, alias };
+        }
+        if (hasHash) return { raw, target, typed, note: target, heading, map: target, topic: heading, hashForm: true, alias };
+        return { raw, target, typed, note: target, heading: null, map: null, topic: target, hashForm: false, alias };
+      }
       function parseLinks(text) {
         const out = [];
         for (const m of stripCode(text).matchAll(LINK_RE)) {
-          const a = m[1].trim(), b = m[2] === void 0 ? void 0 : m[2].trim();
+          const a = m[1].trim();
           if (!a) continue;
-          if (b === void 0) out.push({ raw: m[0], map: null, topic: a, alias: m[3] ? m[3].trim() : null });
-          else out.push({ raw: m[0], map: a, topic: b || null, alias: m[3] ? m[3].trim() : null });
+          if (!a.replace(/\//g, "").trim()) continue;
+          out.push(shapeLink(m[0], m[1], m[2], m[3]));
         }
         return out;
       }
@@ -6559,14 +6573,23 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         for (const m of src.matchAll(/```[\s\S]*?```|`[^`\n]*`/g)) protectedRanges.push([m.index, m.index + m[0].length]);
         return src.replace(LINK_RE, (raw, a, b, alias, offset) => {
           if (protectedRanges.some(([s, e]) => offset >= s && offset < e)) return raw;
-          const A = a.trim(), B = b === void 0 ? void 0 : b.trim();
-          const link = B === void 0 ? { raw, map: null, topic: A, alias: alias ? alias.trim() : null } : { raw, map: A, topic: B || null, alias: alias ? alias.trim() : null };
-          const r = fn(link);
+          if (!a.trim()) return raw;
+          const r = fn(shapeLink(raw, a, b, alias));
           return r == null ? raw : r;
         });
       }
       var plainLinks = (text) => rewriteLinks(text, (lk) => lk.alias || lk.topic || lk.map);
-      module.exports = { norm, parseLinks, rewriteLinks, plainLinks, LINK_RE };
+      function migrateLegacyLinks(text, hasMap) {
+        let count = 0;
+        const out = rewriteLinks(text, (lk) => {
+          if (!lk.hashForm || !lk.map || !lk.topic || lk.map.includes("/") || !hasMap(lk.map)) return null;
+          count++;
+          const target = `${lk.map}/${lk.topic}`;
+          return lk.alias ? `[[${target}|${lk.alias}]]` : `[[${target}]]`;
+        });
+        return { text: out, count };
+      }
+      module.exports = { norm, parseLinks, rewriteLinks, plainLinks, migrateLegacyLinks, LINK_RE };
     }
   });
 
@@ -6635,16 +6658,20 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         };
         const resolve = (lk, from) => {
           const t = lk.topic == null ? null : norm(lk.topic);
+          const heading = lk.hashForm ? null : lk.heading ?? null;
           if (lk.map) {
             const cands = mapIndex.get(norm(lk.map)) || [];
-            if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? "#" + t : "")) };
+            if (!cands.length && lk.hashForm && lk.note) {
+              return resolve({ map: null, topic: lk.note, note: lk.note, heading: lk.heading, hashForm: false }, from);
+            }
+            if (!cands.length) return { id: ghost(lk.topic ? `${lk.map}#${lk.topic}` : lk.map, norm(lk.map) + (t ? "#" + t : "")), heading };
             const e = cands.find((c) => c.key === from.key) || cands[0];
-            if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1 };
+            if (t == null) return { id: idOf(e, e.root), ambiguous: cands.length > 1, heading };
             const hit = (e.topics.get(t) || [])[0];
-            return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1 } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + "#" + t) };
+            return hit ? { id: idOf(e, hit), ambiguous: cands.length > 1, heading } : { id: ghost(`${lk.map}#${lk.topic}`, norm(lk.map) + "#" + t), heading };
           }
           const own = (from.topics.get(t) || [])[0];
-          if (own) return { id: idOf(from, own) };
+          if (own) return { id: idOf(from, own), heading };
           const asMap = (mapIndex.get(t) || []).filter((c) => c.key !== from.key);
           const others = [];
           for (const e of [...entries].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))) {
@@ -6656,8 +6683,8 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
             const id = idOf(e, e.root);
             if (!others.includes(id)) others.push(id);
           }
-          if (others.length) return { id: others[0], ambiguous: others.length > 1 };
-          return { id: ghost(lk.topic, t) };
+          if (others.length) return { id: others[0], ambiguous: others.length > 1, heading };
+          return { id: ghost(lk.topic, t), heading };
         };
         for (const e of entries) {
           walkAll(e.map, (n, level, parent) => {
@@ -9884,6 +9911,268 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
     }
   });
 
+  // ../core/obsidian.js
+  var require_obsidian = __commonJS({
+    "../core/obsidian.js"(exports, module) {
+      "use strict";
+      var { buildGraph } = require_graph();
+      var { norm, rewriteLinks, plainLinks } = require_links();
+      var FOLDER = "MindCraft";
+      var ID_KEY = "mindcraft-id";
+      var HASH_KEY = "mindcraft-hash";
+      var RESERVED = /^(con|prn|aux|nul|com\d|lpt\d)$/i;
+      function fingerprint(s) {
+        let h = 2166136261;
+        for (let i = 0; i < s.length; i++) {
+          h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return (h >>> 0).toString(16).padStart(8, "0") + s.length.toString(16);
+      }
+      function safeName(s, fallback = "Sem t\xEDtulo", max = 80) {
+        let t = String(s ?? "").replace(/[\\/:*?"<>|#^[\]\u0000-\u001f]/g, " ").replace(/\s+/g, " ").replace(/^[.\s]+|[.\s]+$/g, "").slice(0, max).trim();
+        if (!t) t = fallback;
+        if (RESERVED.test(t)) t += " (nota)";
+        return t;
+      }
+      var aliasText = (s) => String(s ?? "").replace(/[[\]|]/g, " ").replace(/\s+/g, " ").trim();
+      function unique(name, used) {
+        let cand = name, i = 2;
+        while (used.has(cand.toLowerCase())) cand = `${name} (${i++})`;
+        used.add(cand.toLowerCase());
+        return cand;
+      }
+      function walkTopics(map, fn) {
+        const visit = (node, parent) => {
+          fn(node, parent);
+          for (const c of node.children) visit(c, node);
+        };
+        visit(map.root, null);
+        for (const f of map.meta._momFloating || []) visit(f.node, null);
+      }
+      function buildObsidianVault(maps, { folder = FOLDER } = {}) {
+        const g = buildGraph(maps, { hierarchy: true });
+        const usedFolders = /* @__PURE__ */ new Set();
+        const folderOf = /* @__PURE__ */ new Map();
+        for (const m of maps) folderOf.set(m.key, unique(safeName(plainLinks(m.name), "Mapa", 50), usedFolders));
+        const pathOf = /* @__PURE__ */ new Map();
+        const topics = [];
+        for (const m of maps) {
+          const used = /* @__PURE__ */ new Set();
+          walkTopics(m.map, (n, parent) => {
+            const id = `${m.key}::${n.id}`;
+            const rel = `${folder}/${folderOf.get(m.key)}/${unique(safeName(plainLinks(n.title)), used)}`;
+            pathOf.set(id, rel);
+            topics.push({ m, n, id, parentId: parent ? `${m.key}::${parent.id}` : null });
+          });
+        }
+        const notesOf = new Map(topics.map((t) => [t.id, String(t.n.notes || "")]));
+        const headingCount = { missing: 0 };
+        const hasHeading = (id, heading) => {
+          const want = norm(heading);
+          for (const line of (notesOf.get(id) || "").split("\n")) {
+            const h = /^#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
+            if (h && norm(h[1]) === want) return true;
+          }
+          return false;
+        };
+        const headingText = (h) => String(h ?? "").replace(/[[\]|^]/g, " ").replace(/\s+/g, " ").trim();
+        const wiki = (id, alias, heading = null) => {
+          const node = g.byId.get(id);
+          if (!node) return `[[${safeName(alias)}]]`;
+          if (node.kind === "ghost") return `[[${safeName(node.title)}|${aliasText(alias || node.title)}]]`;
+          const shown = aliasText(alias || plainLinks(node.title)) || "Sem t\xEDtulo";
+          let sec = "";
+          if (heading) {
+            if (hasHeading(id, heading)) sec = "#" + headingText(heading);
+            else headingCount.missing++;
+          }
+          return `[[${pathOf.get(id)}${sec}|${shown}]]`;
+        };
+        const childrenOf = /* @__PURE__ */ new Map(), relOut = /* @__PURE__ */ new Map(), relIn = /* @__PURE__ */ new Map();
+        for (const e of g.edges) {
+          if (e.type === "hierarchy") {
+            if (!childrenOf.has(e.from)) childrenOf.set(e.from, []);
+            childrenOf.get(e.from).push(e.to);
+          }
+          if (e.type === "relation") {
+            if (!relOut.has(e.from)) relOut.set(e.from, []);
+            relOut.get(e.from).push(e);
+            if (!relIn.has(e.to)) relIn.set(e.to, []);
+            relIn.get(e.to).push(e);
+          }
+        }
+        const parentOf = /* @__PURE__ */ new Map();
+        for (const [p, kids] of childrenOf) for (const k of kids) parentOf.set(k, p);
+        const files = [];
+        let ghostCount = 0, ambiguous = 0;
+        for (const { m, n, id, parentId } of topics) {
+          const title = aliasText(plainLinks(n.title)) || "Sem t\xEDtulo";
+          const notes = rewriteLinks(n.notes || "", (lk) => {
+            const r = g.resolveLink(lk, m.key);
+            if (!r) return null;
+            if (r.ambiguous) ambiguous++;
+            const ghost = g.byId.get(r.id)?.kind === "ghost";
+            const shown = lk.alias || (r.heading || ghost ? lk.typed : lk.topic || lk.map);
+            return wiki(r.id, shown, r.heading);
+          }).trim();
+          const sec = [];
+          const parent = parentOf.get(id) ?? parentId;
+          if (parent && g.byId.has(parent)) sec.push(`Parte de: ${wiki(parent)}`);
+          const kids = childrenOf.get(id) || [];
+          if (kids.length) sec.push("", "## Subt\xF3picos", ...kids.map((k) => `- ${wiki(k)}`));
+          const rels = [...(relOut.get(id) || []).map((e) => `- \u2192 ${e.label ? e.label + " " : ""}${wiki(e.to)}`), ...(relIn.get(id) || []).map((e) => `- \u2190 ${e.label ? e.label + " " : ""}${wiki(e.from)}`)];
+          if (rels.length) sec.push("", "## Rela\xE7\xF5es", ...rels);
+          const bodyParts = [`# ${title}`];
+          if (notes) bodyParts.push("", notes);
+          if (sec.length) bodyParts.push("", "---", ...sec);
+          const body = bodyParts.join("\n") + "\n";
+          const fm = ["---", `${ID_KEY}: ${JSON.stringify(`${m.name}::${n.id}`)}`, `mapa: ${JSON.stringify(m.name)}`];
+          if (n.progress != null && Number.isFinite(Number(n.progress))) fm.push(`progresso: ${Number(n.progress)}`);
+          fm.push("aliases:", `  - ${JSON.stringify(title)}`, "tags:", "  - mindcraft");
+          const base = fm.join("\n") + "\n---\n" + body;
+          const content = [...fm, `${HASH_KEY}: ${JSON.stringify(fingerprint(base))}`].join("\n") + "\n---\n" + body;
+          files.push({ path: `${pathOf.get(id)}.md`, content });
+        }
+        for (const node of g.nodes) if (node.kind === "ghost") ghostCount++;
+        const links = files.reduce((acc, f) => acc + (f.content.match(/\[\[/g) || []).length, 0);
+        return { files, stats: { maps: maps.length, notes: files.length, links, ghosts: ghostCount, ambiguous, headingsMissing: headingCount.missing } };
+      }
+      module.exports = { buildObsidianVault, safeName, fingerprint, FOLDER, ID_KEY, HASH_KEY };
+      function obsidianOpenUrl(vaultDir) {
+        const dir = String(vaultDir || "").trim();
+        if (!dir) throw new Error("Escolha primeiro a pasta do vault do Obsidian.");
+        return `obsidian://open?path=${encodeURIComponent(dir)}`;
+      }
+      module.exports.obsidianOpenUrl = obsidianOpenUrl;
+    }
+  });
+
+  // ../core/obsidian-write.js
+  var require_obsidian_write = __commonJS({
+    "../core/obsidian-write.js"(exports, module) {
+      "use strict";
+      var fs2 = require_fs_vfs();
+      var path2 = require_path();
+      var { fingerprint, ID_KEY, HASH_KEY, FOLDER } = require_obsidian();
+      var HASH_LINE = new RegExp(`^${HASH_KEY}: .*\\n`, "m");
+      function readOurs(text) {
+        const m = /^---\n([\s\S]*?)\n---\n/.exec(text);
+        if (!m || !new RegExp(`^${ID_KEY}: `, "m").test(m[1])) return null;
+        const hashM = new RegExp(`^${HASH_KEY}: (.*)$`, "m").exec(m[1]);
+        const storedHash = hashM ? safeJson(hashM[1]) : null;
+        const stripped = text.replace(HASH_LINE, "");
+        const edited = !storedHash || fingerprint(stripped) !== storedHash;
+        return { edited };
+      }
+      function safeJson(s) {
+        try {
+          return JSON.parse(s);
+        } catch {
+          return null;
+        }
+      }
+      function listOurs(dir) {
+        const out = [];
+        const walk2 = (d) => {
+          let items;
+          try {
+            items = fs2.readdirSync(d, { withFileTypes: true });
+          } catch {
+            return;
+          }
+          for (const it of items) {
+            const full = path2.join(d, it.name);
+            if (it.isDirectory()) walk2(full);
+            else if (it.isFile() && /\.md$/i.test(it.name)) out.push(full);
+          }
+        };
+        walk2(dir);
+        return out;
+      }
+      function writeObsidianVault(vaultDir, files, { folder = FOLDER } = {}) {
+        if (!vaultDir || !fs2.existsSync(vaultDir) || !fs2.statSync(vaultDir).isDirectory()) throw new Error("A pasta do vault n\xE3o existe.");
+        const root = path2.resolve(vaultDir);
+        const result = { written: [], unchanged: [], skipped: [], obsolete: 0 };
+        const expected = /* @__PURE__ */ new Set();
+        for (const f of files) {
+          const target = path2.resolve(root, ...f.path.split("/"));
+          if (!target.startsWith(root + path2.sep)) {
+            result.skipped.push({ path: f.path, reason: "caminho fora do vault" });
+            continue;
+          }
+          expected.add(target);
+          let existing = null;
+          try {
+            existing = fs2.readFileSync(target, "utf8");
+          } catch (e) {
+            if (e.code !== "ENOENT") throw e;
+          }
+          if (existing !== null) {
+            const ours = readOurs(existing);
+            if (!ours) {
+              result.skipped.push({ path: f.path, reason: "j\xE1 existe uma nota sua com esse nome" });
+              continue;
+            }
+            if (ours.edited) {
+              result.skipped.push({ path: f.path, reason: "editada no Obsidian (n\xE3o sobrescrevi)" });
+              continue;
+            }
+            if (existing === f.content) {
+              result.unchanged.push(f.path);
+              continue;
+            }
+          }
+          fs2.mkdirSync(path2.dirname(target), { recursive: true });
+          const tmp = `${target}.tmp-${process.pid}`;
+          try {
+            fs2.writeFileSync(tmp, f.content, "utf8");
+            fs2.renameSync(tmp, target);
+          } catch (e) {
+            try {
+              fs2.unlinkSync(tmp);
+            } catch {
+            }
+            throw e;
+          }
+          result.written.push(f.path);
+        }
+        const base = path2.join(root, folder);
+        for (const file of listOurs(base)) {
+          if (expected.has(path2.resolve(file))) continue;
+          try {
+            if (readOurs(fs2.readFileSync(file, "utf8"))) result.obsolete++;
+          } catch {
+          }
+        }
+        return result;
+      }
+      function countForeignNotes(vaultDir, folder = FOLDER, limit = 5e3) {
+        const skip = path2.resolve(vaultDir, folder);
+        let n = 0, seen = 0;
+        const walk2 = (d) => {
+          let items;
+          try {
+            items = fs2.readdirSync(d, { withFileTypes: true });
+          } catch {
+            return;
+          }
+          for (const it of items) {
+            if (++seen > limit) return;
+            if (it.name.startsWith(".")) continue;
+            const full = path2.join(d, it.name);
+            if (it.isDirectory()) {
+              if (path2.resolve(full) !== skip) walk2(full);
+            } else if (/\.md$/i.test(it.name)) n++;
+          }
+        };
+        walk2(path2.resolve(vaultDir));
+        return n;
+      }
+      module.exports = { writeObsidianVault, readOurs, countForeignNotes };
+    }
+  });
+
   // ../core/shapes.js
   var require_shapes = __commonJS({
     "../core/shapes.js"(exports, module) {
@@ -10335,6 +10624,8 @@ ${renderGroup(L, { logo: true })}
         "mindomo": require_mindomo(),
         "model": require_model(),
         "mom": require_mom(),
+        "obsidian": require_obsidian(),
+        "obsidian-write": require_obsidian_write(),
         "pdfrefs": require_pdfrefs(),
         "print-style": require_print_style(),
         "shapes": require_shapes(),

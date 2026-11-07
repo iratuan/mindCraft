@@ -7,7 +7,7 @@ const { placeLabels, relationLabelAnchor } = require(path.join(core, 'graph-labe
 const { loadVault } = require(path.join(core, 'vault'));
 const { getTheme } = require(path.join(core, 'themes'));
 const { unlinkedMentions, linkify } = require(path.join(core, 'mentions'));
-const { norm } = require(path.join(core, 'links'));
+const { norm, migrateLegacyLinks } = require(path.join(core, 'links'));
 
 const { escapeHtml: gesc } = require(path.join(core, 'text'));
 
@@ -232,7 +232,20 @@ function buildGraphUI() {
   const reshape = () => { remember(); renderGraph(true); };
   const viewPop = pop('gViewPop', 'Exibir ▾', 'Opções de exibição da rede', chk('gHier', 'Hierarquia dos mapas', 'hier', reshape), chk('gOrph', 'Pontos sem ligações', 'orphans', reshape), chk('gLocal', 'Só a vizinhança do selecionado', 'local', () => { depthRow.hidden = !gOpt.local; reshape(); }), depthRow,
     chk('gGroup', 'Agrupar folhas (+N)', 'group', () => { remember(); renderGraph(false); }), chk('gFocus', 'Focar a seleção', 'focus', () => { remember(); paintDim(); updateLabels(); }));
-  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick);
+  // Obsidian: a pasta é o vault que o usuário abre no Obsidian; a exportação só grava em <vault>/MindCraft
+  const obsDirTxt = el('div', 'path'); obsDirTxt.id = 'gObsDir'; obsDirTxt.textContent = loadCfg().obsidianDir || '(nenhuma pasta escolhida)'; obsDirTxt.title = loadCfg().obsidianDir || '';
+  const obsPick = el('button', 'btn', 'Escolher pasta…'); obsPick.id = 'gObsPick'; obsPick.title = 'Escolher o vault do Obsidian (a pasta que você abre no Obsidian)'; obsPick.onclick = () => { closePops(); chooseObsidianDir(); };
+  const obsExp = el('button', 'btn', 'Exportar para o Obsidian'); obsExp.id = 'gExport'; obsExp.title = 'Grava uma nota por tópico em <vault>/MindCraft (o Obsidian lê a rede como grafo)'; obsExp.onclick = () => { closePops(); exportObsidian(); };
+  const obsOpen = el('button', 'btn', 'Abrir no Obsidian'); obsOpen.id = 'gObsidian'; obsOpen.title = 'Abre a pasta do vault no Obsidian'; obsOpen.onclick = () => { closePops(); openInObsidian(); };
+  // ao salvar um mapa, o vault acompanha (ligado por padrão quando há uma pasta do Obsidian)
+  const obsAuto = el('label'); const obsAutoBox = el('input'); obsAutoBox.type = 'checkbox'; obsAutoBox.id = 'gObsAuto';
+  obsAutoBox.checked = loadCfg().obsidianAuto !== false;
+  obsAutoBox.onchange = () => saveCfg({ obsidianAuto: obsAutoBox.checked });
+  obsAuto.append(obsAutoBox, document.createTextNode('Atualizar ao salvar o mapa'));
+  const stdLinks = el('button', 'btn', 'Padronizar links deste mapa'); stdLinks.id = 'gStdLinks';
+  stdLinks.title = 'Troca [[Mapa#Tópico]] (formato antigo) por [[Mapa/Tópico]] (formato do Obsidian). Salvar grava; Ctrl+Z desfaz.';
+  stdLinks.onclick = () => { closePops(); standardizeLinks(); };
+  const menuPop = pop('gMenu', '⋯', 'Mais opções', el('div', 'muted', 'Pasta dos mapas'), dirTxt, pick, el('div', 'muted', 'Obsidian'), obsDirTxt, obsPick, obsExp, obsOpen, obsAuto, stdLinks);
   function closePops() { for (const d of bar.querySelectorAll('details[open]')) d.open = false; }
   document.addEventListener('mousedown', (e) => { if (!bar.contains(e.target)) closePops(); }, true);
   bar.addEventListener('toggle', (e) => { if (e.target.open) for (const d of bar.querySelectorAll('details[open]')) if (d !== e.target) d.open = false; }, true);
@@ -333,6 +346,83 @@ async function pickVaultDir() {
   const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta com os seus mapas (.mom)');
   if (!dir) return;
   saveCfg({ vaultDir: dir, scope: 'vault' }); $('#gScope').value = 'vault'; renderGraph(true); fitGraph();
+}
+
+/** Escolhe o vault do Obsidian (pasta que o usuário abre no Obsidian). Devolve o caminho ou null. */
+async function chooseObsidianDir() {
+  const dir = await ipcRenderer.invoke('dialog:folder', 'Pasta do vault do Obsidian (recomendo uma pasta só para o MindCraft)');
+  if (!dir) return null;
+  saveCfg({ obsidianDir: dir });
+  const t = $('#gObsDir'); if (t) { t.textContent = dir; t.title = dir; }
+  // vault que já tem notas suas: nomes iguais podem confundir os links antigos delas
+  try {
+    const n = require(path.join(core, 'obsidian-write')).countForeignNotes(dir);
+    if (n) setStatus(`Atenção: esta pasta já tem ${n} nota(s) suas. Um vault só para o MindCraft evita nomes iguais.`);
+  } catch { /* o aviso é opcional */ }
+  return dir;
+}
+
+/** Troca [[Mapa#Tópico]] por [[Mapa/Tópico]] nos títulos e notas deste mapa, num só desfazer. Salvar grava. */
+function standardizeLinks() {
+  const names = new Set(gatherMaps(vaultDirEff() ? 'vault' : 'map').maps.map((m) => norm(m.name)));
+  const hasMap = (n) => names.has(norm(n));
+  let total = 0;
+  change(() => map.batch(() => {
+    const fix = (node) => {
+      const t = migrateLegacyLinks(node.title, hasMap), no = migrateLegacyLinks(node.notes || '', hasMap);
+      if (!t.count && !no.count) return;
+      total += t.count + no.count;
+      map.update(node.id, { title: t.text, notes: no.text });
+    };
+    const visit = (node) => { fix(node); for (const c of node.children) visit(c); };
+    visit(map.root);
+    for (const f of map.meta._momFloating || []) visit(f.node);
+    return total > 0;
+  }));
+  setStatus(total ? `${total} link(s) padronizado(s) para Mapa/Tópico. Salve o mapa para gravar (Ctrl+Z desfaz).` : 'Nenhum link no formato antigo neste mapa.');
+}
+
+/** Chamada ao salvar um mapa: atualiza o vault sem abrir diálogos. Só roda com pasta escolhida e a opção ligada. */
+function autoObsidian() {
+  const c = loadCfg();
+  if (!c.obsidianDir || c.obsidianAuto === false) return;
+  exportObsidian({ quiet: true }).catch(() => { /* a falha já aparece na barra de status */ });
+}
+
+/** Exporta os mapas (o aberto + os da pasta do vault, se houver) como notas do Obsidian. Nunca apaga nada. */
+async function exportObsidian({ quiet = false } = {}) {
+  let dir = loadCfg().obsidianDir;
+  if (!dir || !fs.existsSync(dir)) {
+    if (quiet) return;                                  // a pasta sumiu: o salvamento não pede nada
+    dir = await chooseObsidianDir();
+  }
+  if (!dir) return;
+  let mod;
+  try { mod = { build: require(path.join(core, 'obsidian')).buildObsidianVault, write: require(path.join(core, 'obsidian-write')).writeObsidianVault }; }
+  catch { setStatus('A exportação para o Obsidian não está disponível neste aparelho.'); return; }
+  try {
+    const info = gatherMaps(vaultDirEff() ? 'vault' : 'map');
+    const built = mod.build(info.maps);
+    const r = mod.write(dir, built.files);
+    const parts = [`Obsidian: ${r.written.length} nota(s) gravada(s)`, `${r.unchanged.length} já em dia`];
+    if (r.skipped.length) parts.push(`${r.skipped.length} não sobrescrita(s) (${r.skipped[0].reason}${r.skipped.length > 1 ? ' e outras' : ''})`);
+    if (r.obsolete) parts.push(`${r.obsolete} antiga(s) sem tópico correspondente (mantida(s))`);
+    if (info.errors && info.errors.length) parts.push(`${info.errors.length} mapa(s) com erro de leitura ficaram de fora`);
+    const msg = parts.join(' · ') + '. Use "Abrir no Obsidian" para abrir o vault.';
+    setStatus(msg); if (!quiet) sideMsg(msg, 'ok');     // ao salvar, só a barra de status: não interrompe o trabalho
+  } catch (e) {
+    const msg = 'Não consegui exportar para o Obsidian: ' + (e.message || e);
+    setStatus(msg); sideMsg(msg, 'err');
+  }
+}
+
+/** Abre a pasta do vault no Obsidian (pelo processo principal, que valida a pasta). */
+async function openInObsidian() {
+  const dir = loadCfg().obsidianDir;
+  if (!dir) { sideMsg('Escolha primeiro a pasta do vault do Obsidian (⋯ › Obsidian › Escolher pasta).', 'err'); return; }
+  const r = await ipcRenderer.invoke('obsidian:open', dir);
+  if (!r || !r.ok) { sideMsg(r && r.error ? r.error : 'Não consegui abrir o Obsidian.', 'err'); return; }
+  sideMsg(r.method === 'skipped' ? 'Abriria no Obsidian: ' + r.url : 'Abrindo o vault no Obsidian…', 'ok');
 }
 
 function djb(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h; }

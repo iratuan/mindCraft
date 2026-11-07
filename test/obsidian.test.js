@@ -59,7 +59,7 @@ test('links para tópicos inexistentes viram links "fantasmas" (como no Obsidian
   const { files } = buildObsidianVault(twoMaps());
   const atos = noteOf(files, 'Atos', 'Direito Administrativo').content;
   assert.ok(atos.includes('[[Tópico inexistente|Tópico inexistente]]'));
-  assert.ok(atos.includes('[[Mapa Fantasma X|Mapa Fantasma#X]]'));
+  assert.ok(atos.includes('[[Mapa Fantasma|Mapa Fantasma#X]]'), 'sem nota "Mapa Fantasma", o link vai para a nota com a seção X (que não existe)');
   const dr = noteOf(files, 'Direitos Fundamentais', 'Direito Constitucional').content;
   assert.ok(dr.includes('`[[ignorado]]`'), 'código de exemplo fica como está');
 });
@@ -100,4 +100,11 @@ test('dois mapas com o mesmo nome ganham pastas diferentes', () => {
 
 test('mapa vazio ou sem tópicos não gera notas', () => {
   assert.equal(buildObsidianVault([]).files.length, 0);
+});
+
+test('obsidianOpenUrl: codifica o caminho inteiro (espaços, acentos, #) e recusa pasta vazia', () => {
+  const { obsidianOpenUrl } = require('../core/obsidian');
+  assert.equal(obsidianOpenUrl('C:\Estudos\Meu vault #1'), 'obsidian://open?path=' + encodeURIComponent('C:\Estudos\Meu vault #1'));
+  assert.ok(obsidianOpenUrl('/home/ana/Concursos ç').includes('%C3%A7'), 'acentos viram UTF-8 codificado');
+  assert.throws(() => obsidianOpenUrl('  '), /Escolha primeiro/);
 });

@@ -44,7 +44,7 @@ test('links: sintaxe [[A]], [[Mapa#Tópico]], [[Mapa#]], alias; ignora código, 
 test('grafo: resolução por mapa/título (sem acento/caixa), alias, fantasmas, relações e retrolinks', () => {
   const [dc, da] = twoMaps(); const g = buildGraph([dc, da]);
   assert.deepEqual(edgeList(g), [
-    'A:Atos -link> ?Mapa Fantasma#X',
+    'A:Atos -link> ?Mapa Fantasma',   // [[Mapa Fantasma#X]]: sem mapa com esse nome, "#X" é seção (Obsidian)
     'A:Atos -link> ?Direito Constitucional#Não existe',
     'A:Atos -link> ?Tópico inexistente',
     'A:Atos -link> C:Princípios',
