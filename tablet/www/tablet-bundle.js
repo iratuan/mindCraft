@@ -4132,7 +4132,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     "package.json"(exports, module) {
       module.exports = {
         name: "braniac-tablet",
-        version: "0.7.4",
+        version: "0.7.5",
         private: true,
         description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
         scripts: {
@@ -10215,6 +10215,27 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
       var { logoSize, logoVariant, logoMarkup } = require_logo();
       var { escapeHtml: esc } = require_text();
       var REL_COLOR = "#e5484d";
+      function luminance(hex) {
+        const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      }
+      function contrast(a, b) {
+        const x = luminance(a), y = luminance(b);
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+      }
+      function lighten(hex, t) {
+        const ch = (i) => parseInt(hex.slice(i, i + 2), 16);
+        const mix = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, "0");
+        return `#${mix(ch(1))}${mix(ch(3))}${mix(ch(5))}`;
+      }
+      function onDarkCanvas(color, canvas, min) {
+        if (!/^#[0-9a-fA-F]{6}$/.test(color || "") || contrast(color, canvas) >= min) return color;
+        for (let t = 0.05; t <= 1; t += 0.05) {
+          const c = lighten(color, t);
+          if (contrast(c, canvas) >= min) return c;
+        }
+        return "#ffffff";
+      }
       function edgePath(e, curve) {
         const { a, b, dir } = edgePoints(e);
         if (curve === "elbow") {
@@ -10230,33 +10251,37 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         return b.side < 0 ? "right" : "left";
       }
       var SKETCH_DEFS = '<defs><filter id="mc-sketch" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5" xChannelSelector="R" yChannelSelector="G"/></filter></defs>';
-      function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hits, logo } = {}) {
+      function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hits, logo, canvas } = {}) {
         const { theme } = L;
         const out = [];
         if (theme.sketch) out.push(SKETCH_DEFS);
         for (const e of L.edges) {
           const w = e.to.style.edgeWidth || theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
-          out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${e.to.style.edge || e.to.branch}" stroke-width="${w}" stroke-linecap="round"/>`);
+          out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${canvas ? onDarkCanvas(e.to.style.edge || e.to.branch, canvas, 3) : e.to.style.edge || e.to.branch}" stroke-width="${w}" stroke-linecap="round"/>`);
         }
         for (const { rel, geo } of L.relations) {
-          const col = /^#[0-9a-fA-F]{6}$/.test(rel.color || "") ? rel.color : REL_COLOR, sel = selectedRel === rel.id;
+          const col0 = /^#[0-9a-fA-F]{6}$/.test(rel.color || "") ? rel.color : REL_COLOR;
+          const col = canvas ? onDarkCanvas(col0, canvas, 3) : col0, sel = selectedRel === rel.id;
           const d = `M${geo.a.x},${geo.a.y} Q${geo.c.x},${geo.c.y} ${geo.b.x},${geo.b.y}`;
           const ar = geo.arrow.map((p) => `${p.x},${p.y}`).join(" ");
-          out.push(`<g${interactive ? ` data-rel="${esc(rel.id)}" class="rel"` : ""}>` + (interactive ? `<path d="${d}" fill="none" stroke="transparent" stroke-width="14"/>` : "") + `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sel ? 3.5 : 2}" stroke-dasharray="7 5" stroke-linecap="round"/><polygon points="${ar}" fill="${col}"/>` + (rel.label ? `<text x="${geo.label.x}" y="${geo.label.y - 6}" text-anchor="middle" font-size="12" font-style="italic" fill="${col}" stroke="${theme.background}" stroke-width="4" paint-order="stroke">${esc(rel.label)}</text>` : "") + "</g>");
+          out.push(`<g${interactive ? ` data-rel="${esc(rel.id)}" class="rel"` : ""}>` + (interactive ? `<path d="${d}" fill="none" stroke="transparent" stroke-width="14"/>` : "") + `<path d="${d}" fill="none" stroke="${col}" stroke-width="${sel ? 3.5 : 2}" stroke-dasharray="7 5" stroke-linecap="round"/><polygon points="${ar}" fill="${col}"/>` + (rel.label ? `<text x="${geo.label.x}" y="${geo.label.y - 6}" text-anchor="middle" font-size="12" font-style="italic" fill="${col}" stroke="${canvas || theme.background}" stroke-width="4" paint-order="stroke">${esc(rel.label)}</text>` : "") + "</g>");
         }
         for (const b of L.boxes.values()) {
           const s = b.style, n = b.node;
+          const onCanvasText = canvas && (s.shape === "underline" || s.shape === "none" && (!s.fill || s.fill === "none"));
+          const ink = onCanvasText ? onDarkCanvas(s.color, canvas, 4.5) : s.color;
+          const rim = canvas && !s.stroke && /^#[0-9a-fA-F]{6}$/.test(s.fill || "") && contrast(s.fill, canvas) < 3 ? ' stroke="#9aa3b5" stroke-width="1.5"' : "";
           const tx = b.x + b.markerW + (b.w - b.markerW) / 2;
           let shape = "";
           if (s.shape === "underline") {
-            shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${s.stroke || b.branch}" stroke-width="${s.strokeWidth || 2}"/>`;
+            shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${canvas ? onDarkCanvas(s.stroke || b.branch, canvas, 3) : s.stroke || b.branch}" stroke-width="${s.strokeWidth || 2}"/>`;
           } else if (s.shape === "none") {
             shape = s.fill && s.fill !== "none" ? `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="${s.fill}"/>` : "";
           } else if (s.shape === "ellipse") {
-            shape = `<ellipse cx="${b.x + b.w / 2}" cy="${b.y + b.h / 2}" rx="${b.w / 2}" ry="${b.h / 2}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ""}/>`;
+            shape = `<ellipse cx="${b.x + b.w / 2}" cy="${b.y + b.h / 2}" rx="${b.w / 2}" ry="${b.h / 2}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : rim}/>`;
           } else {
             const r = s.shape === "pill" ? Math.min(b.h / 2, 8) : s.shape === "round" ? 5 : 2;
-            shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : ""}/>`;
+            shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${r}" fill="${s.fill}"${s.stroke ? ` stroke="${s.stroke}" stroke-width="${s.strokeWidth}"` : rim}/>`;
           }
           if (logo && b.level === 0) {
             const ls = logoSize(s.size);
@@ -10267,7 +10292,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
           const align = textAlign(b, s);
           const txA = align === "left" ? b.x + s.padX * 0.7 + b.markerW : align === "right" ? b.x + b.w - s.padX : tx;
           const anchor = align === "left" ? "start" : align === "right" ? "end" : "middle";
-          const text = b.lines.map((l, i) => `<text x="${txA}" y="${startY + i * b.lineHeight}" text-anchor="${anchor}" dominant-baseline="central" fill="${s.color}" font-size="${s.size}"${s.font ? ` font-family="${esc(`'${s.font}', ${theme.font}`)}"` : ""} font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ""}>${esc(l)}</text>`).join("");
+          const text = b.lines.map((l, i) => `<text x="${txA}" y="${startY + i * b.lineHeight}" text-anchor="${anchor}" dominant-baseline="central" fill="${ink}" font-size="${s.size}"${s.font ? ` font-family="${esc(`'${s.font}', ${theme.font}`)}"` : ""} font-weight="${s.bold ? 700 : 400}"${s.italic ? ' font-style="italic"' : ""}>${esc(l)}</text>`).join("");
           const markers = b.markers.map((m, i) => {
             const d = b.markerD, cx = b.x + s.padX * 0.7 + (b.logoW || 0) + d / 2 + i * (d + 4), cy = b.y + b.h / 2;
             return `<circle cx="${cx}" cy="${cy}" r="${d / 2}" fill="${MARKERS[m].color}"/><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="${d * 0.62}" font-weight="700">${MARKERS[m].glyph}</text>`;

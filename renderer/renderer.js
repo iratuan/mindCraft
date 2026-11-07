@@ -71,7 +71,9 @@ function render() {
   if (!selectedId) selIds = new Set(); else if (!selIds.has(selectedId)) selIds = new Set([selectedId]);
   for (const id of [...selIds]) if (!map.find(id)) selIds.delete(id);
   svg.setAttribute('font-family', L.theme.font);
-  view.innerHTML = renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits, logo: true });
+  // tema Pixel tem canvas escuro: as cores do mapa são ajustadas para ter contraste sobre ele (ver core/svg.js)
+  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26' : null;   // mesmo fundo do CSS do tema Pixel
+  view.innerHTML = renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits, logo: true, canvas });
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
   syncCustomTheme();
   $('#theme').value = map.meta.theme;

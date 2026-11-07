@@ -44,12 +44,15 @@ body.ui-pixel .modal-box, body.ui-pixel .ctx-menu {
   box-shadow: none !important;
 }
 
-/* canvas do mapa: claro, com grade discreta, para o texto dos tópicos ter contraste */
+/* canvas do mapa: escuro, com grade discreta. O renderizador ajusta as cores dos tópicos para ter contraste sobre ele (core/svg.js, opção canvas) */
 body.ui-pixel #stage {
-  background-color: #eeeff2 !important;
-  background-image: linear-gradient(rgba(20, 23, 29, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 23, 29, .06) 1px, transparent 1px) !important;
+  background-color: #1c1f26 !important;
+  background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px) !important;
   background-size: 16px 16px !important;
 }
+/* mapa pixelizado: cantos retos e bordas sem suavização nas formas dos tópicos e das ligações */
+body.ui-pixel #stage svg rect { rx: 0; ry: 0; shape-rendering: crispEdges; }
+body.ui-pixel #stage svg line, body.ui-pixel #stage svg path { shape-rendering: crispEdges; }
 
 /* botões, campos e chips em relevo de degrau (luz em cima e à esquerda, sombra embaixo e à direita) */
 body.ui-pixel .btn, body.ui-pixel button, body.ui-pixel select, body.ui-pixel input, body.ui-pixel textarea, body.ui-pixel .chip {
