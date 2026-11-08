@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.5**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.6**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Telas
 
@@ -26,10 +26,10 @@ Versão atual: **0.7.5**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 - Marcadores de prioridade e progresso por tópico.
 - Temas do mapa (Oceano, Escuro, Papel, Neon, Desenho, Monocromático).
 - Fluxograma e lousa de resolução.
-- Auto-organizar o mapa.
+- **Auto-organizar o mapa:** refaz a disposição de todos os níveis (inclusive mapas com vários subtópicos em cada ramo), sem recolher nenhum ramo. Recolher é uma decisão sua, pelo controle Níveis ou pelo botão em cada tópico.
 
 ### Aparência
-- **Tema da interface:** Escuro, Claro, Desenho à mão e **Pixel (8 bits)**, com paleta de console, bordas em degrau e fonte pixel nos títulos.
+- **Tema da interface:** Escuro, Claro, Desenho à mão e **Pixel (8 bits)**. O Pixel usa paleta discreta, bordas em degrau e fonte pixel nos títulos; o leitor de PDF e a lousa ficam claros para a leitura, e o mapa fica em canvas escuro com contraste ajustado aos temas de mapa.
 - Painel lateral recolhível (Ctrl+\\) e divisores arrastáveis.
 
 ### Estudo e revisão
@@ -47,9 +47,9 @@ Versão atual: **0.7.5**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe `BRANIAC Setup 0.7.5.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
+**Windows:** baixe `BRANIAC Setup 0.7.6.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
 
-**Android:** baixe `BRANIAC-0.7.5.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
+**Android:** baixe `BRANIAC-0.7.6.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
 
 **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
@@ -67,7 +67,7 @@ Atalhos completos: **F1**.
 ```bash
 npm install
 npm start          # abre o app
-npm run check      # lint + testes unitários (210)
+npm run check      # lint + testes unitários (228)
 npm run e2e        # testes ponta a ponta no Electron real
 npm run dist       # gera o instalador do Windows em dist/
 ```
@@ -95,6 +95,7 @@ Documentação para quem vai evoluir o projeto:
 
 - **Recursos de estudo do histórico que não estão neste repositório:** painel de estudos, caderno de erros, simulados, metas, modelos de concurso, agenda de revisões em `.ics`, sincronização com Google Drive, navegador embutido e player de videoaulas. Eles aparecem no CHANGELOG das versões 0.1.x a 0.7.1 e foram mantidos como histórico. Os itens afetados estão marcados com ⚠️ lá.
 - **Aviso diário:** só dispara com o app aberto (verifica 4 segundos após abrir e depois a cada 30 minutos). O aviso do sistema foi confirmado só no processo do app, não visto na tela do Windows.
+- **Mapas grandes:** com centenas de tópicos, o botão Ajustar à tela deixa o mapa pequeno e o texto só fica legível com zoom.
 - **Tablet:** o APK foi gerado e assinado, mas não foi instalado nem testado em aparelho nesta versão. No tablet não há aviso do sistema para as revisões.
 - **Instaladores sem assinatura de código:** o Windows e o macOS mostram avisos na primeira execução.
 - **Mindomo:** ícones, anexos, tarefas e Gantt não são importados. Relações do Mindomo são preservadas no arquivo, mas não aparecem no mapa. Tópicos soltos são só de leitura até serem trazidos para a árvore.

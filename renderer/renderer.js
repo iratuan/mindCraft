@@ -235,17 +235,6 @@ function fit() {
 }
 
 // ---------- arquivos ----------
-/** Mapa grande abre organizado: se há muitos tópicos visíveis, os ramos mais profundos são recolhidos para caber na tela.
-    É uma ação desfazível (Ctrl+Z) e o mapa passa a constar como alterado, para você saber que mudou algo. */
-const AUTO_ORGANIZE_LIMIT = 120;
-
-function autoOrganize() {
-  const visible = (n) => 1 + (n.collapsed ? 0 : n.children.reduce((s, c) => s + visible(c), 0));
-  if (!map || visible(map.root) <= AUTO_ORGANIZE_LIMIT) return false;
-  const level = change(() => map.autoLevels(AUTO_ORGANIZE_LIMIT) || false);
-  if (level) setStatus(`Mapa grande: os ramos mais profundos foram recolhidos para caber na tela (nível ${level}). Ctrl+Z desfaz.`);
-  return !!level;
-}
 async function openPath(p, { silent = false } = {}) {
   try {
     const already = tabIndexOfPath(p);
@@ -255,7 +244,7 @@ async function openPath(p, { silent = false } = {}) {
     map = loaded;
     filePath = p; dirty = false; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
     if (typeof closeHome === 'function') closeHome();
-    render(); autoOrganize(); fit();
+    render(); fit();   // abre com todos os níveis do arquivo: o mapa não é recolhido sozinho
     // tópicos soltos do Mindomo: avisa na barra de status (o bloco fica à direita do mapa)
     const soltos = (map.meta._momFloating || []).length;
     if (soltos) setStatus(`${soltos} tópico(s) solto(s) do Mindomo à direita do mapa. Editar → Trazer tópicos soltos para o mapa.`);

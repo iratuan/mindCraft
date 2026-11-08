@@ -71,6 +71,7 @@ function openReviewsModal() {
 /** Aviso do sistema (desktop) uma vez por dia, quando há revisões. No tablet não há aviso do sistema: só a barra de status. */
 async function checkDailyReviews() {
   const today = dayKey();
+  if (!map) return null;   // sem mapa aberto (tela inicial) não há o que revisar: o temporizador não pode falhar
   const c = collectReviews(map.root, today);
   if (c.counts.total > 0) setStatus(notificationText(c.counts.today, c.counts.overdue));
   let last = null;

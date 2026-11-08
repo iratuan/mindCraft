@@ -79,7 +79,7 @@ async function main() {
   await waitFor(() => BrowserWindow.getAllWindows().length > 0);
   const win = BrowserWindow.getAllWindows()[0];
   const errors = [];
-  win.webContents.on('console-message', (e) => { const lv = e.level ?? e.level; if (lv === 'error' || lv >= 3) errors.push(e.message); });
+  win.webContents.on('console-message', (e) => { const lv = e.level ?? e.level; if (lv === 'error' || lv >= 3) errors.push(e.message + " @ " + (e.sourceId || "?").split("/").pop() + ":" + (e.lineNumber || "?")); });
   const js = (code) => win.webContents.executeJavaScript(code);
   const RESET_TABS = "tabs.forEach((t) => { if (t.state) t.state.dirty = false; }); dirty = false; tabs = []; activeIdx = -1;";
   // a captura falha às vezes logo após a tela aparecer (quadro da GPU ainda não pronto): tenta de novo
@@ -343,7 +343,7 @@ async function main() {
     await js('map.meta.theme = "ocean"; render();');
   });
 
-  await check('mapa grande abre organizado: ramos profundos recolhidos, uma ação desfazível', async () => {
+  await check('mapa grande abre com todos os níveis visíveis e Organizar não recolhe nenhum ramo', async () => {
     const big = path.join(TMP, 'grande.mom');
     const z = new AdmZip();
     const nodes = [{ id: 'r', title: 'Raiz', index: 0, style: {} }];
@@ -365,9 +365,15 @@ async function main() {
     await js(`openPath(${JSON.stringify(big)})`);
     await waitFor(() => js('typeof map !== "undefined" && map.root.title === "Raiz"'));
     await wait(300);
-    const shown = await js('(() => { const v = (n) => 1 + (n.collapsed ? 0 : n.children.reduce((s, c) => s + v(c), 0)); return v(map.root); })()');
-    assert.ok(shown <= 120, 'deveria caber em 120 tópicos visíveis, há ' + shown);
-    assert.ok(await js('map._undo.length') >= 1, 'a organização deve ser desfazível');
+    const count = () => js('(() => { let n = 0, hid = 0; const v = (x) => { n++; if (x.collapsed) hid++; x.children.forEach(v); }; v(map.root); return n + "/" + hid; })()');
+    const [total, hidden] = (await count()).split('/').map(Number);
+    assert.strictEqual(total, 301, 'o arquivo tem 301 tópicos');
+    assert.strictEqual(hidden, 0, 'abrir um mapa grande não recolhe ramos sozinho, há ' + hidden + ' recolhidos');
+    assert.strictEqual(await js('map._undo.length'), 0, 'abrir não cria ação de desfazer');
+    await js('organizeMap()');
+    await wait(300);
+    assert.strictEqual((await count()).split('/')[1], '0', 'Organizar não pode recolher ramos');
+    assert.ok(/todos na disposição/.test(await js("document.querySelector('#statusbar').textContent")), 'a barra deve informar a organização');
   });
 
   await check('tema da interface Desenho aplica-se a toda a janela; o botão mostra o tema atual e cicla', async () => {
@@ -375,11 +381,11 @@ async function main() {
     assert.strictEqual(await js("document.body.classList.contains('ui-draw')"), true);
     assert.strictEqual(await js("document.getElementById('uiTheme').value"), 'draw');
     assert.match(await js("document.getElementById('lightToggle').title"), /Desenho/);
-    await js("document.getElementById('lightToggle').click()");
-    assert.strictEqual(await js("document.body.classList.contains('ui-draw')"), false, 'o botão deveria passar para o próximo tema');
-    assert.strictEqual(await js("document.body.classList.contains('light')"), false);
-    await js("document.getElementById('lightToggle').click()");
-    assert.strictEqual(await js("document.body.classList.contains('light')"), true);
+    // o botão cicla: desenho -> pixel -> escuro -> claro -> desenho (quatro cliques voltam ao início)
+    const seen = [];
+    for (let i = 0; i < 4; i++) { await js("document.getElementById('lightToggle').click()"); seen.push(await js("document.getElementById('uiTheme').value")); }
+    assert.deepStrictEqual(seen, ['pixel', 'dark', 'light', 'draw'], 'ordem do botão de tema');
+    assert.strictEqual(await js("document.body.classList.contains('ui-draw')"), true, 'depois de dar a volta, volta ao Desenho');
     await js('setUiTheme("draw")'); await wait(200); await shot('12-interface-desenho');
     await js('setUiTheme("dark")');
   });
@@ -392,6 +398,9 @@ async function main() {
     const big = path.join(TMP, 'grande.mom');
     await js(`openPath(${JSON.stringify(big)})`);
     await waitFor(() => js('typeof map !== "undefined" && map.root.title === "Raiz"'));
+    // abrir não recolhe mais sozinho: recolhe-se um ramo aqui, para haver um número de filhos para clicar
+    await js('(() => { map.find("p0").node.collapsed = true; render(); return true; })()');
+    await wait(200);
     await wait(300);
     const id = await js('(() => { const b = document.querySelector(".fold-badge.collapsed"); return b ? b.dataset.fold : null; })()');
     assert.ok(id, 'deveria haver um tópico recolhido com o número de filhos');
@@ -547,7 +556,7 @@ async function main() {
     await js(RESET_TABS);   // cada teste parte de um mapa limpo (abas de testes anteriores são descartadas)
     await js(`openPath(${JSON.stringify(legacy)})`);
     await waitFor(() => js('typeof map !== "undefined" && map.root.title === "Direito"'));
-    await waitFor(() => js("document.querySelectorAll('#view path[fill=\"#fecd65\"]').length >= 1"));
+    await waitFor(() => js("document.querySelectorAll('#view g[aria-hidden=\"true\"] > path').length >= 33"));
     await shot('05-topico-principal');
   });
 
