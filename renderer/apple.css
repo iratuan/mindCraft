@@ -377,6 +377,10 @@ body.hand-pan #svg.panning, body.hand-pan #svg.panning .node { cursor: grabbing;
 #flowSvg #flowArrow path { fill: var(--text-dim); }
 #flowSvg .flow-label rect { fill: var(--bg-panel); stroke: var(--line-soft); }
 #flowSvg .flow-label text { fill: var(--text); font: 12px var(--font); }
+/* modo de ligação: cursor crosshair e destaque para nós alvo */
+#flowpane.link-mode #flowSvg { cursor: crosshair; }
+#flowpane.link-mode #flowSvg .flow-node:hover rect, #flowpane.link-mode #flowSvg .flow-node:hover polygon { stroke: #0a84ff; stroke-width: 3; }
+#flowSvg .flow-node.link-src rect, #flowSvg .flow-node.link-src polygon { stroke: #43a047; stroke-width: 3; }
 .flow-edit { position: absolute; z-index: 5; font: 13px var(--font); padding: 4px 6px; border: 2px solid var(--accent); border-radius: 6px; background: var(--bg-field); color: var(--text-strong); }
 .flow-info { position: absolute; left: 10px; bottom: 40px; width: min(440px, 86%); max-height: 46%; overflow: auto; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); font-size: 12.5px; color: var(--text); }
 .flow-info h3 { font-size: 12px; margin: 8px 0 4px; color: var(--text-strong); }

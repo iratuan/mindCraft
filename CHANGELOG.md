@@ -4,6 +4,11 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
+## 0.7.7 — 14/11/2026
+- **Fluxograma: múltiplas setas de entrada e saída.** Passos podem ter múltiplos próximos passos via setas extras (relações). Novo botão "Ligar" no fluxograma: Alt+clique na origem, depois Alt+clique no destino cria a seta; clique na seta seleciona; F2 ou duplo clique edita o rótulo; Delete remove. As setas extras aparecem em tracejado e podem formar laços ou junções.
+- **Contraste revisado para tema Pixel.** O ajuste de cores agora é feito no layout (núcleo) em vez de só na renderização; mapa, fluxograma e tópicos soltos têm contraste consistente (texto ≥ 4,5:1, gráficos ≥ 3:1) sobre o canvas escuro do Pixel.
+- **Release:** Windows (`BRANIAC Setup 0.7.7.exe`) e Android (`BRANIAC-0.7.7.apk`, código 29).
+
 ## 0.7.6 — 07/11/2026
 - **Auto-organizar reorganiza o mapa inteiro.** Antes, mapas com mais de 120 tópicos visíveis tinham os ramos mais profundos recolhidos (um mapa de 322 tópicos mostrava só dois níveis). Agora o botão Organizar refaz a disposição de todos os níveis e ajusta a vista, sem recolher nenhum ramo. Abrir um mapa grande também não recolhe mais sozinho.
 - **Contraste no canvas escuro:** o texto sem caixa e os ramos ganham contraste mínimo sobre o fundo escuro do tema Pixel (texto ≥ 4,5:1, ramos ≥ 3:1).

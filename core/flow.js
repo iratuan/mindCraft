@@ -127,6 +127,33 @@ function successors(map, id) {
   return [...seq, ...rel];
 }
 
+/** Liga dois passos com uma seta extra (relação). Sobrescreve seta anterior do mesmo par. Rótulo opcional. */
+function connect(map, fromId, toId, label = '') {
+  const from = nodeOf(map, fromId);
+  const to = nodeOf(map, toId);
+  if (!from) throw new Error('Passo de saída não encontrado.');
+  if (!to) throw new Error('Passo de entrada não encontrado.');
+  if (fromId === toId) throw new Error('Um passo não pode ligar para si mesmo.');
+  const existing = map.meta.relations.find((r) => r.from === fromId && r.to === toId);
+  if (existing) {
+    // atualiza o rótulo da seta que já existe
+    map._snapshot();
+    existing.label = String(label).slice(0, 60);
+  } else {
+    // cria a nova relação
+    map._snapshot();
+    const rel = { id: 'r' + Date.now() + '-' + Math.random().toString(36).slice(2, 9), from: fromId, to: toId, label: String(label).slice(0, 60) };
+    if (!Array.isArray(map.meta.relations)) map.meta.relations = [];
+    map.meta.relations.push(rel);
+  }
+}
+
+/** Remove a seta extra entre dois passos. */
+function disconnect(map, fromId, toId) {
+  map._snapshot();
+  map.meta.relations = map.meta.relations.filter((r) => !(r.from === fromId && r.to === toId));
+}
+
 /** Regras de fluxo: lista de avisos (nunca bloqueia a edição). Cada aviso aponta o passo. */
 function validateFlow(map) {
   const warn = [];
@@ -142,8 +169,9 @@ function validateFlow(map) {
       for (const c of n.children) if (!c.branchLabel) warn.push({ level: 'warn', id: c.id, message: `Ramo sem rótulo após a decisão "${name}".` });
     } else if (t === 'end' && n.children.length) {
       warn.push({ level: 'error', id: n.id, message: `O fim "${name}" tem saídas; o fim não pode ter próximos passos.` });
-    } else if (t !== 'end' && n.children.length > 1) {
-      warn.push({ level: 'warn', id: n.id, message: `Passo "${name}" com ${n.children.length} próximos; para bifurcar, use uma decisão.` });
+    } else if (t !== 'end' && t !== 'decision' && n.children.length > 1) {
+      // passo comum (não decisão, não fim) com múltiplos filhos: não é válido. Deve usar decisão ou relações.
+      warn.push({ level: 'error', id: n.id, message: `Passo "${name}" com ${n.children.length} próximos filhos; a estrutura não é válida. Para bifurcar, use uma decisão; para caminhos alternativos, use setas extras.` });
     }
     if (t !== 'end' && t !== 'decision' && isLeaf(n) && !map.meta.relations.some((x) => x.from === n.id)) {
       warn.push({ level: 'warn', id: n.id, message: `Passo "${name}" sem saída: marque como Fim ou acrescente o próximo passo.` });
@@ -185,5 +213,5 @@ function listPaths(map, { max = MAX_PATHS, maxLen = MAX_PATH_LEN } = {}) {
 module.exports = {
   FLOW_TYPES, FLOW_LABELS, MAX_BRANCHES, DEFAULT_BRANCHES, MAX_PATHS,
   isFlow, createFlow, insertStepAfter, addBranch, setFlowType, removeStep,
-  findStarts, successors, validateFlow, listPaths, typeOf,
+  findStarts, successors, validateFlow, listPaths, typeOf, connect, disconnect,
 };

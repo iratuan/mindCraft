@@ -46,17 +46,18 @@ function edgeStrokes(svg) {
 
 for (const theme of Object.keys(THEMES)) {
   test(`${theme}: com canvas escuro, texto do nível 3 tem contraste ≥ 4,5:1`, () => {
-    const L = layoutMap(sampleMap(theme));
+    const L = layoutMap(sampleMap(theme), { canvas: CANVAS });
     const svg = renderGroup(L, { interactive: false, canvas: CANVAS });
     const fill = textFill(svg, 'Neto');
     const style = THEMES[theme].levels[2];
     if (style.fill === 'none' || style.fill === undefined) {
       assert.ok(contrast(fill, CANVAS) >= 4.5, `${theme}: texto ${fill} tem ${contrast(fill, CANVAS).toFixed(2)}:1 sobre o canvas`);
+      assert.strictEqual(fill, '#ffffff', theme + ': texto sem moldura sobre o canvas escuro deve ser branco');
     }
   });
 
   test(`${theme}: com canvas escuro, todos os ramos têm contraste ≥ 3:1`, () => {
-    const L = layoutMap(sampleMap(theme));
+    const L = layoutMap(sampleMap(theme), { canvas: CANVAS });
     const svg = renderGroup(L, { interactive: false, canvas: CANVAS });
     const strokes = edgeStrokes(svg);
     assert.ok(strokes.length >= 3, 'deveria haver ramos no SVG');
@@ -64,8 +65,8 @@ for (const theme of Object.keys(THEMES)) {
   });
 
   test(`${theme}: sem a opção canvas, as cores do tema saem inalteradas`, () => {
-    const L = layoutMap(sampleMap(theme));
-    const svg = renderGroup(L, { interactive: false });
+    const L = layoutMap(sampleMap(theme));  // sem canvas no layout
+    const svg = renderGroup(L, { interactive: false });  // sem canvas no render
     const ramos = THEMES[theme].branches.map((x) => x.toLowerCase());
     for (const c of edgeStrokes(svg)) assert.ok(ramos.includes(c.toLowerCase()), 'ramo fora da paleta do tema: ' + c);
     const direct = renderGroup(L, { interactive: false, canvas: null });

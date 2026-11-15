@@ -4,7 +4,7 @@
  *  1. o compartilhamento enxerga a pasta interna do app (files/braniac), onde o BRANIAC grava mapas e exportações;
  *  2. assinatura de release com a chave de tablet/keystore (fora do git). A senha é lida do arquivo na hora do build
  *     e nunca é copiada para o projeto; sem o arquivo, o release sai sem assinatura (e o build avisa);
- *  3. versão 0.7.6 (código 28), igual ao package.json.
+ *  3. versão 0.7.7 (código 29), igual ao package.json.
  */
 const fs = require('fs');
 const path = require('path');
@@ -60,9 +60,9 @@ if (fs.existsSync(iconSrc) && fs.existsSync(stylesFile)) {
   }
 }
 
-// 3) versão do APK: nome 0.7.6 (código 28); sempre reaplicada, pois o `cap sync` regenera o build.gradle
+// 3) versão do APK: nome 0.7.7 (código 29); sempre reaplicada, pois o `cap sync` regenera o build.gradle
 const gradleVersion = fs.readFileSync(gradle, 'utf8');
-fs.writeFileSync(gradle, gradleVersion.replace(/versionCode \d+/, 'versionCode 28').replace(/versionName "[^"]*"/, 'versionName "0.7.6"'));
+fs.writeFileSync(gradle, gradleVersion.replace(/versionCode \d+/, 'versionCode 29').replace(/versionName "[^"]*"/, 'versionName "0.7.7"'));
 
 // 2) e 3) assinatura e versão
 let g = fs.readFileSync(gradle, 'utf8');
@@ -85,7 +85,7 @@ if (!g.includes('// BRANIAC: assinatura')) {
   ].join('\n');
   g = g.replace('    buildTypes {', signing + '    buildTypes {');
   g = g.replace('    buildTypes {\n        release {', "    buildTypes {\n        release {\n            if (file('../../keystore/senha.txt').exists()) signingConfig signingConfigs.release");
-  g = g.replace(/versionCode \d+/, 'versionCode 28').replace(/versionName "[^"]*"/, 'versionName "0.7.6"');
+  g = g.replace(/versionCode \d+/, 'versionCode 29').replace(/versionName "[^"]*"/, 'versionName "0.7.7"');
   fs.writeFileSync(gradle, g);
 }
-console.log('Android: compartilhamento liberado, assinatura de release e versão 0.7.6 (código 28).');
+console.log('Android: compartilhamento liberado, assinatura de release e versão 0.7.7 (código 29).');

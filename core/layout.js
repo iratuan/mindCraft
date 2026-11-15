@@ -1,5 +1,5 @@
 'use strict';
-const { getTheme, resolveStyle } = require('./themes');
+const { getTheme, resolveStyle, adaptThemeToCanvas, adaptStyleToCanvas } = require('./themes');
 const { logoSize } = require('./logo');
 const { MARKERS } = require('./markers');
 
@@ -53,13 +53,17 @@ function wrap(text, size, bold, maxW) {
  * box: { id, x, y, w, h, level, side, lines, style, node }  (x,y = canto superior esquerdo)
  */
 function layoutMap(map, opts = {}) {
-  const theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
+  let theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
+  // se o canvas é escuro (tema Pixel), adapta as cores do tema para ter contraste
+  if (opts.canvas) theme = adaptThemeToCanvas(theme, opts.canvas);
   const maxW = opts.maxTextWidth || 260;
   const boxes = new Map();
   const views = progressViews(map.root);
 
   const measure = (node, level, branch, temp = false) => {
-    const st = resolveStyle(theme, level, branch, node.style);
+    let st = resolveStyle(theme, level, branch, node.style);
+    // adapta o estilo resolvido se o canvas é escuro
+    if (opts.canvas) st = adaptStyleToCanvas(st, opts.canvas, st.branch);
     const lines = wrap(node.title, st.size, st.bold, maxW);
     const tw = Math.max(...lines.map((l) => textWidth(l, st.size, st.bold)));
     const lh = st.size * 1.25;

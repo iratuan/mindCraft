@@ -79,9 +79,10 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hit
 
   for (const b of L.boxes.values()) {
     const s = b.style, n = b.node;
-    // no canvas escuro: texto sem caixa precisa de contraste com o canvas; forma sem contorno que se confunde com ele ganha um contorno claro
+    // no canvas escuro: texto sem caixa fica branco (contraste com o canvas); forma sem contorno que se confunde com ele ganha um contorno claro
     const onCanvasText = canvas && (s.shape === 'underline' || (s.shape === 'none' && (!s.fill || s.fill === 'none')));
-    const ink = onCanvasText ? onDarkCanvas(s.color, canvas, 4.5) : s.color;
+    const ink = onCanvasText ? '#ffffff' : s.color;   // texto sem moldura sobre o canvas escuro: branco, o de maior contraste
+    // rim: contorno claro para forma sem contorno quando fill fica muito escuro
     const rim = canvas && !s.stroke && /^#[0-9a-fA-F]{6}$/.test(s.fill || '') && contrast(s.fill, canvas) < 3 ? ' stroke="#9aa3b5" stroke-width="1.5"' : '';
     const tx = b.x + b.markerW + (b.w - b.markerW) / 2;
     let shape = '';
