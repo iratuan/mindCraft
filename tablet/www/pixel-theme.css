@@ -98,3 +98,8 @@ body.ui-pixel ::-webkit-scrollbar { width: 12px; height: 12px; }
 body.ui-pixel ::-webkit-scrollbar-track { background: var(--bg-field); border: 2px solid var(--line); }
 body.ui-pixel ::-webkit-scrollbar-thumb { background: var(--bg-hover); border: 2px solid var(--line); box-shadow: inset -2px -2px 0 var(--line), inset 2px 2px 0 var(--line-soft); }
 body.ui-pixel .brand img { image-rendering: pixelated; }
+
+/* fluxograma no tema Pixel: usa o canvas escuro como o mapa mental. Estilos herdam de #stage. */
+body.ui-pixel #flowpane { background-color: #1c1f26 !important; background-image: linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px) !important; background-size: 16px 16px !important; }
+body.ui-pixel #flowSvg rect { rx: 0; ry: 0; shape-rendering: crispEdges; }
+body.ui-pixel #flowSvg line, body.ui-pixel #flowSvg path { shape-rendering: crispEdges; }

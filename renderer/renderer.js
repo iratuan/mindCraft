@@ -50,8 +50,9 @@ function descendantCount(node) { let n = 0; for (const c of node.children) n += 
 function render() {
   if (map && isFlow(map) && typeof flowRender === 'function') { flowMode(true); flowRender(); flowTail(selectedId && map.find(selectedId)); return; }   // fluxograma: visão própria (flow-ui.js)
   if (typeof flowMode === 'function') flowMode(false);
-  // tema Pixel tem canvas escuro: as cores do mapa são ajustadas para ter contraste sobre ele (ver core/svg.js)
-  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26' : null;   // mesmo fundo do CSS do tema Pixel
+  // canvas escuro do Pixel ou claro do tema claro: o mapa adapta suas cores para manter contraste
+  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26'
+    : document.body.classList.contains('light') ? '#c7c7c7' : null;   // cores de #stage em pixel-theme.css e style.css
   const layoutOpts = canvas ? { canvas } : {};
   L = layoutMap(map, layoutOpts);
   // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
@@ -484,6 +485,7 @@ function setUiTheme(name) {
     b.title = `Tema da interface: ${UI_THEMES[name].label}. Clique para trocar`; b.setAttribute('aria-label', b.title);
   }
   const sel = $('#uiTheme'); if (sel) sel.value = name;
+  if (map) render();
 }
 setUiTheme(uiThemeGet());
 $('#lightToggle').addEventListener('click', () => { const keys = Object.keys(UI_THEMES); setUiTheme(keys[(keys.indexOf(uiThemeGet()) + 1) % keys.length]); });

@@ -3,6 +3,7 @@
 module.exports = {
   "ai": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/ai.js"),
   "backup": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/backup.js"),
+  "contrast": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/contrast.js"),
   "errorlog": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/errorlog.js"),
   "flow": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/flow.js"),
   "flow-export": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/flow-export.js"),

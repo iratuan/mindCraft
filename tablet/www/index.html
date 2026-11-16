@@ -24,7 +24,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando o BRANIAC…</div>
-    <div class="splash-foot" id="splashVersion">BRANIAC · v0.7.6</div>
+    <div class="splash-foot" id="splashVersion">BRANIAC · v0.7.7</div>
   </div>
 </div>
 <script src="tablet-bundle.js"></script>
@@ -175,6 +175,7 @@
           <select id="flowType" title="Tipo do passo selecionado" aria-label="Tipo do passo">
             <option value="start">Início</option><option value="step">Passo</option><option value="decision">Decisão</option><option value="end">Fim</option>
           </select>
+          <button type="button" class="btn small" data-flow="link" title="Ligar passos com seta extra (Alt+clique)">Ligar</button>
           <button type="button" class="btn small" data-flow="delete" title="Excluir o passo selecionado (Delete)">Excluir</button>
           <span class="grow"></span>
           <button type="button" class="btn small" data-flow="organize" title="Reorganiza e ajusta o fluxo à tela">Auto-organizar</button>
@@ -186,7 +187,7 @@
           <g id="flowView"></g>
         </svg>
         <div id="flowInfo" class="flow-info" hidden></div>
-        <div class="flow-foot"><span id="flowCount"></span><span class="muted">Enter passo · Tab ramo · Delete excluir · F2 renomear · duplo clique edita o título</span></div>
+        <div class="flow-foot"><span id="flowCount"></span><span class="muted">Enter passo · Tab ramo · Alt+clique ligar · Delete excluir · F2 renomear · duplo clique edita o título</span></div>
       </section>
       <textarea id="editor" hidden></textarea>
       <div id="marquee" hidden></div>

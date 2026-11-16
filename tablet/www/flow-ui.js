@@ -17,6 +17,8 @@ let flowInfoOpen = false;           // painel de caminhos e avisos
 const flowTouches = new Map();      // dedos sobre o fundo do fluxo (pinça e arrasto)
 let flowGesture = null;
 let flowDrag = null;
+let flowLinkMode = false;           // modo de ligação ativa?
+let flowLinkFrom = null;            // id do passo de origem ao ligar
 
 const flowPaneEl = () => document.getElementById('flowpane');
 const flowSvgEl = () => document.getElementById('flowSvg');
@@ -51,7 +53,7 @@ function flowRender() {
   flowLast = layoutFlow(map);
   const L = flowLast, parts = [];
   for (const e of L.edges) parts.push(flowEdgeSvg(L.boxes.get(e.from), L.boxes.get(e.to), e.label));
-  for (const r of L.relations) parts.push(flowRelSvg(L.boxes.get(r.from), L.boxes.get(r.to), r.label, r.id === selectedRel));
+  for (const r of L.relations) parts.push(flowRelSvg(L.boxes.get(r.from), L.boxes.get(r.to), r.label, r.id === selectedRel, r.id));
   for (const b of L.boxes.values()) parts.push(flowBoxSvg(b, b.id === selectedId || selIds.has(b.id)));
   flowGroupEl().innerHTML = parts.join('');
   if (flowFitPending && L.boxes.size) { flowFitPending = false; flowFit(); }
@@ -84,7 +86,8 @@ function flowBoxSvg(b, selected) {
   else shape = `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="10"/>`;
   const top = cy - ((b.lines.length - 1) * b.lineHeight) / 2;
   const texts = b.lines.map((l, i) => `<text x="${cx}" y="${top + i * b.lineHeight}" text-anchor="middle" dominant-baseline="central">${flowEsc(l)}</text>`).join('');
-  return `<g class="flow-node ${b.type}${selected ? ' sel' : ''}" data-id="${flowEsc(b.id)}">${shape}${texts}</g>`;
+  const isSrc = flowLinkMode && flowLinkFrom === b.id;
+  return `<g class="flow-node ${b.type}${selected ? ' sel' : ''}${isSrc ? ' link-src' : ''}" data-id="${flowEsc(b.id)}">${shape}${texts}</g>`;
 }
 
 /** Seta da sequência: sai de baixo do passo e entra em cima do próximo; o rótulo do ramo fica no meio. */
@@ -96,11 +99,12 @@ function flowEdgeSvg(a, b, label) {
 }
 
 /** Seta extra (relação do modelo): curva tracejada pela direita, para voltas e junções sem empurrar os passos. */
-function flowRelSvg(a, b, label, selected) {
+function flowRelSvg(a, b, label, selected, relId) {
   const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x + b.w, y2 = b.y + b.h / 2;
   const cx = Math.max(x1, x2) + 90;
   const lab = label ? flowLabelSvg(cx - 4, (y1 + y2) / 2, label) : '';
-  return `<path class="flow-rel${selected ? ' sel' : ''}" d="M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}" marker-end="url(#flowArrow)"/>${lab}`;
+  const dataId = relId ? ` data-id="${flowEsc(relId)}"` : '';
+  return `<g class="flow-rel${selected ? ' sel' : ''}"${dataId}><path d="M${x1},${y1} C${cx},${y1} ${cx},${y2} ${x2},${y2}" marker-end="url(#flowArrow)"/>${lab}</g>`;
 }
 
 function flowLabelSvg(x, y, text) {
@@ -113,6 +117,7 @@ function flowSelect(id) {
   selectedId = id || map.root.id;
   selIds = new Set([selectedId]);
   selectedRel = null;
+  flowLinkFrom = null;  // cancela ligação se estava em modo de ligação
   render();
 }
 
@@ -142,7 +147,26 @@ function flowAct(action, arg) {
       change(() => flowRules.setFlowType(map, sel, arg));
     } else if (action === 'delete') {
       flowDelete(sel);
+    } else if (action === 'link') {
+      flowToggleLinkMode();
     }
+  } catch (e) {
+    setStatus(e.message);
+  }
+}
+
+/** Remove uma seta extra (relação) entre dois passos. */
+async function flowDeleteRelation() {
+  if (!selectedRel) return;
+  const rel = map.meta.relations.find((r) => r.id === selectedRel);
+  if (!rel) return;
+  const fromNode = map.find(rel.from);
+  const toNode = map.find(rel.to);
+  if (!fromNode || !toNode) return;
+  try {
+    change(() => flowRules.disconnect(map, rel.from, rel.to));
+    flowSelect(map.root.id);
+    setStatus(`Seta removida de "${fromNode.node.title}" para "${toNode.node.title}".`);
   } catch (e) {
     setStatus(e.message);
   }
@@ -167,18 +191,38 @@ async function flowDelete(id) {
   } catch (e) { setStatus(e.message); }
 }
 
-/** Edição do título no próprio passo (duplo clique ou F2). Enter grava; Esc cancela. */
-function flowRename(id) {
-  const b = flowLast && flowLast.boxes.get(id);
+/** Edição do título no próprio passo (duplo clique ou F2), ou rótulo de uma seta extra. Enter grava; Esc cancela. */
+function flowRename(id, relId) {
   const pane = flowPaneEl();
-  if (!b || !pane) return;
+  if (!pane) return;
   const old = pane.querySelector('#flowEdit'); if (old) old.remove();
   const sr = flowSvgEl().getBoundingClientRect(), pr = pane.getBoundingClientRect();
+
+  let text, x, y, w;
+  if (relId) {
+    // Editar rótulo de uma seta: tenta usar a posição do rótulo no layout
+    const rel = map.meta.relations.find((r) => r.id === relId);
+    if (!rel) return;
+    text = rel.label || '';
+    // posição aproximada: centro da tela
+    x = sr.left - pr.left + sr.width / 2;
+    y = sr.top - pr.top + sr.height / 2;
+    w = 200;
+  } else {
+    // Editar título de um passo
+    const b = flowLast && flowLast.boxes.get(id);
+    if (!b) return;
+    text = map.find(id) ? map.find(id).node.title || '' : '';
+    x = sr.left - pr.left + flowView.x + b.x * flowView.k;
+    y = sr.top - pr.top + flowView.y + b.y * flowView.k;
+    w = Math.max(120, b.w * flowView.k);
+  }
+
   const inp = document.createElement('input');
-  inp.id = 'flowEdit'; inp.className = 'flow-edit'; inp.value = map.find(id).node.title || '';
-  inp.style.left = `${sr.left - pr.left + flowView.x + b.x * flowView.k}px`;
-  inp.style.top = `${sr.top - pr.top + flowView.y + b.y * flowView.k}px`;
-  inp.style.width = `${Math.max(120, b.w * flowView.k)}px`;
+  inp.id = 'flowEdit'; inp.className = 'flow-edit'; inp.value = text;
+  inp.style.left = `${x}px`;
+  inp.style.top = `${y}px`;
+  inp.style.width = `${w}px`;
   pane.append(inp);
   inp.focus(); inp.select();
   let done = false;
@@ -186,8 +230,15 @@ function flowRename(id) {
     if (done) return; done = true;
     const v = inp.value.trim();
     inp.remove();
-    if (save && v && map.find(id) && v !== map.find(id).node.title) change(() => map.update(id, { title: v.slice(0, 120) }));
-    else render();
+    if (save && v !== text) {
+      if (relId) {
+        const rel = map.meta.relations.find((r) => r.id === relId);
+        if (rel) change(() => rel.label = v.slice(0, 60));
+      } else if (map.find(id) && v !== map.find(id).node.title) {
+        change(() => map.update(id, { title: v.slice(0, 120) }));
+      }
+    }
+    render();
   };
   inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); finish(true); } else if (e.key === 'Escape') { e.preventDefault(); finish(false); } e.stopPropagation(); });
   inp.addEventListener('blur', () => finish(true));
@@ -231,6 +282,45 @@ function newFlow() {
   render();
 }
 
+/** Ativa/desativa o modo de ligação (ligar passos com seta extra). */
+function flowToggleLinkMode() {
+  flowLinkMode = !flowLinkMode;
+  flowLinkFrom = null;
+  const pane = flowPaneEl();
+  if (pane) pane.classList.toggle('link-mode', flowLinkMode);
+  if (flowLinkMode) setStatus('Modo ligar ativo: Alt+clique no passo de saída, depois Alt+clique no passo de entrada.');
+  else setStatus('Modo ligar desativado.');
+  flowRender();
+}
+
+/** Completa ou inicia uma ligação entre passos (com Alt+clique). */
+function flowLinkNode(id) {
+  if (!flowLinkMode) return;
+  if (!flowLinkFrom) {
+    flowLinkFrom = id;
+    flowRender();  // redesenha para destacar o nó de origem
+  } else {
+    // ligação: origem → destino
+    if (flowLinkFrom === id) {
+      setStatus('Não é possível ligar um passo para si mesmo.');
+      flowLinkFrom = null;
+    } else {
+      try {
+        flowRules.connect(map, flowLinkFrom, id, '');
+        dirty = true;
+        rev++;
+        change(() => render());
+        setStatus(`Seta criada de "${map.find(flowLinkFrom).node.title}" para "${map.find(id).node.title}".`);
+        flowLinkFrom = null;
+      } catch (err) {
+        setStatus(`Erro ao ligar: ${err.message}`);
+        flowLinkFrom = null;
+      }
+    }
+    flowRender();
+  }
+}
+
 /** Teclado do fluxo: Enter passo, Tab ramo, Delete excluir, F2 renomear, Esc limpa. Devolve true se tratou a tecla. */
 function flowKey(e) {
   if (!flowOn) return false;
@@ -241,9 +331,12 @@ function flowKey(e) {
   switch (e.key) {
     case 'Enter': flowAct('step'); break;
     case 'Tab': e.preventDefault(); flowAct('branch'); return true;
-    case 'Delete': case 'Backspace': if (id) flowDelete(id); break;
-    case 'F2': if (id) flowRename(id); break;
-    case 'Escape': flowSelect(map.root.id); break;
+    case 'Delete': case 'Backspace':
+      if (selectedRel) flowDeleteRelation();
+      else if (id) flowDelete(id);
+      break;
+    case 'F2': if (id || selectedRel) flowRename(id, selectedRel); break;
+    case 'Escape': flowLinkMode ? flowToggleLinkMode() : flowSelect(map.root.id); break;
     default: return false;
   }
   e.preventDefault();
@@ -315,12 +408,33 @@ function flowBind() {
   S.addEventListener('click', (e) => {
     if (flowDrag && flowDrag.moved) return;
     const nd = e.target.closest && e.target.closest('.flow-node');
-    if (nd) flowSelect(nd.dataset.id);
-    else if (!(e.target.closest && e.target.closest('.flow-rel'))) flowSelect(map.root.id);
+    const rel = e.target.closest && e.target.closest('.flow-rel');
+    if (nd) {
+      // Alt+clique em um nó: inicia/completa ligação
+      if (e.altKey && flowLinkMode) {
+        flowLinkNode(nd.dataset.id);
+        e.preventDefault();
+      } else {
+        flowSelect(nd.dataset.id);
+      }
+    } else if (rel) {
+      // Clique em uma seta: seleciona a relação
+      const relId = rel.dataset.id;
+      if (relId) {
+        selectedRel = relId;
+        selectedId = null;
+        selIds = new Set();
+        render();
+      }
+    } else {
+      flowSelect(map.root.id);
+    }
   });
   S.addEventListener('dblclick', (e) => {
     const nd = e.target.closest && e.target.closest('.flow-node');
+    const rel = e.target.closest && e.target.closest('.flow-rel');
     if (nd) flowRename(nd.dataset.id);
+    else if (rel) flowRename(null, rel.dataset.id);
   });
   S.addEventListener('wheel', (e) => {
     e.preventDefault();
@@ -341,6 +455,7 @@ function flowBindBar() {
     if (a === 'fit' || a === 'organize') { flowFit(); if (a === 'organize') setStatus('Fluxo ajustado à tela.'); }
     else if (a === 'info') { flowInfoOpen = !flowInfoOpen; flowInfoRefresh(); const i = document.getElementById('flowInfo'); if (i) i.hidden = !flowInfoOpen; }
     else if (a === 'delete') flowAct('delete');
+    else if (a === 'link') flowAct('link');
     else if (a === 'branch') flowAct('branch');
     else flowAct('step', a);
   });

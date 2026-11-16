@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { luminance, contrast, lighten, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('../core/contrast');
+const { luminance, contrast, lighten, darken, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('../core/contrast');
 
 test('luminance(hex): WCAG 2.0 relative luminance', () => {
   assert.strictEqual(luminance('#ffffff'), 1.0, 'branco é 1.0');
@@ -28,6 +28,12 @@ test('lighten(hex, t): mistura com branco', () => {
   assert.ok(contrast(lighten('#000000', 0), lighten('#000000', 0.5)) > contrast(lighten('#000000', 0), lighten('#000000', 0.1)), 'mais claro = contraste maior');
 });
 
+test('darken(hex, t): mistura com preto', () => {
+  assert.strictEqual(darken('#ffffff', 0), '#ffffff', 't=0 retorna a cor original');
+  assert.strictEqual(darken('#ffffff', 1), '#000000', 't=1 vira preto');
+  assert.ok(contrast(darken('#ffffff', 0.5), '#ffffff') > 1, 'escurecer aumenta o contraste com branco');
+});
+
 test('onCanvas(color, canvas, min): adapta cor ao canvas escuro', () => {
   const canvas = '#1c1f26';
   const bright = '#ffffff';
@@ -52,6 +58,13 @@ test('onCanvas(color, canvas, min): adapta cor ao canvas escuro', () => {
   const textAdapted = onCanvas(veryDark, canvas, MIN_TEXT);
   assert.ok(contrast(textAdapted, canvas) >= MIN_TEXT, 'com MIN_TEXT atende 4.5:1');
   assert.ok(contrast(textAdapted, canvas) > contrast(onCanvas(veryDark, canvas, MIN_GRAPHIC), canvas), 'texto > gráficos');
+});
+
+test('onCanvas: escurece cores com pouco contraste em canvas claro', () => {
+  const canvas = '#c7c7c7';
+  const adapted = onCanvas('#ffffff', canvas, MIN_TEXT);
+  assert.ok(contrast(adapted, canvas) >= MIN_TEXT, 'cor adaptada atende 4,5:1');
+  assert.ok(adapted !== '#ffffff', 'branco foi escurecido');
 });
 
 test('onCanvas: branco no limite', () => {

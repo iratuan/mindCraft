@@ -50,9 +50,12 @@ function descendantCount(node) { let n = 0; for (const c of node.children) n += 
 function render() {
   if (map && isFlow(map) && typeof flowRender === 'function') { flowMode(true); flowRender(); flowTail(selectedId && map.find(selectedId)); return; }   // fluxograma: visão própria (flow-ui.js)
   if (typeof flowMode === 'function') flowMode(false);
-  L = layoutMap(map);
+  // tema Pixel tem canvas escuro: as cores do mapa são ajustadas para ter contraste sobre ele (ver core/svg.js)
+  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26' : null;   // mesmo fundo do CSS do tema Pixel
+  const layoutOpts = canvas ? { canvas } : {};
+  L = layoutMap(map, layoutOpts);
   // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
-  L.floats = placeFloating();
+  L.floats = placeFloating(canvas);
   // As caixas dos soltos entram no mesmo desenho: clicáveis e editáveis no lugar (a estrutura no arquivo não muda)
   for (const { fl, dx, dy } of L.floats) {
     for (const b of fl.boxes.values()) { b.x += dx; b.y += dy; L.boxes.set(b.id, b); }
@@ -71,8 +74,6 @@ function render() {
   if (!selectedId) selIds = new Set(); else if (!selIds.has(selectedId)) selIds = new Set([selectedId]);
   for (const id of [...selIds]) if (!map.find(id)) selIds.delete(id);
   svg.setAttribute('font-family', L.theme.font);
-  // tema Pixel tem canvas escuro: as cores do mapa são ajustadas para ter contraste sobre ele (ver core/svg.js)
-  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26' : null;   // mesmo fundo do CSS do tema Pixel
   view.innerHTML = renderGroup(L, { selectedId, selectedIds: selIds, selectedRel, interactive: true, hits, logo: true, canvas });
   view.setAttribute('transform', `translate(${pan.x} ${pan.y}) scale(${pan.k})`);
   syncCustomTheme();
@@ -198,13 +199,14 @@ function reveal(id, margin = 70) {
 }
 
 /** Cada tópico solto é desenhado à parte (layout próprio) e colocado à direita da árvore principal, empilhado de cima para baixo. */
-function placeFloating() {
+function placeFloating(canvas) {
   const list = (map && map.meta._momFloating) || [];
   const out = [];
   let y = L.bounds.y;
   const x0 = L.bounds.x + L.bounds.w + 140;
+  const layoutOpts = canvas ? { canvas } : {};
   for (const f of list) {
-    const fl = layoutMap({ root: f.node, meta: map.meta });
+    const fl = layoutMap({ root: f.node, meta: map.meta }, layoutOpts);
     out.push({ fl, dx: x0 - fl.bounds.x, dy: y - fl.bounds.y });
     y += fl.bounds.h + 80;
   }

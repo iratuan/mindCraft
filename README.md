@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.7**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.8**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Telas
 
@@ -29,7 +29,7 @@ Versão atual: **0.7.7**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 - **Auto-organizar o mapa:** refaz a disposição de todos os níveis (inclusive mapas com vários subtópicos em cada ramo), sem recolher nenhum ramo. Recolher é uma decisão sua, pelo controle Níveis ou pelo botão em cada tópico.
 
 ### Aparência
-- **Tema da interface:** Escuro, Claro, Desenho à mão e **Pixel (8 bits)**. O Pixel usa paleta discreta, bordas em degrau e fonte pixel nos títulos; o leitor de PDF e a lousa ficam claros para a leitura, e o mapa fica em canvas escuro com contraste ajustado aos temas de mapa.
+- **Tema da interface:** Escuro, Claro, Desenho à mão e **Pixel (8 bits)**. O contraste dos textos e elementos do mapa se adapta ao canvas claro e ao escuro. O Pixel usa paleta discreta, bordas em degrau e fonte pixel nos títulos; o leitor de PDF e a lousa ficam claros para a leitura.
 - Painel lateral recolhível (Ctrl+\\) e divisores arrastáveis.
 
 ### Estudo e revisão
@@ -47,9 +47,9 @@ Versão atual: **0.7.7**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe `BRANIAC Setup 0.7.7.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
+**Windows:** baixe `BRANIAC Setup 0.7.8.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
 
-**Android:** baixe `BRANIAC-0.7.7.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
+**Android:** baixe `BRANIAC-0.7.8.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
 
 **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 

@@ -7,8 +7,10 @@ const { THEMES } = require('../core/themes');
 const { MindMap, createNode } = require('../core/model');
 const { layoutMap } = require('../core/layout');
 const { renderGroup } = require('../core/svg');
+const { MIN_TEXT } = require('../core/contrast');
 
 const CANVAS = '#1c1f26';
+const LIGHT_CANVAS = '#c7c7c7';
 
 function lum(hex) {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -71,5 +73,15 @@ for (const theme of Object.keys(THEMES)) {
     for (const c of edgeStrokes(svg)) assert.ok(ramos.includes(c.toLowerCase()), 'ramo fora da paleta do tema: ' + c);
     const direct = renderGroup(L, { interactive: false, canvas: null });
     assert.strictEqual(direct, svg, 'canvas null deve ser igual a não passar a opção');
+  });
+
+  test(`${theme}: texto sem forma tem contraste ≥ 4,5:1 no canvas claro`, () => {
+    const L = layoutMap(sampleMap(theme), { canvas: LIGHT_CANVAS });
+    const svg = renderGroup(L, { interactive: false, canvas: LIGHT_CANVAS });
+    const fill = textFill(svg, 'Neto');
+    const style = THEMES[theme].levels[2];
+    if (style.fill === 'none' || style.fill === undefined) {
+      assert.ok(contrast(fill, LIGHT_CANVAS) >= MIN_TEXT, `${theme}: texto ${fill} tem ${contrast(fill, LIGHT_CANVAS).toFixed(2)}:1`);
+    }
   });
 }

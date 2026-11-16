@@ -54,7 +54,7 @@ function wrap(text, size, bold, maxW) {
  */
 function layoutMap(map, opts = {}) {
   let theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
-  // se o canvas é escuro (tema Pixel), adapta as cores do tema para ter contraste
+  // adapta as cores do tema para ter contraste no canvas escolhido
   if (opts.canvas) theme = adaptThemeToCanvas(theme, opts.canvas);
   const maxW = opts.maxTextWidth || 260;
   const boxes = new Map();
@@ -62,7 +62,7 @@ function layoutMap(map, opts = {}) {
 
   const measure = (node, level, branch, temp = false) => {
     let st = resolveStyle(theme, level, branch, node.style);
-    // adapta o estilo resolvido se o canvas é escuro
+    // adapta o estilo resolvido para o canvas escolhido
     if (opts.canvas) st = adaptStyleToCanvas(st, opts.canvas, st.branch);
     const lines = wrap(node.title, st.size, st.bold, maxW);
     const tw = Math.max(...lines.map((l) => textWidth(l, st.size, st.bold)));

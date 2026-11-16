@@ -4132,7 +4132,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     "package.json"(exports, module) {
       module.exports = {
         name: "braniac-tablet",
-        version: "0.7.6",
+        version: "0.7.7",
         private: true,
         description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
         scripts: {
@@ -4657,6 +4657,39 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         return dest;
       }
       module.exports = { backupBefore, backupDirFor, listBackups };
+    }
+  });
+
+  // ../core/contrast.js
+  var require_contrast = __commonJS({
+    "../core/contrast.js"(exports, module) {
+      "use strict";
+      var HEX = /^#[0-9a-fA-F]{6}$/;
+      var MIN_GRAPHIC = 3;
+      var MIN_TEXT = 4.5;
+      var isHex = (c) => HEX.test(c || "");
+      function luminance(hex) {
+        const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      }
+      function contrast(a, b) {
+        const x = luminance(a), y = luminance(b);
+        return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+      }
+      function lighten(hex, t) {
+        const ch = (i) => parseInt(hex.slice(i, i + 2), 16);
+        const mix = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, "0");
+        return `#${mix(ch(1))}${mix(ch(3))}${mix(ch(5))}`;
+      }
+      function onCanvas(color, canvas, min = MIN_GRAPHIC) {
+        if (!isHex(color) || !isHex(canvas) || contrast(color, canvas) >= min) return color;
+        for (let t = 0.05; t <= 1.001; t += 0.05) {
+          const c = lighten(color, Math.min(t, 1));
+          if (contrast(c, canvas) >= min) return c;
+        }
+        return "#ffffff";
+      }
+      module.exports = { MIN_GRAPHIC, MIN_TEXT, isHex, luminance, contrast, lighten, onCanvas };
     }
   });
 
@@ -5242,6 +5275,27 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         const rel = map.meta.relations.filter((x) => x.from === id).map((x) => ({ to: x.to, label: x.label || "", kind: "rel" }));
         return [...seq, ...rel];
       }
+      function connect(map, fromId, toId, label = "") {
+        const from = nodeOf(map, fromId);
+        const to = nodeOf(map, toId);
+        if (!from) throw new Error("Passo de sa\xEDda n\xE3o encontrado.");
+        if (!to) throw new Error("Passo de entrada n\xE3o encontrado.");
+        if (fromId === toId) throw new Error("Um passo n\xE3o pode ligar para si mesmo.");
+        const existing = map.meta.relations.find((r) => r.from === fromId && r.to === toId);
+        if (existing) {
+          map._snapshot();
+          existing.label = String(label).slice(0, 60);
+        } else {
+          map._snapshot();
+          const rel = { id: "r" + Date.now() + "-" + Math.random().toString(36).slice(2, 9), from: fromId, to: toId, label: String(label).slice(0, 60) };
+          if (!Array.isArray(map.meta.relations)) map.meta.relations = [];
+          map.meta.relations.push(rel);
+        }
+      }
+      function disconnect(map, fromId, toId) {
+        map._snapshot();
+        map.meta.relations = map.meta.relations.filter((r) => !(r.from === fromId && r.to === toId));
+      }
       function validateFlow(map) {
         const warn = [];
         const starts = findStarts(map);
@@ -5256,8 +5310,8 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
             for (const c of n.children) if (!c.branchLabel) warn.push({ level: "warn", id: c.id, message: `Ramo sem r\xF3tulo ap\xF3s a decis\xE3o "${name}".` });
           } else if (t === "end" && n.children.length) {
             warn.push({ level: "error", id: n.id, message: `O fim "${name}" tem sa\xEDdas; o fim n\xE3o pode ter pr\xF3ximos passos.` });
-          } else if (t !== "end" && n.children.length > 1) {
-            warn.push({ level: "warn", id: n.id, message: `Passo "${name}" com ${n.children.length} pr\xF3ximos; para bifurcar, use uma decis\xE3o.` });
+          } else if (t !== "end" && t !== "decision" && n.children.length > 1) {
+            warn.push({ level: "error", id: n.id, message: `Passo "${name}" com ${n.children.length} pr\xF3ximos filhos; a estrutura n\xE3o \xE9 v\xE1lida. Para bifurcar, use uma decis\xE3o; para caminhos alternativos, use setas extras.` });
           }
           if (t !== "end" && t !== "decision" && isLeaf(n) && !map.meta.relations.some((x) => x.from === n.id)) {
             warn.push({ level: "warn", id: n.id, message: `Passo "${name}" sem sa\xEDda: marque como Fim ou acrescente o pr\xF3ximo passo.` });
@@ -5320,7 +5374,9 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         successors,
         validateFlow,
         listPaths,
-        typeOf
+        typeOf,
+        connect,
+        disconnect
       };
     }
   });
@@ -5485,7 +5541,38 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         for (const k of keys) if (o[k] !== void 0) r[k] = o[k];
         return r;
       }
-      module.exports = { THEMES, getTheme, resolveStyle, sanitizeStyle, sanitizeTheme };
+      function adaptThemeToCanvas(theme, canvas) {
+        if (!canvas || !/^#[0-9a-fA-F]{6}$/.test(canvas)) return theme;
+        const { onCanvas } = require_contrast();
+        const branches = theme.branches.map((c) => onCanvas(c, canvas, 3));
+        const levels = theme.levels.map((base) => {
+          const level = { ...base };
+          if (level.fill && level.fill !== "none" && level.fill !== "branch") {
+            level.fill = onCanvas(level.fill, canvas, 3);
+          }
+          if (level.stroke && level.stroke !== "branch") {
+            level.stroke = onCanvas(level.stroke, canvas, 3);
+          }
+          return level;
+        });
+        return { ...theme, branches, levels };
+      }
+      function adaptStyleToCanvas(style, canvas, branchColor) {
+        if (!canvas || !/^#[0-9a-fA-F]{6}$/.test(canvas)) return style;
+        const { onCanvas } = require_contrast();
+        const s = { ...style };
+        if (s.fill && s.fill !== "none") {
+          s.fill = onCanvas(s.fill, canvas, 3);
+        }
+        if (s.stroke) {
+          s.stroke = onCanvas(s.stroke, canvas, 3);
+        }
+        if (s.branch) {
+          s.branch = onCanvas(s.branch, canvas, 3);
+        }
+        return s;
+      }
+      module.exports = { THEMES, getTheme, resolveStyle, sanitizeStyle, sanitizeTheme, adaptThemeToCanvas, adaptStyleToCanvas };
     }
   });
 
@@ -5585,7 +5672,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
   var require_layout = __commonJS({
     "../core/layout.js"(exports, module) {
       "use strict";
-      var { getTheme, resolveStyle } = require_themes();
+      var { getTheme, resolveStyle, adaptThemeToCanvas, adaptStyleToCanvas } = require_themes();
       var { logoSize } = require_logo();
       var { MARKERS } = require_markers();
       function progressViews(root) {
@@ -5636,12 +5723,14 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
         return lines;
       }
       function layoutMap(map, opts = {}) {
-        const theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
+        let theme = getTheme(opts.theme || map.meta.theme, map.meta.customTheme);
+        if (opts.canvas) theme = adaptThemeToCanvas(theme, opts.canvas);
         const maxW = opts.maxTextWidth || 260;
         const boxes = /* @__PURE__ */ new Map();
         const views = progressViews(map.root);
         const measure = (node, level, branch, temp = false) => {
-          const st = resolveStyle(theme, level, branch, node.style);
+          let st = resolveStyle(theme, level, branch, node.style);
+          if (opts.canvas) st = adaptStyleToCanvas(st, opts.canvas, st.branch);
           const lines = wrap(node.title, st.size, st.bold, maxW);
           const tw = Math.max(...lines.map((l) => textWidth(l, st.size, st.bold)));
           const lh = st.size * 1.25;
@@ -10269,7 +10358,7 @@ ${rewriteLinks(node.notes || "", () => " ")}`.replace(/\[\[[^\]]*\]\]/g, " "));
         for (const b of L.boxes.values()) {
           const s = b.style, n = b.node;
           const onCanvasText = canvas && (s.shape === "underline" || s.shape === "none" && (!s.fill || s.fill === "none"));
-          const ink = onCanvasText ? onDarkCanvas(s.color, canvas, 4.5) : s.color;
+          const ink = onCanvasText ? "#ffffff" : s.color;
           const rim = canvas && !s.stroke && /^#[0-9a-fA-F]{6}$/.test(s.fill || "") && contrast(s.fill, canvas) < 3 ? ' stroke="#9aa3b5" stroke-width="1.5"' : "";
           const tx = b.x + b.markerW + (b.w - b.markerW) / 2;
           let shape = "";
@@ -10390,6 +10479,7 @@ ${renderGroup(L, { logo: true })}
       module.exports = {
         "ai": require_ai(),
         "backup": require_backup(),
+        "contrast": require_contrast(),
         "errorlog": require_errorlog(),
         "flow": require_flow(),
         "flow-export": require_flow_export(),

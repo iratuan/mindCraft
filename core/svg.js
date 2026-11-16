@@ -2,35 +2,10 @@
 const { layoutMap, edgePoints } = require('./layout');
 const { MARKERS } = require('./markers');
 const { logoSize, logoVariant, logoMarkup } = require('./logo');
+const { contrast, luminance, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('./contrast');
 
 const { escapeHtml: esc } = require('./text');
 const REL_COLOR = '#e5484d';
-
-/* Canvas escuro (tema Pixel): as cores dos temas foram pensadas para fundo claro. Aqui cada cor que ficaria
-   invisível sobre o canvas é clareada até atingir o contraste mínimo (WCAG: 4,5:1 para texto, 3:1 para gráficos). */
-function luminance(hex) {
-  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-function contrast(a, b) {
-  const x = luminance(a), y = luminance(b);
-  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
-}
-function lighten(hex, t) {
-  const ch = (i) => parseInt(hex.slice(i, i + 2), 16);
-  const mix = (v) => Math.round(v + (255 - v) * t).toString(16).padStart(2, '0');
-  return `#${mix(ch(1))}${mix(ch(3))}${mix(ch(5))}`;
-}
-/** Devolve a cor (ou um tom mais claro dela) com contraste mínimo sobre o fundo escuro. Cores não hexadecimais ficam como estão. */
-function onDarkCanvas(color, canvas, min) {
-  if (!/^#[0-9a-fA-F]{6}$/.test(color || '') || contrast(color, canvas) >= min) return color;
-  for (let t = 0.05; t <= 1; t += 0.05) {
-    const c = lighten(color, t);
-    if (contrast(c, canvas) >= min) return c;
-  }
-  return '#ffffff';
-}
 
 function edgePath(e, curve) {
   const { a, b, dir } = edgePoints(e);
@@ -61,12 +36,12 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hit
 
   for (const e of L.edges) {
     const w = e.to.style.edgeWidth || theme.line.width[Math.min(e.to.level - 1, theme.line.width.length - 1)];
-    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${canvas ? onDarkCanvas(e.to.style.edge || e.to.branch, canvas, 3) : (e.to.style.edge || e.to.branch)}" stroke-width="${w}" stroke-linecap="round"/>`);
+    out.push(`<path d="${edgePath(e, theme.line.curve)}" fill="none" stroke="${canvas ? onCanvas(e.to.style.edge || e.to.branch, canvas, MIN_GRAPHIC) : (e.to.style.edge || e.to.branch)}" stroke-width="${w}" stroke-linecap="round"/>`);
   }
 
   for (const { rel, geo } of L.relations) {
     const col0 = /^#[0-9a-fA-F]{6}$/.test(rel.color || '') ? rel.color : REL_COLOR;
-    const col = canvas ? onDarkCanvas(col0, canvas, 3) : col0, sel = selectedRel === rel.id;
+    const col = canvas ? onCanvas(col0, canvas, MIN_GRAPHIC) : col0, sel = selectedRel === rel.id;
     const d = `M${geo.a.x},${geo.a.y} Q${geo.c.x},${geo.c.y} ${geo.b.x},${geo.b.y}`;
     const ar = geo.arrow.map((p) => `${p.x},${p.y}`).join(' ');
     out.push(`<g${interactive ? ` data-rel="${esc(rel.id)}" class="rel"` : ''}>`
@@ -79,15 +54,17 @@ function renderGroup(L, { selectedId, selectedIds, selectedRel, interactive, hit
 
   for (const b of L.boxes.values()) {
     const s = b.style, n = b.node;
-    // no canvas escuro: texto sem caixa fica branco (contraste com o canvas); forma sem contorno que se confunde com ele ganha um contorno claro
+    // texto sem caixa precisa contrastar diretamente com o canvas, claro ou escuro
     const onCanvasText = canvas && (s.shape === 'underline' || (s.shape === 'none' && (!s.fill || s.fill === 'none')));
-    const ink = onCanvasText ? '#ffffff' : s.color;   // texto sem moldura sobre o canvas escuro: branco, o de maior contraste
-    // rim: contorno claro para forma sem contorno quando fill fica muito escuro
-    const rim = canvas && !s.stroke && /^#[0-9a-fA-F]{6}$/.test(s.fill || '') && contrast(s.fill, canvas) < 3 ? ' stroke="#9aa3b5" stroke-width="1.5"' : '';
+    const textColor = onCanvasText && luminance(canvas) < 0.5 ? '#ffffff' : s.color;
+    const ink = onCanvasText ? onCanvas(textColor, canvas, MIN_TEXT) : s.color;
+    // rim: contorno contrastante para forma sem contorno quando o preenchimento se confunde com o canvas
+    const rim = canvas && !s.stroke && /^#[0-9a-fA-F]{6}$/.test(s.fill || '') && contrast(s.fill, canvas) < MIN_GRAPHIC
+      ? ` stroke="${onCanvas('#9aa3b5', canvas, MIN_GRAPHIC)}" stroke-width="1.5"` : '';
     const tx = b.x + b.markerW + (b.w - b.markerW) / 2;
     let shape = '';
     if (s.shape === 'underline') {
-      shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${canvas ? onDarkCanvas(s.stroke || b.branch, canvas, 3) : (s.stroke || b.branch)}" stroke-width="${s.strokeWidth || 2}"/>`;
+      shape = `<line x1="${b.x}" y1="${b.y + b.h}" x2="${b.x + b.w}" y2="${b.y + b.h}" stroke="${canvas ? onCanvas(s.stroke || b.branch, canvas, MIN_GRAPHIC) : (s.stroke || b.branch)}" stroke-width="${s.strokeWidth || 2}"/>`;
     } else if (s.shape === 'none') {
       shape = s.fill && s.fill !== 'none' ? `<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="${s.fill}"/>` : '';   // "sem forma" do Mindomo: só o texto (e um fundo, se houver)
     } else if (s.shape === 'ellipse') {

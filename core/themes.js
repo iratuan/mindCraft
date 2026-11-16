@@ -145,20 +145,20 @@ function pick(o, keys) {
   return r;
 }
 
-/** Canvas escuro (tema Pixel): adapta um tema para ter contraste sobre o fundo escuro. */
+/** Adapta um tema para ter contraste sobre um canvas claro ou escuro. */
 function adaptThemeToCanvas(theme, canvas) {
   if (!canvas || !/^#[0-9a-fA-F]{6}$/.test(canvas)) return theme;
   const { onCanvas } = require('./contrast');
-  // ramos clareados (contraste gráfico ≥ 3:1)
+  // ramos com contraste gráfico ≥ 3:1
   const branches = theme.branches.map((c) => onCanvas(c, canvas, 3));
   // estilos de nível adaptados (fills e strokes)
   const levels = theme.levels.map((base) => {
     const level = { ...base };
-    // fill vira mais claro se não for 'none' ou 'branch'
+    // adapta o preenchimento se não for 'none' ou 'branch'
     if (level.fill && level.fill !== 'none' && level.fill !== 'branch') {
       level.fill = onCanvas(level.fill, canvas, 3);
     }
-    // stroke vira mais claro
+    // adapta o contorno
     if (level.stroke && level.stroke !== 'branch') {
       level.stroke = onCanvas(level.stroke, canvas, 3);
     }
@@ -167,16 +167,16 @@ function adaptThemeToCanvas(theme, canvas) {
   return { ...theme, branches, levels };
 }
 
-/** Adapta um estilo resolvido (de resolveStyle) para o canvas escuro. */
+/** Adapta um estilo resolvido (de resolveStyle) para o canvas. */
 function adaptStyleToCanvas(style, canvas, branchColor) {
   if (!canvas || !/^#[0-9a-fA-F]{6}$/.test(canvas)) return style;
   const { onCanvas } = require('./contrast');
   const s = { ...style };
-  // fill vira mais claro
+  // adapta o preenchimento
   if (s.fill && s.fill !== 'none') {
     s.fill = onCanvas(s.fill, canvas, 3);
   }
-  // stroke vira mais claro (menos rigoroso que texto: 3:1)
+  // adapta o contorno (menos rigoroso que texto: 3:1)
   if (s.stroke) {
     s.stroke = onCanvas(s.stroke, canvas, 3);
   }
