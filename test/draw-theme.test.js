@@ -2,9 +2,9 @@
 // Tema "Desenho (à mão)": monocromático, flat (sem sombras nem gradientes) e com traço de mão.
 const test = require('node:test');
 const assert = require('node:assert');
-const { THEMES, getTheme } = require('../core/themes');
-const { MindMap, createNode } = require('../core/model');
-const { toSVG } = require('../core/svg');
+const { THEMES, getTheme } = require('../core/components/themes');
+const { MindMap, createNode } = require('../core/components/model');
+const { toSVG } = require('../core/components/svg');
 
 const sample = () => {
   const m = new MindMap(createNode('Ideia central'));

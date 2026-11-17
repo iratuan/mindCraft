@@ -11,8 +11,8 @@
  *
  * Só usa dados puros (sem fs/crypto), para rodar também no navegador/tablet.
  */
-const { buildGraph } = require('./graph');
-const { norm, rewriteLinks, plainLinks } = require('./links');
+const { buildGraph } = require('../components/graph');
+const { norm, rewriteLinks, plainLinks } = require('../components/links');
 
 const FOLDER = 'MindCraft';
 const ID_KEY = 'mindcraft-id';

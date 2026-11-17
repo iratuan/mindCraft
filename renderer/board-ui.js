@@ -1,5 +1,5 @@
 'use strict';
-const { classifyStroke } = require(path.join(core, 'shapes'));   // reconhecimento de traço da caneta (core/shapes.js)
+const { classifyStroke } = require(path.join(core, 'components', 'shapes'));   // reconhecimento de traço da caneta (core/shapes.js)
 /* Lousa de resolução: uma folha quadriculada para escrever e resolver exercícios com a caneta (ou mouse). Abre ao lado do PDF.
    Ferramentas com ícones planos na cor do tema da interface: caneta, marca-texto, borracha, cores, espessuras, desfazer,
    refazer, páginas e limpar página. O traço é suavizado por curvas que passam pelos pontos médios (sem cantos duros).

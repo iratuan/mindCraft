@@ -2,7 +2,7 @@
 // Revisão espaçada: intervalos fixos 1-7-15-30-60-120 dias, contagem de revisões de hoje e atrasadas, aviso diário.
 const test = require('node:test');
 const assert = require('node:assert');
-const R = require('../core/revisao');
+const R = require('../core/services/revisao');
 
 test('datas: chave local AAAA-MM-DD e soma de dias sem erro de fuso', () => {
   assert.strictEqual(R.addDays('2026-02-27', 1), '2026-02-28');
@@ -60,8 +60,8 @@ test('aviso diário: só quando há revisões e ainda não avisou hoje', () => {
 });
 
 test('persistência: a revisão sobrevive a salvar e reabrir o .mom, e lixo no arquivo vira "sem revisão"', () => {
-  const { MindMap, createNode } = require('../core/model');
-  const { readMom, writeMom } = require('../core/mom');
+  const { MindMap, createNode } = require('../core/components/model');
+  const { readMom, writeMom } = require('../core/formats/mom');
   const m = new MindMap(createNode('Concurso'));
   m.addChild(m.root.id, 'Direito');
   const d = m.root.children[0];

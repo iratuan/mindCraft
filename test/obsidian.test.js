@@ -1,8 +1,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { buildObsidianVault, safeName, fingerprint } = require('../core/obsidian');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildObsidianVault, safeName, fingerprint } = require('../core/services/obsidian');
 
 const T = (m, title) => { let r; m.walk((n) => { if (n.title === title && !r) r = n; }); return r; };
 const noteOf = (files, title, mapName) => files.find((f) => f.path === `MindCraft/${mapName}/${title}.md`);
@@ -103,7 +103,7 @@ test('mapa vazio ou sem tópicos não gera notas', () => {
 });
 
 test('obsidianOpenUrl: codifica o caminho inteiro (espaços, acentos, #) e recusa pasta vazia', () => {
-  const { obsidianOpenUrl } = require('../core/obsidian');
+  const { obsidianOpenUrl } = require('../core/services/obsidian');
   assert.equal(obsidianOpenUrl('C:\Estudos\Meu vault #1'), 'obsidian://open?path=' + encodeURIComponent('C:\Estudos\Meu vault #1'));
   assert.ok(obsidianOpenUrl('/home/ana/Concursos ç').includes('%C3%A7'), 'acentos viram UTF-8 codificado');
   assert.throws(() => obsidianOpenUrl('  '), /Escolha primeiro/);

@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { logError } = require('../core/errorlog');
+const { logError } = require('../core/services/errorlog');
 
 test('grava uma linha por erro, com data e mensagem em uma linha só', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mc-log-'));

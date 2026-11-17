@@ -1,10 +1,10 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { readMom, writeMom } = require('../core/mom');
-const { layoutMap } = require('../core/layout');
-const { THEMES } = require('../core/themes');
+const { MindMap, createNode } = require('../core/components/model');
+const { readMom, writeMom } = require('../core/formats/mom');
+const { layoutMap } = require('../core/components/layout');
+const { THEMES } = require('../core/components/themes');
 
 function sample() {
   const m = new MindMap(createNode('Raiz'));
@@ -34,6 +34,20 @@ test('round-trip .mom preserva árvore, notas e ordem', () => {
   assert.deepEqual(back.root.children.map((c) => c.title), ['A', 'B & <C>']);
   assert.equal(back.root.children[1].notes, 'nota\nlinha 2');
   assert.equal(back.root.children[0].children[0].title, 'A1');
+});
+
+test('tópicos flutuantes são criados, desfeitos e preservados no .mom sem entrar na árvore', () => {
+  const m = sample();
+  const floating = m.addFloating('Ideia independente');
+  assert.equal(m.find(floating.id).parent, null);
+  assert.deepEqual(m.meta._momFloating.map((f) => f.node.title), ['Ideia independente']);
+  const back = readMom(writeMom(m));
+  assert.equal(back.find(floating.id).parent, null);
+  assert.equal(back.meta._momFloating[0].node.title, 'Ideia independente');
+  assert.ok(m.undo());
+  assert.equal(m.meta._momFloating, undefined);
+  assert.ok(m.redo());
+  assert.equal(m.find(floating.id).node.title, 'Ideia independente');
 });
 
 test('layout: sem sobreposição entre irmãos, em todos os temas', () => {

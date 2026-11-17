@@ -1,8 +1,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { buildGraph } = require('../core/graph');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildGraph } = require('../core/components/graph');
 
 // Peso do tópico (tamanho do ponto na rede 3D) = filhos diretos + nota + ligações (links e setas)
 test('peso: filhos diretos, nota e ligações entram na conta', () => {

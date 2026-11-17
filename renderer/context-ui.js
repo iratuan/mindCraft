@@ -14,7 +14,7 @@ const NO_MAP_MSG = 'Abra ou crie um mapa para usar esta ferramenta.';
  *  Nunca é salvo: não está em nenhuma biblioteca nem em nenhum arquivo. */
 let _emptyStub = null;
 function emptyMapStub() {
-  if (!_emptyStub) { const { MindMap, createNode } = require(path.join(core, 'model')); _emptyStub = new MindMap(createNode(''), { name: '' }); }
+  if (!_emptyStub) { const { MindMap, createNode } = require(path.join(core, 'components', 'model')); _emptyStub = new MindMap(createNode(''), { name: '' }); }
   return _emptyStub;
 }
 function needMap() {
@@ -65,7 +65,7 @@ function syncNoMapUI() {
   const tabMap = $('#tabMap');
   if (tabMap) tabMap.hidden = true;
   // ferramentas que dependem do mapa (edição, rede, painel de estudos e as mídias que alimentam o mapa): desabilitadas sem mapa
-  for (const a of ['child', 'sibling', 'delete', 'moveUp', 'moveDown', 'relate', 'fit', 'graph', 'dash', 'pdf']) setToolBtn($(`[data-act="${a}"]`), false, NO_MAP_TITLE);
+  for (const a of ['child', 'sibling', 'addFloating', 'delete', 'moveUp', 'moveDown', 'relate', 'fit', 'graph', 'dash', 'pdf']) setToolBtn($(`[data-act="${a}"]`), false, NO_MAP_TITLE);
   // Início só faz sentido com a tela inicial aberta: sem mapa, não há para onde voltar
   setToolBtn($('[data-act="home"]'), home, home ? '' : 'Tela inicial');
   for (const id of ['#search', '#closeMapBtn', '#zoom', '#zoomIn', '#zoomOut']) { const el = $(id); if (el) el.disabled = true; }
@@ -96,6 +96,7 @@ function syncContextUI() {
 
   // 1. Atualização dos botões do trilho lateral (#rail)
   setToolBtn($('[data-act="child"]'), !!sel, sel ? 'Novo tópico filho (Tab)' : pick('Selecione um tópico para criar filho'));
+  setToolBtn($('[data-act="addFloating"]'), inUse, inUse ? 'Novo tópico flutuante, independente da árvore' : NO_MAP_TITLE);
   setToolBtn(
     $('[data-act="sibling"]'),
     !!sel && !isRoot && !multi,

@@ -5,9 +5,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const AdmZip = require('adm-zip');
-const { MindMap, createNode } = require('../core/model');
-const { buildGraph, neighborhood } = require('../core/graph');
-const { writeMom, readMom } = require('../core/mom');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildGraph, neighborhood } = require('../core/components/graph');
+const { writeMom, readMom } = require('../core/formats/mom');
 
 function mk() {
   const m = new MindMap(createNode('Direito'));

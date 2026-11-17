@@ -4,8 +4,8 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { migrateLegacyLinks, parseLinks } = require('../core/links');
-const { countForeignNotes, writeObsidianVault } = require('../core/obsidian-write');
+const { migrateLegacyLinks, parseLinks } = require('../core/components/links');
+const { countForeignNotes, writeObsidianVault } = require('../core/services/obsidian-write');
 
 const maps = new Set(['direito administrativo', 'mapa b']);
 const hasMap = (n) => maps.has(n.toLowerCase());

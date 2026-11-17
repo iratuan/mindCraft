@@ -1,9 +1,8 @@
 'use strict';
 // Markdown das notas: renderizador próprio, pequeno e SEGURO (todo texto é escapado; só gera um conjunto fixo de tags),
 // conversor para texto simples (Word/PDF) e alternância de tarefas. O texto da nota continua sendo Markdown puro.
-const { rewriteLinks, plainLinks } = require('./links');
-
-const { escapeHtml: esc } = require('./text');
+const { rewriteLinks, plainLinks } = require('../components/links');
+const { escapeHtml: esc } = require('../utils/text');
 const SAFE_URL = /^(https?:\/\/|mailto:)[^\s<>"']+$/i;
 const FENCE = /^\s{0,3}(```|~~~)/;
 const LIST = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;

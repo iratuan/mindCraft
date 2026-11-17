@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const start = require('./harness');
-const { writeMom } = require('../core/mom');
+const { writeMom } = require('../core/formats/mom');
 const { openLibrary } = require('../core/library');
 const { TODAY, concurso, d } = require('./fixtures');
 

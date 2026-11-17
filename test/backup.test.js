@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { backupBefore, backupDirFor, listBackups } = require('../core/backup');
+const { backupBefore, backupDirFor, listBackups } = require('../core/services/backup');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mc-backup-'));
 

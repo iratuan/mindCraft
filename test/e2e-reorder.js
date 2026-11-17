@@ -84,7 +84,7 @@ const start = require('./harness');
 
   await t('a ordem é gravada: salvar e reabrir o mapa mantém a nova ordem; nenhum erro de console', async () => {
     await build(); await dragTo('D', 'A', 0.1); eq(await order('Raiz'), 'D,A,B,C');
-    const { writeMom, readMom } = require('../core/mom'); const json = await js('JSON.stringify(map.toJSON())'); const { MindMap } = require('../core/model'); const m = MindMap.fromJSON(JSON.parse(json)); const back = readMom(writeMom(m));
+    const { writeMom, readMom } = require('../core/formats/mom'); const json = await js('JSON.stringify(map.toJSON())'); const { MindMap } = require('../core/components/model'); const m = MindMap.fromJSON(JSON.parse(json)); const back = readMom(writeMom(m));
     eq(back.root.children.map((n) => n.title), ['D', 'A', 'B', 'C']); eq(c.errors, [], 'erros de console');
   });
   await c.finish();

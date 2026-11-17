@@ -1,9 +1,9 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { parseLinks } = require('../core/links');
-const { buildObsidianVault } = require('../core/obsidian');
+const { MindMap, createNode } = require('../core/components/model');
+const { parseLinks } = require('../core/components/links');
+const { buildObsidianVault } = require('../core/services/obsidian');
 
 const T = (m, t) => { let r; m.walk((n) => { if (n.title === t && !r) r = n; }); return r; };
 const noteOf = (files, title, mapName) => files.find((f) => f.path === `MindCraft/${mapName}/${title}.md`);

@@ -12,7 +12,7 @@ const STEPS = [
   'e2e.js', 'e2e-study.js', 'e2e-network.js', 'e2e-assistant.js', 
   'e2e-notes.js', 'e2e-library.js', 'e2e-pdf.js', 'e2e-review.js', 'e2e-errors.js', 'e2e-perf.js', 'e2e-monkey.js', 'e2e-home.js', 'e2e-simulados.js',
   'e2e-hostile.js', 'e2e-failures.js', 'e2e-layout.js', 'e2e-a11y.js', 'e2e-deep.js', 'e2e-questions.js', 'e2e-notify.js',
-  'e2e-web.js', 'e2e-edit.js', 'e2e-tablet.js', 'e2e-sync.js', 'e2e-sync-web.js', 'e2e-mindomo.js', 'e2e-graph.js', 'e2e-reorder.js', 'e2e-saveas.js', 'e2e-manual.js', 'e2e-split.js', 'e2e-homecards.js', 'e2e-backupdest.js', 'e2e-paste.js',
+  'e2e-web.js', 'e2e-edit.js', 'e2e-tablet.js', 'e2e-sync.js', 'e2e-sync-web.js', 'e2e-mindomo.js', 'e2e-soltos.js', 'e2e-graph.js', 'e2e-reorder.js', 'e2e-saveas.js', 'e2e-manual.js', 'e2e-split.js', 'e2e-homecards.js', 'e2e-backupdest.js', 'e2e-paste.js',
 ];
 const only = process.argv[2] ? new RegExp(process.argv[2]) : null;
 const electron = require('electron');

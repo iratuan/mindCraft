@@ -3,11 +3,11 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const AdmZip = require('adm-zip');
-const { readMom, writeMom } = require('../core/mom');
-const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml, parseFont } = require('../core/mindomo');
-const { sanitizeTheme, sanitizeStyle, getTheme, resolveStyle } = require('../core/themes');
-const { layoutMap } = require('../core/layout');
-const { toSVG } = require('../core/svg');
+const { readMom, writeMom } = require('../core/formats/mom');
+const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml, parseFont } = require('../core/formats/mindomo');
+const { sanitizeTheme, sanitizeStyle, getTheme, resolveStyle } = require('../core/components/themes');
+const { layoutMap } = require('../core/components/layout');
+const { toSVG } = require('../core/components/svg');
 const { canonical } = require('./canonical');
 
 const { TID, themes, node, mindomo } = require('./mindomo-fixture');

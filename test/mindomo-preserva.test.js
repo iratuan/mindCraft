@@ -4,7 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const AdmZip = require('adm-zip');
-const { readMom, writeMom } = require('../core/mom');
+const { readMom, writeMom } = require('../core/formats/mom');
 
 function momFixture() {
   const z = new AdmZip();

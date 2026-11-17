@@ -4,7 +4,7 @@
  * então não há bloqueio de CORS). A chave fica no armazenamento seguro do aparelho (Keystore do Android), nunca no mapa.
  */
 const { SecureStorage } = require('@aparajita/capacitor-secure-storage');
-const ai = require('../../core/ai');
+const ai = require('../../core/services/ai');
 
 const TIMEOUT_MS = 60000;
 const providerOf = (p) => (ai.PROVIDERS[p] ? p : ai.DEFAULT_PROVIDER);

@@ -21,10 +21,20 @@ function copyDir(from, to) {
   }
 }
 
-/** Registro do núcleo: cada módulo de core/ vira um objeto que a interface pode pedir pelo nome (require(path.join(core, 'model'))). */
+/** Registro por nome público: varre as pastas organizadas mantendo a chave usada pela interface. */
 function writeCoreRegistry() {
-  const names = fs.readdirSync(path.join(ROOT, 'core')).filter((f) => f.endsWith('.js')).map((f) => f.slice(0, -3)).sort();
-  const lines = names.map((n) => `  ${JSON.stringify(n)}: require(${JSON.stringify(path.join(ROOT, 'core', n + '.js').replace(/\\/g, '/'))}),`);
+  const files = [];
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(file);
+      else if (entry.name.endsWith('.js')) files.push(file);
+    }
+  };
+  visit(path.join(ROOT, 'core'));
+  const names = files.map((f) => path.basename(f, '.js')).sort();
+  if (new Set(names).size !== names.length) throw new Error('Há nomes de módulos duplicados nas pastas de core/.');
+  const lines = files.map((f) => `  ${JSON.stringify(path.basename(f, '.js'))}: require(${JSON.stringify(f.replace(/\\/g, '/'))}),`);
   fs.mkdirSync(BUILD, { recursive: true });
   fs.writeFileSync(path.join(BUILD, 'core-registry.js'), `'use strict';\n// Gerado por tablet/scripts/build-www.js: não editar.\nmodule.exports = {\n${lines.join('\n')}\n};\n`);
   return names.length;

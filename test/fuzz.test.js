@@ -4,13 +4,13 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const AdmZip = require('adm-zip');
-const { MindMap, createNode } = require('../core/model');
-const { readMom, writeMom } = require('../core/mom');
-const { MARKERS } = require('../core/markers');
-const { mdToHtml, mdToPlain, toggleTask } = require('../core/markdown');
-const { sanitizeRefs, sanitizePdfs } = require('../core/pdfrefs');
-const { buildGraph } = require('../core/graph');
-const { toSVG } = require('../core/svg');
+const { MindMap, createNode } = require('../core/components/model');
+const { readMom, writeMom } = require('../core/formats/mom');
+const { MARKERS } = require('../core/components/markers');
+const { mdToHtml, mdToPlain, toggleTask } = require('../core/formats/markdown');
+const { sanitizeRefs, sanitizePdfs } = require('../core/components/pdfrefs');
+const { buildGraph } = require('../core/components/graph');
+const { toSVG } = require('../core/components/svg');
 const { canonical } = require('./canonical');
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }

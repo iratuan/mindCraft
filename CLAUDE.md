@@ -27,7 +27,7 @@ Detalhes: `docs/TESTING.md`. Receitas passo a passo: `.claude/skills/` (release,
 
 ## Arquitetura em 30 segundos (completo em `docs/ARCHITECTURE.md`)
 ```
-core/        Regras de negócio PURAS (CommonJS, sem Electron/DOM). Roda no Node E no navegador.   ← onde a lógica nova deve nascer
+core/        Regras de negócio PURAS (CommonJS, sem Electron/DOM), organizadas em components/, services/, formats/ e utils/.
 electron/    Processo principal do desktop (janela, menus, diálogos, notificações) — fino.
 renderer/    Interface: scripts clássicos (escopo global compartilhado) + React por "fatias" (renderer/react). layout-ui.js = painel lateral recolhível e divisores.
 platform/web Emula o Electron/Node na web: fs virtual (IndexedDB), SQLite (sql.js), zip, ipc, toque, notificações nativas.
@@ -38,10 +38,10 @@ test/        unitários (*.test.js) · e2e (e2e-*.js, Electron real) · QA (qa-t
 Dependências só **para baixo**: `renderer → core`, `platform → core`, `electron → core`. `core` nunca importa nada de cima (teste de arquitetura garante).
 
 ## Armadilhas que já custaram caro (leia antes de mexer)
-- **Módulo novo em `core/` precisa entrar em `MODULES` (`tools/build-web-core.js`)**, senão o app **quebra no tablet** ("Módulo indisponível"). `test/architecture.test.js` pega isso.
+- Módulos do núcleo ficam em `core/components/`, `core/services/`, `core/formats/` ou `core/utils/`; os arquivos na raiz de `core/` são apenas fachadas de compatibilidade.
 - Os scripts de `renderer/*.js` compartilham **um único escopo global** (`map`, `selectedId`, `pan`, `render`…). A camada `platform/` NÃO lê essas variáveis: usa a fachada **`window.MCView`** (fim de `renderer.js`).
-- **Todo texto do usuário que vira HTML/SVG passa por `escapeHtml` (`core/text.js`).** Nunca interpole título/nota crua.
-- `.mom` do Mindomo tem formatação própria: lida em `core/mindomo.js` na LEITURA; o original fica em `_mom`/`_momDoc`/`_momThemes` e é regravado intacto. Não "normalize" o que o MindCraft não entende.
+- **Todo texto do usuário que vira HTML/SVG passa por `escapeHtml` (`core/utils/text.js`).** Nunca interpole título/nota crua.
+- `.mom` do Mindomo tem formatação própria: lida em `core/formats/mindomo.js` na LEITURA; o original fica em `_mom`/`_momDoc`/`_momThemes` e é regravado intacto. Não "normalize" o que o MindCraft não entende.
 - **Emulador Android ligado derruba testes do desktop** (CPU/GPU): desligue (`adb emu kill`) antes de `npm run e2e`/`qa`; ligue só para a bateria Android. Não rode nada em paralelo à bateria Android.
 - `hashOf` (sincronização) usa a forma NORMALIZADA `readMom(writeMom(mapa))`: a 1ª ida e volta pelo `.mom` acrescenta campos internos.
 - `viewport-fit=cover` faz o Capacitor deixar o app **sob** as barras do Android: não use. Responsividade da rede usa **container query** (largura da própria rede), não a da janela.
@@ -56,7 +56,7 @@ Dependências só **para baixo**: `renderer → core`, `platform → core`, `ele
 ## Convenções
 - Comentários e mensagens em português, explicando **por quê** (não o quê). Funções curtas; ≤ ~160 colunas em código novo (há trechos antigos mais longos; o teto duro é 450).
 - Limites de tamanho de arquivo (testados): `core` ≤ 600 linhas, `renderer/*.js` ≤ 1000, `renderer/react` ≤ 500, `electron` ≤ 400. Passou? Extraia uma responsabilidade.
-- Erros esperados do usuário viram mensagem pt-BR; erros inesperados vão para o log (`core/errorlog.js`) e nunca derrubam o app.
+- Erros esperados do usuário viram mensagem pt-BR; erros inesperados vão para o log (`core/services/errorlog.js`) e nunca derrubam o app.
 - Antes de commit: `npm run check`. Commit termina com a linha `Co-Authored-By` (ver `docs/CONTRIBUTING.md`). Nunca versionar `tablet/keystore`, `node_modules`, `dist`, `_extracted`, `*.apk`, `*.exe`.
 
 ## Estrutura-alvo e próximas tarefas

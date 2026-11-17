@@ -2,7 +2,7 @@
 // Reconhecimento de traço da caneta: reta, ângulo reto, retângulo, elipse; curva suave e rabisco ficam como estão.
 const test = require('node:test');
 const assert = require('node:assert');
-const { classifyStroke } = require('../core/shapes');
+const { classifyStroke } = require('../core/components/shapes');
 
 const seg = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => ({ x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n }));
 const join = (...parts) => parts.flatMap((p, i) => (i ? p.slice(1) : p));

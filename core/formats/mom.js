@@ -1,12 +1,12 @@
 'use strict';
 const fs = require('fs');
 const AdmZip = require('adm-zip');
-const { MindMap, createNode, newId } = require('./model');
-const { sanitizeStyle, sanitizeTheme, THEMES } = require('./themes');
+const { MindMap, createNode, newId } = require('../components/model');
+const { sanitizeStyle, sanitizeTheme, THEMES } = require('../components/themes');
 const { convertTheme, convertNodeStyle, htmlToMarkdown, markdownToHtml } = require('./mindomo');
-const { MARKERS } = require('./markers');
-const { sanitizePdfs, sanitizeRefs } = require('./pdfrefs');
-const { sanitizeReview } = require('./revisao');
+const { MARKERS } = require('../components/markers');
+const { sanitizePdfs, sanitizeRefs } = require('../components/pdfrefs');
+const { sanitizeReview } = require('../services/revisao');
 
 // Limites contra arquivos corrompidos ou maliciosos (o .mom é um ZIP vindo de fora).
 const MAX_ENTRY_BYTES = 64 * 1024 * 1024;

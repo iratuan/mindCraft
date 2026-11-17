@@ -4,10 +4,10 @@
  * Regras puras, sem Electron. Peso = prioridade dos marcadores (1 > 2 > 3; sem marcador = 0). Com "ordenar por peso", os irmãos
  * mais importantes vêm primeiro (a ordenação é estável: o restante mantém a ordem do mapa).
  */
-const { parseLinks } = require('./links');
+const { parseLinks } = require('../components/links');
 const { mdToHtml } = require('./markdown');
-const { MARKERS } = require('./markers');
-const { escapeHtml: esc } = require('./text');
+const { MARKERS } = require('../components/markers');
+const { escapeHtml: esc } = require('../utils/text');
 const { printCss, weightClass } = require('./print-style');
 
 const WEIGHT = { p1: 3, p2: 2, p3: 1 };

@@ -3,11 +3,11 @@
 // e o limite (MAX_DEPTH) precisa barrar criação/movimentação/colagem sem corromper nada.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { MindMap, createNode, MAX_DEPTH } = require('../core/model')
-const { toSVG } = require('../core/svg');;
-const { writeMom, readMom } = require('../core/mom');
-const { layoutMap } = require('../core/layout');
-const { buildGraph } = require('../core/graph');
+const { MindMap, createNode, MAX_DEPTH } = require('../core/components/model')
+const { toSVG } = require('../core/components/svg');;
+const { writeMom, readMom } = require('../core/formats/mom');
+const { layoutMap } = require('../core/components/layout');
+const { buildGraph } = require('../core/components/graph');
 
 const TODAY = '2026-10-20';
 /** Corrente de `n` níveis abaixo da raiz, criada pela API pública (respeita o limite). */

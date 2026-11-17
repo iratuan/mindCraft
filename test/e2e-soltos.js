@@ -1,6 +1,5 @@
 'use strict';
-// Tópicos soltos do Mindomo (0.5.0): aparecem à direita do mapa, só para leitura; "Trazer tópicos soltos para o mapa" os torna filhos
-// da raiz; Ctrl+Z desfaz tudo; e o arquivo regravado mantém o id de cada tópico.
+// Tópicos independentes do Mindomo aparecem à direita; podem ser editados, excluídos ou trazidos para a árvore.
 const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
@@ -32,13 +31,22 @@ function mindomoFile(dir) {
   const c = await start('MindCraft e2e — tópicos soltos do Mindomo');
   const { js, wait, eq, ok, t, TMP } = c;
   fs.mkdirSync(SHOTS, { recursive: true });
+  await c.waitFor(() => js(`document.getElementById('splash').hidden`));
+  const clickSel = async (sel) => {
+    const p = await js(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+    const x = Math.round(p.x), y = Math.round(p.y);
+    c.win.webContents.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 });
+    c.win.webContents.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 });
+    await wait(300);
+  };
   const file = mindomoFile(TMP);
   await js(`openPath(${JSON.stringify(file)})`);
   await c.waitFor(() => js(`filePath === ${JSON.stringify(file)}`)); await wait(400);
 
-  await t('ao abrir: o solto aparece à direita do mapa (só para leitura) e não vira nó clicável', async () => {
+  await t('ao abrir: o solto aparece à direita como tópico independente selecionável', async () => {
     eq(await js(`(map.meta._momFloating || []).length`), 1, 'um tópico solto guardado');
-    eq(await js(`document.querySelectorAll('#svg .node').length`), 2, 'só a árvore principal (raiz + filho) é clicável');
+    eq(await js(`document.querySelectorAll('#svg .node').length`), 4, 'raiz, filho e subárvore solta são selecionáveis');
+    eq(await js(`map.find('flutu0000000000000000000000000003').parent`), null, 'mantém-se fora da árvore');
     ok(await js(`/Tópico solto/.test(document.querySelector('#svg').textContent)`), 'o solto aparece desenhado');
     ok(await js(`/soltos/.test(document.querySelector('#status').textContent)`), 'avisa na barra de status');
   });
@@ -49,6 +57,20 @@ function mindomoFile(dir) {
   });
   await c.shot(path.join(SHOTS, '04-topicos-soltos-a-direita.png'));
 
+  await t('Novo tópico flutuante fica visível na barra e é salvo fora da árvore', async () => {
+    const state = await js(`(() => { const b = document.querySelector('[data-act="addFloating"]'); const r = b.getBoundingClientRect(); return { disabled: b.disabled, visible: r.width > 0 && r.height > 0, x: r.left + r.width / 2, y: r.top + r.height / 2, hit: document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.outerHTML.slice(0, 100), focus: workspaceFocus, inUse: mapInUse() }; })()`);
+    ok(state.visible && !state.disabled, `ação precisa estar visível e habilitada: ${JSON.stringify(state)}`);
+    await clickSel('[data-act="addFloating"]');
+    const count = await js(`map.meta._momFloating.length`);
+    eq(count, 2, `novo tópico independente após clique real (${JSON.stringify(state)})`);
+    const id = await js(`selectedId`);
+    eq(await js(`map.find(${JSON.stringify(id)}).parent`), null, 'sem pai na árvore');
+    ok(await js(`document.querySelector('#svg').textContent.includes('Tópico flutuante')`), 'desenhado no mapa');
+    await c.shot(path.join(__dirname, '..', 'docs', 'evidencias', 'topico-flutuante.png'));
+    await js(`act.undo()`); await wait(200);
+    eq(await js(`map.meta._momFloating.length`), 1, 'desfazer remove apenas o tópico criado');
+  });
+
   await t('Trazer tópicos soltos: vira filho da raiz, aparece como nó clicável, e Ctrl+Z desfaz tudo', async () => {
     await js(`act.attachFloating()`); await wait(300);
     eq(await js(`(map.meta._momFloating || []).length`), 0, 'nenhum solto restante');
@@ -56,7 +78,7 @@ function mindomoFile(dir) {
     eq(await js(`document.querySelectorAll('#svg .node').length`), 4, 'quatro nós clicáveis agora');
     await js(`act.undo()`); await wait(300);
     eq(await js(`(map.meta._momFloating || []).length`), 1, 'o desfazer devolve o solto');
-    eq(await js(`!map.find('flutu0000000000000000000000000003')`), true, 'e o nó sai da árvore');
+    eq(await js(`map.find('flutu0000000000000000000000000003').parent`), null, 'e o tópico volta a ficar independente');
   });
 
   await t('salvar depois de trazer: o arquivo mantém o mesmo id de cada tópico', async () => {

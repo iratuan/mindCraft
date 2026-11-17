@@ -40,13 +40,12 @@ Verificadas por `test/architecture.test.js` (sem ciclos em `core/`, sem DOM/Elec
 
 | Grupo | Módulos | Papel |
 |---|---|---|
-| Modelo | `model`, `markers`, `themes`, `layout`, `svg`, `graph-labels` | árvore de tópicos, estilos, desenho (SVG puro), posicionamento de rótulos |
-| Formatos | `mom`, `mindomo`, `import`, `csv`, `edital`, `markdown`, `export`, `ics`, `obsidian`, `vault` | ler/gravar `.mom` (compatível), formatação do Mindomo, importações/exportações |
-| Estudo | `study`, `planner`, `simulados`, `bancas`, `report`, `notify`, `settings` | revisão espaçada, questões por banca/ano, erros, metas, simulados, relatórios, aviso diário |
-| Dados | `library`, `backup`, `errorlog`, `pdfrefs` | biblioteca SQLite (transações, versões, lixeira), cópias, log |
-| Rede de conhecimento | `links`, `mentions`, `graph`, `forcelayout`, `graph-labels` | links `[[…]]`, grafo, layout por componentes, rótulos |
-| Sincronização | `sync` (motor), `sync-folder`, `sync-drive`, `oauth-device`, `net-node` | decide o que enviar/receber; provedores; login por código |
-| Utilitários | `text` (`escapeHtml`) | segurança de texto compartilhada |
+| `components/` | `model`, `pdfrefs`, `markers`, `themes`, `contrast`, `layout`, `svg`, `logo`, `shapes`, `flow`, `flow-layout`, `graph`, `graph-labels`, `links`, `mentions`, `forcelayout` | modelo, desenho, fluxogramas e rede de conhecimento; lógica pura, não componentes React. `model.addFloating()` cria uma raiz independente para tópicos flutuantes. |
+| `services/` | `ai`, `backup`, `errorlog`, `obsidian`, `obsidian-write`, `revisao`, `vault` | serviços da aplicação e integrações |
+| `formats/` | `mom`, `mindomo`, `markdown`, `drawio`, `flow-export`, `study-export`, `print-style` | leitura, gravação e exportação de formatos/documentos |
+| `utils/` | `text` (`escapeHtml`) | utilitários compartilhados |
+
+Os imports existentes de `core/<módulo>.js` continuam funcionando por fachadas na raiz; novos imports internos devem apontar diretamente para a pasta responsável. O teste de arquitetura verifica as dependências entre os módulos organizados.
 
 Módulos "mais dependidos" (mudar com cuidado): `study`, `model`, `links`, `markers`.
 
@@ -73,9 +72,9 @@ Módulos "mais dependidos" (mudar com cuidado): `study`, `model`, `links`, `mark
 Unitários do núcleo (rápidos, rodam também contra o núcleo web = **paridade**) → e2e no Electron real → QA com entrada real → bateria no Android. Defeitos pegos na prática: ver `docs/DECISIONS.md` e `evidencias/RESULTADOS.md`.
 
 ## 6.1 Novidades da v0.4.0 (onde mora cada coisa)
-- **Manual** — `core/manual.js` (conteúdo em dados puros + busca; texto por aparelho: `only: 'desktop'|'touch'`) · `renderer/react/ManualModal.jsx` (janela) · `act.manual(secao)` e o clique global em `[data-manual]` ("Como usar?") em `react-bridge.js`. Regra de manutenção: **funcionalidade nova ⇒ seção no manual** (`test/manual.test.js` confere a cobertura e se todo `data-manual` aponta para uma seção).
+- **Manual** — seção histórica: esse módulo não está presente nesta versão do repositório.
 - **Layout** — `renderer/layout-ui.js`: recolher o painel lateral (botão ‹ ›, Ctrl+\\, menu Exibir) e divisores arrastáveis (Pointer Events: mouse, dedo, caneta; teclado; duplo clique restaura). Estado em `config.json` (`panelsCollapsed`, `panelsWidth`, `pdfWidth`; locais, não vão no pacote). A largura do painel é a variável CSS `--panels-w` (as regras por tamanho de janela continuam sendo o padrão). Em modo gaveta (tablet < 1000 px) o recolher/divisor não existe.
-- **Tela inicial** — `core/backup-reminder.js` (regra do lembrete: nunca fez / passou de 7·14·30 dias / adiado 3 dias) e `core/glance.js` ("Seu estudo": sequência, 7 dias, acerto, metas, disciplina mais atrasada; fonte = biblioteca inteira ou, sem ela, o mapa aberto). `homeData()`/`homeActions` em `react-bridge.js` ligam as regras à tela (`Home.jsx`). `exportPackQuick`/`importPackQuick` são a ÚNICA implementação de exportar/restaurar pacote (a janela da biblioteca também as usa). Restaurar nunca sobrescreve (conflito vira cópia).
+- **Tela inicial** — seção histórica: funcionalidades de revisão e pacote descritas aqui não estão presentes nesta versão do repositório.
 
 ## 7. ESTRUTURA-ALVO (definida pelo dono do projeto — 17/10/2026)
 
@@ -116,7 +115,7 @@ assets/ · release/ · .erb/ (build) · package.json · tsconfig.json · vite.co
 5. **Features em React** — migrar o que resta do clássico (canvas do mapa, painéis, busca) para `features/*`, uma por vez; ao final remover `renderer/*.js`.
 6. **`src/main/services`** — mover `library/sync/backup` e reorganizar `electron/`.
 
-O teste de arquitetura (`test/architecture.test.js`) deve ser **atualizado a cada fase** para vigiar o novo layout (camadas, ciclos, orçamento de tamanho, pacote do tablet). Ver ADR 016.
+O núcleo atual já está agrupado nessas quatro pastas; a raiz `core/` não contém módulos JavaScript soltos. Os imports apontam diretamente para a pasta responsável e o gerador do tablet percorre as subpastas, mantendo as chaves de módulo que a interface usa. O teste de arquitetura (`test/architecture.test.js`) vigia o layout, ciclos, orçamento de tamanho e empacotamento do tablet. Ver ADR 016.
 
 ## 8. Dívidas técnicas conhecidas (priorizadas)
 1. **`renderer/renderer.js` (~900 linhas) concentra estado global** (`map`, `pan`, `selectedId`, `dirty`…). Caminho já em curso: migrar por fatias para React (ver `react-bridge.js`) e expor a plataforma só por `window.MCView`. Próximos candidatos: barra de ferramentas/opções, busca. (O modo apresentação foi retirado na 0.5.0.)

@@ -1,9 +1,9 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { parseParagraphs, LIMITS } = require('../core/ai');
-const { buildStudyDoc, toMarkdown, toHtml } = require('../core/study-export');
+const { MindMap, createNode } = require('../core/components/model');
+const { parseParagraphs, LIMITS } = require('../core/services/ai');
+const { buildStudyDoc, toMarkdown, toHtml } = require('../core/formats/study-export');
 
 test('parágrafos da IA: separados por linha em branco, sem marcação, de 1 a 3', () => {
   const r = parseParagraphs('Primeiro.\n\n- Segundo\n\n## Terceiro\n\n');

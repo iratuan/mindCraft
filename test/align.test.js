@@ -2,10 +2,10 @@
 // Alinhamento do texto dos tópicos: automático para fora do centro, centro na raiz e escolha manual gravada no estilo.
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { layoutMap } = require('../core/layout');
-const { renderGroup } = require('../core/svg');
-const { readMom, writeMom } = require('../core/mom');
+const { MindMap, createNode } = require('../core/components/model');
+const { layoutMap } = require('../core/components/layout');
+const { renderGroup } = require('../core/components/svg');
+const { readMom, writeMom } = require('../core/formats/mom');
 
 function sample() {
   const m = new MindMap(createNode('Raiz'));

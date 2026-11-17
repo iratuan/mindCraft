@@ -3,7 +3,7 @@
 // para o que o MindCraft sabe desenhar. As tabelas de formas e de estilos de preenchimento vêm do próprio código do Mindomo (NodeViewShapeType, FillStyle).
 // Tudo que sai daqui é VALIDADO (cores #rrggbb, números em faixas, nomes de fonte seguros): vira atributo de SVG e nunca carrega texto arbitrário.
 // O arquivo original NÃO é alterado: o que o MindCraft não entende continua guardado no `_mom` de cada tópico e no documento original.
-const { sanitizeTheme, sanitizeStyle } = require('./themes');
+const { sanitizeTheme, sanitizeStyle } = require('../components/themes');
 
 const HEX6 = /^[0-9a-fA-F]{6}$/;
 const hex = (v) => (typeof v === 'string' && HEX6.test(v.trim()) ? '#' + v.trim().toLowerCase() : null);
@@ -109,7 +109,7 @@ function htmlToMarkdown(html) {
   s = decode(s).replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/(\S)[ \t]{2,}(?=\S)/g, '$1 ').replace(/\n{3,}/g, '\n\n');
   return s.trim();
 }
-const escHtml = require('./text').escapeHtml;
+const escHtml = require('../utils/text').escapeHtml;
 /** Markdown simples → HTML do Mindomo (parágrafos, **negrito**, *itálico*), com TUDO escapado. */
 function markdownToHtml(md) {
   const inline = (t) => escHtml(t).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*\n]+)\*/g, '<em>$1</em>');

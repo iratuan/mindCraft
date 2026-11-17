@@ -18,7 +18,7 @@ description: Orienta mudanças na interface do MindCraft (classica em renderer/*
 5. **Responsivo**: meça o **espaço da própria tela** (`@container`), não a janela; alvos de toque ≥ 44 px em `pointer: coarse` (regras em `platform/web/host/tablet.css`); nada de rolagem horizontal da página.
 6. **Teclado/acessibilidade**: `aria-label` em botões só-ícone, foco visível, Esc fecha o que abriu por último.
 7. **Janela que abre**: em tela de toque não foca campo de texto sozinho (o teclado virtual esconderia a tela) — `initialFocus` em `react/index.jsx`.
-8. **Mapa novo na tela** (desenho): `core/svg.js` + `core/layout.js` (puro, testável). Estilo de tópico novo → `themes.sanitizeStyle/resolveStyle` (valide!).
+8. **Mapa novo na tela** (desenho): `core/components/svg.js` + `core/components/layout.js` (puro, testável). Estilo de tópico novo → `themes.sanitizeStyle/resolveStyle` (valide!).
 
 ## Reordenar / arrastar tópicos
 O soltar do mapa tem 3 modos pela altura do ponteiro sobre o alvo (`dropMode` em `renderer.js`): 30% de cima = antes e 30% de baixo = depois (`MindMap.moveBeside`), meio = filho (`moveMany`). A linha laranja é `#dropLine` (SVG, criada em `showDropLine`). Botões: ▲▼ na barra lateral (`data-act=moveUp/moveDown`, escondidos no tablet) e ▲▼◀▶ na barra flutuante (`platform/web/host/menu.js`). Teste: `e2e-reorder` (mouse/teclado reais) e, no tablet, `e2e-tablet` (aguarde ~1,5 s após um arrasto CDP antes de tocar num botão: o Chromium consome o 1º toque durante o fling).

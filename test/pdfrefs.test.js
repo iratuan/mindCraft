@@ -5,9 +5,9 @@ const AdmZip = require('adm-zip');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { MindMap, createNode } = require('../core/model');
-const { readMom, writeMom } = require('../core/mom');
-const { sanitizePdfs, sanitizeRefs, refLabel } = require('../core/pdfrefs');
+const { MindMap, createNode } = require('../core/components/model');
+const { readMom, writeMom } = require('../core/formats/mom');
+const { sanitizePdfs, sanitizeRefs, refLabel } = require('../core/components/pdfrefs');
 
 const mk = () => { const m = new MindMap(createNode('Direito')); const a = m.addChild(m.root.id, 'Crase'); return { m, a }; };
 const REF = { page: 12, quote: 'Emprega-se a crase antes de palavras femininas.', rects: [[0.1, 0.2, 0.5, 0.03], [0.1, 0.23, 0.4, 0.03]] };

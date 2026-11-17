@@ -10,12 +10,12 @@ description: Cria um módulo novo em core/ do MindCraft do jeito certo (puro, te
 - **Já existe onde encaixar?** Procure em `docs/ARCHITECTURE.md` (tabela de módulos). Prefira estender com um módulo novo a inchar um existente (orçamento: `core` ≤ 600 linhas/arquivo).
 
 ## Passos
-1. `core/<nome>.js` com `'use strict'`, CommonJS, cabeçalho em português dizendo **responsabilidade** e **regras de segurança** (o que valida, o que nunca faz). Exporte **só** o que outros usam.
-2. **Sem dependências circulares** e sem `electron`/DOM/`renderer`/`platform` (teste de arquitetura).
-3. **Pacote do tablet**: acrescente o nome em `MODULES` (`tools/build-web-core.js`). Módulo que só faz sentido no computador (usa `http`/`https` do Node) vai em `NODE_ONLY` do `test/architecture.test.js` **e** a interface só o carrega atrás de `IS_HOST ? … : require(…)`.
+1. Coloque o módulo em `core/components/`, `core/services/`, `core/formats/` ou `core/utils/`, conforme a responsabilidade. Use `'use strict'`, CommonJS e exporte só o necessário.
+2. Crie `core/<nome>.js` como fachada `module.exports = require('./<grupo>/<nome>')`. A interface e o empacotador do tablet ainda carregam o núcleo pelo nome plano.
+3. Use imports relativos para a pasta organizada. **Sem dependências circulares** e sem `electron`/DOM/`renderer`/`platform` (teste de arquitetura).
 4. **Teste unitário** `test/<nome>.test.js` (`node:test`): caminho feliz, bordas, **entradas hostis** (texto com `<img onerror>`, números absurdos, nomes de arquivo com `..`), determinismo. Para lógica com aleatoriedade, semente fixa.
-5. Texto do usuário que vira HTML/SVG → `escapeHtml` (`core/text.js`). Dado vindo de arquivo → sanitize/valide e **limite tamanhos**.
-6. Rode `npm run check` (lint + arquitetura + paridade web). Se o módulo é usado pela interface, rode também o e2e da área e `npm run build:web-app` + `e2e-tablet`.
+5. Texto do usuário que vira HTML/SVG → `escapeHtml` (`core/utils/text.js`). Dado vindo de arquivo → sanitize/valide e **limite tamanhos**.
+6. Rode `npm run check`. Se usado pela interface, rode também o e2e da área; para conferir o pacote do tablet, `npm --prefix tablet run build:www`.
 7. **Documente**: linha na tabela de módulos de `docs/ARCHITECTURE.md`; decisão não óbvia em `docs/DECISIONS.md`.
 
 ## Padrões do projeto para copiar

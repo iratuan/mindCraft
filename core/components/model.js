@@ -127,6 +127,16 @@ class MindMap {
     return n;
   }
 
+  /** Adiciona uma raiz independente, exibida fora da árvore principal e preservada no formato .mom. */
+  addFloating(title = 'Tópico flutuante') {
+    const list = Array.isArray(this.meta._momFloating) ? this.meta._momFloating : [];
+    this._snapshot();
+    const index = list.reduce((max, f) => Math.max(max, Number.isFinite(f.index) ? f.index : -1), -1) + 1;
+    const floating = { node: createNode(title), index, parentId: null, previousId: null };
+    this.meta._momFloating = [...list, floating];
+    return floating.node;
+  }
+
   addSibling(id, title = 'Tópico') {
     const r = this.find(id);
     if (!r || !r.parent) return null;

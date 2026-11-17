@@ -1,6 +1,6 @@
 'use strict';
 // Conjunto de dados de conferência compartilhado pelos scripts de evidência e de QA (data fixa, determinístico).
-const { MindMap, createNode } = require('../core/model');
+const { MindMap, createNode } = require('../core/components/model');
 const S = require('../core/study');
 
 const TODAY = '2026-10-20';

@@ -2,8 +2,8 @@
 // Material de estudo: peso por prioridade, notas, fontes (PDFs e páginas), conexões (setas e links) e saídas Markdown/HTML seguras.
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { buildStudyDoc, toMarkdown, toHtml, weightOf } = require('../core/study-export');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildStudyDoc, toMarkdown, toHtml, weightOf } = require('../core/formats/study-export');
 
 function sample() {
   const m = new MindMap(createNode('Direito'));

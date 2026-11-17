@@ -22,7 +22,7 @@ window.require = (id) => {
   const name = String(id);
   if (NATIVE[name]) return NATIVE[name];
   const base = path.basename(name);
-  if (name.includes('/core/') && core[base]) return core[base];   // path.join(core, 'model') -> /app/core/model
+  if (name.includes('/core/') && core[base]) return core[base];   // path.join(core, 'components', 'model') -> /app/core/model
   throw new Error('Módulo indisponível no tablet: ' + name);
 };
 window.process = { pid: 1, platform: 'android', env: {}, versions: {}, cwd: () => '/' };

@@ -1,11 +1,11 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { buildStudyDoc, toHtml } = require('../core/study-export');
-const { toFlowHtml } = require('../core/flow-export');
-const f = require('../core/flow');
-const { printCss, weightClass } = require('../core/print-style');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildStudyDoc, toHtml } = require('../core/formats/study-export');
+const { toFlowHtml } = require('../core/formats/flow-export');
+const f = require('../core/components/flow');
+const { printCss, weightClass } = require('../core/formats/print-style');
 
 test('estilo: escala de tamanhos única (títulos 16/12/10,5; texto 10; secundário 9)', () => {
   const css = printCss();

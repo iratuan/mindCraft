@@ -15,7 +15,7 @@
 - Sem `console.log`, `debugger`, `eval` (teste de arquitetura barra).
 
 ## Segurança (checklist de revisão)
-- Texto do usuário → HTML/SVG: `escapeHtml` (`core/text.js`) ou `textContent`; nunca `innerHTML` com texto cru.
+- Texto do usuário → HTML/SVG: `escapeHtml` (`core/utils/text.js`) ou `textContent`; nunca `innerHTML` com texto cru.
 - Valores de arquivos externos (`.mom`, `.mcpack`, CSV, pasta remota) vão por **validação/sanitização** antes de virar atributo/estilo/nome de arquivo (`themes.sanitizeStyle/sanitizeTheme`, `SAFE_ID`, `SAFE_FILE`, limites de tamanho).
 - Rede: só HTTPS (HTTP só para `127.0.0.1` em testes); tokens nunca em log nem em mensagem de erro.
 - Arquivos: gravar em temporário e renomear; nunca seguir caminho vindo de fora sem restringir à pasta do app.
@@ -23,7 +23,7 @@
 ## Mudando o quê? Lista de verificação
 | Mudança | Faça também |
 |---|---|
-| Novo módulo em `core/` | acrescente em `MODULES` (`tools/build-web-core.js`); teste `test/<módulo>.test.js`; rode `npm run test:web` |
+| Novo módulo em `core/` | coloque em `components/`, `services/`, `formats/` ou `utils/`; crie a fachada `core/<módulo>.js` para compatibilidade do renderer/tablet; rode `npm run check` e `npm --prefix tablet run build:www` |
 | Novo canal IPC | trate em `electron/main.js` **e** `platform/web/host/ipc.js` (ou liste em `DESKTOP_ONLY_CHANNELS` do teste de arquitetura, com motivo) |
 | Nova opção de interface | `loadCfg/saveCfg`; se deve viajar no `.mcpack`: `core/settings.js`; teste e2e; veja no tablet (alvos ≥ 44 px) |
 | Novo comando de menu | `electron/main.js` (menu) **e** `platform/web/host/menu.js`; `act.<comando>` na interface |

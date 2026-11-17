@@ -3,8 +3,7 @@ const { layoutMap, edgePoints } = require('./layout');
 const { MARKERS } = require('./markers');
 const { logoSize, logoVariant, logoMarkup } = require('./logo');
 const { contrast, luminance, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('./contrast');
-
-const { escapeHtml: esc } = require('./text');
+const { escapeHtml: esc } = require('../utils/text');
 const REL_COLOR = '#e5484d';
 
 function edgePath(e, curve) {

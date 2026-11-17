@@ -3,8 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const AdmZip = require('adm-zip');
-const { MindMap, createNode } = require('../core/model');
-const { readMom, writeMom } = require('../core/mom');
+const { MindMap, createNode } = require('../core/components/model');
+const { readMom, writeMom } = require('../core/formats/mom');
 
 test('texto com "tags" (ex.: matéria de Informática) NÃO é alterado ao salvar e reabrir o .mom — nem a cada ciclo', () => {
   const m = new MindMap(createNode('HTML'));

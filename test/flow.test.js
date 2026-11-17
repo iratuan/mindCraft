@@ -4,12 +4,12 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { MindMap, createNode } = require('../core/model');
-const f = require('../core/flow');
-const { layoutFlow } = require('../core/flow-layout');
-const { toFlowMarkdown } = require('../core/flow-export');
-const { writeMom } = require('../core/mom');
-const { readMom } = require('../core/mom');
+const { MindMap, createNode } = require('../core/components/model');
+const f = require('../core/components/flow');
+const { layoutFlow } = require('../core/components/flow-layout');
+const { toFlowMarkdown } = require('../core/formats/flow-export');
+const { writeMom } = require('../core/formats/mom');
+const { readMom } = require('../core/formats/mom');
 
 const byTitle = (m, t) => { let r = null; m.walk((n) => { if (n.title === t && !r) r = n; }); return r; };
 

@@ -4,6 +4,11 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
+## 0.7.9 — 17/11/2026
+- **Núcleo organizado:** módulos separados em `core/components/`, `core/services/`, `core/formats/` e `core/utils/`; imports e empacotamento web/tablet atualizados.
+- **Tópicos flutuantes:** nova ação na barra lateral, no menu do tópico e em Editar para criar uma raiz independente no mapa. O tópico pode ser editado e o histórico desfaz/refaz a criação.
+- **Release:** versão incrementada para 0.7.9.
+
 ## 0.7.8 — 16/11/2026
 - **Contraste no tema Claro:** texto sem forma e elementos do mapa agora são ajustados para manter contraste no canvas claro. A troca de tema redesenha o mapa.
 - **Release:** Windows (`BRANIAC Setup 0.7.8.exe`) e Android (`BRANIAC-0.7.8.apk`, código 30).

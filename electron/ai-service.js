@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const { safeStorage } = require('electron');
-const ai = require('../core/ai');
+const ai = require('../core/services/ai');
 
 const TIMEOUT_MS = 60000;
 const providerOf = (p) => (ai.PROVIDERS[p] ? p : ai.DEFAULT_PROVIDER);

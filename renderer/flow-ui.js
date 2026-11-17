@@ -5,9 +5,9 @@
    O mapa mental não muda: render() só desvia para cá quando o documento é um fluxo. Tudo que o usuário escreve passa
    pelo escape de HTML antes de virar SVG. */
 
-const flowRules = require(path.join(core, 'flow'));
-const { layoutFlow } = require(path.join(core, 'flow-layout'));
-const { escapeHtml: flowEsc } = require(path.join(core, 'text'));
+const flowRules = require(path.join(core, 'components', 'flow'));
+const { layoutFlow } = require(path.join(core, 'components', 'flow-layout'));
+const { escapeHtml: flowEsc } = require(path.join(core, 'utils', 'text'));
 
 let flowOn = false;                 // a visão de fluxo está na tela?
 let flowView = { x: 40, y: 40, k: 1 };

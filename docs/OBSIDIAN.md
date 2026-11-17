@@ -51,7 +51,7 @@ mindcraft-hash: "..."                 # impressão do conteúdo; detecta ediçã
 
 ## Compatibilidade, por sistema
 
-- **MindCraft:** a rede exportada é calculada pela mesma função do grafo (`core/graph.js`) usada pela visão 2D e pela rede 3D. O teste `test/obsidian-network.test.js` lê os `.md` e compara com o grafo: links do texto, hierarquia e relações batem.
+- **MindCraft:** a rede exportada é calculada pela mesma função do grafo (`core/components/graph.js`) usada pela visão 2D e pela rede 3D. O teste `test/obsidian-network.test.js` lê os `.md` e compara com o grafo: links do texto, hierarquia e relações batem.
 - **Mindomo:** nada muda no `.mom`. Tópicos soltos e relações são preservados na leitura.
 - **Obsidian:** a sintaxe segue a documentação oficial de links internos e aliases. Os arquivos foram checados por leitura (links resolvem, nenhum quebrado). **Não foi testado no Obsidian aberto** — ver abaixo.
 

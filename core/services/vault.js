@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { readMom } = require('./mom');
+const { readMom } = require('../formats/mom');
 
 /**
  * "Vault" = uma pasta com arquivos .mom. Os links [[Mapa/Tópico]] (sintaxe do Obsidian) entre eles formam a rede de conhecimento.

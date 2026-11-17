@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { mdToHtml, mdToPlain, toggleTask } = require('../core/markdown');
+const { mdToHtml, mdToPlain, toggleTask } = require('../core/formats/markdown');
 
 test('formatação básica: títulos, negrito, itálico, riscado, código, parágrafos e quebras de linha', () => {
   const h = mdToHtml('# Título\n\nTexto **forte** e *itálico* e _outro_ e ~~riscado~~ e `x < y`.\nsegunda linha');

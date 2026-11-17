@@ -5,8 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
 const start = require('./harness');
-const { writeMom } = require('../core/mom');
-const { MindMap, createNode, MAX_DEPTH } = require('../core/model');
+const { writeMom } = require('../core/formats/mom');
+const { MindMap, createNode, MAX_DEPTH } = require('../core/components/model');
 
 const SHOTS = path.join(__dirname, '..', 'evidencias', 'profundidade');
 

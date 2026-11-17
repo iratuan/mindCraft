@@ -6,9 +6,9 @@
  * O HTML traz também o diagrama em SVG (mesmas formas da tela). Tudo que é do usuário passa por escape.
  * Regras puras: nada aqui executa código.
  */
-const { findStarts, successors, validateFlow, listPaths, typeOf, FLOW_LABELS } = require('./flow');
-const { layoutFlow } = require('./flow-layout');
-const { escapeHtml: esc } = require('./text');
+const { findStarts, successors, validateFlow, listPaths, typeOf, FLOW_LABELS } = require('../components/flow');
+const { layoutFlow } = require('../components/flow-layout');
+const { escapeHtml: esc } = require('../utils/text');
 const { printCss } = require('./print-style');
 
 /**

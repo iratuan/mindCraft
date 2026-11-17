@@ -1,7 +1,7 @@
 'use strict';
 /* Editor de notas em Markdown: barra de formatação + modo "Visualizar" (renderização segura).
    A nota continua sendo texto Markdown puro (compatível com Obsidian/exportações). Carregado depois de graph-ui.js. */
-const MD = require(path.join(core, 'markdown'));
+const MD = require(path.join(core, 'formats', 'markdown'));
 
 const notesView = $('#notesView'), notesBar = $('#notesBar');
 let notesMode = 'edit';

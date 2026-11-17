@@ -11,6 +11,7 @@ const MENU_BAR = [
   ] },
   { label: 'Editar', items: [
     ['undo', 'Desfazer', 'Ctrl+Z'], '-',
+    ['addFloating', 'Novo tópico flutuante', ''], '-',
     ['cut', 'Recortar', 'Ctrl+X'], ['copy', 'Copiar', 'Ctrl+C'], ['paste', 'Colar', 'Ctrl+V'], '-',
     ['selectAll', 'Selecionar tudo', 'Ctrl+A'], '-',
     ['review-mark', 'Marcar tópico como revisado', ''],

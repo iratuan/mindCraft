@@ -4,12 +4,12 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { MindMap, createNode } = require('../core/model');
-const { writeMom } = require('../core/mom');
-const { norm, parseLinks, rewriteLinks } = require('../core/links');
-const { listMoms, loadVault, clearVaultCache } = require('../core/vault');
-const { buildGraph, neighborhood } = require('../core/graph');
-const { forceLayout } = require('../core/forcelayout');
+const { MindMap, createNode } = require('../core/components/model');
+const { writeMom } = require('../core/formats/mom');
+const { norm, parseLinks, rewriteLinks } = require('../core/components/links');
+const { listMoms, loadVault, clearVaultCache } = require('../core/services/vault');
+const { buildGraph, neighborhood } = require('../core/components/graph');
+const { forceLayout } = require('../core/components/forcelayout');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mc-net-'));
 const T = (m, title) => { let r; m.walk((n) => { if (n.title === title && !r) r = n; }); return r; };
@@ -146,7 +146,7 @@ test('vault: lista .mom (ignora ocultos/temporários/node_modules, respeita prof
 });
 
 test('menções sem link: acha títulos citados como palavra inteira (sem acento/caixa) e ignora os já ligados', () => {
-  const { unlinkedMentions, linkify } = require('../core/mentions');
+  const { unlinkedMentions, linkify } = require('../core/components/mentions');
   const [dc, da] = twoMaps();
   const ate = T(da.map, 'Atos'); da.map.update(ate.id, { notes: 'O princípio da LEGALIDADE se liga aos Princípios; veja [[Princípios da Administração]]. Legalidades? não. Direitos fundamentais também.' });
   const m = unlinkedMentions([dc, da], da.key, ate);
@@ -158,7 +158,7 @@ test('menções sem link: acha títulos citados como palavra inteira (sem acento
 });
 
 test('linkify: envolve a 1ª ocorrência preservando os caracteres originais; ignora [[links]] e código', () => {
-  const { linkify } = require('../core/mentions');
+  const { linkify } = require('../core/components/mentions');
   assert.equal(linkify('O princípio da LEGALIDADE vale', 'Legalidade'), 'O princípio da [[LEGALIDADE]] vale');
   assert.equal(linkify('administração pública', 'Administração Pública'), '[[administração pública]]');
   assert.equal(linkify('Legalidades e legalidade', 'Legalidade'), 'Legalidades e [[legalidade]]', 'só palavra inteira');

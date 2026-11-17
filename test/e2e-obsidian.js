@@ -5,8 +5,8 @@
 const fs = require('fs');
 const path = require('path');
 const start = require('./harness');
-const { MindMap, createNode } = require('../core/model');
-const { writeMom, readMom } = require('../core/mom');
+const { MindMap, createNode } = require('../core/components/model');
+const { writeMom, readMom } = require('../core/formats/mom');
 
 (async () => {
   const c = await start('MindCraft e2e — Obsidian (exportação, atualização ao salvar, links e rede)');

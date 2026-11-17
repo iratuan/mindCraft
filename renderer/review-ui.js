@@ -2,7 +2,7 @@
 /* Revisão espaçada na interface: "Revisões de hoje" (lista com botão Revisado), marcar o tópico selecionado e o aviso
    diário do sistema. A regra de datas e intervalos está em core/revisao.js; aqui só mostramos e marcamos. Usa as globais de renderer.js. */
 
-const { collectReviews, markReviewed, dayKey, shouldNotify, notificationText } = require(path.join(core, 'revisao'));
+const { collectReviews, markReviewed, dayKey, shouldNotify, notificationText } = require(path.join(core, 'services', 'revisao'));
 const REVIEW_NOTIFIED_KEY = 'mc-review-notified';   // dia do último aviso (por máquina; não vai para o arquivo do mapa)
 const REVIEW_CHECK_MS = 30 * 60 * 1000;
 

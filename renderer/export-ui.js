@@ -3,7 +3,7 @@
    PDF (impresso pelo processo principal a partir do HTML do núcleo) e Markdown (texto para outros aplicativos de estudo).
    Usa o mesmo documento para as duas, então o conteúdo é igual. Carregado depois de renderer.js e react-bridge.js. */
 
-const { buildStudyDoc, toMarkdown, toHtml } = require(path.join(core, 'study-export'));
+const { buildStudyDoc, toMarkdown, toHtml } = require(path.join(core, 'formats', 'study-export'));
 
 const STUDY_AI_MAX = 40;   // teto por material: cada tópico sem nota é uma chamada ao provedor
 let lastStudyAi = null;    // resultado da última geração (para avisar na barra de status)
@@ -55,7 +55,7 @@ Subtópicos: ${kids}` : ''), topic: path.join(' > ') });
 /** Monta o documento e grava no caminho escolhido. Devolve o caminho gravado ou lança erro para o usuário. */
 /** Exportação de um fluxograma (flow-export.js): mesma janela, mesma regra dos parágrafos da IA. */
 async function exportFlowTo(format, target, opts = {}) {
-  const { toFlowMarkdown, toFlowHtml } = require(path.join(core, 'flow-export'));
+  const { toFlowMarkdown, toFlowHtml } = require(path.join(core, 'formats', 'flow-export'));
   let generated = new Map();
   if (opts.aiFill) {
     const ks = await ipcRenderer.invoke('ai:key-status', aiProv());

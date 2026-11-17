@@ -6,7 +6,9 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.8**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.9**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+
+**Projeto aberto a contribuições.** Relate problemas, proponha melhorias e envie pull requests pelo [GitHub](https://github.com/iratuan/mindCraft). Leia [Como contribuir](docs/CONTRIBUTING.md) antes de alterar o código.
 
 ## Telas
 
@@ -20,6 +22,7 @@ Versão atual: **0.7.8**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ### Mapa mental
 - Criar, renomear, excluir, mover e recolher tópicos (Tab e Enter para filho e irmão, F2 para renomear, Espaço para recolher).
+- Criar **tópicos flutuantes** (independentes da árvore) pela barra lateral ou menu Editar.
 - Desfazer e refazer (Ctrl+Z e Ctrl+Y).
 - Notas e links `[[entre tópicos]]`.
 - Busca no mapa (Ctrl+F).
@@ -47,9 +50,9 @@ Versão atual: **0.7.8**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe `BRANIAC Setup 0.7.8.exe` e execute. O instalador não é assinado, então o Windows pode mostrar um aviso de editor desconhecido: clique em "Mais informações" e depois em "Executar assim mesmo".
+**Windows:** baixe `BRANIAC Setup 0.7.9.exe` na página de [Releases](https://github.com/iratuan/mindCraft/releases/latest) e execute. O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
 
-**Android:** baixe `BRANIAC-0.7.8.apk`, abra o arquivo e permita a instalação de fontes desconhecidas quando o aparelho pedir.
+**Android:** baixe `BRANIAC-0.7.9.apk` na página de [Releases](https://github.com/iratuan/mindCraft/releases/latest). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
 
 **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
@@ -64,26 +67,45 @@ Atalhos completos: **F1**.
 
 ## Para desenvolver
 
+### Requisitos
+
+- Windows 10 ou superior para executar e empacotar o desktop.
+- Node.js LTS e npm.
+- JDK 21 e Android SDK para compilar a versão Android.
+- Git para trabalhar em uma cópia do repositório.
+
+### Desktop
+
 ```bash
-npm install
+npm ci
 npm start          # abre o app
-npm run check      # lint + testes unitários (228)
+npm run check      # lint e testes unitários
 npm run e2e        # testes ponta a ponta no Electron real
 npm run dist       # gera o instalador do Windows em dist/
 ```
 
-**APK (Android):** requer JDK 21 e o Android SDK.
+### Android
 
-```bash
-cd tablet
-npm run sync                       # copia a interface e aplica a versão e a assinatura
-cd android
-./gradlew assembleRelease          # gera app/build/outputs/apk/release/app-release.apk
+```powershell
+npm --prefix tablet ci
+npm --prefix tablet run sync
+cd tablet\android
+.\gradlew.bat assembleRelease
 ```
 
-A chave de assinatura fica em `tablet/keystore/` (`mindcraft.jks` e `senha.txt`), fora do Git. **Faça uma cópia**: sem ela não é possível atualizar o app já instalado.
+O APK é gerado em `tablet/android/app/build/outputs/apk/release/app-release.apk`. Para um build de desenvolvimento sem a chave privada, use `.\gradlew.bat assembleDebug`. A assinatura de release depende da chave local em `tablet/keystore/`; ela não é distribuída nem deve ser enviada ao Git.
 
-Estrutura: `core/` (regras de negócio puras, sem Electron nem DOM) · `electron/` (processo principal) · `renderer/` (interface) · `tablet/` (Capacitor) · `test/`.
+## Colaborar
+
+1. Abra uma [issue](https://github.com/iratuan/mindCraft/issues) para relatar um erro, discutir uma mudança ou verificar se alguém já está trabalhando nela.
+2. Faça um fork, crie uma branch para sua alteração e mantenha o escopo do pull request pequeno.
+3. Siga as convenções e os limites de arquitetura descritos em [CLAUDE.md](CLAUDE.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) e [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+4. Rode `npm run check` e os testes ponta a ponta relevantes. Mudanças que afetam a interface devem ser verificadas também no tablet; descreva no pull request o que foi testado e o que não foi.
+5. Não inclua arquivos pessoais, mapas, credenciais, keystore, APKs, instaladores, `node_modules/` ou arquivos gerados. O checklist completo está em [Como contribuir](docs/CONTRIBUTING.md).
+
+## Estrutura do projeto
+
+`core/components/`, `core/services/`, `core/formats/` e `core/utils/` (regras compartilhadas) · `electron/` (processo principal) · `renderer/` (interface) · `platform/web/` (compatibilidade tablet) · `tablet/` (Capacitor/Android) · `test/`.
 
 Documentação para quem vai evoluir o projeto:
 - [`CLAUDE.md`](CLAUDE.md): regras, comandos e armadilhas. Comece por aqui.

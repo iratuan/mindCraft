@@ -3,11 +3,11 @@
 // sobre o fundo escuro. Sem a opção, a saída fica como antes (exportação e demais temas não mudam).
 const test = require('node:test');
 const assert = require('node:assert');
-const { THEMES } = require('../core/themes');
-const { MindMap, createNode } = require('../core/model');
-const { layoutMap } = require('../core/layout');
-const { renderGroup } = require('../core/svg');
-const { MIN_TEXT } = require('../core/contrast');
+const { THEMES } = require('../core/components/themes');
+const { MindMap, createNode } = require('../core/components/model');
+const { layoutMap } = require('../core/components/layout');
+const { renderGroup } = require('../core/components/svg');
+const { MIN_TEXT } = require('../core/components/contrast');
 
 const CANVAS = '#1c1f26';
 const LIGHT_CANVAS = '#c7c7c7';

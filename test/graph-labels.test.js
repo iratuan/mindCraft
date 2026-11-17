@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { placeLabels, relationLabelAnchor, SpatialGrid, ROW_H } = require('../core/graph-labels');
+const { placeLabels, relationLabelAnchor, SpatialGrid, ROW_H } = require('../core/components/graph-labels');
 
 const measure = (s) => s.length * 7;                                   // largura fictícia: 7 px por caractere
 const fit = (s, max) => (measure(s) <= max ? s : s.slice(0, Math.max(1, Math.floor(max / 7) - 1)) + '…');

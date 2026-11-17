@@ -14,7 +14,7 @@ let pendingFile = argvFile(process.argv, app.isPackaged);
 // Comandos que só fazem sentido com um mapa aberto (a tela inicial cobre o mapa). Começam desabilitados.
 // O renderer informa a situação ('map-state') e aqui só se aplica; reconstruir o menu reaplica o último estado.
 const MAP_COMMANDS = ['m-save', 'm-saveAs', 'm-exportStudy', 'm-shareStudy', 'm-undo', 'm-redo', 'm-moveUp', 'm-moveDown', 'm-outdent', 'm-indent',
-  'cut', 'copy', 'paste', 'selectAll', 'm-fit', 'm-organize'];
+  'cut', 'copy', 'paste', 'selectAll', 'm-fit', 'm-organize', 'm-addFloating'];
 let mapInUse = false;
 function applyMapCommands() {
   const menu = Menu.getApplicationMenu();
@@ -79,6 +79,8 @@ function buildMenu() {
       { id: 'm-undo', label: 'Desfazer', accelerator: 'CmdOrCtrl+Z', click: send('undo') },
       { label: 'Marcar tópico como revisado', click: send('review-mark') },
       { id: 'm-redo', label: 'Refazer', accelerator: isMac ? 'Shift+Cmd+Z' : 'Ctrl+Y', click: send('redo') },
+      { type: 'separator' },
+      { id: 'm-addFloating', label: 'Novo tópico flutuante', click: send('addFloating') },
       { type: 'separator' },
       { id: 'm-moveUp', label: 'Subir tópico (Alt+↑)', click: send('moveUp') },
       { id: 'm-moveDown', label: 'Descer tópico (Alt+↓)', click: send('moveDown') },
@@ -207,7 +209,7 @@ ipcMain.handle('export:pdf', async (e, html, target) => {
 });
 // Abre o vault no Obsidian. A URL é montada aqui (não vem do aparelho), e só para uma pasta que existe.
 ipcMain.handle('obsidian:open', async (_e, dir) => {
-  const { obsidianOpenUrl } = require('../core/obsidian');
+  const { obsidianOpenUrl } = require('../core/services/obsidian');
   let url;
   try { url = obsidianOpenUrl(dir); } catch (e) { return { ok: false, error: e.message }; }
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return { ok: false, error: 'A pasta do vault não existe mais. Escolha de novo.' };

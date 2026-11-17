@@ -5,11 +5,11 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const AdmZip = require('adm-zip');
-const { MindMap, createNode } = require('../core/model');
-const { readMom, writeMom } = require('../core/mom');
-const { toSVG, renderGroup } = require('../core/svg');
-const { layoutMap } = require('../core/layout');
-const { sanitizeStyle } = require('../core/themes');
+const { MindMap, createNode } = require('../core/components/model');
+const { readMom, writeMom } = require('../core/formats/mom');
+const { toSVG, renderGroup } = require('../core/components/svg');
+const { layoutMap } = require('../core/components/layout');
+const { sanitizeStyle } = require('../core/components/themes');
 
 const walkAll = (m) => { const r = []; m.walk((n, l) => r.push([l, n])); return r; };
 

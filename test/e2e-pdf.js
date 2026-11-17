@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const start = require('./harness');
-const { readMom } = require('../core/mom');
+const { readMom } = require('../core/formats/mom');
 
 function makePdf(file, pages) {
   return new Promise((resolve, reject) => {

@@ -2,7 +2,7 @@
 // Assistente de IA (núcleo): formato da requisição, leitura da resposta e validação da estrutura de tópicos.
 const test = require('node:test');
 const assert = require('node:assert');
-const { buildRequest, parseResponse, parseOutline, parseNote, LIMITS, PROVIDERS, DEFAULT_PROVIDER, validKey } = require('../core/ai');
+const { buildRequest, parseResponse, parseOutline, parseNote, LIMITS, PROVIDERS, DEFAULT_PROVIDER, validKey } = require('../core/services/ai');
 const API_URL = PROVIDERS.claude.url, MODEL = PROVIDERS.claude.model;
 
 test('requisição: só o trecho selecionado vai no corpo; a chave só vai no cabeçalho', () => {
@@ -117,7 +117,7 @@ test('nota: limpa marcas de código e linhas em branco excessivas; vazia é recu
 });
 
 test('modelo: o modelo escolhido na conta substitui o padrão; nome inválido volta ao padrão', () => {
-  const { validModel } = require('../core/ai');
+  const { validModel } = require('../core/services/ai');
   const a = buildRequest({ provider: 'groq', model: 'modelo-da-conta-1', mode: 'answer', question: 'x', selection: 'y', apiKey: 'gsk_' + 'a'.repeat(30) });
   assert.strictEqual(a.body.model, 'modelo-da-conta-1');
   const b = buildRequest({ provider: 'groq', model: 'x; rm -rf /', mode: 'answer', question: 'x', selection: 'y', apiKey: 'gsk_' + 'a'.repeat(30) });
@@ -126,7 +126,7 @@ test('modelo: o modelo escolhido na conta substitui o padrão; nome inválido vo
 });
 
 test('modelos: lista só modelos de conversa, do mais útil ao menos útil', () => {
-  const { pickModels } = require('../core/ai');
+  const { pickModels } = require('../core/services/ai');
   const ids = pickModels(['whisper-large-v3', 'llama-guard-4', 'llama-3.1-8b-instant', 'openai/gpt-oss-120b', 'text-embedding-3', 'llama-3.3-70b-versatile']);
   assert.deepStrictEqual(ids, ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'llama-3.1-8b-instant']);
 });

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const start = require('./web-harness');
-const { readMom } = require('../core/mom');
+const { readMom } = require('../core/formats/mom');
 
 (async () => {
   const c = await start('MindCraft e2e — Salvar como (nome e local editáveis)');

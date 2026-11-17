@@ -4,9 +4,9 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { MindMap, createNode } = require('../core/model');
-const { buildObsidianVault } = require('../core/obsidian');
-const { writeObsidianVault } = require('../core/obsidian-write');
+const { MindMap, createNode } = require('../core/components/model');
+const { buildObsidianVault } = require('../core/services/obsidian');
+const { writeObsidianVault } = require('../core/services/obsidian-write');
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mc-obs-'));
 const T = (m, title) => { let r; m.walk((n) => { if (n.title === title && !r) r = n; }); return r; };

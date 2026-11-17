@@ -2,8 +2,8 @@
 // Expandir ou recolher ramos NÃO pode trocar o lado dos tópicos principais (o lado depende da altura completa dos ramos).
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
-const { layoutMap } = require('../core/layout');
+const { MindMap, createNode } = require('../core/components/model');
+const { layoutMap } = require('../core/components/layout');
 
 function build() {
   const m = new MindMap(createNode('Raiz'));

@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { luminance, contrast, lighten, darken, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('../core/contrast');
+const { luminance, contrast, lighten, darken, onCanvas, MIN_GRAPHIC, MIN_TEXT } = require('../core/components/contrast');
 
 test('luminance(hex): WCAG 2.0 relative luminance', () => {
   assert.strictEqual(luminance('#ffffff'), 1.0, 'branco é 1.0');

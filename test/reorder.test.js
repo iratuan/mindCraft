@@ -2,7 +2,7 @@
 // Reordenar tópicos: moveSibling (Alt+↑/↓) e moveBeside (soltar entre irmãos ao arrastar).
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model');
+const { MindMap, createNode } = require('../core/components/model');
 
 const mk = () => {                                    // Raiz → A(a1,a2,a3), B, C, D
   const m = new MindMap(createNode('Raiz')); const id = {};

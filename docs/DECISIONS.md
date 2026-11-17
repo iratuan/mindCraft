@@ -18,7 +18,7 @@ Formato: **Decisão** · Por quê · Consequências/como reverter.
 
 **008 — Escopo mínimo do Drive: `drive.file`.** O app só enxerga a pasta que ele criou. · Menor risco, sem verificação do Google. · Não lê arquivos do usuário fora da pasta "MindCraft".
 
-**009 — Formatação do Mindomo traduzida na leitura (`core/mindomo.js`).** Tema → `meta.customTheme`; estilo por tópico → `node.style`; notas HTML → Markdown. Tabelas de formas/preenchimento extraídas do código do próprio Mindomo. · Fidelidade visual sem mudar o formato. · Não reproduzidos: ícones, imagens, anexos, formas especiais, degradês (cor do meio), formatação em trechos do título.
+**009 — Formatação do Mindomo traduzida na leitura (`core/formats/mindomo.js`).** Tema → `meta.customTheme`; estilo por tópico → `node.style`; notas HTML → Markdown. Tabelas de formas/preenchimento extraídas do código do próprio Mindomo. · Fidelidade visual sem mudar o formato. · Não reproduzidos: ícones, imagens, anexos, formas especiais, degradês (cor do meio), formatação em trechos do título.
 
 **010 — Rede de conhecimento: layout por componentes + rótulos em lógica pura.** `forcelayout` empacota componentes; `graph-labels` posiciona rótulos (4 posições, grade espacial, orçamento por densidade). · Legibilidade e testabilidade sem DOM. · Parâmetros de densidade em `DENS` (graph-ui).
 

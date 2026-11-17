@@ -2,7 +2,7 @@
 // Logomarca: três variantes (colorida, fundo escuro e monocromática) com caminhos inteiros e sem texto arbitrário.
 const test = require('node:test');
 const assert = require('node:assert');
-const { logoSize, logoVariant, logoMarkup, luminance } = require('../core/logo');
+const { logoSize, logoVariant, logoMarkup, luminance } = require('../core/components/logo');
 
 test('tamanho da logo acompanha a linha do texto e mantém a proporção do desenho', () => {
   const s = logoSize(20);

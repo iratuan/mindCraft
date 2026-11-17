@@ -1,10 +1,10 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { MindMap, createNode } = require('../core/model')
-const { toSVG } = require('../core/svg');;
-const { layoutMap } = require('../core/layout');
-const { plainLinks } = require('../core/links');
+const { MindMap, createNode } = require('../core/components/model')
+const { toSVG } = require('../core/components/svg');;
+const { layoutMap } = require('../core/components/layout');
+const { plainLinks } = require('../core/components/links');
 
 function tree() {
   const m = new MindMap(createNode('R'));

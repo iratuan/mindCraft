@@ -1,15 +1,15 @@
 'use strict';
 /* Rede de conhecimento: links [[ ]] entre tópicos e mapas, retrolinks, menções sem link e grafo interativo.
    Os mapas vêm do mapa aberto ou da pasta escolhida (vault). Carregado depois de renderer.js (usa os globais dele). */
-const { buildGraph, neighborhood } = require(path.join(core, 'graph'));
-const { forceLayout } = require(path.join(core, 'forcelayout'));
-const { placeLabels, relationLabelAnchor } = require(path.join(core, 'graph-labels'));
-const { loadVault } = require(path.join(core, 'vault'));
-const { getTheme } = require(path.join(core, 'themes'));
-const { unlinkedMentions, linkify } = require(path.join(core, 'mentions'));
-const { norm, migrateLegacyLinks } = require(path.join(core, 'links'));
+const { buildGraph, neighborhood } = require(path.join(core, 'components', 'graph'));
+const { forceLayout } = require(path.join(core, 'components', 'forcelayout'));
+const { placeLabels, relationLabelAnchor } = require(path.join(core, 'components', 'graph-labels'));
+const { loadVault } = require(path.join(core, 'services', 'vault'));
+const { getTheme } = require(path.join(core, 'components', 'themes'));
+const { unlinkedMentions, linkify } = require(path.join(core, 'components', 'mentions'));
+const { norm, migrateLegacyLinks } = require(path.join(core, 'components', 'links'));
 
-const { escapeHtml: gesc } = require(path.join(core, 'text'));
+const { escapeHtml: gesc } = require(path.join(core, 'utils', 'text'));
 
 // ---------- coleta dos mapas ----------
 const curKey = () => (filePath ? path.resolve(filePath) : '(mapa atual)');
@@ -356,7 +356,7 @@ async function chooseObsidianDir() {
   const t = $('#gObsDir'); if (t) { t.textContent = dir; t.title = dir; }
   // vault que já tem notas suas: nomes iguais podem confundir os links antigos delas
   try {
-    const n = require(path.join(core, 'obsidian-write')).countForeignNotes(dir);
+    const n = require(path.join(core, 'services', 'obsidian-write')).countForeignNotes(dir);
     if (n) setStatus(`Atenção: esta pasta já tem ${n} nota(s) suas. Um vault só para o MindCraft evita nomes iguais.`);
   } catch { /* o aviso é opcional */ }
   return dir;
@@ -398,7 +398,7 @@ async function exportObsidian({ quiet = false } = {}) {
   }
   if (!dir) return;
   let mod;
-  try { mod = { build: require(path.join(core, 'obsidian')).buildObsidianVault, write: require(path.join(core, 'obsidian-write')).writeObsidianVault }; }
+  try { mod = { build: require(path.join(core, 'services', 'obsidian')).buildObsidianVault, write: require(path.join(core, 'services', 'obsidian-write')).writeObsidianVault }; }
   catch { setStatus('A exportação para o Obsidian não está disponível neste aparelho.'); return; }
   try {
     const info = gatherMaps(vaultDirEff() ? 'vault' : 'map');

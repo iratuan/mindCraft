@@ -2,9 +2,9 @@
 // O mapa é plano em TODOS os temas: sem sombras, sem brilhos e sem gradientes no desenho dos tópicos e das ligações.
 const test = require('node:test');
 const assert = require('node:assert');
-const { THEMES } = require('../core/themes');
-const { MindMap, createNode } = require('../core/model');
-const { toSVG } = require('../core/svg');
+const { THEMES } = require('../core/components/themes');
+const { MindMap, createNode } = require('../core/components/model');
+const { toSVG } = require('../core/components/svg');
 
 const sample = (theme) => {
   const m = new MindMap(createNode('Raiz'));
