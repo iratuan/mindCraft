@@ -50,9 +50,9 @@ Versão atual: **0.7.9**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe `BRANIAC Setup 0.7.9.exe` na página de [Releases](https://github.com/iratuan/mindCraft/releases/latest) e execute. O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+**Windows:** baixe o [instalador x64 da versão 0.7.9](https://github.com/iratuan/mindCraft/releases/download/v0.7.9/BRANIAC.Setup.0.7.9.exe) e execute. O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
 
-**Android:** baixe `BRANIAC-0.7.9.apk` na página de [Releases](https://github.com/iratuan/mindCraft/releases/latest). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
+**Android:** baixe o [APK 0.7.9](https://github.com/iratuan/mindCraft/releases/download/v0.7.9/BRANIAC-0.7.9.apk). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
 
 **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
