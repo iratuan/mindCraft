@@ -143,7 +143,14 @@ function buildObsidianVault(maps, { folder = FOLDER } = {}) {
 
     const fm = ['---', `${ID_KEY}: ${JSON.stringify(`${m.name}::${n.id}`)}`, `mapa: ${JSON.stringify(m.name)}`];
     if (n.progress != null && Number.isFinite(Number(n.progress))) fm.push(`progresso: ${Number(n.progress)}`);
-    fm.push('aliases:', `  - ${JSON.stringify(title)}`, 'tags:', '  - mindcraft');
+    const prog = Number(n.progress);
+    const tags = ['mindcraft'];
+    if (Number.isFinite(prog)) {
+      if (prog >= 100) tags.push('concluido');
+      else tags.push('revisar');
+      if (prog <= 25) tags.push('prioridade-alta');
+    } else tags.push('revisar');
+    fm.push('aliases:', `  - ${JSON.stringify(title)}`, 'tags:', ...tags.map((t) => `  - ${t}`));
     const base = fm.join('\n') + '\n---\n' + body;               // o que o hash cobre (sem a própria linha do hash)
     const content = [...fm, `${HASH_KEY}: ${JSON.stringify(fingerprint(base))}`].join('\n') + '\n---\n' + body;
     files.push({ path: `${pathOf.get(id)}.md`, content });

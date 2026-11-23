@@ -196,16 +196,8 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
   .brand img { height: 28px; }
 }
 
-/* Tablet portrait: painel lateral em overlay para não esconder o mapa */
+/* Tablet portrait: ajustes de layout (o painel já é gaveta via JS/CSS existente) */
 @media (max-width: 768px) and (pointer: coarse) {
-  #work { position: relative; }
-  #panels {
-    position: absolute; right: 0; top: 0; bottom: 0; z-index: 5;
-    width: min(320px, 85vw); max-width: 85vw;
-    box-shadow: -4px 0 16px rgba(0,0,0,.4);
-    transform: translateX(100%); transition: transform .2s ease;
-  }
-  #panels.open { transform: translateX(0); }
   body.pdf-open #panels { display: none; }
   #pdfpane { width: 100%; min-width: 0; }
   #pdfsplit { display: none; }
