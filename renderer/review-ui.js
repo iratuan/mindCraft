@@ -62,9 +62,55 @@ function renderReviewsModal(modal) {
   modal.append(box);
 }
 
+/** Revisões de todos os mapas da pasta (vault): agrega revisões pendentes de cada mapa aberto no vault. */
+function renderUnifiedReviewsModal(modal) {
+  const info = (typeof gatherMaps === 'function') ? gatherMaps('vault') : { maps: [{ key: curKey(), name: curName(), map }] };
+  const today = dayKey();
+  const allDue = [];
+  for (const m of info.maps) {
+    const c = collectReviews(m.map.root, today);
+    for (const d of c.due) allDue.push({ ...d, mapName: m.name, mapKey: m.key });
+  }
+  modal.textContent = '';
+  const box = reviewElement('div', 'modal-box review-box');
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-label', 'Revisões unificadas');
+  box.append(reviewElement('h3', null, `Revisões de hoje — todos os mapas (${allDue.length})`));
+  if (!allDue.length) box.append(reviewElement('p', 'review-empty', 'Nenhuma revisão pendente em nenhum mapa.'));
+  const late = allDue.filter((d) => d.overdueDays > 0);
+  const tod = allDue.filter((d) => d.overdueDays === 0);
+  const list = (title, items) => {
+    if (!items.length) return;
+    box.append(reviewElement('h4', null, `${title} (${items.length})`));
+    for (const d of items) {
+      const row = reviewElement('div', 'review-item');
+      const txt = document.createElement('div');
+      txt.append(reviewElement('div', 'review-title', d.title), reviewElement('div', 'review-path', `${d.mapName} › ${d.path}`));
+      const btn = reviewElement('button', 'btn primary', 'Revisado');
+      btn.addEventListener('click', async () => {
+        if (d.mapKey !== curKey() && typeof openPath === 'function') await openPath(d.mapKey);
+        markTopicReviewed(d.id); renderUnifiedReviewsModal(modal);
+      });
+      row.append(txt, btn);
+      box.append(row);
+    }
+  };
+  list('Atrasadas', late);
+  list('Hoje', tod);
+  const close = reviewElement('button', 'btn', 'Fechar');
+  close.addEventListener('click', () => closeModal());
+  box.append(close);
+  modal.append(box);
+}
+
 function openReviewsModal() {
   const modal = $('#modal');
   renderReviewsModal(modal);
+  modal.hidden = false;
+}
+function openUnifiedReviewsModal() {
+  const modal = $('#modal');
+  renderUnifiedReviewsModal(modal);
   modal.hidden = false;
 }
 
