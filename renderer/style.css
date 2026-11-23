@@ -315,6 +315,8 @@ body.timing #timerBtn { background: var(--danger); border-color: var(--danger); 
 .lk .go:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .lk .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 #graph { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; background: var(--g-bg, #161616); }
+#graph::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.25) 100%); z-index: 0; }
+#graph > * { position: relative; z-index: 1; }
 .g-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; background: var(--bg-panel); border-bottom: 1px solid var(--line); }
 .g-bar select, .g-bar input[type=search], .g-bar input[type=text] { transition: border-color .15s; }
 .g-bar select:focus, .g-bar input[type=search]:focus, .g-bar input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
@@ -721,6 +723,9 @@ body.panel-max #stage, body.panel-max #pdfpane, body.panel-max #pdfsplit, body.p
 body.panel-max #panels { width: auto !important; flex: 1 1 auto; }
 /* bancada da esquerda maximizada: ocupa a área de trabalho; o mapa e o painel da direita somem até restaurar */
 body.dock-max #stage, body.dock-max #panels, body.dock-max #panelsSplit, body.dock-max #panelsReveal, body.dock-max #pdfsplit { display: none !important; }
+#boardpane { position: relative; background: var(--bg-stage); }
+#boardpane::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.12) 100%); z-index: 0; }
+#boardpane > * { position: relative; z-index: 1; }
 body.dock-max #pdfpane, body.dock-max #boardpane { width: auto !important; flex: 1 1 auto; }
 body.dock-max #boardsplit { display: none !important; }
 /* botão de maximizar/restaurar do cabeçalho do painel */
