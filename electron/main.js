@@ -186,7 +186,7 @@ ipcMain.handle('dialog:open-at', async (_e, dir) => {
 // resultado { ok, path } ou { ok:false, error } para a interface (sem expor detalhes internos)
 // Exportação do material de estudo: o diálogo escolhe o local; o PDF é impresso a partir do HTML do núcleo
 ipcMain.handle('dialog:save-export', async (_e, kind, defaultName) => {
-  const filters = kind === 'pdf' ? [{ name: 'PDF', extensions: ['pdf'] }] : kind === 'png' ? [{ name: 'Imagem PNG', extensions: ['png'] }] : [{ name: 'Markdown', extensions: ['md'] }];
+  const filters = kind === 'pdf' ? [{ name: 'PDF', extensions: ['pdf'] }] : kind === 'png' ? [{ name: 'Imagem PNG', extensions: ['png'] }] : kind === 'drawio' ? [{ name: 'Draw.io', extensions: ['drawio'] }] : [{ name: 'Markdown', extensions: ['md'] }];
   const r = await dialog.showSaveDialog(win, { filters, defaultPath: defaultName });
   return r.canceled ? null : r.filePath;
 });

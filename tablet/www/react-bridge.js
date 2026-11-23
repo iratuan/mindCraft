@@ -16,7 +16,7 @@ Object.assign(window.MC, {
   copyText: (t) => ipcRenderer.invoke('clip:write', String(t)),
   createTopicFromLink: (t) => createTopicFromLink(t),
   linkifyMention: (node, m) => linkifyMention(node, m),
-  mdToHtml: (t) => require(path.join(core, 'markdown')).mdToHtml(t),
+  mdToHtml: (t) => require(path.join(core, 'formats', 'markdown')).mdToHtml(t),
 });
 
 /** Modelo de dados do painel Conexões (links, retrolinks, menções). */
@@ -66,7 +66,7 @@ function pdfCapture({ source, page, text, rects, mode }) {
     }
     return true;
   }));
-  if (!target) throw new Error('Profundidade máxima: ' + require(path.join(core, 'model')).MAX_DEPTH + ' níveis de subtópicos.');   // o lote foi revertido; o leitor mostra a mensagem
+  if (!target) throw new Error('Profundidade máxima: ' + require(path.join(core, 'components', 'model')).MAX_DEPTH + ' níveis de subtópicos.');   // o lote foi revertido; o leitor mostra a mensagem
   selectedId = target; selIds = new Set([target]); selectedRel = null; render(); reveal(target);
   return { id: target, title };
 }

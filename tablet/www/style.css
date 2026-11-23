@@ -58,8 +58,26 @@ body:not(.light):not(.ui-draw) .brand img, body:not(.light):not(.ui-draw) img.hm
   #rail { width: 64px; padding: 6px 0; }
   .tool { width: 44px; height: 44px; margin: 2px 0; }
   .tool svg { width: 22px; height: 22px; }
+  .tool.has-cap { min-height: 52px; }
+  .icon-btn { width: 36px; height: 36px; }
   .icon-btn.sm { width: 32px; height: 32px; font-size: 16px; }
   .media-tab-close { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+  .btn, .btn.small, .btn.big { min-height: 36px; padding: 0 14px; }
+  .chip { min-width: 36px; height: 36px; }
+  .mini { width: 32px; height: 32px; }
+  .txt-btn { width: 32px; height: 32px; }
+  #zoomOut, #zoomIn { width: 36px; height: 36px; }
+  .g-zoom .btn { width: 44px; height: 44px; font-size: 20px; }
+  .ptab { height: 44px; font-size: 12px; }
+  .panel-h { height: 40px; }
+  .rev { padding: 10px 4px; }
+  .lk { padding: 8px 4px; }
+  .lib-row { padding: 10px 10px; }
+  .err-row { padding: 6px 0; }
+  .sim-row { padding: 8px 10px; }
+  input, select, textarea { min-height: 36px; font-size: 14px; }
+  .searchbox { height: 36px; }
+  #search { font-size: 14px; }
 }
 
 /* Barra de opções (contextual e estritamente exclusiva) */
@@ -164,6 +182,39 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 
 
 @media (max-width: 1000px) { .opt-hint { display: none; } #panels { width: var(--panels-w, 240px); } #search { width: 130px; } }
+
+/* Tablet: painel lateral mais compacto e rail mais largo para toque */
+@media (max-width: 1024px) and (pointer: coarse) {
+  #panels { width: var(--panels-w, 280px); }
+  #pdfpane { width: 40%; min-width: 260px; }
+  .hm-cols { grid-template-columns: 1fr; }
+  .hm-actions { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .mn-grid { grid-template-columns: 200px 1fr; }
+  #appbar { height: 48px; padding: 0 8px; gap: 6px; }
+  #docinfo { max-width: 30vw; }
+  .brand img { height: 28px; }
+}
+
+/* Tablet portrait: painel lateral em overlay para não esconder o mapa */
+@media (max-width: 768px) and (pointer: coarse) {
+  #work { position: relative; }
+  #panels {
+    position: absolute; right: 0; top: 0; bottom: 0; z-index: 5;
+    width: min(320px, 85vw); max-width: 85vw;
+    box-shadow: -4px 0 16px rgba(0,0,0,.4);
+    transform: translateX(100%); transition: transform .2s ease;
+  }
+  #panels.open { transform: translateX(0); }
+  body.pdf-open #panels { display: none; }
+  #pdfpane { width: 100%; min-width: 0; }
+  #pdfsplit { display: none; }
+  .hm-head h1 { font-size: 22px; }
+  .dash-head h2 { font-size: 16px; }
+  .countdown b { font-size: 20px; }
+  .card .v { font-size: 18px; }
+  #stage { touch-action: pan-x pan-y; }
+}
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: 5px; border: 2px solid var(--bg-panel); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }

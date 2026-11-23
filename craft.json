@@ -1,0 +1,142 @@
+{
+  "version": 5,
+  "name": "quero melhorar funcionalidades gerais desse",
+  "request": "quero melhorar funcionalidades gerais desse meu aplicativo. Ele ja cumpre boa parte do que preciso, porém, preciso que ele melhore a tela inicial, as funcionalidades de gerar mapa, de formularios de preenchimento de notas, de linkar conteudo entre mapas ou fluxogramas, algorítmo de peso da rede neural. A funcionalidade basica deve ser preservada. As notas geram sempre arquivos markdown. Posso exportar o pacote do mapa alem do mapa que consiste em arquivo .mom e arquivos markdwon que o obsidian poderia usar. Trabalhe forte nas correcoes, adequacoes, para tornar esse aplicativo uma referencia em aplicativos de estudos.\nA stack nao deve ser modificada.\nConfirme o entendimento.",
+  "target": {
+    "kind": "none"
+  },
+  "stack": "Electron",
+  "status": "ready",
+  "note": "Ready: all 2 checks pass.",
+  "created_ms": 1794917723890,
+  "updated_ms": 1794919628915,
+  "checks": [
+    {
+      "round": 1,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794917919165
+    },
+    {
+      "round": 1,
+      "check": "own-tests",
+      "passed": false,
+      "similarity": null,
+      "note": "The project's tests failed:\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 3228.8232\n✖ failing tests:\ntest at test\\weight.test.js:8:1\n✖ peso: filhos diretos, nota e ligações entram na conta (4.8772ms)\n  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n  12.7 !== 5\n      at TestContext.<anonymous> (E:\\SANDBOX_CLAUDE\\mindomo_craft\\app\\test\\weight.test.js:19:10)\n      at Test.runInAsyncScope (node:async_hooks:227:14)\n      at Test.run (node:internal/test_runner/test:1306:25)\n      at Test.start (node:internal/test_runner/test:1177:17)\n      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {\n    generatedMessage: true,\n    code: 'ERR_ASSERTION',\n    actual: 12.7,\n    expected: 5,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }",
+      "artifacts": [],
+      "at_ms": 1794917922872
+    },
+    {
+      "round": 2,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794917939638
+    },
+    {
+      "round": 2,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794917942592
+    },
+    {
+      "round": 3,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794918576432
+    },
+    {
+      "round": 3,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794918579478
+    },
+    {
+      "round": 4,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794918576432
+    },
+    {
+      "round": 4,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794918579478
+    },
+    {
+      "round": 5,
+      "check": "build",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm run build --if-present` passed.",
+      "artifacts": [],
+      "at_ms": 1794919620877
+    },
+    {
+      "round": 5,
+      "check": "own-tests",
+      "passed": true,
+      "similarity": null,
+      "note": "`npm test` passed.",
+      "artifacts": [],
+      "at_ms": 1794919623725
+    }
+  ],
+  "agent_session": "2442e621-0a3e-4057-90fb-eb602e734698",
+  "agent_session_by": "claude-code",
+  "agent_session_deep": false,
+  "capture_deep": false,
+  "allowed_actions": [],
+  "last_reply": "Posso reorganizar, mas fiz só uma parte: dividi a tela inicial em componentes pequenos (botão de ação, cartão \"continuar de onde parou\" e cartão de mapa recente). A tela tem o mesmo comportamento de antes. A compilação, os testes (245) e o `rebuild_check` passaram, mas não olhei a tela inicial aberta, então a aparência não foi conferida.\n\nNão mudei o resto das pastas, porque o app e o tablet dependem dos caminhos atuais. Mover tudo de uma vez arrisca quebrar o tablet, e a pasta não tem a ferramenta que monta o núcleo dele para eu conferir. O caminho seguro é mover um módulo por vez, testando a cada passo. Posso seguir assim com os painéis de notas e da rede, se você quiser.",
+  "asset_budget_usd": 5.0,
+  "generate_assets": false,
+  "app_in_root": true,
+  "start_files": [
+    ".claude",
+    ".editorconfig",
+    ".git",
+    ".gitattributes",
+    ".github",
+    ".gitignore",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "README.md",
+    "SUGESTOES.md",
+    "assets",
+    "build",
+    "core",
+    "dist",
+    "docs",
+    "electron",
+    "eslint.config.js",
+    "evidencias",
+    "modelos",
+    "node_modules",
+    "package-lock.json",
+    "package.json",
+    "renderer",
+    "tablet",
+    "test",
+    "tools"
+  ]
+}

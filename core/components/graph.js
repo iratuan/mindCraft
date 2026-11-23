@@ -14,6 +14,44 @@ function walkAll(map, fn) {
   for (const f of map.meta._momFloating || []) visit(f.node, 0, null);
 }
 
+/** Quanto cada tipo de aresta transmite de importância (a hierarquia conta menos que um link escolhido de propósito). */
+const EDGE_POWER = { link: 1, relation: 1.2, hierarchy: 0.5 };
+
+/**
+ * Peso dos nós: PageRank (amortecimento 0,85) sobre links, relações e hierarquia. Quem RECEBE links ganha mais e quem
+ * os faz ainda ganha um pouco (volta de 30%). Soma ao conteúdo próprio (nota, filhos). Define `rank` (0..1, o mais
+ * importante vale 1) e `importance` (>= 0, tamanho do ponto na rede 3D). Determinístico, sem aleatoriedade.
+ */
+function computeWeights(nodes, edges) {
+  const n = nodes.length; if (!n) return;
+  const idx = new Map(nodes.map((g, i) => [g.id, i]));
+  const outs = nodes.map(() => []);
+  const addArc = (a, b, w) => { if (a !== b && w > 0) outs[a].push([b, w]); };
+  for (const e of edges) {
+    const a = idx.get(e.from), b = idx.get(e.to); if (a == null || b == null) continue;
+    const w = EDGE_POWER[e.type] ?? 1;
+    addArc(a, b, w); addArc(b, a, e.type === 'hierarchy' ? w : w * 0.3);
+  }
+  const total = outs.map((l) => l.reduce((t, [, w]) => t + w, 0));
+  let r = new Array(n).fill(1 / n);
+  for (let it = 0; it < 40; it++) {
+    const nx = new Array(n).fill(0); let dangling = 0;
+    for (let i = 0; i < n; i++) {
+      if (!total[i]) { dangling += r[i]; continue; }
+      for (const [j, w] of outs[i]) nx[j] += r[i] * w / total[i];
+    }
+    let diff = 0;
+    for (let i = 0; i < n; i++) { const v = 0.15 / n + 0.85 * (nx[i] + dangling / n); diff += Math.abs(v - r[i]); nx[i] = v; }
+    r = nx; if (diff < 1e-9) break;
+  }
+  const max = Math.max(...r) || 1;
+  nodes.forEach((g, i) => {
+    g.rank = r[i] / max;
+    const own = Math.min(g.childCount || 0, 6) * 0.4 + (g.hasNote ? 1 : 0);
+    g.importance = Math.round((g.rank * 10 + own + Math.min(g.deg || 0, 8) * 0.5) * 100) / 100;
+  });
+}
+
 function buildGraph(maps, { hierarchy = false } = {}) {
   const nodes = [];
   const byId = new Map();
@@ -99,8 +137,9 @@ function buildGraph(maps, { hierarchy = false } = {}) {
   }
 
   for (const ed of edges) { if (ed.type === 'hierarchy') continue; byId.get(ed.from).deg++; byId.get(ed.to).deg++; }
-  // peso (tamanho do ponto na rede 3D): filhos diretos + nota + ligações
-  for (const g of nodes) g.weight = (g.childCount || 0) + (g.hasNote ? 1 : 0) + g.deg;
+  // peso (tamanho do ponto na rede 3D): importância estilo PageRank + conteúdo próprio (ver computeWeights)
+  for (const g of nodes) g.weight = (g.childCount || 0) + (g.hasNote ? 1 : 0) + g.deg;   // contagem simples (contrato antigo)
+  computeWeights(nodes, edges);
   const out = new Map(), inn = new Map();
   for (const ed of edges) {
     if (!out.has(ed.from)) out.set(ed.from, []); out.get(ed.from).push(ed);
@@ -133,4 +172,4 @@ function neighborhood(g, id, depth = 1) {
   return { nodes: g.nodes.filter((n) => seen.has(n.id)), edges: g.edges.filter((e) => seen.has(e.from) && seen.has(e.to)), distance: seen };
 }
 
-module.exports = { buildGraph, neighborhood };
+module.exports = { buildGraph, neighborhood, computeWeights };

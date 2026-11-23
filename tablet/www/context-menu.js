@@ -65,6 +65,7 @@ function ctxTree(id) {
     { label: 'Estrutura', children: [
       { label: 'Novo tópico filho', hint: 'Tab', run: () => act.child() },
       { label: 'Novo tópico irmão', hint: 'Enter', run: () => act.sibling() },
+      { label: 'Novo tópico flutuante', run: () => act.addFloating() },
       { label: 'Duplicar', run: () => ctxDuplicate(id) },
       { label: 'Subir', hint: 'Alt+↑', run: () => act.moveUp() },
       { label: 'Descer', hint: 'Alt+↓', run: () => act.moveDown() },

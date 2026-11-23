@@ -22081,12 +22081,46 @@
 
   // renderer/react/Home.jsx
   var import_react5 = __toESM(require_react());
+
+  // renderer/react/home-parts.jsx
   var import_jsx_runtime7 = __toESM(require_jsx_runtime());
   var ago = (ms) => {
     if (!ms) return "";
     const d2 = Math.floor((Date.now() - ms) / 864e5);
     return d2 <= 0 ? "hoje" : d2 === 1 ? "ontem" : d2 < 30 ? `h\xE1 ${d2} dias` : new Date(ms).toLocaleDateString("pt-BR");
   };
+  function ActionButton({ id, title, hint, primary, onClick }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-action" + (primary ? " primary" : ""), id, onClick, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: title }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: hint })
+    ] });
+  }
+  function ContinueCard({ last, onOpen }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("section", { className: "hm-sec hm-continue-sec", id: "hmLast", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h3", { children: "Continuar de onde parou" }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-continue", id: "hmContinue", onClick: () => onOpen(last), children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: last.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "muted", children: [
+          last.dir,
+          " \xB7 ",
+          ago(last.mtime)
+        ] })
+      ] })
+    ] });
+  }
+  function RecentCard({ item, onOpen, onRemove }) {
+    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("li", { className: "hm-card" + (item.exists ? "" : " missing"), children: [
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-card-open", disabled: !item.exists, onClick: () => onOpen(item), title: item.path, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: item.name }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "muted", children: item.exists ? `${item.dir}` : "arquivo n\xE3o encontrado" }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "hm-card-when", children: item.exists ? ago(item.mtime) : "" })
+      ] }),
+      /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: "icon-btn sm hm-card-x", title: "Tirar da lista (o arquivo n\xE3o \xE9 apagado)", "aria-label": "Tirar da lista: " + item.name, onClick: () => onRemove(item.path), children: "\xD7" })
+    ] });
+  }
+
+  // renderer/react/Home.jsx
+  var import_jsx_runtime8 = __toESM(require_jsx_runtime());
   function Home() {
     const [data, setData] = (0, import_react5.useState)(() => H().homeData());
     const A2 = H().homeActions;
@@ -22099,66 +22133,36 @@
       await A2.clearRecent();
       refresh();
     };
-    const last = data.last;
-    return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-start", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-brand", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("img", { className: "hm-logo", src: "assets/logo.svg", alt: "", height: "40" }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h1", { children: "BRANIAC" })
+    return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm-start", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm-brand", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("img", { className: "hm-logo", src: "assets/logo.svg", alt: "", height: "40" }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("h1", { children: "BRANIAC" })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("p", { className: "hm-lead", children: "Seu grande c\xE9rebro para mapas mentais. Abre e salva no formato do Mindomo." }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-actions", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-action primary", id: "hmNew", onClick: () => A2.newBlank(), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: "Novo mapa" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "Come\xE7a com a ideia central e tr\xEAs t\xF3picos" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-action", id: "hmOpen", onClick: () => A2.openFile(), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: "Abrir arquivo .mom" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "Um mapa do Mindomo ou salvo aqui" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-action", id: "hmPdf", onClick: () => A2.openPdf(), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: "Ler um PDF" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "Selecione um trecho para virar t\xF3pico" })
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-action", id: "hmDash", onClick: () => H().openDash(), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: "Painel de mapas" }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "Resumo dos seus mapas" })
-          ] })
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("p", { className: "hm-lead", children: "Seu grande c\xE9rebro para mapas mentais. Abre e salva no formato do Mindomo. Cada nota vira um arquivo Markdown que o Obsidian l\xEA." }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm-actions", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmNew", primary: true, title: "Novo mapa", hint: "Come\xE7a com a ideia central e tr\xEAs t\xF3picos", onClick: () => A2.newBlank() }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmOpen", title: "Abrir arquivo .mom", hint: "Um mapa do Mindomo ou salvo aqui", onClick: () => A2.openFile() }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmPdf", title: "Ler um PDF", hint: "Selecione um trecho para virar t\xF3pico", onClick: () => A2.openPdf() }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmDash", title: "Painel de mapas", hint: "Resumo dos seus mapas", onClick: () => H().openDash() })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "hm-main", children: [
-        last && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("section", { className: "hm-sec hm-continue-sec", id: "hmLast", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h3", { children: "Continuar de onde parou" }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-continue", id: "hmContinue", onClick: () => A2.openRecent(last), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: last.name }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "muted", children: [
-              last.dir,
-              " \xB7 ",
-              ago(last.mtime)
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("section", { className: "hm-sec", id: "hmRecent", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("h3", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: "Mapas recentes" }),
-            data.recent.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: "link", id: "hmClear", onClick: clear, children: "limpar lista" })
+      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm-main", children: [
+        data.last && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ContinueCard, { last: data.last, onOpen: A2.openRecent }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("section", { className: "hm-sec", id: "hmRecent", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("h3", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "Mapas recentes" }),
+            data.recent.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { className: "link", id: "hmClear", onClick: clear, children: "limpar lista" })
           ] }),
-          data.recent.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "empty", children: "Nenhum mapa aberto ainda. Crie um novo ou arraste um arquivo .mom para esta janela." }),
-          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("ul", { className: "hm-cards", children: data.recent.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("li", { className: "hm-card" + (r2.exists ? "" : " missing"), children: [
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("button", { className: "hm-card-open", disabled: !r2.exists, onClick: () => A2.openRecent(r2), title: r2.path, children: [
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("b", { children: r2.name }),
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "muted", children: r2.exists ? `${r2.dir}` : "arquivo n\xE3o encontrado" }),
-              /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "hm-card-when", children: r2.exists ? ago(r2.mtime) : "" })
-            ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("button", { className: "icon-btn sm hm-card-x", title: "Tirar da lista (o arquivo n\xE3o \xE9 apagado)", "aria-label": "Tirar da lista: " + r2.name, onClick: () => remove(r2.path), children: "\xD7" })
-          ] }, r2.path)) })
+          data.recent.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "empty", children: "Nenhum mapa aberto ainda. Crie um novo, arraste um arquivo .mom para esta janela, ou importe uma pasta do Obsidian para come\xE7ar seu segundo c\xE9rebro." }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("ul", { className: "hm-cards", children: data.recent.map((r2) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(RecentCard, { item: r2, onOpen: A2.openRecent, onRemove: remove }, r2.path)) })
         ] })
       ] })
     ] });
   }
 
   // renderer/react/index.jsx
-  var import_jsx_runtime8 = __toESM(require_jsx_runtime());
+  var import_jsx_runtime9 = __toESM(require_jsx_runtime());
   var cur = null;
   function unmount() {
     if (cur) {
@@ -22240,7 +22244,7 @@
         if (H3.modalEl().hidden && back && document.contains(back) && visible(back)) back.focus();
       }, 0);
     };
-    (0, import_react_dom.flushSync)(() => root.render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Component, { ...props, onClose: close })));
+    (0, import_react_dom.flushSync)(() => root.render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Component, { ...props, onClose: close })));
     initialFocus(m2);
   }
   var dashRoot = null;
@@ -22250,7 +22254,7 @@
       box.textContent = "";
       dashRoot = (0, import_client.createRoot)(box);
     }
-    (0, import_react_dom.flushSync)(() => dashRoot.render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Dashboard, { onClose: () => window.MC.closeDash() })));
+    (0, import_react_dom.flushSync)(() => dashRoot.render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Dashboard, { onClose: () => window.MC.closeDash() })));
   }
   function unmountDash() {
     if (!dashRoot) return;
@@ -22290,15 +22294,15 @@
   var pdfRoot = null;
   var resizeSoon = () => setTimeout(() => window.dispatchEvent(new Event("resize")), 0);
   function PdfHost({ initial, onClose }) {
-    return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(import_jsx_runtime8.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "media-head", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { children: "Leitor de PDF" }),
-        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "media-tools", children: [
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { type: "button", className: "icon-btn sm", id: "pdfMax", title: "Maximizar o leitor (ocupa a \xE1rea de trabalho)", "aria-label": "Maximizar o leitor de PDF", onClick: () => window.toggleDockMax && window.toggleDockMax(), children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { "aria-hidden": "true", children: "\u2922" }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { type: "button", className: "icon-btn sm", id: "pdfClose", title: "Fechar o leitor de PDF (Ctrl+Shift+P)", "aria-label": "Fechar o leitor de PDF", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { "aria-hidden": "true", children: "\u2715" }) })
+    return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "media-head", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: "Leitor de PDF" }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "media-tools", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { type: "button", className: "icon-btn sm", id: "pdfMax", title: "Maximizar o leitor (ocupa a \xE1rea de trabalho)", "aria-label": "Maximizar o leitor de PDF", onClick: () => window.toggleDockMax && window.toggleDockMax(), children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { "aria-hidden": "true", children: "\u2922" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("button", { type: "button", className: "icon-btn sm", id: "pdfClose", title: "Fechar o leitor de PDF (Ctrl+Shift+P)", "aria-label": "Fechar o leitor de PDF", onClick: onClose, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { "aria-hidden": "true", children: "\u2715" }) })
         ] })
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(PdfPane, { initial })
+      /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(PdfPane, { initial })
     ] });
   }
   function openPdf(opts = {}) {
@@ -22315,7 +22319,7 @@
     const w2 = cfg.pdfWidth;
     if (w2) pane.style.width = w2 + "px";
     pdfRoot = (0, import_client.createRoot)(pane);
-    (0, import_react_dom.flushSync)(() => pdfRoot.render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(PdfHost, { initial: opts, onClose: closePdf })));
+    (0, import_react_dom.flushSync)(() => pdfRoot.render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(PdfHost, { initial: opts, onClose: closePdf })));
     document.body.classList.add("pdf-open");
     resizeSoon();
   }
@@ -22342,7 +22346,7 @@
       box.textContent = "";
       refsRoot.r = (0, import_client.createRoot)(box);
     }
-    (0, import_react_dom.flushSync)(() => refsRoot.r.render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(RefsBox, {})));
+    (0, import_react_dom.flushSync)(() => refsRoot.r.render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(RefsBox, {})));
   }
   document.addEventListener("mc:render", () => {
     if (document.getElementById("refsBox")) renderRefs();
@@ -22357,7 +22361,7 @@
     box.hidden = false;
     box.dataset.ui = "react";
     document.querySelector('[data-act="home"]')?.classList.add("on");
-    (0, import_react_dom.flushSync)(() => homeRoot.render(/* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Home, { onClose: closeHome })));
+    (0, import_react_dom.flushSync)(() => homeRoot.render(/* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Home, { onClose: closeHome })));
     const target = box.querySelector("#hmContinue") || box.querySelector("#hmNew");
     if (target) target.focus();
     window.dispatchEvent(new Event("mc:render"));
@@ -22389,9 +22393,9 @@
     togglePdf: () => pdfRoot ? closePdf() : openPdf({}),
     pdfIsOpen: () => !!pdfRoot,
     renderRefs,
-    renderLinks: (model) => renderPanel("linksBody", /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Connections, { model })),
+    renderLinks: (model) => renderPanel("linksBody", /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Connections, { model })),
     unmountLinks: () => unmountPanel("linksBody"),
-    renderOutline: (rows) => renderPanel("outline", /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(Outline, { rows })),
+    renderOutline: (rows) => renderPanel("outline", /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(Outline, { rows })),
     unmountOutline: () => unmountPanel("outline"),
     unmount
   };

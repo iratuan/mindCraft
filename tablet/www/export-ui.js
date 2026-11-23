@@ -3,7 +3,7 @@
    PDF (impresso pelo processo principal a partir do HTML do núcleo) e Markdown (texto para outros aplicativos de estudo).
    Usa o mesmo documento para as duas, então o conteúdo é igual. Carregado depois de renderer.js e react-bridge.js. */
 
-const { buildStudyDoc, toMarkdown, toHtml } = require(path.join(core, 'study-export'));
+const { buildStudyDoc, toMarkdown, toHtml } = require(path.join(core, 'formats', 'study-export'));
 
 const STUDY_AI_MAX = 40;   // teto por material: cada tópico sem nota é uma chamada ao provedor
 let lastStudyAi = null;    // resultado da última geração (para avisar na barra de status)
@@ -55,7 +55,7 @@ Subtópicos: ${kids}` : ''), topic: path.join(' > ') });
 /** Monta o documento e grava no caminho escolhido. Devolve o caminho gravado ou lança erro para o usuário. */
 /** Exportação de um fluxograma (flow-export.js): mesma janela, mesma regra dos parágrafos da IA. */
 async function exportFlowTo(format, target, opts = {}) {
-  const { toFlowMarkdown, toFlowHtml } = require(path.join(core, 'flow-export'));
+  const { toFlowMarkdown, toFlowHtml } = require(path.join(core, 'formats', 'flow-export'));
   let generated = new Map();
   if (opts.aiFill) {
     const ks = await ipcRenderer.invoke('ai:key-status', aiProv());
@@ -65,6 +65,12 @@ async function exportFlowTo(format, target, opts = {}) {
     } else generated = await studyParagraphs();
   }
   const o = { notes: opts.notes !== false, generated };
+  if (format === 'drawio') {   // gravação atômica (temporário + renomear), como o Markdown
+    const tmp = target + '.tmp-' + process.pid;
+    fs.writeFileSync(tmp, require(path.join(core, 'formats', 'drawio')).toDrawio(map), 'utf8');
+    fs.renameSync(tmp, target);
+    return target;
+  }
   if (format === 'md') {
     const tmp = target + '.tmp-' + process.pid;
     fs.writeFileSync(tmp, toFlowMarkdown(map, o), 'utf8');
@@ -136,7 +142,7 @@ function openExportModal(mode = 'export') {
   const read = () => Object.fromEntries(Object.entries(opts).map(([k, i]) => [k, i.checked]));
   const onTablet = document.documentElement.dataset.host === 'web';
   const run = async (format) => {
-    const fname = (map.meta.name || map.root.title || 'material') + (format === 'pdf' ? '-material-de-estudo.pdf' : '-material-de-estudo.md');
+    const fname = (map.meta.name || map.root.title || 'material') + (format === 'pdf' ? '-material-de-estudo.pdf' : format === 'drawio' ? '.drawio' : '-material-de-estudo.md');
     // compartilhar no computador não pede local: o arquivo vai para a pasta de exportados; no tablet, o salvamento já abre a folha de compartilhar
     const target = sharing && !onTablet ? await ipcRenderer.invoke('share:temp', fname) : await ipcRenderer.invoke('dialog:save-export', format, fname);
     if (!target) return;
@@ -160,7 +166,9 @@ function openExportModal(mode = 'export') {
   cancel.onclick = () => closeModal();
   md.onclick = () => run('md');
   pdf.onclick = () => run('pdf');
-  foot.append(cancel, md, pdf);
+  const dio = el('button', 'btn', 'Gerar Draw.io'); dio.id = 'exDrawio'; dio.title = 'Abre no diagrams.net e na extensão Draw.io do VS Code';
+  dio.onclick = () => run('drawio');
+  if (isFlow(map)) foot.append(cancel, dio, md, pdf); else foot.append(cancel, md, pdf);
   box.append(foot);
   m.append(box);
   pdf.focus();

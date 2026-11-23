@@ -3,21 +3,21 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const core = path.join(__dirname, '..', 'core');
-const { MindMap, createNode } = require(path.join(core, 'model'));
-const { readMom, writeMom } = require(path.join(core, 'mom'));
-const { layoutMap, textWidth } = require(path.join(core, 'layout'));
-const { isFlow } = require(path.join(core, 'flow'));   // fluxograma: o documento muda de visão (flow-ui.js)
-const { toSVG, renderGroup } = require(path.join(core, 'svg'));
-const { THEMES } = require(path.join(core, 'themes'));
+const { MindMap, createNode } = require(path.join(core, 'components', 'model'));
+const { readMom, writeMom } = require(path.join(core, 'formats', 'mom'));
+const { layoutMap, textWidth } = require(path.join(core, 'components', 'layout'));
+const { isFlow } = require(path.join(core, 'components', 'flow'));   // fluxograma: o documento muda de visão (flow-ui.js)
+const { toSVG, renderGroup } = require(path.join(core, 'components', 'svg'));
+const { THEMES } = require(path.join(core, 'components', 'themes'));
 
 const $ = (s) => document.querySelector(s);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const svg = $('#svg'), view = $('#view'), editor = $('#editor'), notes = $('#notes'), stage = $('#stage');
 
-const { MARKERS } = require(path.join(core, 'markers'));
+const { MARKERS } = require(path.join(core, 'components', 'markers'));
 
-const { backupBefore, backupDirFor, listBackups } = require(path.join(core, 'backup'));
-const { logError } = require(path.join(core, 'errorlog'));
+const { backupBefore, backupDirFor, listBackups } = require(path.join(core, 'services', 'backup'));
+const { logError } = require(path.join(core, 'services', 'errorlog'));
 
 let map, filePath = null, dirty = false, selectedId = null, selectedRel = null, L = null;
 let selIds = new Set();     // seleção múltipla; selectedId é sempre o "primário" e pertence ao conjunto
@@ -50,8 +50,9 @@ function descendantCount(node) { let n = 0; for (const c of node.children) n += 
 function render() {
   if (map && isFlow(map) && typeof flowRender === 'function') { flowMode(true); flowRender(); flowTail(selectedId && map.find(selectedId)); return; }   // fluxograma: visão própria (flow-ui.js)
   if (typeof flowMode === 'function') flowMode(false);
-  // tema Pixel tem canvas escuro: as cores do mapa são ajustadas para ter contraste sobre ele (ver core/svg.js)
-  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26' : null;   // mesmo fundo do CSS do tema Pixel
+  // canvas escuro do Pixel ou claro do tema claro: o mapa adapta suas cores para manter contraste
+  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26'
+    : document.body.classList.contains('light') ? '#c7c7c7' : null;   // cores de #stage em pixel-theme.css e style.css
   const layoutOpts = canvas ? { canvas } : {};
   L = layoutMap(map, layoutOpts);
   // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
@@ -290,6 +291,12 @@ const sel = () => selectedId && map.find(selectedId);
 const act = {
   child() { const s = sel(); if (!s) return; const n = change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
   sibling() { const s = sel(); if (!s) return; const n = s.parent ? change(() => map.addSibling(s.node.id)) : change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
+  addFloating() {
+    const n = change(() => map.addFloating());
+    if (!n) return;
+    selectedId = n.id; selectedRel = null; selIds = new Set([n.id]);
+    centerOn(n.id); startEdit();
+  },
   moveUp() { reshape('moveSibling', -1, 'Já é o primeiro tópico deste nível.'); },
   moveDown() { reshape('moveSibling', +1, 'Já é o último tópico deste nível.'); },
   indent() { reshape('indent', undefined, 'Não há irmão acima para receber este tópico como filho.'); },
@@ -484,6 +491,7 @@ function setUiTheme(name) {
     b.title = `Tema da interface: ${UI_THEMES[name].label}. Clique para trocar`; b.setAttribute('aria-label', b.title);
   }
   const sel = $('#uiTheme'); if (sel) sel.value = name;
+  if (map) render();
 }
 setUiTheme(uiThemeGet());
 $('#lightToggle').addEventListener('click', () => { const keys = Object.keys(UI_THEMES); setUiTheme(keys[(keys.indexOf(uiThemeGet()) + 1) % keys.length]); });

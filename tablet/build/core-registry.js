@@ -17,6 +17,7 @@ module.exports = {
   "shapes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/components/shapes.js"),
   "svg": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/components/svg.js"),
   "themes": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/components/themes.js"),
+  "drawio": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/formats/drawio.js"),
   "flow-export": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/formats/flow-export.js"),
   "markdown": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/formats/markdown.js"),
   "mindomo": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/formats/mindomo.js"),

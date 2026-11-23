@@ -319,7 +319,7 @@ function render3d() {
   if (!gMode3d || !gLast || !window.ForceGraph3D) return;
   const host = $('#g3d');
   const data = {
-    nodes: gLast.nodes.map((n) => ({ id: n.id, name: n.title + (n.kind === 'ghost' ? ' (sem tópico)' : ''), val: 1 + (n.weight || 0), color: n.kind === 'ghost' ? '#8a8f98' : mapColor(n.mapKey || '') })),
+    nodes: gLast.nodes.map((n) => ({ id: n.id, name: n.title + (n.kind === 'ghost' ? ' (sem tópico)' : ''), val: 1 + (n.importance ?? n.weight ?? 0), color: n.kind === 'ghost' ? '#8a8f98' : mapColor(n.mapKey || '') })),
     links: gLast.edges.map((e) => ({ source: e.from, target: e.to })),
   };
   if (!g3) {
