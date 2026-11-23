@@ -32,7 +32,8 @@ textarea, input[type=search] { user-select: text; }
 .grow { flex: 1; }
 button, select, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button:focus-visible, .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-visible, .chip:focus-visible { box-shadow: 0 0 0 2px var(--accent-soft); }
 .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 
 /* Barra do aplicativo */
@@ -120,7 +121,7 @@ body:not(.light):not(.ui-draw) .brand img, body:not(.light):not(.ui-draw) img.hm
 .hsep { width: 24px; height: 1px; margin: 9px 0; background: transparent; }
 
 #stage { position: relative; flex: 1; overflow: hidden; background: var(--bg-stage); outline: none;
-  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 22px 22px; }
+  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 24px 24px; }
 body.light #stage { background-image: radial-gradient(circle, rgba(0,0,0,.07) 1px, transparent 1px); }
 #svg { width: 100%; height: 100%; display: block; cursor: default; }
 #svg.panning { cursor: grabbing; }
@@ -164,7 +165,8 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 .seg .chip:last-child { border-radius: 0 6px 6px 0; }
 .seg .chip.active { position: relative; z-index: 1; }
 
-#notes { font: inherit; width: 100%; height: 130px; resize: vertical; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 6px; padding: 8px; color: var(--text); outline: none; }
+#notes { font: inherit; width: 100%; height: 130px; resize: vertical; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px; color: var(--text); outline: none; transition: border-color .15s; }
+#notes:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 #notes:focus { border-color: var(--accent); }
 #notes:disabled { opacity: .5; }
 
