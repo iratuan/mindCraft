@@ -1,12 +1,12 @@
 /* Linguagem visual: interface escura em camadas de cinza, painéis recolhíveis, ferramentas à esquerda
    (inspirada em apps de criação profissionais; sem marcas nem fontes de terceiros). */
 :root {
-  --bg-app: #1e1e1e; --bg-bar: #262626; --bg-panel: #2c2c2c; --bg-panel-h: #333333; --bg-stage: #3a3a3a;
-  --bg-field: #1f1f1f; --bg-hover: #3d3d3d; --bg-active: #4a4a4a;
-  --line: #131313; --line-soft: #404040; --text: #e1e1e1; --text-dim: #9a9a9a; --text-strong: #ffffff;
-  --accent: #2680eb; --accent-hover: #4b97f3; --accent-soft: rgba(38,128,235,.22); --danger: #e34850;
+  --bg-app: #0A0A0C; --bg-bar: #121215; --bg-panel: #121215; --bg-panel-h: #18181C; --bg-stage: #0D0D10;
+  --bg-field: #18181C; --bg-hover: #1e1e22; --bg-active: #27272A;
+  --line: #27272A; --line-soft: rgba(255,255,255,0.08); --text: #F3F4F6; --text-dim: #9CA3AF; --text-strong: #FFFFFF;
+  --accent: #3B82F6; --accent-hover: #6366F1; --accent-soft: rgba(59,130,246,.2); --danger: #EF4444;
   --shadow: 0 4px 14px rgba(0,0,0,.45);
-  --font: "Adobe Clean", "Source Sans Pro", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font: 'Inter', 'Plus Jakarta Sans', 'SF Pro', "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   color-scheme: dark;
 }
 body.light {

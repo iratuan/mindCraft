@@ -23,6 +23,7 @@ export function PdfPane({ initial }) {
   const [msg, setMsg] = useState('');
   const [query, setQuery] = useState('');
   const scroller = useRef(null), pane = useRef(null), texts = useRef(new Map()), want = useRef(initial.page || null), saveT = useRef(null), findFrom = useRef(0);
+  const touchPts = useRef(new Map()); const pinchRef = useRef(null);
   const scale = mode === 'fit' ? fitScale : mode;
 
   const pdfs = map.meta.pdfs || [];
@@ -53,6 +54,32 @@ export function PdfPane({ initial }) {
     calc(); const ro = new ResizeObserver(calc); ro.observe(el);
     return () => ro.disconnect();
   }, [base.w, doc]);
+
+  // Pinch-zoom no leitor de PDF (touch)
+  useEffect(() => {
+    const el = scroller.current; if (!el) return undefined;
+    const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    const onStart = (e) => {
+      if (e.touches.length === 2) { pinchRef.current = { d: dist(e.touches[0], e.touches[1]), scale: mode === 'fit' ? fitScale : mode }; }
+    };
+    const onMove = (e) => {
+      if (e.touches.length !== 2 || !pinchRef.current) return;
+      e.preventDefault();
+      const d = dist(e.touches[0], e.touches[1]);
+      const ratio = d / pinchRef.current.d;
+      const target = Math.max(0.5, Math.min(3, pinchRef.current.scale * ratio));
+      // acha o passo mais próximo
+      let closest = STEPS[0], best = Infinity;
+      for (const s of STEPS) { if (Math.abs(s - target) < best) { best = Math.abs(s - target); closest = s; } }
+      setMode(closest);
+    };
+    const onEnd = () => { pinchRef.current = null; };
+    el.addEventListener('touchstart', onStart, { passive: true });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd);
+    el.addEventListener('touchcancel', onEnd);
+    return () => { el.removeEventListener('touchstart', onStart); el.removeEventListener('touchmove', onMove); el.removeEventListener('touchend', onEnd); el.removeEventListener('touchcancel', onEnd); };
+  }, [mode, fitScale]);
 
   const goPage = useCallback((n, smooth = false) => {
     const el = scroller.current && scroller.current.querySelector(`[data-page="${n}"]`);

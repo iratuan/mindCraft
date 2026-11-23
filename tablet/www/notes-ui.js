@@ -108,4 +108,35 @@ notesView.addEventListener('click', (e) => {
 });
 notesView.addEventListener('dblclick', (e) => { if (!e.target.closest('a, input')) setNotesMode('edit'); });
 
+// Preview de link [[...]] ao passar o mouse
+let linkTip = null;
+notesView.addEventListener('mouseover', (e) => {
+  const wl = e.target.closest('a.wl');
+  if (!wl) { if (linkTip) { linkTip.remove(); linkTip = null; } return; }
+  if (linkTip) return;
+  const g = buildGraph(gatherMaps(activeScope()).maps);
+  const r = g.resolveLink({ map: wl.dataset.map || null, topic: wl.dataset.topic === '' ? null : wl.dataset.topic, alias: null }, curKey());
+  const node = r && g.byId.get(r.id);
+  if (!node || node.kind === 'ghost') return;
+  const note = node.map && node.id ? (node.map.topics?.get(node.title)?.[0]?.notes || '') : '';
+  linkTip = document.createElement('div');
+  linkTip.className = 'link-preview';
+  linkTip.style.cssText = 'position:fixed;z-index:50;max-width:320px;max-height:200px;overflow:auto;padding:8px 10px;background:var(--bg-panel);border:1px solid var(--line-soft);border-radius:8px;box-shadow:var(--shadow);font-size:12px;color:var(--text);pointer-events:none;';
+  const title = document.createElement('div');
+  title.style.cssText = 'font-weight:700;color:var(--text-strong);margin-bottom:4px;';
+  title.textContent = node.title || 'Sem título';
+  linkTip.appendChild(title);
+  const preview = document.createElement('div');
+  preview.textContent = (node.notes || '').slice(0, 300) || 'Sem notas.';
+  preview.style.cssText = 'color:var(--text-dim);white-space:pre-wrap;';
+  linkTip.appendChild(preview);
+  document.body.appendChild(linkTip);
+  const rect = wl.getBoundingClientRect();
+  linkTip.style.left = Math.min(rect.left, window.innerWidth - 340) + 'px';
+  linkTip.style.top = (rect.bottom + 6) + 'px';
+});
+notesView.addEventListener('mouseout', (e) => {
+  if (!e.target.closest('a.wl') && linkTip) { linkTip.remove(); linkTip = null; }
+});
+
 refreshNotesView();

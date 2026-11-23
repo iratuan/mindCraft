@@ -16,6 +16,13 @@ body.light {
   --accent-soft: rgba(38,128,235,.16); --shadow: 0 4px 14px rgba(0,0,0,.2);
   color-scheme: light;
 }
+body.high-contrast {
+  --bg-app: #000; --bg-bar: #000; --bg-panel: #000; --bg-panel-h: #111; --bg-stage: #000;
+  --bg-field: #000; --bg-hover: #222; --bg-active: #333;
+  --line: #fff; --line-soft: #ccc; --text: #fff; --text-dim: #ccc; --text-strong: #fff;
+  --accent: #ffff00; --accent-hover: #ffff66; --accent-soft: rgba(255,255,0,.3); --danger: #ff0000;
+  color-scheme: dark;
+}
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
@@ -25,7 +32,8 @@ textarea, input[type=search] { user-select: text; }
 .grow { flex: 1; }
 button, select, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button:focus-visible, .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-visible, .chip:focus-visible { box-shadow: 0 0 0 2px var(--accent-soft); }
 .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 
 /* Barra do aplicativo */
@@ -113,7 +121,9 @@ body:not(.light):not(.ui-draw) .brand img, body:not(.light):not(.ui-draw) img.hm
 .hsep { width: 24px; height: 1px; margin: 9px 0; background: transparent; }
 
 #stage { position: relative; flex: 1; overflow: hidden; background: var(--bg-stage); outline: none;
-  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 22px 22px; }
+  background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 24px 24px; }
+#stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.15) 100%); z-index: 0; }
+#stage > * { position: relative; z-index: 1; }
 body.light #stage { background-image: radial-gradient(circle, rgba(0,0,0,.07) 1px, transparent 1px); }
 #svg { width: 100%; height: 100%; display: block; cursor: default; }
 #svg.panning { cursor: grabbing; }
@@ -157,7 +167,9 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
 .seg .chip:last-child { border-radius: 0 6px 6px 0; }
 .seg .chip.active { position: relative; z-index: 1; }
 
-#notes { font: inherit; width: 100%; height: 130px; resize: vertical; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 6px; padding: 8px; color: var(--text); outline: none; }
+#notes { font: inherit; width: 100%; height: 130px; resize: vertical; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 8px; padding: 10px 12px; color: var(--text); outline: none; transition: border-color .15s, box-shadow .15s; line-height: 1.5; }
+#notes:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+#notes::placeholder { color: var(--text-dim); opacity: .6; }
 #notes:focus { border-color: var(--accent); }
 #notes:disabled { opacity: .5; }
 
@@ -196,16 +208,8 @@ body.relating #svg, body.relating #svg .node { cursor: crosshair; }
   .brand img { height: 28px; }
 }
 
-/* Tablet portrait: painel lateral em overlay para não esconder o mapa */
+/* Tablet portrait: ajustes de layout (o painel já é gaveta via JS/CSS existente) */
 @media (max-width: 768px) and (pointer: coarse) {
-  #work { position: relative; }
-  #panels {
-    position: absolute; right: 0; top: 0; bottom: 0; z-index: 5;
-    width: min(320px, 85vw); max-width: 85vw;
-    box-shadow: -4px 0 16px rgba(0,0,0,.4);
-    transform: translateX(100%); transition: transform .2s ease;
-  }
-  #panels.open { transform: translateX(0); }
   body.pdf-open #panels { display: none; }
   #pdfpane { width: 100%; min-width: 0; }
   #pdfsplit { display: none; }
@@ -311,7 +315,11 @@ body.timing #timerBtn { background: var(--danger); border-color: var(--danger); 
 .lk .go:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 .lk .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 #graph { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; background: var(--g-bg, #161616); }
+#graph::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.25) 100%); z-index: 0; }
+#graph > * { position: relative; z-index: 1; }
 .g-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; background: var(--bg-panel); border-bottom: 1px solid var(--line); }
+.g-bar select, .g-bar input[type=search], .g-bar input[type=text] { transition: border-color .15s; }
+.g-bar select:focus, .g-bar input[type=search]:focus, .g-bar input[type=text]:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .g-bar label { display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
 .g-bar select, .g-bar input[type=search], .g-bar input[type=text] { height: 26px; background: var(--bg-field); border: 1px solid var(--line-soft); border-radius: 4px; padding: 0 7px; color: var(--text); }
 .g-bar .path { color: var(--text-dim); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
@@ -715,6 +723,9 @@ body.panel-max #stage, body.panel-max #pdfpane, body.panel-max #pdfsplit, body.p
 body.panel-max #panels { width: auto !important; flex: 1 1 auto; }
 /* bancada da esquerda maximizada: ocupa a área de trabalho; o mapa e o painel da direita somem até restaurar */
 body.dock-max #stage, body.dock-max #panels, body.dock-max #panelsSplit, body.dock-max #panelsReveal, body.dock-max #pdfsplit { display: none !important; }
+#boardpane { position: relative; background: var(--bg-stage); }
+#boardpane::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.12) 100%); z-index: 0; }
+#boardpane > * { position: relative; z-index: 1; }
 body.dock-max #pdfpane, body.dock-max #boardpane { width: auto !important; flex: 1 1 auto; }
 body.dock-max #boardsplit { display: none !important; }
 /* botão de maximizar/restaurar do cabeçalho do painel */

@@ -27,6 +27,7 @@ module.exports = {
   "ai": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/ai.js"),
   "backup": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/backup.js"),
   "errorlog": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/errorlog.js"),
+  "obsidian-import": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/obsidian-import.js"),
   "obsidian-write": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/obsidian-write.js"),
   "obsidian": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/obsidian.js"),
   "revisao": require("E:/SANDBOX_CLAUDE/mindomo_craft/app/core/services/revisao.js"),

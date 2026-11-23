@@ -10346,7 +10346,14 @@ ${renderGroup(L, { logo: true })}
           const body = bodyParts.join("\n") + "\n";
           const fm = ["---", `${ID_KEY}: ${JSON.stringify(`${m.name}::${n.id}`)}`, `mapa: ${JSON.stringify(m.name)}`];
           if (n.progress != null && Number.isFinite(Number(n.progress))) fm.push(`progresso: ${Number(n.progress)}`);
-          fm.push("aliases:", `  - ${JSON.stringify(title)}`, "tags:", "  - mindcraft");
+          const prog = Number(n.progress);
+          const tags = ["mindcraft"];
+          if (Number.isFinite(prog)) {
+            if (prog >= 100) tags.push("concluido");
+            else tags.push("revisar");
+            if (prog <= 25) tags.push("prioridade-alta");
+          } else tags.push("revisar");
+          fm.push("aliases:", `  - ${JSON.stringify(title)}`, "tags:", ...tags.map((t) => `  - ${t}`));
           const base = fm.join("\n") + "\n---\n" + body;
           const content = [...fm, `${HASH_KEY}: ${JSON.stringify(fingerprint(base))}`].join("\n") + "\n---\n" + body;
           files.push({ path: `${pathOf.get(id)}.md`, content });
@@ -10362,6 +10369,70 @@ ${renderGroup(L, { logo: true })}
         return `obsidian://open?path=${encodeURIComponent(dir)}`;
       }
       module.exports.obsidianOpenUrl = obsidianOpenUrl;
+    }
+  });
+
+  // ../core/services/obsidian-import.js
+  var require_obsidian_import = __commonJS({
+    "../core/services/obsidian-import.js"(exports, module) {
+      "use strict";
+      var fs2 = require_fs_vfs();
+      var path2 = require_path();
+      var { fingerprint, ID_KEY, HASH_KEY } = require_obsidian();
+      function readOurs(text) {
+        const m = /^---\n([\s\S]*?)\n---\n/.exec(text);
+        if (!m || !new RegExp(`^${ID_KEY}: `, "m").test(m[1])) return null;
+        const hashM = new RegExp(`^${HASH_KEY}: (.*)$`, "m").exec(m[1]);
+        const storedHash = hashM ? (function(s) {
+          try {
+            return JSON.parse(s);
+          } catch {
+            return null;
+          }
+        })(hashM[1]) : null;
+        const stripped = text.replace(new RegExp(`^${HASH_KEY}: .*\\n`, "m"), "");
+        const edited = !storedHash || fingerprint(stripped) !== storedHash;
+        const idM = new RegExp(`^${ID_KEY}: (.*)$`, "m").exec(m[1]);
+        const id = idM ? (function(s) {
+          try {
+            return JSON.parse(s);
+          } catch {
+            return null;
+          }
+        })(idM[1]) : null;
+        const bodyM = /^---\n[\s\S]*?\n---\n([\s\S]*)$/.exec(text);
+        const body = bodyM ? bodyM[1].trim() : "";
+        return { edited, id, body, storedHash };
+      }
+      function detectEditedNotes(vaultDir, folder = "MindCraft") {
+        const base = path2.join(vaultDir, folder);
+        const result = [];
+        const walk2 = (d) => {
+          let items;
+          try {
+            items = fs2.readdirSync(d, { withFileTypes: true });
+          } catch {
+            return;
+          }
+          for (const it of items) {
+            const full = path2.join(d, it.name);
+            if (it.isDirectory()) walk2(full);
+            else if (it.isFile() && /\.md$/i.test(it.name)) {
+              try {
+                const text = fs2.readFileSync(full, "utf8");
+                const ours = readOurs(text);
+                if (ours && ours.edited) {
+                  result.push({ path: path2.relative(vaultDir, full), id: ours.id, body: ours.body, fullPath: full });
+                }
+              } catch {
+              }
+            }
+          }
+        };
+        walk2(base);
+        return result;
+      }
+      module.exports = { detectEditedNotes, readOurs };
     }
   });
 
@@ -10581,6 +10652,7 @@ ${renderGroup(L, { logo: true })}
         "ai": require_ai(),
         "backup": require_backup(),
         "errorlog": require_errorlog(),
+        "obsidian-import": require_obsidian_import(),
         "obsidian-write": require_obsidian_write(),
         "obsidian": require_obsidian(),
         "revisao": require_revisao(),

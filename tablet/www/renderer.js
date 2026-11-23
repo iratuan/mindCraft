@@ -548,6 +548,11 @@ function fitEditor() {
   if (editBase) editor.style.top = Math.max(8, Math.min(editBase.top, sh - h - 8)) + 'px';
 }
 editor.addEventListener('input', fitEditor);
+// teclado virtual (tablet): quando a área visível muda, reposiciona o campo de edição
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => { if (!editor.hidden) refitEditorToViewport(); });
+  window.visualViewport.addEventListener('scroll', () => { if (!editor.hidden) refitEditorToViewport(); });
+}
 /** Depois que o teclado virtual aparece/some ou a tela gira: rola o mapa até o tópico em edição caber e reposiciona o campo de texto. */
 function refitEditorToViewport() {
   if (editor.hidden || !selectedId || !L) return;

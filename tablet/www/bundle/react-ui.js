@@ -21728,6 +21728,8 @@
     const [msg, setMsg] = (0, import_react4.useState)("");
     const [query, setQuery] = (0, import_react4.useState)("");
     const scroller = (0, import_react4.useRef)(null), pane = (0, import_react4.useRef)(null), texts = (0, import_react4.useRef)(/* @__PURE__ */ new Map()), want = (0, import_react4.useRef)(initial.page || null), saveT = (0, import_react4.useRef)(null), findFrom = (0, import_react4.useRef)(0);
+    const touchPts = (0, import_react4.useRef)(/* @__PURE__ */ new Map());
+    const pinchRef = (0, import_react4.useRef)(null);
     const scale = mode === "fit" ? fitScale : mode;
     const pdfs = map.meta.pdfs || [];
     const reg = src ? pdfs.find((p2) => p2.path.toLowerCase() === src.path.toLowerCase()) : null;
@@ -21775,6 +21777,44 @@
       ro.observe(el);
       return () => ro.disconnect();
     }, [base.w, doc]);
+    (0, import_react4.useEffect)(() => {
+      const el = scroller.current;
+      if (!el) return void 0;
+      const dist = (a2, b2) => Math.hypot(a2.clientX - b2.clientX, a2.clientY - b2.clientY);
+      const onStart = (e2) => {
+        if (e2.touches.length === 2) {
+          pinchRef.current = { d: dist(e2.touches[0], e2.touches[1]), scale: mode === "fit" ? fitScale : mode };
+        }
+      };
+      const onMove = (e2) => {
+        if (e2.touches.length !== 2 || !pinchRef.current) return;
+        e2.preventDefault();
+        const d2 = dist(e2.touches[0], e2.touches[1]);
+        const ratio = d2 / pinchRef.current.d;
+        const target = Math.max(0.5, Math.min(3, pinchRef.current.scale * ratio));
+        let closest = STEPS[0], best = Infinity;
+        for (const s2 of STEPS) {
+          if (Math.abs(s2 - target) < best) {
+            best = Math.abs(s2 - target);
+            closest = s2;
+          }
+        }
+        setMode(closest);
+      };
+      const onEnd = () => {
+        pinchRef.current = null;
+      };
+      el.addEventListener("touchstart", onStart, { passive: true });
+      el.addEventListener("touchmove", onMove, { passive: false });
+      el.addEventListener("touchend", onEnd);
+      el.addEventListener("touchcancel", onEnd);
+      return () => {
+        el.removeEventListener("touchstart", onStart);
+        el.removeEventListener("touchmove", onMove);
+        el.removeEventListener("touchend", onEnd);
+        el.removeEventListener("touchcancel", onEnd);
+      };
+    }, [mode, fitScale]);
     const goPage = (0, import_react4.useCallback)((n2, smooth = false) => {
       const el = scroller.current && scroller.current.querySelector(`[data-page="${n2}"]`);
       if (el) scroller.current.scrollTo({ top: el.offsetTop - 8, behavior: smooth ? "smooth" : "auto" });
