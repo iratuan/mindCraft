@@ -175,6 +175,18 @@
   new MutationObserver(paintToggle).observe(body, { attributes: true, attributeFilter: ['class'] });
   paintToggle();
 
+  // Acessibilidade: Alt+1..5 seleciona a aba correspondente do painel lateral
+  document.addEventListener('keydown', (e) => {
+    if (!e.altKey || e.ctrlKey || e.metaKey) return;
+    const n = parseInt(e.key, 10);
+    if (!Number.isInteger(n) || n < 1 || n > 5) return;
+    const tabs = [...document.querySelectorAll('#ptabs .ptab')];
+    if (n - 1 >= tabs.length) return;
+    e.preventDefault();
+    tabs[n - 1].click();
+    tabs[n - 1].focus();
+  });
+
   // swipe entre abas do painel lateral (tablet): deslizar para a esquerda/direita troca de aba
   (function panelSwipe() {
     const tabs = () => [...document.querySelectorAll('#ptabs .ptab')];

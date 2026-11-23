@@ -16,6 +16,13 @@ body.light {
   --accent-soft: rgba(38,128,235,.16); --shadow: 0 4px 14px rgba(0,0,0,.2);
   color-scheme: light;
 }
+body.high-contrast {
+  --bg-app: #000; --bg-bar: #000; --bg-panel: #000; --bg-panel-h: #111; --bg-stage: #000;
+  --bg-field: #000; --bg-hover: #222; --bg-active: #333;
+  --line: #fff; --line-soft: #ccc; --text: #fff; --text-dim: #ccc; --text-strong: #fff;
+  --accent: #ffff00; --accent-hover: #ffff66; --accent-soft: rgba(255,255,0,.3); --danger: #ff0000;
+  color-scheme: dark;
+}
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
