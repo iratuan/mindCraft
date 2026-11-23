@@ -174,6 +174,24 @@
   window.addEventListener('resize', keepFit);
   new MutationObserver(paintToggle).observe(body, { attributes: true, attributeFilter: ['class'] });
   paintToggle();
+
+  // swipe entre abas do painel lateral (tablet): deslizar para a esquerda/direita troca de aba
+  (function panelSwipe() {
+    const tabs = () => [...document.querySelectorAll('#ptabs .ptab')];
+    let startX = 0, startY = 0, tracking = false;
+    panels.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; startX = e.touches[0].clientX; startY = e.touches[0].clientY; tracking = true; }, { passive: true });
+    panels.addEventListener('touchend', (e) => {
+      if (!tracking || e.changedTouches.length !== 1) { tracking = false; return; }
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      tracking = false;
+      if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // só swipe horizontal claro
+      const ts = tabs(); const on = ts.findIndex((t) => t.classList.contains('on')); if (on < 0) return;
+      const next = dx < 0 ? on + 1 : on - 1;
+      if (next < 0 || next >= ts.length) return;
+      ts[next].click();
+    }, { passive: true });
+  })();
 })();
 
 // Nome da aba ativa no cabeçalho do painel (a aba ativa só mostra o ícone; o rótulo ajuda a saber onde se está).
