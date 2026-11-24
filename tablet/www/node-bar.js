@@ -4,6 +4,7 @@
    Carregado depois de renderer.js e context-ui.js (usa os globais deles). */
 
 const nodeBarEl = document.getElementById('nodebar');
+if (nodeBarEl) nodeBarEl.addEventListener('mousedown', (e) => e.stopPropagation());
 const NB_BUTTONS = [
   { id: 'nbChild', icon: 'child', label: 'Novo subtópico (Tab)', run: () => act.child() },
   { id: 'nbNote', icon: 'note', label: 'Escrever nota', run: () => { const s = sel(); if (s) openNotesFor(s.node.id); } },
@@ -49,7 +50,8 @@ function syncNodeBar() {
       btn.type = 'button'; btn.id = b.id; btn.className = 'nb-btn' + (b.danger ? ' danger' : '');
       btn.innerHTML = iconSvg(b.icon, 18);   // ícone plano: a cor vem do tema; o nome vai para o leitor de tela e a dica
       btn.title = b.label; btn.setAttribute('aria-label', b.label);
-      btn.onclick = () => { b.run(); };
+      btn.onmousedown = (e) => { e.stopPropagation(); e.preventDefault(); };
+      btn.onclick = (e) => { e.stopPropagation(); b.run(); };
       nodeBarEl.append(btn);
     }
   }

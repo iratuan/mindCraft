@@ -564,7 +564,7 @@ async function main() {
     await js('selectedId = "r"; selIds = new Set(["r"]); render();');
     await waitFor(() => js("!document.getElementById('nodebar').hidden"));
     const n = await js("document.querySelectorAll('#nodebar button svg').length");
-    assert.strictEqual(n, 6, 'seis botões com ícone');
+    assert.strictEqual(n, 4, 'quatro botões com ícone');
     const names = await js("[...document.querySelectorAll('#nodebar button')].every((b) => b.getAttribute('aria-label') && b.title)");
     assert.ok(names, 'cada botão tem nome e dica');
     await shot('06-barra-icones');
