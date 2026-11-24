@@ -48,7 +48,7 @@
     if (!panel) {
       panel = document.createElement('div');
       panel.id = 'flashcardPanel';
-      panel.style.cssText = 'position:fixed;bottom:80px;right:12px;z-index:10;width:280px;max-height:320px;display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--bg-panel);border:1px solid var(--line-soft);border-radius:12px;box-shadow:var(--shadow);font-size:13px;color:var(--text);';
+      panel.style.cssText = 'position:fixed;bottom:80px;right:12px;z-index:10;width:300px;max-height:340px;display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--text);line-height:1.5;';
       document.body.appendChild(panel);
     }
     if (!cards.length) { panel.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">Nenhum flashcard. Selecione um trecho nas notas e clique 🃏.</div>'; return; }
@@ -62,7 +62,7 @@
     panel.appendChild(header);
 
     const card = document.createElement('div');
-    card.style.cssText = 'flex:1;min-height:120px;padding:12px;background:var(--bg-field);border:1px solid var(--line-soft);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;overflow:auto;';
+    card.style.cssText = 'flex:1;min-height:120px;padding:16px;background:var(--bg-app);border:1px solid var(--line);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;overflow:auto;font-size:15px;line-height:1.6;';
     card.textContent = flipped ? c.back : c.front;
     card.addEventListener('click', () => { flipped = !flipped; renderPanel(); });
     panel.appendChild(card);
