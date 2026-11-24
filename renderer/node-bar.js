@@ -28,11 +28,26 @@ function syncNodeBar() {
   if (!nodeBarEl) return;
   const s = sel();
   const homeOpen = !!(window.MCReact && window.MCReact.homeIsOpen && window.MCReact.homeIsOpen());
-  // só com o mapa em foco (não com o leitor de PDF ou a lousa ativos); tópicos soltos também contam
-  const flow = typeof flowIsOn === 'function' && flowIsOn();   // no fluxograma, a barra do tópico do mapa não se aplica
+  const flow = typeof flowIsOn === 'function' && flowIsOn();
   const show = !!map && !!s && !homeOpen && !flow && !dashOpenNow() && !document.body.classList.contains('focus-media');
   nodeBarEl.hidden = !show;
   if (!show) return;
+  // posiciona a barra flutuante ao lado do nó selecionado
+  try {
+    if (typeof L !== 'undefined' && L && L.boxes) {
+      const b = L.boxes.get(s.node.id);
+      if (b && typeof pan !== 'undefined') {
+        const cx = (b.x + b.w / 2) * pan.k + pan.x;
+        const top = b.y * pan.k + pan.y;
+        const stage = document.getElementById('stage');
+        const sr = stage ? stage.getBoundingClientRect() : { left: 0, top: 0 };
+        nodeBarEl.style.left = Math.max(8, Math.min(cx - nodeBarEl.offsetWidth / 2, sr.width - nodeBarEl.offsetWidth - 8)) + 'px';
+        nodeBarEl.style.top = (top - nodeBarEl.offsetHeight - 8) + 'px';
+        nodeBarEl.style.transform = 'none';
+        nodeBarEl.style.bottom = 'auto';
+      }
+    }
+  } catch (e) { /* ignora posicionamento se falhar */ }
   if (!nodeBarEl.childElementCount) {
     for (const b of NB_BUTTONS) {
       const btn = document.createElement('button');
