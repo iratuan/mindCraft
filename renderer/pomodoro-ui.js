@@ -49,23 +49,24 @@
   function toggle() { state.running ? pause() : start(); }
 
   function render() {
-    const el = $('#pomodoroWidget');
+    const el = document.getElementById('pomodoroStatus');
     if (!el) return;
-    el.querySelector('.pomo-time').textContent = fmt(state.remaining);
-    el.querySelector('.pomo-phase').textContent = phaseLabel();
-    el.querySelector('.pomo-phase').style.color = phaseColor();
-    el.querySelector('.pomo-btn').textContent = state.running ? '⏸' : '▶';
-    el.querySelector('.pomo-cycles').textContent = `Ciclo ${Math.min(state.cycles + 1, CYCLES)}/${CYCLES}`;
+    const t = el.querySelector('.pomo-time');
+    const p = el.querySelector('.pomo-phase');
+    const b = el.querySelector('.pomo-btn');
+    const c = el.querySelector('.pomo-cycles');
+    if (t) t.textContent = fmt(state.remaining);
+    if (p) { p.textContent = phaseLabel(); p.style.color = phaseColor(); }
+    if (b) b.textContent = state.running ? '⏸' : '▶';
+    if (c) c.textContent = `${Math.min(state.cycles + 1, CYCLES)}/${CYCLES}`;
   }
 
   function buildWidget() {
-    const w = document.createElement('div');
-    w.id = 'pomodoroWidget';
-    w.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:10;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--text);user-select:none;';
-    w.innerHTML = '<span class="pomo-phase" style="font-weight:600;">Foco</span><span class="pomo-time" style="font-variant-numeric:tabular-nums;font-weight:700;min-width:42px;text-align:center;">25:00</span><button class="pomo-btn btn small" style="width:28px;height:28px;padding:0;">▶</button><span class="pomo-cycles" style="color:var(--text-dim);font-size:10px;">Ciclo 1/4</span>';
-    w.querySelector('.pomo-btn').addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
-    w.addEventListener('dblclick', (e) => { e.stopPropagation(); if (confirm('Resetar Pomodoro?')) reset(); });
-    document.body.appendChild(w);
+    const el = document.getElementById('pomodoroStatus');
+    if (!el) return;
+    el.innerHTML = '<span class="pomo-phase" style="font-weight:600;">Foco</span> <span class="pomo-time" style="font-variant-numeric:tabular-nums;font-weight:700;min-width:36px;text-align:center;">25:00</span> <button class="pomo-btn" style="width:22px;height:22px;padding:0;border:0;background:none;color:var(--text);cursor:pointer;font-size:12px;" title="Iniciar/pausar">▶</button> <span class="pomo-cycles" style="color:var(--text-dim);font-size:10px;">1/4</span>';
+    el.querySelector('.pomo-btn').addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    el.addEventListener('dblclick', (e) => { e.stopPropagation(); if (confirm('Resetar Pomodoro?')) reset(); });
     render();
   }
 
@@ -74,7 +75,7 @@
   else buildWidget();
   // expõe toggle para a node-bar
   window.togglePomodoro = () => {
-    const w = document.getElementById('pomodoroWidget');
-    if (w) w.style.display = (w.style.display === 'none') ? 'flex' : 'none';
+    const el = document.getElementById('pomodoroStatus');
+    if (el) el.style.display = (el.style.display === 'none') ? 'flex' : 'none';
   };
 })();
