@@ -20,7 +20,7 @@ const ICON = {
   line: '<path d="M5 19L19 5"/><circle cx="5" cy="19" r="1.6"/><circle cx="19" cy="5" r="1.6"/>',
   rect: '<rect x="4" y="5" width="16" height="14" rx="1.5"/>',
   ellipse: '<circle cx="12" cy="12" r="8"/>',
-  child: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H14a4 4 0 0 1 4 4v5.5"/><path d="M6 8.5V18"/>',
+  child: '<rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><path d="M10 12h2.5V7H14M17.5 14v6M14.5 17h6"/>',
   sibling: '<rect x="3" y="4" width="8" height="6" rx="1.5"/><rect x="3" y="14" width="8" height="6" rx="1.5"/><path d="M17 8v8M13 12h8"/>',
   up: '<path d="M12 19V6M6.5 11.5 12 6l5.5 5.5"/>',
   down: '<path d="M12 5v13M6.5 12.5 12 18l5.5-5.5"/>',
