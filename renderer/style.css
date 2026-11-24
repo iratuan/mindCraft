@@ -37,7 +37,7 @@ button:focus-visible, .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-v
 .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 
 /* Barra do aplicativo */
-#appbar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; background: #EF4444; border-bottom: 1px solid var(--line); }
+#appbar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; background: var(--bg-bar); border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; }
 /* a logomarca é monocromática preta: no tema escuro ela fica clara para aparecer no fundo escuro (não no desenho à mão, que é branco) */
 body:not(.light):not(.ui-draw) .brand img, body:not(.light):not(.ui-draw) img.hm-logo { filter: invert(1); }
