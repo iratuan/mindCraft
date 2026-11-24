@@ -40,6 +40,7 @@ function newMap() {
   ['Tópico 1', 'Tópico 2', 'Tópico 3'].forEach((t) => map.addChild(root.id, t));
   map._undo.length = 0;
   filePath = null; dirty = false; selectedId = root.id;
+  document.body.classList.remove('no-map');
   render(); fit();
 }
 
@@ -247,6 +248,7 @@ async function openPath(p, { silent = false } = {}) {
     beginTab();   // o mapa atual continua na sua aba (com alterações, se houver)
     map = loaded;
     filePath = p; dirty = false; selectedId = map.root.id; selIds = new Set(); selectedRel = null; hits = null; rev++;
+    document.body.classList.remove('no-map');
     if (typeof closeHome === 'function') closeHome();
     render(); fit();   // abre com todos os níveis do arquivo: o mapa não é recolhido sozinho
     // tópicos soltos do Mindomo: avisa na barra de status (o bloco fica à direita do mapa)

@@ -212,6 +212,7 @@ async function closeLastMap() {
 
     // Descarrega o mapa: sem mapa aberto, a tela inicial fica sozinha (nenhum mapa vazio fica por baixo dela)
     map = null;
+    document.body.classList.add('no-map');
     notesOwner = null;   // o painel de notas não pode guardar um dono de um mapa já fechado
     selectedRel = null; selIds = new Set(); hits = null;
 

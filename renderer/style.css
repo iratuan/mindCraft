@@ -697,6 +697,7 @@ body.panels-drawer #panelsSplit { position: fixed; right: 0; top: 0; bottom: 0; 
 .tab-x:disabled { opacity: .3; cursor: default; }
 /* foco numa mídia (PDF, vídeo, navegador): só as ferramentas e o painel da esquerda; o mapa continua visível, e um clique nele volta ao mapa */
 body.focus-media .map-only { display: none !important; }
+body.no-map .map-only { display: none !important; }
 body.focus-media .right-panel { display: none !important; }
 .media-tabs-list { display: none !important; }
 
