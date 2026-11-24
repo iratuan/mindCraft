@@ -59,6 +59,9 @@ function mbOpenMenu(i, label) {
     const t = document.createElement('span'); t.textContent = text;
     b.append(t);
     if (keys) { const k = document.createElement('span'); k.className = 'mb-keys'; k.textContent = keys; b.append(k); }
+    // desabilita itens que exigem mapa aberto quando não há mapa
+    const needsMap = ['save', 'saveAs', 'restore', 'export-study', 'share-study', 'undo', 'redo', 'cut', 'copy', 'paste', 'selectAll', 'review-mark', 'fit', 'organize', 'panelsToggle', 'dash', 'graph', 'board', 'reviews', 'pdf', 'ai-open', 'ai-config', 'addFloating'].includes(cmd);
+    if (needsMap && (typeof map === 'undefined' || !map)) { b.disabled = true; b.style.opacity = '.4'; b.style.pointerEvents = 'none'; }
     b.onclick = () => { mbClose(); window.runMenuCommand(cmd); };
     drop.append(b);
   }

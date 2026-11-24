@@ -282,6 +282,14 @@ async function save(as) {
   } catch (e) { ipcRenderer.invoke('dialog:error', 'Falha ao salvar: ' + e.message); return false; }
   filePath = target; if (rev === r0) dirty = false; render(); rememberSaveDir(target);
   ipcRenderer.invoke('recent:add', target).catch(() => {});
+  // salva também os markdowns ao lado do .mom (fonte de verdade para Obsidian e segundo cérebro)
+  try {
+    const mdDir = path.join(path.dirname(target), 'MindCraft');
+    const info = (typeof gatherMaps === 'function') ? gatherMaps('map') : { maps: [{ key: curKey(), name: curName(), map }] };
+    const mod = { build: require(path.join(core, 'services', 'obsidian')).buildObsidianVault, write: require(path.join(core, 'services', 'obsidian-write')).writeObsidianVault };
+    const built = mod.build(info.maps);
+    mod.write(path.dirname(target), built.files, { folder: 'MindCraft' });
+  } catch (e) { /* falha não afeta o salvamento do .mom */ }
   if (typeof autoObsidian === 'function') autoObsidian();   // o Obsidian acompanha o que foi salvo (falha não afeta o salvamento)
   return true;
 }
