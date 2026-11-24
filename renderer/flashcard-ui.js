@@ -51,7 +51,7 @@
       panel.style.cssText = 'position:fixed;bottom:80px;right:12px;z-index:10;width:300px;max-height:340px;display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--text);line-height:1.5;';
       document.body.appendChild(panel);
     }
-    if (!cards.length) { panel.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">Nenhum flashcard. Selecione um trecho nas notas e clique 🃏.</div>'; return; }
+    if (!cards.length) { panel.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">Nenhum flashcard.<br>Selecione um trecho nas notas e clique 🃏,<br>ou pressione Ctrl+Shift+G para gerar de todas as notas do mapa.</div>'; return; }
     if (idx >= cards.length) idx = 0;
     const c = cards[idx];
     panel.innerHTML = '';
@@ -92,9 +92,35 @@
     else panel.style.display = 'none';
   }
 
+  // Gera flashcards a partir de todas as notas do mapa aberto
+  function generateFromMap() {
+    if (!map) { setStatus('Abra um mapa para gerar flashcards.'); return; }
+    const walk = (node, trail) => {
+      const notes = (node.notes || '').trim();
+      if (notes && notes.length > 10) {
+        // usa o título como frente e a nota como verso
+        if (!cards.some((c) => c.front === node.title)) {
+          cards.push({ id: Date.now() + Math.random(), front: node.title, back: notes, mapKey: (typeof filePath !== 'undefined' ? filePath : null) });
+        }
+      }
+      for (const c of node.children || []) walk(c, [...trail, node.title]);
+    };
+    walk(map.root, []);
+    for (const f of (map.meta._momFloating || [])) walk(f.node, []);
+    saveCards();
+    setStatus(`Flashcards gerados: ${cards.length} no total.`);
+    renderPanel();
+    const panel = $('#flashcardPanel');
+    if (panel) panel.style.display = 'flex';
+  }
+
   // Atalho Ctrl+Shift+F
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') { e.preventDefault(); togglePanel(); }
+  });
+  // Atalho Ctrl+Shift+G para gerar a partir do mapa
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'g') { e.preventDefault(); generateFromMap(); }
   });
 
   // Inicializa quando o mapa carrega
