@@ -88,9 +88,9 @@ function syncContextUI() {
   setToolBtn($('[data-act="dash"]'), true, 'Painel de mapas (Ctrl+E)');
   setToolBtn($('[data-act="pdf"]'), true, 'Leitor de PDF ao lado do mapa (Ctrl+Shift+P)');
   notifyMapState(inUse);
-  const sel = inUse && selectedId && map.find(selectedId);
-  const rel = inUse && selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
-  const isRoot = !!(sel && sel.node.id === map.root.id);
+  const sel = inUse && map && selectedId && map.find(selectedId);
+  const rel = inUse && map && selectedRel && map.meta.relations.find((r) => r.id === selectedRel);
+  const isRoot = !!(sel && map && sel.node.id === map.root.id);
   const multi = inUse && selIds.size > 1;
   const pick = (msg) => (inUse ? msg : NO_MAP_TITLE);
 
@@ -299,7 +299,7 @@ function initContextUIEvents() {
   const relInvertBtn = $('#optRelInvert');
   if (relInvertBtn) {
     relInvertBtn.addEventListener('click', () => {
-      if (selectedRel) {
+      if (selectedRel && map) {
         const r = map.meta.relations.find((x) => x.id === selectedRel);
         if (r) change(() => map.updateRelation(selectedRel, { from: r.to, to: r.from }));
       }

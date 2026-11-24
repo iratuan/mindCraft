@@ -18,6 +18,7 @@ const NB_BUTTONS = [
 
 /** Expande ou contrai os filhos do tópico selecionado (uma ação desfazível). */
 function setSelectedCollapsed(v) {
+  if (!map) return;
   const s = sel();
   if (!s || !s.node.children.length) return;
   change(() => map.update(s.node.id, { collapsed: v }));
