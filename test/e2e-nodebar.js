@@ -128,6 +128,20 @@ const path = require('path');
     ok(await js(`!!map.find(window.__nbA)`), 'o outro tópico selecionado permaneceu');
   });
 
+  await t('a tela inicial esconde a barra flutuante e o retorno ao mapa a traz de volta', async () => {
+    await select(await js(`map.root.children[0].id`));
+    await wait(300);
+    ok(await visible('#nodebar'), 'barra visível com o mapa em primeiro plano');
+    await js(`act.home(true); true`);
+    await wait(500);
+    ok(await js(`!!document.getElementById('home') && !document.getElementById('home').hidden`), 'tela inicial aberta');
+    ok(!(await visible('#nodebar')), 'barra não aparece sobre a tela inicial');
+    await c.shot(path.join(__dirname, '..', 'evidencias', 'nodebar-tela-inicial.png'));
+    await js(`act.home(); true`);
+    await wait(500);
+    ok(await visible('#nodebar'), 'barra volta quando a tela inicial é fechada');
+  });
+
   await c.shot(path.join(__dirname, '..', 'evidencias', 'nodebar-acoes.png'));
   await c.finish();
 })().catch((e) => { console.log('ERRO:', e && e.stack); process.exit(1); });

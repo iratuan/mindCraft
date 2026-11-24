@@ -153,5 +153,10 @@ function syncNodeBar() {
   if (downBtn) downBtn.disabled = isRoot || !s.parent;
 }
 
+/** A tela inicial cobre o mapa sem chamar render(): é ela quem avisa pela mudança de estado. */
+window.addEventListener('mc:render', () => {
+  if (typeof syncNodeBar === 'function') syncNodeBar();
+});
+
 /** O painel de mapas ocupa a área de trabalho: a barra não aparece sobre ele. */
 function dashOpenNow() { const d = document.getElementById('dash'); return !!d && !d.hidden; }

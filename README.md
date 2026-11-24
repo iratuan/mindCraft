@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.16** (código 38). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.17** (código 39). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 **Projeto aberto a contribuições.** Relate problemas, proponha melhorias e envie pull requests pelo [GitHub](https://github.com/iratuan/mindCraft). Leia [Como contribuir](docs/CONTRIBUTING.md) antes de alterar o código.
 
@@ -24,11 +24,15 @@ Versão atual: **0.7.16** (código 38). Histórico completo em [CHANGELOG.md](CH
 
 ### Barra de ações do tópico e edição
 
-Ao selecionar um tópico, a barra flutuante aparece ao lado dele com as ações de edição (novo filho, nota, IA e excluir).
+Ao selecionar um tópico, a barra flutuante aparece ao lado dele com as ações de edição (novo filho, nota, IA e excluir). Na tela inicial ela não aparece: some ao abrir a tela inicial e volta ao retornar ao mapa.
 
 | Barra de ações do tópico | Barra de ícones da interface |
 |---|---|
 | ![Barra de ações do tópico](docs/evidencias/evidence-nodebar.png) | ![Barra de ícones](docs/evidencias/lite/06-barra-icones.png) |
+
+| Tela inicial sem a barra flutuante |
+|---|
+| ![Tela inicial sem a barra do tópico](docs/evidencias/nodebar-tela-inicial.png) |
 
 | Nota em edição | Nota renderizada no mapa |
 |---|---|
@@ -124,7 +128,7 @@ Sequência capturada no Android (AVD):
 
 ### Mapa mental
 - Criar, renomear, excluir, mover e recolher tópicos (Tab e Enter para filho e irmão, F2 para renomear, Espaço para recolher).
-- Barra flutuante de ações do tópico: novo filho, nota, IA e excluir. A exclusão alcança só o tópico da barra e seus filhos.
+- Barra flutuante de ações do tópico: novo filho, nota, IA e excluir. A exclusão alcança só o tópico da barra e seus filhos. A barra fica oculta na tela inicial e reaparece ao voltar ao mapa.
 - Menu de contexto: **Recortar** (Ctrl+X), Copiar e Colar atuam no tópico do menu; a subárvore mantém notas e filhos e a operação é desfeita com Ctrl+Z.
 - **No tablet:** segure um tópico por 2s para arrastá-lo e reordená-lo; toque duplo abre a edição, um dedo no fundo move a vista e dois dedos fazem pinça para zoom.
 - Criar **tópicos flutuantes** (independentes da árvore) pela barra lateral ou menu Editar.
@@ -158,8 +162,8 @@ Sequência capturada no Android (AVD):
 
 Baixe o instalador e o APK mais recentes na [página de Releases](https://github.com/iratuan/mindCraft/releases).
 
-- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.16.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
-- **Windows portátil:** executável único em `dist/BRANIAC 0.7.16.exe`, que roda sem instalação.
+- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.17.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+- **Windows portátil:** executável único em `dist/BRANIAC 0.7.17.exe`, que roda sem instalação.
 - **Android:** APK gerado em `tablet/android/app/build/outputs/apk/debug/app-debug.apk` (build de depuração, assinado). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
 - **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 

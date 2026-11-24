@@ -4,6 +4,11 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
+## 0.7.17 - 24/11/2026
+- **Correção:** a barra flutuante do tópico não aparece mais sobre a tela inicial. Abrir/fechar a tela inicial não passava pelo `render()` do mapa, então a barra não era atualizada e permanecia visível; ela agora reage ao evento `mc:render` e some quando a tela inicial está aberta, voltando ao retornar ao mapa.
+- **Testes:** e2e da node-bar 8/8 com cliques reais, incluindo abrir e fechar a tela inicial; captura em `evidencias/nodebar-tela-inicial.png`.
+- **Release:** Windows (instalador e portátil) e Android (código 39), README e galerias atualizados.
+
 ## 0.7.16 - 24/11/2026
 - **Recortar e colar no menu de contexto:** nova ação Recortar (Ctrl+X) ao lado de Copiar/Colar. Recorta uma subárvore inteira, preserva notas, filhos e progresso, e é desfeita com Ctrl+Z. A raiz não pode ser recortada.
 - **Correção:** o clique direito não selecionava o tópico, então Recortar/Colar podiam agir na seleção anterior. As três ações agora garantem o tópico do menu como alvo (sem quebrar um grupo já selecionado). Diagnóstico incluído no e2e com rótulos de tempo limite.
