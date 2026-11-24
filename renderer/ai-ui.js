@@ -82,12 +82,16 @@ function aiHideResults() { aiEl('aiOut').hidden = true; aiEl('aiPrev').hidden = 
 async function aiRun(mode) {
   if (!map || !primary()) return aiSay('Selecione um tópico no mapa primeiro.', 'err');
   if (aiPending) return aiSay('Espere a resposta anterior terminar.', '');
-  const question = aiEl('aiQ').value.trim();
+  const topic = aiTopicPath();
+  const question = mode === 'outline' || mode === 'notes'
+    ? `Gere ${mode === 'outline' ? 'tópicos' : 'notas'} sobre o tópico selecionado: ${topic}.`
+    : aiEl('aiQ').value.trim();
+  if (mode === 'outline' || mode === 'notes') aiEl('aiQ').value = question;
   if (mode === 'answer' && !question) return aiSay('Escreva uma pergunta, ou use “Gerar tópicos” ou “Gerar nota”.', 'err');
   const ctx = { map, parentId: primary().node.id };
   aiPending = ctx; aiHideResults(); aiSay('', ''); aiBusy(true);
   let r;
-  try { r = await ipcRenderer.invoke('ai:ask', { provider: aiProv(), model: aiModel(), mode, question, selection: aiSelectionText(), topic: aiTopicPath() }); }
+  try { r = await ipcRenderer.invoke('ai:ask', { provider: aiProv(), model: aiModel(), mode, question, selection: aiSelectionText(), topic }); }
   catch (e) { r = { ok: false, error: e.message }; }
   aiPending = null; aiBusy(false);
   // o mapa pode ter fechado ou trocado enquanto o assistente pensava: nada entra no mapa errado
@@ -128,6 +132,7 @@ function aiSaveToNote() {
   const block = a.kind === 'notes' ? a.text : '> ' + a.text.replace(/\n/g, '\n> ') + '\n> — assistente';
   const next = (cur.trim() ? cur.replace(/\s+$/, '') + '\n\n' : '') + block;
   change(() => map.update(a.parentId, { notes: next }));
+  aiEl('aiQ').value = '';
   aiSay('Resposta guardada na nota do tópico. Ctrl+Z desfaz.', 'ok');
 }
 
@@ -175,6 +180,7 @@ function aiInsert() {
     change(() => map.batch(() => { for (const n of build(o.topics)) map.addSubtree(o.parentId, n); return true; }));
   } catch (e) { return aiSay(e.message, 'err'); }
   organizeMap();   // refaz a disposição com os novos filhos (o mapa pode ter ficado com ramos antigos recolhidos ou fora da vista)
+  aiEl('aiQ').value = '';
   aiSay(`${count(o.topics)} tópico(s) inseridos no mapa. Ctrl+Z desfaz.`, 'ok');
 }
 

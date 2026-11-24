@@ -1,70 +1,68 @@
 /* o atributo hidden sempre esconde (as classes com display próprio não podem sobrepô-lo) */
 [hidden] { display: none !important; }
-/* Visual Apple (macOS/iOS): paleta do sistema, fonte do sistema, gradientes suaves, vidro com desfoque nas barras e painéis,
-   cantos contínuos, sombras em camadas e anel de foco azul. Carregado depois de style.css, que continua valendo para a estrutura.
-   O modo claro é o body.light (botão do sol na barra); o escuro é o padrão, como antes. */
+/* Camada visual principal: superfícies carvão, cartões em níveis e acento azul-violeta.
+   O modo claro continua disponível em body.light; o padrão escuro mantém o mapa legível. */
 
 :root {
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-  --bg-app: #1c1c1e;
-  --bg-bar: rgba(44, 44, 46, .72);
-  --bg-panel: rgba(44, 44, 46, .78);
-  --bg-panel-h: rgba(58, 58, 60, .8);
-  --bg-stage: #1c1c1e;
-  --bg-field: #3a3a3c;
-  --bg-hover: rgba(255, 255, 255, .08);
-  --bg-active: rgba(255, 255, 255, .14);
-  --line: rgba(0, 0, 0, .45);
-  --line-soft: rgba(255, 255, 255, .09);
-  --text: #f5f5f7;
-  --text-dim: #aeaeb2;   /* cinza secundário: 5:1 sobre campos escuros (WCAG AA) */
+  --bg-app: #0b0b0d;
+  --bg-bar: #111114;
+  --bg-panel: #18181b;
+  --bg-panel-h: #202024;
+  --bg-stage: #0b0b0d;
+  --bg-field: #202024;
+  --bg-hover: rgba(255, 255, 255, .07);
+  --bg-active: rgba(255, 255, 255, .12);
+  --line: #29292f;
+  --line-soft: rgba(255, 255, 255, .08);
+  --text: #f3f4f6;
+  --text-dim: #a1a1aa;
   --text-strong: #ffffff;
-  --accent: #0a84ff;
-  --accent-hover: #409cff;
-  --accent-soft: rgba(10, 132, 255, .24);
-  --danger: #ff453a;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, .35), 0 1px 0 rgba(255, 255, 255, .06) inset;
-  --ring: 0 0 0 3px rgba(10, 132, 255, .45);
+  --accent: #5368d8;
+  --accent-hover: #455ac4;
+  --accent-soft: rgba(83, 104, 216, .2);
+  --danger: #ff626d;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, .42), 0 1px 0 rgba(255, 255, 255, .04) inset;
+  --ring: 0 0 0 3px rgba(83, 104, 216, .42);
   --ease: cubic-bezier(.25, .1, .25, 1);
 }
 
 body.light {
-  --bg-app: #f2f2f7;
-  --bg-bar: rgba(246, 246, 248, .78);
-  --bg-panel: rgba(255, 255, 255, .78);
-  --bg-panel-h: rgba(242, 242, 247, .9);
-  --bg-stage: #e5e5ea;
+  --bg-app: #f3f4f6;
+  --bg-bar: #f8f9fb;
+  --bg-panel: #ffffff;
+  --bg-panel-h: #f3f4f6;
+  --bg-stage: #f3f4f6;
   --bg-field: #ffffff;
   --bg-hover: rgba(0, 0, 0, .05);
   --bg-active: rgba(0, 0, 0, .1);
-  --line: rgba(0, 0, 0, .14);
-  --line-soft: rgba(0, 0, 0, .08);
+  --line: #dfe1e6;
+  --line-soft: rgba(20, 30, 55, .1);
   --text: #1d1d1f;
   --text-dim: #6e6e73;
   --text-strong: #000000;
-  --accent: #007aff;
-  --accent-hover: #0a84ff;
-  --accent-soft: rgba(0, 122, 255, .16);
-  --shadow: 0 10px 28px rgba(0, 0, 0, .12), 0 1px 0 rgba(255, 255, 255, .8) inset;
+  --accent: #315db5;
+  --accent-hover: #274c99;
+  --accent-soft: rgba(49, 93, 181, .12);
+  --ring: 0 0 0 3px rgba(49, 93, 181, .28);
+  --shadow: 0 10px 28px rgba(20, 30, 55, .12), 0 1px 0 rgba(255, 255, 255, .8) inset;
 }
 
-/* fundo: gradiente suave de cima para baixo, como as janelas do macOS */
+/* mantém as superfícies do aplicativo planas e opacas, como nas referências visuais */
 html, body {
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "kern", "liga";
 }
-body { background: linear-gradient(180deg, #2a2a2d 0%, #1c1c1e 100%); }
-body.light { background: linear-gradient(180deg, #ffffff 0%, #ececf0 100%); }
+body { background: var(--bg-app); }
+body.light { background: var(--bg-app); }
 #app { background: transparent; }
 
-/* barras com vidro e um fio de luz embaixo */
+/* barras sólidas separam claramente a navegação da área de conteúdo */
 #appbar, #statusbar {
   background: var(--bg-bar);
-  -webkit-backdrop-filter: saturate(180%) blur(22px);
-  backdrop-filter: saturate(180%) blur(22px);
   border-color: var(--line-soft);
 }
 #appbar { box-shadow: 0 1px 0 var(--line-soft); }
@@ -91,15 +89,15 @@ body.light { background: linear-gradient(180deg, #ffffff 0%, #ececf0 100%); }
 body.light .btn { background: linear-gradient(180deg, #ffffff, #f4f4f6); box-shadow: 0 1px 1px rgba(0, 0, 0, .06), 0 1px 0 #fff inset; }
 .btn:hover { background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .1)); }
 body.light .btn:hover { background: linear-gradient(180deg, #ffffff, #ececf0); }
-body.light .btn.primary, body.light .btn.primary:hover { background: linear-gradient(180deg, #2f8df7, #0a6ee0); color: #fff; border-color: #0a6ee0; }
+body.light .btn.primary, body.light .btn.primary:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .btn:active { transform: scale(.975); }
 .btn.primary {
-  background: linear-gradient(180deg, #4aa3ff 0%, #0a7cf0 100%);
+  background: var(--accent);
   border-color: rgba(0, 0, 0, .25);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(10, 132, 255, .35), 0 1px 0 rgba(255, 255, 255, .35) inset;
+  box-shadow: 0 1px 2px rgba(83, 104, 216, .3), 0 1px 0 rgba(255, 255, 255, .18) inset;
 }
-.btn.primary:hover { background: linear-gradient(180deg, #5cb0ff 0%, #1a8cff 100%); }
+.btn.primary:hover { background: var(--accent-hover); }
 .btn:focus-visible, .icon-btn:focus-visible, .tool:focus-visible, .ptab:focus-visible { box-shadow: var(--ring); outline: none; }
 .icon-btn, .tool { border-radius: 8px; }
 .icon-btn:hover, .tool:hover { background: var(--bg-hover); }
@@ -115,30 +113,32 @@ body.light .btn.primary, body.light .btn.primary:hover { background: linear-grad
 }
 body.light .seg .chip.active, body.light .chip.active { background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .14); }
 .theme-card { border-radius: var(--radius); }
-.theme-card.active { box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(10, 132, 255, .25); }
+.theme-card.active { box-shadow: 0 0 0 2px var(--accent), 0 4px 12px rgba(83, 104, 216, .25); }
 
-/* painéis laterais em vidro, com cabeçalhos finos */
-#panels, .right-panel { background: var(--bg-panel); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); }
+/* painéis usam níveis discretos de carvão, sem transparência sobre o mapa */
+#panels, .right-panel { background: var(--bg-panel); }
 .panel { border-bottom: 1px solid var(--line-soft); }
 .panel-h { background: linear-gradient(180deg, var(--bg-panel-h), transparent); font-weight: 600; letter-spacing: .01em; }
 .field-label { text-transform: none; font-size: 11.5px; font-weight: 600; color: var(--text-dim); letter-spacing: .01em; }
 
-/* a área do mapa é TODA cinza bem clara (inclusive fora do zoom): o mapa inteiro aparece, com ou sem vários tópicos principais */
+/* o canvas concentra o foco; o renderizador mantém o contraste sem alterar o tema do mapa */
 #stage, body.light #stage {
-  background: #eeeff2;
-  background-image: radial-gradient(circle, rgba(0, 0, 0, .07) 1px, transparent 1px);
+  background: var(--bg-stage);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .07) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+body.light #stage { background-image: radial-gradient(circle, rgba(20, 30, 55, .08) 1px, transparent 1px); }
+body.light #stage::after { background: radial-gradient(ellipse at center, transparent 68%, rgba(20, 30, 55, .035) 100%); }
 #svg .node { transition: filter .15s var(--ease); }
-/* o mapa é plano em todos os temas: sem sombra ao passar o mouse sobre um tópico */
+/* tópicos planos mantêm a hierarquia, o texto e as ligações em primeiro plano */
 
 /* janelas e cartões: cantos contínuos, sombra em camadas */
 .modal-box, .hm-sec, .dash-sec, .hm-continue, .hm-item, .card, .dash-card {
   border-radius: var(--radius-lg);
 }
-.modal-box { background: var(--bg-panel); -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%); box-shadow: var(--shadow); border: 1px solid var(--line-soft); }
+.modal-box { background: var(--bg-panel); box-shadow: var(--shadow); border: 1px solid var(--line-soft); }
 .hm-sec, .dash-sec { background: var(--bg-panel); border: 1px solid var(--line-soft); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
-.hm-continue { background: linear-gradient(135deg, rgba(10, 132, 255, .28), rgba(10, 132, 255, .08)); border-color: rgba(10, 132, 255, .5); }
+.hm-continue { background: linear-gradient(135deg, rgba(83, 104, 216, .28), rgba(83, 104, 216, .08)); border-color: rgba(83, 104, 216, .5); }
 body.light .hm-continue { background: linear-gradient(135deg, rgba(0, 122, 255, .16), rgba(0, 122, 255, .04)); }
 .hm-item:hover, .hm-continue:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, .22); }
 
@@ -159,10 +159,10 @@ body.light .hm-continue { background: linear-gradient(135deg, rgba(0, 122, 255, 
 ::-webkit-scrollbar-thumb:hover { background-color: rgba(128, 128, 128, .55); }
 
 
-/* menu de contexto do tópico: vidro, cantos contínuos e linhas que destacam ao passar o mouse */
+/* menu de contexto do tópico: superfície elevada e linhas que destacam ao passar o mouse */
 .ctx-menu {
   position: fixed; z-index: 500; min-width: 220px; padding: 6px;
-  background: var(--bg-panel); -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%);
+  background: var(--bg-panel);
   border: 1px solid var(--line-soft); border-radius: var(--radius-lg); box-shadow: var(--shadow);
   font-size: 13px; color: var(--text);
 }
@@ -180,7 +180,7 @@ body.light .hm-continue { background: linear-gradient(135deg, rgba(0, 122, 255, 
 .ctx-sep { height: 1px; margin: 5px 6px; background: var(--line-soft); }
 
 /* ligar tópicos: o destino do Alt + arrastar fica destacado em azul */
-#svg .node.link-target > rect:first-child { stroke: #0a84ff !important; stroke-width: 3px !important; }
+#svg .node.link-target > rect:first-child { stroke: var(--accent) !important; stroke-width: 3px !important; }
 
 /* assistente (Claude): respostas em texto corrido e prévia dos tópicos em árvore */
 .ai-out { white-space: pre-wrap; font-size: 13px; line-height: 1.45; margin: 8px 0; }
@@ -215,32 +215,6 @@ body.light .hm-continue { background: linear-gradient(135deg, rgba(0, 122, 255, 
 .ai-dots i:nth-child(3) { animation-delay: .3s; }
 @keyframes aiDot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
 .ai-answer-text { white-space: pre-wrap; font-size: 13px; line-height: 1.5; color: var(--text); }
-
-/* ---- tema da INTERFACE "Desenho (à mão)": monocromático, flat, sem sombras, bordas de traço irregular ---- */
-body.ui-draw {
-  --font: "Segoe Print", "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
-  --bg-app: #f4f4f4; --bg-bar: #ffffff; --bg-panel: #ffffff; --bg-panel-h: #f4f4f4; --bg-stage: #f4f4f4; --bg-field: #ffffff;
-  --bg-hover: #ececec; --bg-active: #dedede;
-  --line: #111111; --line-soft: #111111; --text: #111111; --text-dim: #555555; --text-strong: #000000;
-  --accent: #111111; --accent-hover: #333333; --accent-soft: #e6e6e6; --danger: #111111;
-  --shadow: none; --ring: 0 0 0 2px #111111;
-  --radius: 255px 14px 225px 16px / 14px 225px 16px 255px;
-  --radius-lg: 18px 26px 14px 22px / 22px 14px 26px 18px;
-  background: #f4f4f4 !important;
-}
-body.ui-draw * { box-shadow: none !important; text-shadow: none !important; background-image: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; transition: none !important; }
-body.ui-draw #appbar, body.ui-draw #statusbar, body.ui-draw #panels, body.ui-draw .right-panel, body.ui-draw .modal-box, body.ui-draw .ctx-menu { background: #ffffff !important; }
-body.ui-draw #appbar, body.ui-draw #statusbar { border-color: #111111; }
-body.ui-draw .btn, body.ui-draw button, body.ui-draw input, body.ui-draw select, body.ui-draw textarea, body.ui-draw .chip, body.ui-draw .theme-card, body.ui-draw .ai-card, body.ui-draw .hm-sec, body.ui-draw .dash-sec, body.ui-draw .hm-item, body.ui-draw .hm-continue {
-  border: 1.5px solid #111111 !important; border-radius: var(--radius); background-color: #ffffff; color: #111111;
-}
-body.ui-draw .btn.primary, body.ui-draw .chip.active, body.ui-draw .seg .chip.active, body.ui-draw .tool.on, body.ui-draw .ptab.on {
-  background-color: #111111 !important; color: #ffffff !important; border-color: #111111 !important;
-}
-body.ui-draw .ptab.on svg, body.ui-draw .btn.primary svg { color: #ffffff; }
-body.ui-draw .panel-h, body.ui-draw .ctx-title, body.ui-draw .field-label { color: #111111; }
-body.ui-draw .ctx-item:hover, body.ui-draw .ctx-item:focus-visible { background-color: #111111; color: #ffffff; }
-body.ui-draw #stage { background: #f4f4f4 !important; }
 
 /* rede de conhecimento: botões, legenda e contagem seguem o tema do mapa (fundo e texto) */
 #graph .g-zoom .btn { color: var(--g-text, #222); background: rgba(127, 127, 127, .16); border-color: rgba(127, 127, 127, .35); }
@@ -311,15 +285,26 @@ body.dock-max #boardpane { inset: 0 !important; width: auto !important; height: 
 #bdCanvas { display: block; background: #ffffff; touch-action: none; cursor: crosshair; }
 .bd-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; border-top: 1px solid var(--line-soft); font-size: 12px; color: var(--text-dim); }
 
-/* barra flutuante do tópico selecionado: canto inferior da área de trabalho, botões grandes para toque */
-.node-bar { position: absolute; z-index: 100; display: flex; flex-wrap: nowrap; gap: 4px; padding: 6px 10px; border-radius: 14px; background: var(--bg-panel); border: 1px solid var(--line-soft); box-shadow: 0 4px 20px rgba(0,0,0,.5); width: fit-content; max-width: calc(100% - 32px); align-items: center; }
-  padding: 6px; border-radius: var(--radius-lg); background: var(--bg-panel); border: 1px solid var(--line-soft); box-shadow: var(--shadow); }
+/* barra flutuante do tópico selecionado: position fixed para ficar fora do fluxo do stage/svg */
+.node-bar { position: fixed; z-index: 200; display: flex; flex-wrap: nowrap; gap: 4px; padding: 6px 10px; border-radius: 14px; background: var(--bg-panel); border: 1px solid var(--line-soft); box-shadow: 0 4px 20px rgba(0,0,0,.5); width: fit-content; align-items: center; pointer-events: auto; }
 .node-bar[hidden] { display: none !important; }
-.node-bar .nb-btn { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 9px; border: 1px solid var(--line-soft); background: var(--bg-field); color: var(--text); }
+.node-bar .nb-btn { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 9px; border: 1px solid var(--line-soft); background: var(--bg-field); color: var(--text); cursor: pointer; }
 .node-bar .nb-btn:hover { background: var(--bg-hover); }
-.node-bar .nb-btn:disabled { opacity: .4; }
+.node-bar .nb-btn:active { background: var(--bg-active); }
+.node-bar .nb-btn:disabled { opacity: .4; cursor: default; }
 .node-bar .nb-btn.danger { color: var(--danger); }
 .node-bar .nb-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.node-bar .nb-sep { width: 1px; height: 20px; background: var(--line-soft); margin: 0 2px; flex: none; }
+
+.tool, .ptab, .icon-btn, .btn, .chip, .theme-card, .nb-btn, .bd-btn, .bd-ico, .bd-zoom {
+  transition: color .12s var(--ease), background-color .12s var(--ease), border-color .12s var(--ease),
+    box-shadow .12s var(--ease), transform .12s var(--ease);
+}
+#svg .node { transition: opacity .12s var(--ease); }
+#svg .node:not(.drop):hover { opacity: .9; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
 
 /* barra de menus (Arquivo, Editar, Visualizar, Ajuda) */
 .menubar { display: flex; align-items: center; gap: 2px; padding: 0 6px 0 4px; flex: none; }
@@ -379,7 +364,7 @@ body.hand-pan #svg.panning, body.hand-pan #svg.panning .node { cursor: grabbing;
 #flowSvg .flow-label text { fill: var(--text); font: 12px var(--font); }
 /* modo de ligação: cursor crosshair e destaque para nós alvo */
 #flowpane.link-mode #flowSvg { cursor: crosshair; }
-#flowpane.link-mode #flowSvg .flow-node:hover rect, #flowpane.link-mode #flowSvg .flow-node:hover polygon { stroke: #0a84ff; stroke-width: 3; }
+#flowpane.link-mode #flowSvg .flow-node:hover rect, #flowpane.link-mode #flowSvg .flow-node:hover polygon { stroke: var(--accent); stroke-width: 3; }
 #flowSvg .flow-node.link-src rect, #flowSvg .flow-node.link-src polygon { stroke: #43a047; stroke-width: 3; }
 .flow-edit { position: absolute; z-index: 5; font: 13px var(--font); padding: 4px 6px; border: 2px solid var(--accent); border-radius: 6px; background: var(--bg-field); color: var(--text-strong); }
 .flow-info { position: absolute; left: 10px; bottom: 40px; width: min(440px, 86%); max-height: 46%; overflow: auto; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow); font-size: 12.5px; color: var(--text); }

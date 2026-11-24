@@ -6,24 +6,103 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.9**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.13** (código 35). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 **Projeto aberto a contribuições.** Relate problemas, proponha melhorias e envie pull requests pelo [GitHub](https://github.com/iratuan/mindCraft). Leia [Como contribuir](docs/CONTRIBUTING.md) antes de alterar o código.
 
-## Telas
+## Galeria
 
-| Tela inicial da abertura | Mapa com a logomarca nova |
+### Abertura e mapa
+
+| Abertura do BRANIAC | Mapa com a logomarca |
 |---|---|
-| ![Abertura do BRANIAC](docs/evidencias/logo-splash/1-splash.png) | ![Mapa com a logomarca](docs/evidencias/logo-splash/4-mapa-logo-nova.png) |
-| **Tema Pixel (8 bits)** | **Revisões de hoje** |
-| ![Tema pixel](docs/evidencias/tema-pixel/2-pixel.png) | ![Revisões de hoje](docs/evidencias/revisoes/1-revisoes-hoje.png) |
+| ![Abertura](docs/evidencias/logo-splash/1-splash.png) | ![Mapa com logomarca](docs/evidencias/logo-splash/4-mapa-logo-nova.png) |
+
+| Mapa inicial | Mapa com vários níveis |
+|---|---|
+| ![Mapa inicial](docs/evidencias/mapa-mental/00-mapa-inicial.png) | ![Mapa com vários níveis](docs/evidencias/mapa-mental/01-mapa-com-varios-niveis.png) |
+
+### Barra de ações do tópico e edição
+
+Ao selecionar um tópico, a barra flutuante aparece ao lado dele com as ações de edição (novo filho, subir, descer, nota, IA e excluir).
+
+| Barra de ações do tópico | Barra de ícones da interface |
+|---|---|
+| ![Barra de ações do tópico](docs/evidencias/evidence-nodebar.png) | ![Barra de ícones](docs/evidencias/lite/06-barra-icones.png) |
+
+| Nota em edição | Nota renderizada no mapa |
+|---|---|
+| ![Nota em edição](docs/evidencias/mapa-mental/02-notas-em-edicao.png) | ![Nota renderizada](docs/evidencias/mapa-mental/03-notas-renderizadas.png) |
+
+| Menu de contexto | Painel de estrutura |
+|---|---|
+| ![Menu de contexto](docs/evidencias/lite/08-menu-de-contexto.png) | ![Painel de estrutura](docs/evidencias/mapa-mental/05-painel-estrutura.png) |
+
+### Reordenação e relações
+
+Reordenar preserva a cor de origem, as notas, os marcadores, os filhos e as setas do tópico.
+
+| Antes de reordenar | Depois de reordenar |
+|---|---|
+| ![Antes de reordenar](docs/evidencias/mapa-mental/07-reordenacao-antes.png) | ![Depois de reordenar](docs/evidencias/mapa-mental/08-reordenacao-depois.png) |
+
+| Arrastar para dentro de outro tópico | Mover entre pais |
+|---|---|
+| ![Arrastar para filho](docs/evidencias/mapa-mental/09-arrastar-para-filho.png) | ![Mover entre pais](docs/evidencias/mapa-mental/14-mover-entre-pais.png) |
+
+| Relação entre tópicos | Rede de conhecimento |
+|---|---|
+| ![Relação](docs/evidencias/mapa-mental/11-relacionamento.png) | ![Rede de conhecimento](docs/evidencias/mapa-mental/12-rede-de-conhecimento.png) |
+
+### PDF, lousa, fluxograma e assistente
+
+| PDF ao lado do mapa | Lousa com traço |
+|---|---|
+| ![Seleção no PDF](docs/evidencias/lite/05-selecao-no-pdf.png) | ![Lousa com traço](docs/evidencias/mapa-mental/13-lousa-com-traco.png) |
+
+| Fluxograma | Fluxo profundo |
+|---|---|
+| ![Fluxograma](docs/evidencias/lite/fluxo-visao.png) | ![Fluxo profundo](docs/evidencias/niveis/2-fluxo-profundo.png) |
+
+| Assistente de IA | Nota gerada pela IA |
+|---|---|
+| ![Assistente](docs/evidencias/lite/11-assistente.png) | ![Nota gerada pela IA](docs/evidencias/notas-flashcards/01-nota-gerada-pela-ia.png) |
+
+### Notas, flashcards e revisões
+
+| Nota guardada no tópico | Wikilink na nota |
+|---|---|
+| ![Nota guardada](docs/evidencias/notas-flashcards/02-nota-guardada-no-topico.png) | ![Wikilink](docs/evidencias/notas-flashcards/03-link-wikilink-na-nota.png) |
+
+| Flashcard (frente) | Flashcards gerados do mapa |
+|---|---|
+| ![Flashcard frente](docs/evidencias/notas-flashcards/04-flashcard-trecho-frente.png) | ![Flashcards gerados](docs/evidencias/notas-flashcards/06-flashcards-gerados-do-mapa.png) |
+
+| Mapa salvo: `.mom` e notas Markdown | Revisões de hoje |
+|---|---|
+| ![Mapa e notas Markdown](docs/evidencias/notas-flashcards/07-mapa-salvo-mom-e-notas-md.png) | ![Revisões de hoje](docs/evidencias/revisoes/1-revisoes-hoje.png) |
+
+### Temas e tablet
+
+| Tema Pixel (8 bits) | Interface escura |
+|---|---|
+| ![Tema pixel](docs/evidencias/tema-pixel/2-pixel.png) | ![Interface escura](docs/evidencias/lite/13-interface-escura.png) |
+
+| Interface clara | Tema desenho |
+|---|---|
+| ![Interface clara](docs/evidencias/lite/12-interface-clara.png) | ![Tema desenho](docs/evidencias/lite/10-tema-desenho.png) |
+
+| Mapa no tablet | Tema escuro no tablet |
+|---|---|
+| ![Tablet](docs/evidencias/tablet-screenshot.png) | ![Tablet escuro](docs/evidencias/darkpro-mobile.png) |
 
 ## Funcionalidades
 
 ### Mapa mental
 - Criar, renomear, excluir, mover e recolher tópicos (Tab e Enter para filho e irmão, F2 para renomear, Espaço para recolher).
+- Barra flutuante de ações do tópico: novo filho, subir, descer, nota, IA e excluir. A exclusão alcança só o tópico da barra e seus filhos.
 - Criar **tópicos flutuantes** (independentes da árvore) pela barra lateral ou menu Editar.
-- Desfazer e refazer (Ctrl+Z e Ctrl+Y).
+- Desfazer e refazer (Ctrl+Z e Ctrl+Y). Reordenar preserva estilo, notas, filhos e relações.
 - Notas e links `[[entre tópicos]]`.
 - Busca no mapa (Ctrl+F).
 - Marcadores de prioridade e progresso por tópico.
@@ -39,10 +118,11 @@ Versão atual: **0.7.9**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 - **Marcar tópico como revisado** (Editar › Marcar tópico como revisado). A próxima revisão segue os intervalos de **1, 7, 15, 30, 60 e 120 dias**; depois disso, sempre 120.
 - **Revisões de hoje** (Visualizar › Revisões de hoje…): lista as revisões do dia e as atrasadas, com o botão **Revisado** e a previsão dos próximos 7 dias.
 - **Aviso diário:** uma vez por dia, quando há revisões pendentes, o desktop mostra um aviso do sistema. A barra de status mostra a contagem em qualquer aparelho. O aviso só aparece com o app aberto.
-- PDF ao lado do mapa.
+- PDF ao lado do mapa, **flashcards** gerados a partir das notas e **Pomodoro** na barra de status.
 
 ### Dados e exportação
 - Abrir e salvar arquivos `.mom`.
+- Ao salvar, gera também notas **Markdown** ao lado do `.mom`, em uma pasta `MindCraft/`, para servir de fonte de verdade ao Obsidian mesmo sem ele instalado.
 - Exportar o material de estudo em **PDF** e **Markdown**.
 - **Rede de conhecimento:** visualiza o mapa como rede de ligações e exporta para o **Obsidian** (abre o cofre direto no Obsidian).
 - Cópia de segurança e restauração de versões anteriores.
@@ -50,11 +130,11 @@ Versão atual: **0.7.9**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 ## Instalar
 
-**Windows:** baixe o [instalador x64 da versão 0.7.9](https://github.com/iratuan/mindCraft/releases/download/v0.7.9/BRANIAC.Setup.0.7.9.exe) e execute. O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+Baixe o instalador e o APK mais recentes na [página de Releases](https://github.com/iratuan/mindCraft/releases).
 
-**Android:** baixe o [APK 0.7.9](https://github.com/iratuan/mindCraft/releases/download/v0.7.9/BRANIAC-0.7.9.apk). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
-
-**macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
+- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.13.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+- **Android:** APK gerado em `tablet/android/app/build/outputs/apk/debug/app-debug.apk` (build de depuração, assinado). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
+- **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
 ## Usar
 
@@ -78,10 +158,12 @@ Atalhos completos: **F1**.
 
 ```bash
 npm ci
-npm start          # abre o app
-npm run check      # lint e testes unitários
-npm run e2e        # testes ponta a ponta no Electron real
-npm run dist       # gera o instalador do Windows em dist/
+npm start                    # abre o app
+npm run check                # lint e testes unitários
+npm run e2e                  # testes ponta a ponta no Electron real
+npm run test:map-playwright  # capturas do mapa com Playwright
+npm run test:notes-flashcards  # capturas de notas e flashcards
+npm run dist                 # gera o instalador do Windows em dist/
 ```
 
 ### Android
@@ -90,10 +172,10 @@ npm run dist       # gera o instalador do Windows em dist/
 npm --prefix tablet ci
 npm --prefix tablet run sync
 cd tablet\android
-.\gradlew.bat assembleRelease
+.\gradlew.bat assembleDebug   # ou assembleRelease com a chave local
 ```
 
-O APK é gerado em `tablet/android/app/build/outputs/apk/release/app-release.apk`. Para um build de desenvolvimento sem a chave privada, use `.\gradlew.bat assembleDebug`. A assinatura de release depende da chave local em `tablet/keystore/`; ela não é distribuída nem deve ser enviada ao Git.
+O APK de depuração é gerado em `tablet/android/app/build/outputs/apk/debug/app-debug.apk`. A assinatura de release depende da chave local em `tablet/keystore/`; ela não é distribuída nem deve ser enviada ao Git.
 
 ## Colaborar
 
@@ -111,6 +193,7 @@ Documentação para quem vai evoluir o projeto:
 - [`CLAUDE.md`](CLAUDE.md): regras, comandos e armadilhas. Comece por aqui.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) e [`docs/DECISIONS.md`](docs/DECISIONS.md)
 - [`docs/TESTING.md`](docs/TESTING.md) e [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)
+- [`docs/PLANO-MELHORIAS.md`](docs/PLANO-MELHORIAS.md)
 - [`CHANGELOG.md`](CHANGELOG.md)
 
 ## Limitações conhecidas
@@ -118,7 +201,7 @@ Documentação para quem vai evoluir o projeto:
 - **Recursos de estudo do histórico que não estão neste repositório:** painel de estudos, caderno de erros, simulados, metas, modelos de concurso, agenda de revisões em `.ics`, sincronização com Google Drive, navegador embutido e player de videoaulas. Eles aparecem no CHANGELOG das versões 0.1.x a 0.7.1 e foram mantidos como histórico. Os itens afetados estão marcados com ⚠️ lá.
 - **Aviso diário:** só dispara com o app aberto (verifica 4 segundos após abrir e depois a cada 30 minutos). O aviso do sistema foi confirmado só no processo do app, não visto na tela do Windows.
 - **Mapas grandes:** com centenas de tópicos, o botão Ajustar à tela deixa o mapa pequeno e o texto só fica legível com zoom.
-- **Tablet:** o APK foi gerado e assinado, mas não foi instalado nem testado em aparelho nesta versão. No tablet não há aviso do sistema para as revisões.
+- **Tablet:** APK gerado e instalado em aparelho Android; não há aviso do sistema para as revisões.
 - **Instaladores sem assinatura de código:** o Windows e o macOS mostram avisos na primeira execução.
 - **Mindomo:** ícones, anexos, tarefas e Gantt não são importados. Relações do Mindomo são preservadas no arquivo, mas não aparecem no mapa. Tópicos soltos são só de leitura até serem trazidos para a árvore.
 - **macOS e Linux:** os builds vêm do CI (`.github/workflows/build.yml`) e ainda não foram validados nessas plataformas.

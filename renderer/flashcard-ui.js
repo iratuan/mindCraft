@@ -3,11 +3,12 @@
    Armazena em map.meta.flashcards. Painel de revisão com virar o cartão. */
 (function () {
   const $ = (s) => document.querySelector(s);
-  let cards = [], idx = 0, flipped = false;
+  let cards = [], idx = 0, flipped = false, cardsMap = null;
 
   function loadCards() {
     try { cards = (map && map.meta && Array.isArray(map.meta.flashcards)) ? map.meta.flashcards : []; }
     catch { cards = []; }
+    cardsMap = map || null;
     idx = 0; flipped = false;
   }
 
@@ -128,11 +129,11 @@
   });
 
   // Inicializa quando o mapa carrega
-  const orig = window.expandPanels;
   const init = () => { loadCards(); addFlashcardBtn(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(init, 500));
   else setTimeout(init, 500);
-  // Recarrega cards quando o mapa muda
-  const mo = new MutationObserver(() => { if (map) loadCards(); });
-  if (document.body) mo.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('mc:render', () => {
+    if (map !== cardsMap) loadCards();
+    addFlashcardBtn();
+  });
 })();

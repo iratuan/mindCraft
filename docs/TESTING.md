@@ -9,6 +9,8 @@
 | Unitários do núcleo | `test/*.test.js` (≈240) | `npm test` | sempre; < 10 s |
 | Paridade com o núcleo web | mesmos unitários contra `core-browser` | `npm run test:web` | sempre que mexer em `core/` ou `platform/web/` |
 | Ponta a ponta (Electron real) | `test/e2e-*.js` | `electron test/e2e-x.js [--classic]` | ao mexer na interface; `npm run e2e` roda tudo (41 etapas, ~10 min; `E2E_PROGRESS=1` mostra a hora de cada etapa; o log de cada etapa fica em `evidencias/logs/e2e/`; `node tools/run-e2e.js "regex"` roda só algumas) |
+| Mapa mental (Playwright no Electron) | `test/e2e-playwright-map.js` | `npm run test:map-playwright` | níveis, notas, filtro, temas, arraste real, mudança de pai, relações, rede e lousa; capturas em `docs/evidencias/mapa-mental/` |
+| Notas, flashcards e Obsidian (Playwright no Electron) | `test/e2e-notes-flashcards.js` | `npm run test:notes-flashcards` | geração de notas/tópicos, links `[[ ]]`, cartões, salvamento `.mom` e notas Markdown por tópico; capturas em `docs/evidencias/notas-flashcards/` |
 | Web/tablet (Chromium sem Node) | `e2e-web`, `e2e-tablet`, `e2e-sync-web` | `npm run build:web-app` antes | ao mexer em `platform/web`, CSS do tablet, toque |
 | QA com entrada real | `test/qa-tour.js` | `npm run qa` | antes de entregar (82 casos, mouse/teclado reais) |
 | Evidências | `test/evidence.js` | `npm run evidence` | antes de entregar (capturas em `docs/evidencias/`) |

@@ -17,7 +17,8 @@ const start = require('./harness');
     await js(`dirty = false; newMap(); map.root.title = 'Direito'; ['Crase', 'Regência', 'Isolado'].forEach((x) => map.addChild(map.root.id, x)); render(); __md(__id('Crase')); showPanel('notes')`);
     await wait(150);
     eq(await js(`document.querySelector('#notes').hidden`), false); eq(await js(`document.querySelector('#notesView').hidden`), true);
-    eq(await js(`document.querySelectorAll('#notesBar [data-fmt]').length`), 11); eq(await js(`document.querySelector('#notesBar').hidden`), false);
+    eq(await js(`document.querySelectorAll('#notesBar [data-fmt]').length`), 12); eq(await js(`document.querySelector('#notesBar').hidden`), false);
+    ok(await js(`!!document.querySelector('#notesBar [data-fmt="flashcard"]')`), 'a barra oferece a criação de flashcard do trecho selecionado');
   });
 
   await t('negrito/itálico/riscado/código/link: envolve a seleção, clicar de novo desfaz, sem seleção insere modelo; grava no mapa', async () => {

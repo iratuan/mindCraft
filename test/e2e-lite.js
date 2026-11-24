@@ -376,17 +376,25 @@ async function main() {
     assert.ok(/todos na disposição/.test(await js("document.querySelector('#statusbar').textContent")), 'a barra deve informar a organização');
   });
 
-  await check('tema da interface Desenho aplica-se a toda a janela; o botão mostra o tema atual e cicla', async () => {
-    await js('setUiTheme("draw")');
-    assert.strictEqual(await js("document.body.classList.contains('ui-draw')"), true);
-    assert.strictEqual(await js("document.getElementById('uiTheme').value"), 'draw');
-    assert.match(await js("document.getElementById('lightToggle').title"), /Desenho/);
-    // o botão cicla: desenho -> pixel -> escuro -> claro -> desenho (quatro cliques voltam ao início)
+  await check('a interface oferece claro/escuro e preserva o tema interno do mapa', async () => {
+    const mapTheme = await js('map.meta.theme');
+    await js('setUiTheme("light")');
+    assert.strictEqual(await js("document.body.classList.contains('light')"), true);
+    assert.strictEqual(await js("document.getElementById('uiTheme').value"), 'light');
+    assert.strictEqual(await js("document.querySelectorAll('#uiTheme option').length"), 2);
+    assert.strictEqual(await js('map.meta.theme'), mapTheme, 'o tema do mapa não muda');
+    await js('setUiTheme("dark")');
+    assert.strictEqual(await js("document.body.classList.contains('light')"), false);
+    await js("localStorage.setItem('mc-ui-theme', 'draw')");
+    assert.strictEqual(await js('uiThemeGet()'), 'light', 'tema de interface antigo migra para claro');
+    await js("localStorage.setItem('mc-ui-theme', 'pixel')");
+    assert.strictEqual(await js('uiThemeGet()'), 'dark', 'tema de interface antigo migra para escuro');
+    await js('setUiTheme("dark")');
     const seen = [];
-    for (let i = 0; i < 4; i++) { await js("document.getElementById('lightToggle').click()"); seen.push(await js("document.getElementById('uiTheme').value")); }
-    assert.deepStrictEqual(seen, ['pixel', 'dark', 'light', 'draw'], 'ordem do botão de tema');
-    assert.strictEqual(await js("document.body.classList.contains('ui-draw')"), true, 'depois de dar a volta, volta ao Desenho');
-    await js('setUiTheme("draw")'); await wait(200); await shot('12-interface-desenho');
+    for (let i = 0; i < 2; i++) { await js("document.getElementById('lightToggle').click()"); seen.push(await js("document.getElementById('uiTheme').value")); }
+    assert.deepStrictEqual(seen, ['light', 'dark'], 'o botão alterna só entre os dois temas');
+    await js('setUiTheme("light")'); await wait(200); await shot('12-interface-clara');
+    await js('setUiTheme("dark")'); await wait(200); await shot('13-interface-escura');
     await js('setUiTheme("dark")');
   });
 
@@ -564,7 +572,7 @@ async function main() {
     await js('selectedId = "r"; selIds = new Set(["r"]); render();');
     await waitFor(() => js("!document.getElementById('nodebar').hidden"));
     const n = await js("document.querySelectorAll('#nodebar button svg').length");
-    assert.strictEqual(n, 4, 'quatro botões com ícone');
+    assert.strictEqual(n, 6, 'seis ações principais com ícone');
     const names = await js("[...document.querySelectorAll('#nodebar button')].every((b) => b.getAttribute('aria-label') && b.title)");
     assert.ok(names, 'cada botão tem nome e dica');
     await shot('06-barra-icones');

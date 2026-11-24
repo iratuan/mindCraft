@@ -8,7 +8,10 @@ const start = require('./harness');
 (async () => {
   const c = await start('MindCraft e2e — reordenar tópicos');
   const { js, wait, waitFor, eq, ok, t } = c; const wc = () => c.win.webContents; const SHOTS = path.join(__dirname, '..', 'evidencias', 'reordenar');
-  const mouse = (type, x, y, n = 1, extra = {}) => wc().sendInputEvent({ type, x: Math.round(x), y: Math.round(y), button: 'left', clickCount: n, ...extra });
+  const mouse = (type, x, y, n = 1, extra = {}) => wc().sendInputEvent({
+    type, x: Math.round(x), y: Math.round(y), button: 'left', clickCount: n,
+    ...(['mouseDown', 'mouseMove'].includes(type) ? { modifiers: ['leftButtonDown'] } : {}), ...extra,
+  });
   const key = async (k, mods = []) => { wc().sendInputEvent({ type: 'keyDown', keyCode: k, modifiers: mods }); wc().sendInputEvent({ type: 'keyUp', keyCode: k, modifiers: mods }); await wait(150); };
   const order = (parent) => js(`(() => { const r = map.find(__id(${JSON.stringify(parent)})); return r.node.children.map((n) => n.title).join(','); })()`);
   /** Ponto (coordenadas da janela) a `frac` da altura do tópico (0 = topo, 1 = base). */
@@ -19,7 +22,7 @@ const start = require('./harness');
   const dragTo = async (from, to, frac, { hold = false, ctrlFirst = null } = {}) => {
     const a = await at(from, 0.5); mouse('mouseDown', a.x, a.y); await wait(40);
     const b = await at(to, frac);
-    for (let i = 1; i <= 10; i++) { wc().sendInputEvent({ type: 'mouseMove', x: Math.round(a.x + ((b.x - a.x) * i) / 10), y: Math.round(a.y + ((b.y - a.y) * i) / 10), button: 'left' }); await wait(20); }
+    for (let i = 1; i <= 10; i++) { mouse('mouseMove', a.x + ((b.x - a.x) * i) / 10, a.y + ((b.y - a.y) * i) / 10); await wait(20); }
     await wait(60); if (hold) return b; mouse('mouseUp', b.x, b.y); await wait(250); return b;
   };
   const sel = (title) => js(`selectedId = __id(${JSON.stringify(title)}); selIds = new Set([selectedId]); render(); true`);
@@ -59,7 +62,7 @@ const start = require('./harness');
     await build(); const snap = await js('JSON.stringify(map.toJSON())');
     await dragTo('B', 'B', 0.1); eq(await js('JSON.stringify(map.toJSON())'), snap, 'sobre si mesmo');
     await dragTo('A', 'a2', 0.9); eq(await js('JSON.stringify(map.toJSON())'), snap, 'dentro do próprio ramo');
-    const a = await at('C', 0.5); mouse('mouseDown', a.x, a.y); for (let i = 1; i <= 6; i++) { wc().sendInputEvent({ type: 'mouseMove', x: Math.round(a.x - i * 4), y: Math.round(a.y + 160 + i * 10), button: 'left' }); await wait(15); } mouse('mouseUp', a.x - 24, a.y + 220); await wait(200);
+    const a = await at('C', 0.5); mouse('mouseDown', a.x, a.y); for (let i = 1; i <= 6; i++) { mouse('mouseMove', a.x - i * 4, a.y + 160 + i * 10); await wait(15); } mouse('mouseUp', a.x - 24, a.y + 220); await wait(200);
     eq(await order('Raiz'), 'A,B,C,D', 'soltar no vazio não muda a ordem');
     await dragTo('D', 'Raiz', 0.05); eq(await order('Raiz'), 'A,B,C,D', 'raiz: topo = filho (último), a ordem não muda'); eq(await js('map.find(__id("D")).parent.id === map.root.id'), true);
   });

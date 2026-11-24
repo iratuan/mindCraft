@@ -53,6 +53,33 @@ test('moveBeside respeita o limite de profundidade (não corrompe o mapa)', () =
   assert.ok(ok === false || JSON.stringify(m.toJSON()) !== before); let d = 0; const depth = (n, l) => { d = Math.max(d, l); n.children.forEach((c) => depth(c, l + 1)); }; depth(m.root, 0); assert.ok(d <= 101, 'profundidade ' + d);
 });
 
+test('reordenar preserva cor, notas, marcadores, progresso, filhos e setas (relações)', () => {
+  const { m, id } = mk();
+  const ref = m.find(id.B).node;
+  m.update(id.B, { notes: 'Nota importante', markers: ['importante'], progress: 60, style: { fill: '#ff3300', shape: 'ellipse' } });
+  const filho = m.addChild(id.B, 'filho-do-B');
+  const filhoRef = filho;
+  const saindo = m.addRelation(id.B, id.D, 'leva a');
+  const entrando = m.addRelation(id.A, id.B, 'origem');
+  assert.ok(saindo && entrando, 'relações criadas');
+
+  assert.ok(m.moveSibling(id.B, -1), 'moveSibling (Subir/Descer)');
+  assert.ok(m.moveBeside([id.B], id.D, 'after'), 'moveBeside (arrastar para entre irmãos)');
+
+  const r = m.find(id.B);
+  assert.strictEqual(r.node, ref, 'é o MESMO objeto de nó, não uma cópia');
+  assert.strictEqual(r.node.notes, 'Nota importante');
+  assert.deepStrictEqual(r.node.markers, ['importante']);
+  assert.strictEqual(r.node.progress, 60);
+  assert.strictEqual(r.node.style.fill, '#ff3300', 'cor de origem preservada');
+  assert.strictEqual(r.node.style.shape, 'ellipse');
+  assert.strictEqual(m.find(filho.id).node, filhoRef, 'filho é o mesmo nó');
+  assert.strictEqual(m.find(filho.id).parent.id, id.B, 'filho continua ligado ao mesmo pai');
+  assert.strictEqual(m.meta.relations.length, 2, 'nenhuma seta foi perdida');
+  assert.ok(m.meta.relations.some((x) => x.id === saindo.id), 'seta saindo preservada');
+  assert.ok(m.meta.relations.some((x) => x.id === entrando.id), 'seta entrando preservada');
+});
+
 test('moveSibling: sobe/desce um lugar, recusa nas pontas e na raiz, e é desfazível', () => {
   const { m, id } = mk();
   assert.ok(m.moveSibling(id.C, -1)); assert.strictEqual(kids(m, m.root.id), 'A,C,B,D'); assert.ok(m.moveSibling(id.C, -1)); assert.strictEqual(kids(m, m.root.id), 'C,A,B,D');

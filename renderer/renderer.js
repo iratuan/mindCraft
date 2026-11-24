@@ -52,10 +52,9 @@ function render() {
   if (!map) return;   // sem mapa aberto (fechado): não há o que desenhar
   if (map && isFlow(map) && typeof flowRender === 'function') { flowMode(true); flowRender(); flowTail(selectedId && map.find(selectedId)); return; }   // fluxograma: visão própria (flow-ui.js)
   if (typeof flowMode === 'function') flowMode(false);
-  // canvas escuro do Pixel ou claro do tema claro: o mapa adapta suas cores para manter contraste
-  const canvas = document.body.classList.contains('ui-pixel') ? '#1c1f26'
-    : document.body.classList.contains('light') ? '#c7c7c7' : null;   // cores de #stage em pixel-theme.css e style.css
-  const layoutOpts = canvas ? { canvas } : {};
+  // as cores dos tópicos se adaptam ao canvas da interface para preservar contraste nos dois temas
+  const canvas = document.body.classList.contains('light') ? '#f3f4f6' : '#0b0b0d';
+  const layoutOpts = { canvas };
   L = layoutMap(map, layoutOpts);
   // Tópicos soltos do Mindomo: à direita do mapa, em moldura tracejada e só para leitura (para trazê-los: Editar → Trazer tópicos soltos)
   L.floats = placeFloating(canvas);
@@ -477,17 +476,17 @@ $('#zoomIn').addEventListener('click', () => zoomTo(pan.k * 1.2));
 $('#zoomOut').addEventListener('click', () => zoomTo(pan.k / 1.2));
 
 // tema claro/escuro da interface (preferência por usuário)
-// Tema da INTERFACE (barras, painéis, botões): escuro, claro ou desenho à mão. É independente do tema do mapa.
+// Tema da interface (barras, painéis e canvas): apenas claro/escuro, independente do tema do mapa.
 const UI_THEMES = {
   dark: { label: 'Escuro', icon: '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>' },
   light: { label: 'Claro', icon: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' },
-  draw: { label: 'Desenho (à mão)', icon: '<path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/>' },
-  pixel: { label: 'Pixel (8 bits)', icon: '<path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM4 16h4v4H4zM16 16h4v4h-4z"/>' },
 };
 function uiThemeGet() {
   try {
     const v = localStorage.getItem('mc-ui-theme');
     if (UI_THEMES[v]) return v;
+    if (v === 'draw') return 'light';
+    if (v === 'pixel') return 'dark';
     if (localStorage.getItem('mc-light') === '1') return 'light';   // preferência antiga (claro/escuro)
   } catch { /* sem storage */ }
   return 'dark';
@@ -495,8 +494,7 @@ function uiThemeGet() {
 function setUiTheme(name) {
   if (!UI_THEMES[name]) name = 'dark';
   document.body.classList.toggle('light', name === 'light');
-  document.body.classList.toggle('ui-draw', name === 'draw');
-  document.body.classList.toggle('ui-pixel', name === 'pixel');
+  document.body.classList.remove('ui-draw', 'ui-pixel');
   try { localStorage.setItem('mc-ui-theme', name); } catch { /* sem storage */ }
   const b = $('#lightToggle');
   if (b) {

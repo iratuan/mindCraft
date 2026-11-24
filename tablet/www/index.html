@@ -6,7 +6,6 @@
 <title>BRANIAC</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="apple.css">
-<link rel="stylesheet" href="pixel-theme.css">
 <link rel="stylesheet" href="bundle/pdf.css">
 <link rel="stylesheet" href="tablet.css">
 </head>
@@ -24,7 +23,7 @@
       <div class="splash-bar"></div>
     </div>
     <div id="splashStatus" class="splash-status">Iniciando o BRANIAC…</div>
-    <div class="splash-foot" id="splashVersion">BRANIAC · v0.7.10</div>
+    <div class="splash-foot" id="splashVersion">BRANIAC · v0.7.13</div>
   </div>
 </div>
 <script src="tablet-bundle.js"></script>
@@ -165,7 +164,6 @@
     <section id="boardpane" hidden aria-label="Lousa de resolução"></section>
     <div id="boardsplit" hidden aria-hidden="true"></div>
     <main id="stage" tabindex="-1">
-      <div id="nodebar" class="node-bar" role="toolbar" aria-label="Ações do tópico selecionado" hidden></div>
       <svg id="svg"><g id="view"></g></svg>
       <section id="flowpane" hidden aria-label="Fluxograma">
         <div class="flow-bar" role="toolbar" aria-label="Ações do fluxograma">
@@ -215,7 +213,7 @@
         <header class="panel-h"><span class="chev"></span>Estilo</header>
         <div class="panel-b">
           <div class="field-label">Tema da interface</div>
-          <select id="uiTheme" aria-label="Tema da interface"><option value="dark">Escuro</option><option value="light">Claro</option><option value="draw">Desenho (à mão)</option><option value="pixel">Pixel (8 bits)</option></select>
+          <select id="uiTheme" aria-label="Tema da interface"><option value="dark">Escuro</option><option value="light">Claro</option></select>
           <div class="field-label">Estilo do mapa</div>
           <div id="themeGrid" class="theme-grid"></div>
           <select id="theme" hidden></select>

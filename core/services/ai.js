@@ -85,8 +85,8 @@ function buildRequest({ provider = DEFAULT_PROVIDER, model, mode, question, sele
   const q = cleanText(question, LIMITS.question);
   if (!sel) throw new Error('Selecione um tópico ou escreva um trecho antes de perguntar.');
   const ctx = (tema ? `Tema do tópico: ${tema}\n` : '') + `Conteúdo do tópico:\n${sel}`;
-  const user = mode === 'outline' ? `Organize em tópicos o conteúdo abaixo:\n\n${ctx}`
-    : mode === 'notes' ? `Escreva a nota de estudo para este tópico:\n\n${ctx}`
+  const user = mode === 'outline' ? `${q || 'Organize em tópicos o conteúdo abaixo:'}\n\n${ctx}`
+    : mode === 'notes' ? `${q || 'Escreva a nota de estudo para este tópico:'}\n\n${ctx}`
     : mode === 'paragraphs' ? `Escreva os parágrafos de revisão para este tópico:
 
 ${ctx}`

@@ -46,6 +46,16 @@ test('round-trip: salvar no MindCraft mantém o themes.json original, o HTML das
   assert.strictEqual(find(m2, 'a').notes, find(m1, 'a').notes);
 });
 
+test('flashcards do MindCraft são preservados ao salvar e reabrir o .mom', () => {
+  const m = readMom(mindomo());
+  m.meta.flashcards = [
+    { id: 123.5, front: 'Qual é a regra?', back: 'A resposta [[Atos]]', mapKey: 'C:\\estudos\\Direito.mom' },
+    { id: 456, front: 'Conceito', back: '', mapKey: null },
+  ];
+  const reopened = readMom(writeMom(m));
+  assert.deepStrictEqual(reopened.meta.flashcards, m.meta.flashcards);
+});
+
 test('editar a nota no MindCraft atualiza o description (HTML escapado); apagar limpa; trocar de tema e voltar ao original funciona', () => {
   const m = readMom(mindomo()); find(m, 'a').notes = 'Novo <script>alert(1)</script> **forte**\n\nOutro';
   const out = JSON.parse(new AdmZip(writeMom(m)).getEntry('nodes.json').getData().toString()).find((n) => n.id === 'a');

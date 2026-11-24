@@ -19,6 +19,17 @@ const KNOWN_MC = new Set(['markers', 'progress', 'style', 'collapsed', 'refs', '
 // Fluxograma: tipo do passo e rótulo do ramo (ex.: "Sim") ficam no bloco mc.flow; mapas mentais não gravam nada disso
 const FLOW_TYPES = ['start', 'step', 'decision', 'end'];
 
+/** Valida flashcards antes de usá-los ou gravá-los, preservando campos futuros da extensão. */
+function sanitizeFlashcards(cards) {
+  if (!Array.isArray(cards)) throw new Error('Arquivo .mom inválido: flashcards devem estar em uma lista.');
+  return cards.map((card, i) => {
+    if (!card || typeof card !== 'object' || Array.isArray(card) || typeof card.front !== 'string' || typeof card.back !== 'string') {
+      throw new Error(`Arquivo .mom inválido: flashcard ${i + 1} sem frente e verso de texto.`);
+    }
+    return { ...card };
+  });
+}
+
 // Remove apenas tags de formatação conhecidas; texto literal como "<C>" é preservado.
 const stripTags = (s) => String(s ?? '')
   .replace(/<br\s*\/?>/gi, '\n')
@@ -114,6 +125,7 @@ function readMom(source) {
   const theme = doc.mcTheme === 'custom' && custom ? 'custom' : typeof doc.mcTheme === 'string' && THEMES[doc.mcTheme] ? doc.mcTheme : (!fromMindCraft && custom ? 'custom' : 'ocean');
   const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
   map.meta._momDoc = doc; // preservado para round-trip
+  if (fromMindCraft && doc.mcFlashcards !== undefined) map.meta.flashcards = sanitizeFlashcards(doc.mcFlashcards);
   // Três grupos de nós que a árvore principal não mostra. Nenhum pode sumir ao salvar:
   //  - SOLTOS: tópicos sem ligação à raiz (o Mindomo os mostra à parte). Viram _momFloating: aparecem à direita do mapa.
   //  - LIXEIRA: nós marcados como excluídos no Mindomo (e o que está dentro deles). Ficam guardados como estavam, sem aparecer.
@@ -214,6 +226,7 @@ function writeMom(map, target) {
   };
   doc.mcWriter = 'mindcraft';                    // texto puro nos títulos/notas (ver readMom)
   doc.mcRelations = map.meta.relations || [];
+  if (Array.isArray(map.meta.flashcards)) doc.mcFlashcards = sanitizeFlashcards(map.meta.flashcards);
   doc.mcTheme = map.meta.theme || 'ocean';
   if (map.meta.customTheme) doc.mcCustomTheme = map.meta.customTheme; else delete doc.mcCustomTheme;
   if (map.meta.pdfs && map.meta.pdfs.length) doc.mcPdfs = map.meta.pdfs; else delete doc.mcPdfs;

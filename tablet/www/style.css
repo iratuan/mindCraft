@@ -39,8 +39,8 @@ button:focus-visible, .tool:focus-visible, .icon-btn:focus-visible, .btn:focus-v
 /* Barra do aplicativo */
 #appbar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; background: #EF4444; border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; }
-/* a logomarca é monocromática preta: no tema escuro ela fica clara para aparecer no fundo escuro (não no desenho à mão, que é branco) */
-body:not(.light):not(.ui-draw) .brand img, body:not(.light):not(.ui-draw) img.hm-logo { filter: invert(1); }
+/* a logomarca monocromática ganha contraste sem alterar o arquivo original */
+body:not(.light) .brand img, body:not(.light) img.hm-logo { filter: invert(1); }
 #docinfo { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-strong); max-width: 44vw; min-width: 0; flex-shrink: 1; }
 #docTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 0 1 auto; }
 #dirtyDot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; animation: pulseDot 2s infinite ease-in-out; }

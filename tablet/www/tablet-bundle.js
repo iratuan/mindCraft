@@ -3900,9 +3900,9 @@
         const ctx = (tema ? `Tema do t\xF3pico: ${tema}
 ` : "") + `Conte\xFAdo do t\xF3pico:
 ${sel}`;
-        const user = mode === "outline" ? `Organize em t\xF3picos o conte\xFAdo abaixo:
+        const user = mode === "outline" ? `${q || "Organize em t\xF3picos o conte\xFAdo abaixo:"}
 
-${ctx}` : mode === "notes" ? `Escreva a nota de estudo para este t\xF3pico:
+${ctx}` : mode === "notes" ? `${q || "Escreva a nota de estudo para este t\xF3pico:"}
 
 ${ctx}` : mode === "paragraphs" ? `Escreva os par\xE1grafos de revis\xE3o para este t\xF3pico:
 
@@ -4132,7 +4132,7 @@ Pergunta do aluno: ${q || "Explique o t\xF3pico de forma resumida, do jeito que 
     "package.json"(exports, module) {
       module.exports = {
         name: "braniac-tablet",
-        version: "0.7.10",
+        version: "0.7.13",
         private: true,
         description: "Casca Android (Capacitor) do BRANIAC: empacota a mesma interface do desktop para o tablet.",
         scripts: {
@@ -9767,6 +9767,15 @@ ${renderGroup(L, { logo: true })}
       var SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
       var KNOWN_MC = /* @__PURE__ */ new Set(["markers", "progress", "style", "collapsed", "refs", "flow", "review"]);
       var FLOW_TYPES = ["start", "step", "decision", "end"];
+      function sanitizeFlashcards(cards) {
+        if (!Array.isArray(cards)) throw new Error("Arquivo .mom inv\xE1lido: flashcards devem estar em uma lista.");
+        return cards.map((card, i) => {
+          if (!card || typeof card !== "object" || Array.isArray(card) || typeof card.front !== "string" || typeof card.back !== "string") {
+            throw new Error(`Arquivo .mom inv\xE1lido: flashcard ${i + 1} sem frente e verso de texto.`);
+          }
+          return { ...card };
+        });
+      }
       var stripTags = (s) => String(s ?? "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/?(?:b|i|u|em|strong|span|div|p|font|a)\b[^>]*>/gi, "");
       function readMom(source) {
         const zip = new AdmZip(source);
@@ -9852,6 +9861,7 @@ ${renderGroup(L, { logo: true })}
         const theme = doc.mcTheme === "custom" && custom ? "custom" : typeof doc.mcTheme === "string" && THEMES[doc.mcTheme] ? doc.mcTheme : !fromMindCraft && custom ? "custom" : "ocean";
         const map = new MindMap(rootEntry.node, { name: String(doc.mapInfo?.name || rootEntry.node.title), theme });
         map.meta._momDoc = doc;
+        if (fromMindCraft && doc.mcFlashcards !== void 0) map.meta.flashcards = sanitizeFlashcards(doc.mcFlashcards);
         const shown = /* @__PURE__ */ new Set();
         (function walk2(n) {
           shown.add(n.id);
@@ -9970,6 +9980,7 @@ ${renderGroup(L, { logo: true })}
         };
         doc.mcWriter = "mindcraft";
         doc.mcRelations = map.meta.relations || [];
+        if (Array.isArray(map.meta.flashcards)) doc.mcFlashcards = sanitizeFlashcards(map.meta.flashcards);
         doc.mcTheme = map.meta.theme || "ocean";
         if (map.meta.customTheme) doc.mcCustomTheme = map.meta.customTheme;
         else delete doc.mcCustomTheme;

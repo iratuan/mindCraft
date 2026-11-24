@@ -101,6 +101,19 @@ test('nota: pedido próprio, curto e motivador (ideia, exemplo e pergunta)', () 
   assert.ok(r.body.messages[1].content.includes('Princípio da legalidade'));
 });
 
+test('geração de notas e tópicos inclui o comando do tópico selecionado na pergunta enviada', () => {
+  const topic = 'Direito Constitucional › Legalidade';
+  for (const [mode, question] of [
+    ['notes', `Gere notas sobre o tópico selecionado: ${topic}.`],
+    ['outline', `Gere tópicos sobre o tópico selecionado: ${topic}.`],
+  ]) {
+    const r = buildRequest({ provider: 'groq', mode, question, selection: 'Legalidade exige atuação conforme a lei.', topic, apiKey: 'gsk_' + 'a'.repeat(30) });
+    const user = r.body.messages[1].content;
+    assert.ok(user.startsWith(question), `${mode}: o comando deve iniciar a pergunta enviada`);
+    assert.ok(user.includes('Conteúdo do tópico:\nLegalidade exige atuação conforme a lei.'));
+  }
+});
+
 test('nota: limite de tamanho é aplicado no código, cortando em palavra inteira', () => {
   const longo = ('palavra '.repeat(200)).trim();
   const n = parseNote(longo);
