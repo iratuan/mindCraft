@@ -72,4 +72,9 @@
   if (state.running) { timer = setInterval(tick, 1000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildWidget);
   else buildWidget();
+  // expõe toggle para a node-bar
+  window.togglePomodoro = () => {
+    const w = document.getElementById('pomodoroWidget');
+    if (w) w.style.display = (w.style.display === 'none') ? 'flex' : 'none';
+  };
 })();
