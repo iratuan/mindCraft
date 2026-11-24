@@ -296,6 +296,9 @@ const inspectWithin = async (page, expression, id) => Promise.race([
     const at = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2, id: 1, radiusX: 2, radiusY: 2, force: 1 });
     const start = at(touchSource), end = at(touchTarget);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+    await page.waitForTimeout(1900);
+    assert.equal(await page.evaluate(() => drag), null, 'o toque ainda não inicia arraste antes de completar 2 segundos');
+    await page.waitForFunction((id) => drag && drag.id === id, touchIds.source, { timeout: 500 });
     for (let i = 1; i <= 12; i++) {
       await cdp.send('Input.dispatchTouchEvent', {
         type: 'touchMove',

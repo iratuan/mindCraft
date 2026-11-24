@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.14** (código 36). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.15** (código 37). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 **Projeto aberto a contribuições.** Relate problemas, proponha melhorias e envie pull requests pelo [GitHub](https://github.com/iratuan/mindCraft). Leia [Como contribuir](docs/CONTRIBUTING.md) antes de alterar o código.
 
@@ -56,13 +56,23 @@ Reordenar preserva a cor de origem, as notas, os marcadores, os filhos e as seta
 
 ### Gestos de toque no tablet
 
-| Arrastar o tópico para reordenar | Editar por duplo toque |
+| Segurar 2s e arrastar o tópico | Editar por duplo toque |
 |---|---|
 | ![Arrasto por toque](docs/evidencias/mapa-mental/16-arrasto-toque-tablet.png) | ![Edição por duplo toque](docs/evidencias/mapa-mental/17-edicao-por-toque-duplo.png) |
 
 | Mover a vista com um dedo no fundo |
 |---|
 | ![Pan com um dedo](docs/evidencias/mapa-mental/18-pan-com-um-dedo-no-fundo.png) |
+
+Sequência capturada no Android (AVD):
+
+| Mapa inicial | Toque mantido por 2s |
+|---|---|
+| ![Mapa no Android](docs/evidencias/mapa-mental/19-android-avd-mapa-inicial.png) | ![Toque longo](docs/evidencias/mapa-mental/20-android-press-2s.png) |
+
+| Arrasto até o destino | Tópico movido por toque |
+|---|---|
+| ![Arrasto no Android](docs/evidencias/mapa-mental/21-android-arrasto-para-alvo.png) | ![Tópico movido](docs/evidencias/mapa-mental/22-android-topico-movido-por-toque.png) |
 
 ### PDF, lousa, fluxograma e assistente
 
@@ -111,7 +121,7 @@ Reordenar preserva a cor de origem, as notas, os marcadores, os filhos e as seta
 ### Mapa mental
 - Criar, renomear, excluir, mover e recolher tópicos (Tab e Enter para filho e irmão, F2 para renomear, Espaço para recolher).
 - Barra flutuante de ações do tópico: novo filho, nota, IA e excluir. A exclusão alcança só o tópico da barra e seus filhos.
-- **No tablet:** um dedo no tópico o arrasta para reordenar, duplo toque abre a edição, um dedo no fundo move a vista e dois dedos fazem pinça para zoom.
+- **No tablet:** segure um tópico por 2s para arrastá-lo e reordená-lo; toque duplo abre a edição, um dedo no fundo move a vista e dois dedos fazem pinça para zoom.
 - Criar **tópicos flutuantes** (independentes da árvore) pela barra lateral ou menu Editar.
 - Desfazer e refazer (Ctrl+Z e Ctrl+Y). Reordenar preserva estilo, notas, filhos e relações.
 - Notas e links `[[entre tópicos]]`.
@@ -143,8 +153,8 @@ Reordenar preserva a cor de origem, as notas, os marcadores, os filhos e as seta
 
 Baixe o instalador e o APK mais recentes na [página de Releases](https://github.com/iratuan/mindCraft/releases).
 
-- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.14.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
-- **Windows portátil:** executável único em `dist/BRANIAC 0.7.14.exe`, que roda sem instalação.
+- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.15.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+- **Windows portátil:** executável único em `dist/BRANIAC 0.7.15.exe`, que roda sem instalação.
 - **Android:** APK gerado em `tablet/android/app/build/outputs/apk/debug/app-debug.apk` (build de depuração, assinado). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
 - **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
