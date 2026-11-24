@@ -57,8 +57,11 @@
     panel.innerHTML = '';
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
-    header.innerHTML = `<span style="font-weight:700;color:var(--text-strong);">🃏 ${idx + 1}/${cards.length}</span><button class="btn small" style="width:24px;height:24px;padding:0;" title="Fechar">✕</button>`;
-    header.querySelector('button').addEventListener('click', () => { panel.style.display = 'none'; });
+    header.innerHTML = `<span style="font-weight:700;color:var(--text-strong);">🃏 ${idx + 1}/${cards.length}</span><button class="btn small" style="height:24px;padding:0 8px;font-size:11px;" title="Gerar de todas as notas do mapa">Gerar do mapa</button><button class="btn small" style="width:24px;height:24px;padding:0;" title="Fechar">✕</button>`;
+    const genBtn = header.querySelectorAll('button')[0];
+    genBtn.addEventListener('click', (e) => { e.stopPropagation(); generateFromMap(); });
+    const closeBtn = header.querySelectorAll('button')[1];
+    closeBtn.addEventListener('click', () => { panel.style.display = 'none'; });
     panel.appendChild(header);
 
     const card = document.createElement('div');
