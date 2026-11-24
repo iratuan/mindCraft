@@ -29,6 +29,13 @@ function ctxHide() {
   ctxEl.hidden = true; ctxEl.textContent = '';
 }
 
+/** Garante que o tópico do menu seja o alvo da ação, preservando um grupo de seleção que já o contenha. */
+function ctxEnsureTarget(id) {
+  if (!id || !map || !map.find(id)) return;
+  if (!selIds.has(id)) selIds = new Set([id]);
+  selectedId = id;
+}
+
 /** Duplica o tópico (com a subárvore) logo depois dele, como um novo irmão. Uma ação desfazível. */
 function ctxDuplicate(id) {
   if (!map) return;
@@ -81,8 +88,9 @@ function ctxTree(id) {
       { label: 'Ver conexões', run: () => showPanel('links') },
     ] },
     { sep: true },
-    { label: 'Copiar', hint: 'Ctrl+C', run: () => editCommand('copy') },
-    { label: 'Colar', hint: 'Ctrl+V', run: () => editCommand('paste') },
+    { label: 'Recortar', hint: 'Ctrl+X', disabled: id === map.root.id, run: () => { ctxEnsureTarget(id); editCommand('cut'); } },
+    { label: 'Copiar', hint: 'Ctrl+C', run: () => { ctxEnsureTarget(id); editCommand('copy'); } },
+    { label: 'Colar', hint: 'Ctrl+V', run: () => { ctxEnsureTarget(id); editCommand('paste'); } },
     { label: 'Renomear', hint: 'F2', run: () => startEdit() },
     { label: 'Excluir', hint: 'Del', danger: true, run: () => act.delete() },
   ];

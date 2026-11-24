@@ -830,7 +830,13 @@ async function editCommand(c) {
   if (!editor.hidden) return;
   if (c === 'selectAll') { selIds = new Set(L.boxes.keys()); selectedId = selectedId || map.root.id; render(); setStatus(`${selIds.size} tópicos selecionados`); }
   else if (c === 'copy') await copySelection();
-  else if (c === 'cut') { if (await copySelection()) act.delete(); }
+  else if (c === 'cut') {
+    const items = map.topLevel(targets());
+    if (await copySelection()) {
+      act.delete();
+      if (items.every((n) => !map.find(n.id))) setStatus(`${countNodes(clip.trees)} tópico(s) recortado(s). Selecione o destino e cole.`);
+    }
+  }
   else if (c === 'paste') await pasteSelection();
 }
 

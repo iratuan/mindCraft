@@ -19,11 +19,11 @@ for (const s of ['disable-backgrounding-occluded-windows', 'disable-renderer-bac
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-async function waitFor(fn, timeout = 15000) {
+async function waitFor(fn, timeout = 15000, label = 'condição') {
   const t0 = Date.now();
   for (;;) {
     try { if (await fn()) return true; } catch { /* tenta de novo */ }
-    if (Date.now() - t0 > timeout) throw new Error('tempo esgotado');
+    if (Date.now() - t0 > timeout) throw new Error(`tempo esgotado: ${label}`);
     await wait(60);
   }
 }
@@ -274,6 +274,60 @@ async function main() {
     await waitFor(() => js("document.getElementById('ctxMenu').hidden === true"));
     await waitFor(() => js('map.find("a").node.style.align === "right"'));
     assert.strictEqual(await js("document.getElementById('ctxMenu').hidden"), true, 'o menu deveria fechar após a ação');
+  });
+
+  await check('menu de contexto recorta uma subárvore e cola no destino, preservando notas e desfazer', async () => {
+    const nodes = await js(`(() => {
+      const source = map.root.children[0], target = map.addChild(map.root.id, 'Destino do recorte');
+      const child = map.addChild(source.id, 'Filho preservado');
+      map.update(child.id, { notes: 'Nota preservada no recorte' });
+      const grandchild = map.addChild(child.id, 'Neto preservado');
+      render(); fit();
+      return { root: map.root.id, source: source.id, sourceTitle: source.title, target: target.id, child: child.id, grandchild: grandchild.id };
+    })()`);
+    const openContext = async (id) => {
+      const p = await js(`(() => { const r = document.querySelector('[data-id="${id}"] rect').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
+      win.webContents.sendInputEvent({ type: 'mouseDown', x: p.x, y: p.y, button: 'right', clickCount: 1 });
+      win.webContents.sendInputEvent({ type: 'mouseUp', x: p.x, y: p.y, button: 'right', clickCount: 1 });
+      await waitFor(() => js("!document.getElementById('ctxMenu').hidden"), 15000, `menu de contexto abrir em ${id}`);
+    };
+    const clickContextItem = async (label) => {
+      const p = await js(`(() => {
+        const b = [...document.querySelectorAll('#ctxMenu .ctx-item')].find((x) => x.querySelector('.ctx-label').textContent === ${JSON.stringify(label)});
+        if (!b) return null;
+        const r = b.getBoundingClientRect();
+        return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), disabled: b.disabled };
+      })()`);
+      assert.ok(p, `item "${label}" existe no menu`);
+      assert.strictEqual(p.disabled, false, `item "${label}" está habilitado`);
+      win.webContents.sendInputEvent({ type: 'mouseDown', x: p.x, y: p.y, button: 'left', clickCount: 1 });
+      win.webContents.sendInputEvent({ type: 'mouseUp', x: p.x, y: p.y, button: 'left', clickCount: 1 });
+      await waitFor(() => js("document.getElementById('ctxMenu').hidden"), 15000, `menu de contexto fechar após ${label}`);
+    };
+    await openContext(nodes.root);
+    assert.strictEqual(await js("[...document.querySelectorAll('#ctxMenu .ctx-item')].find((x) => x.querySelector('.ctx-label').textContent === 'Recortar').disabled"), true, 'a raiz não pode ser recortada');
+    await js('ctxHide()');
+    await openContext(nodes.source);
+    await clickContextItem('Recortar');
+    await waitFor(() => js(`!map.find(${JSON.stringify(nodes.source)}) && !map.find(${JSON.stringify(nodes.child)})`), 15000, 'recortar remove a origem');
+    await waitFor(() => js("document.getElementById('status').textContent.includes('recortado')"), 15000, 'status de recorte');
+    await openContext(nodes.target);
+    await clickContextItem('Colar');
+    await waitFor(() => js(`map.find(${JSON.stringify(nodes.target)}).node.children.some((n) => n.title === ${JSON.stringify(nodes.sourceTitle)})`), 15000, 'colar no destino');
+    const pasted = await js(`(() => {
+      let out = {};
+      map.walk((n) => { if ([${JSON.stringify(nodes.sourceTitle)}, 'Filho preservado', 'Neto preservado'].includes(n.title)) out[n.title] = n.id; });
+      return out;
+    })()`);
+    assert.strictEqual(await js(`map.find(${JSON.stringify(pasted[nodes.sourceTitle])}).parent.id`), nodes.target, 'o tópico recortado vira filho do destino');
+    assert.strictEqual(await js(`map.find(${JSON.stringify(pasted['Filho preservado'])}).node.notes`), 'Nota preservada no recorte');
+    assert.strictEqual(await js(`map.find(${JSON.stringify(pasted['Neto preservado'])}).parent.id`), pasted['Filho preservado'], 'o neto também é preservado');
+    await shot('09-recortar-e-colar');
+    await js('act.undo()');
+    await waitFor(() => js(`!map.find(${JSON.stringify(pasted[nodes.sourceTitle])})`), 15000, 'desfazer o colar');
+    await js('act.undo()');
+    await waitFor(() => js(`!!map.find(${JSON.stringify(nodes.source)})`), 15000, 'desfazer o recorte');
+    assert.strictEqual(await js(`map.find(${JSON.stringify(nodes.child)}).node.notes`), 'Nota preservada no recorte', 'desfazer recupera a origem completa');
   });
 
   await check('Alt + arrastar liga dois tópicos; a ligação entra na rede', async () => {

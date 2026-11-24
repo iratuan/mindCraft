@@ -4,6 +4,12 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
+## 0.7.16 - 24/11/2026
+- **Recortar e colar no menu de contexto:** nova ação Recortar (Ctrl+X) ao lado de Copiar/Colar. Recorta uma subárvore inteira, preserva notas, filhos e progresso, e é desfeita com Ctrl+Z. A raiz não pode ser recortada.
+- **Correção:** o clique direito não selecionava o tópico, então Recortar/Colar podiam agir na seleção anterior. As três ações agora garantem o tópico do menu como alvo (sem quebrar um grupo já selecionado). Diagnóstico incluído no e2e com rótulos de tempo limite.
+- **Testes:** e2e-lite 60/60 em três rodadas consecutivas; unitários 254/254.
+- **Release:** Windows (instalador e portátil) e Android (código 38), README e galerias atualizados.
+
 ## 0.7.15 - 24/11/2026
 - **Arraste por toque sem conflito:** o tópico só começa a ser arrastado após 2 segundos de toque mantido; toque simples continua selecionando e duplo toque abre a edição. O fundo do mapa continua movendo a vista com um dedo.
 - **Evidência:** sequência capturada no Android (AVD) e teste Playwright confirmando que o arraste não começa antes dos 2s. Unitários 254/254.

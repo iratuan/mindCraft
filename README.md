@@ -6,7 +6,7 @@
 - Tablet: **Android** (APK).
 - Compatível com arquivos **Mindomo `.mom`**: abre, salva e preserva o que não entende.
 
-Versão atual: **0.7.15** (código 37). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
+Versão atual: **0.7.16** (código 38). Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 **Projeto aberto a contribuições.** Relate problemas, proponha melhorias e envie pull requests pelo [GitHub](https://github.com/iratuan/mindCraft). Leia [Como contribuir](docs/CONTRIBUTING.md) antes de alterar o código.
 
@@ -37,6 +37,10 @@ Ao selecionar um tópico, a barra flutuante aparece ao lado dele com as ações 
 | Menu de contexto | Painel de estrutura |
 |---|---|
 | ![Menu de contexto](docs/evidencias/lite/08-menu-de-contexto.png) | ![Painel de estrutura](docs/evidencias/mapa-mental/05-painel-estrutura.png) |
+
+| Recortar e colar uma subárvore |
+|---|
+| ![Recortar e colar](docs/evidencias/lite/09-recortar-e-colar.png) |
 
 ### Reordenação e relações
 
@@ -121,6 +125,7 @@ Sequência capturada no Android (AVD):
 ### Mapa mental
 - Criar, renomear, excluir, mover e recolher tópicos (Tab e Enter para filho e irmão, F2 para renomear, Espaço para recolher).
 - Barra flutuante de ações do tópico: novo filho, nota, IA e excluir. A exclusão alcança só o tópico da barra e seus filhos.
+- Menu de contexto: **Recortar** (Ctrl+X), Copiar e Colar atuam no tópico do menu; a subárvore mantém notas e filhos e a operação é desfeita com Ctrl+Z.
 - **No tablet:** segure um tópico por 2s para arrastá-lo e reordená-lo; toque duplo abre a edição, um dedo no fundo move a vista e dois dedos fazem pinça para zoom.
 - Criar **tópicos flutuantes** (independentes da árvore) pela barra lateral ou menu Editar.
 - Desfazer e refazer (Ctrl+Z e Ctrl+Y). Reordenar preserva estilo, notas, filhos e relações.
@@ -153,8 +158,8 @@ Sequência capturada no Android (AVD):
 
 Baixe o instalador e o APK mais recentes na [página de Releases](https://github.com/iratuan/mindCraft/releases).
 
-- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.15.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
-- **Windows portátil:** executável único em `dist/BRANIAC 0.7.15.exe`, que roda sem instalação.
+- **Windows:** instalador x64 gerado em `dist/BRANIAC Setup 0.7.16.exe` (NSIS). O instalador não é assinado; se o Windows mostrar um aviso de editor desconhecido, confira se baixou o arquivo desta página e escolha "Mais informações" → "Executar assim mesmo".
+- **Windows portátil:** executável único em `dist/BRANIAC 0.7.16.exe`, que roda sem instalação.
 - **Android:** APK gerado em `tablet/android/app/build/outputs/apk/debug/app-debug.apk` (build de depuração, assinado). O Android pode pedir autorização para instalar apps desta origem. Instale apenas APKs publicados nas Releases deste repositório.
 - **macOS e Linux:** sem instalador publicado. Gere a partir do código (veja abaixo).
 
