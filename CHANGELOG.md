@@ -4,7 +4,12 @@ Formato livre, mais recente primeiro. Detalhes de testes: `evidencias/RESULTADOS
 
 > **Nota de consistência (novembro/2026).** O código deste repositório (`app/`) não contém os recursos de estudo descritos nas versões 0.1.x a 0.7.1: painel de estudos, revisão do dia, caderno de erros, simulados, metas, modelos de concurso, agenda `.ics`, sincronização e manual de uso. Só restaram estilos CSS desses recursos. As entradas marcadas com ⚠️ descrevem esses recursos e foram mantidas como histórico. O que existe e foi conferido no código: mapas, rede de conhecimento, PDF, abas, Obsidian (fase 1), revisão espaçada (0.7.2), logomarca e abertura. Os trechos de mídia (vídeo e navegador) das versões 0.4.3 e 0.6.x não foram conferidos um a um.
 
-## 0.7.9 — 17/11/2026
+## 0.7.14 - 24/11/2026
+- **Gestos de toque no mapa:** um dedo no tópico o arrasta para reordenar (com marcação de destino), duplo toque abre a edição e um dedo no fundo move a vista; a pinça com dois dedos continua fazendo zoom. Válido no desktop e no tablet.
+- **Correções nos testes:** quebradas as linhas longas de `flashcard-ui.js` e `pomodoro-ui.js` e criado `test/obsidian-import.test.js`. Suíte unitária: 254/254; Playwright do mapa: ok, com capturas de arrasto, duplo toque e pan.
+- **Release:** Windows (instalador NSIS e executável portátil) e Android (código 36), com README e galerias atualizados.
+
+## 0.7.9 - 17/11/2026
 - **Núcleo organizado:** módulos separados em `core/components/`, `core/services/`, `core/formats/` e `core/utils/`; imports e empacotamento web/tablet atualizados.
 - **Tópicos flutuantes:** nova ação na barra lateral, no menu do tópico e em Editar para criar uma raiz independente no mapa. O tópico pode ser editado e o histórico desfaz/refaz a criação.
 - **Release:** versão incrementada para 0.7.9.

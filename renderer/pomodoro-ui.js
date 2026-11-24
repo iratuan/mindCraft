@@ -64,7 +64,10 @@
   function buildWidget() {
     const el = document.getElementById('pomodoroStatus');
     if (!el) return;
-    el.innerHTML = '<span class="pomo-phase" style="font-weight:600;">Foco</span> <span class="pomo-time" style="font-variant-numeric:tabular-nums;font-weight:700;min-width:36px;text-align:center;">25:00</span> <button class="pomo-btn" style="width:22px;height:22px;padding:0;border:0;background:none;color:var(--text);cursor:pointer;font-size:12px;" title="Iniciar/pausar">▶</button> <span class="pomo-cycles" style="color:var(--text-dim);font-size:10px;">1/4</span>';
+    el.innerHTML = '<span class="pomo-phase" style="font-weight:600;">Foco</span> '
+      + '<span class="pomo-time" style="font-variant-numeric:tabular-nums;font-weight:700;min-width:36px;text-align:center;">25:00</span> '
+      + '<button class="pomo-btn" style="width:22px;height:22px;padding:0;border:0;background:none;color:var(--text);cursor:pointer;font-size:12px;" title="Iniciar/pausar">▶</button> '
+      + '<span class="pomo-cycles" style="color:var(--text-dim);font-size:10px;">1/4</span>';
     el.querySelector('.pomo-btn').addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
     el.addEventListener('dblclick', (e) => { e.stopPropagation(); if (confirm('Resetar Pomodoro?')) reset(); });
     render();

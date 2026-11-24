@@ -279,8 +279,74 @@ const inspectWithin = async (page, expression, id) => Promise.race([
     assert.deepEqual(await page.evaluate(() => map.root.children.map((node) => node.title)), ['A', 'a3', 'B', 'C']);
     assert.deepEqual(await page.evaluate((id) => map.find(id).node.children.map((node) => node.title), reorderIds.a), ['a1', 'a2', 'D']);
 
+    const touchIds = await page.evaluate(() => {
+      const idOf = (title) => {
+        let id = null;
+        map.walk((node) => { if (!id && node.title === title) id = node.id; });
+        return id;
+      };
+      return { source: idOf('C'), target: idOf('B') };
+    });
+    await page.evaluate(() => fit());
+    const touchSource = await page.locator(`[data-id="${touchIds.source}"]`).boundingBox();
+    const touchTarget = await page.locator(`[data-id="${touchIds.target}"]`).boundingBox();
+    assert.ok(touchSource && touchTarget, 'origem e destino visíveis para arraste por toque');
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+    const at = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2, id: 1, radiusX: 2, radiusY: 2, force: 1 });
+    const start = at(touchSource), end = at(touchTarget);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+    for (let i = 1; i <= 12; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ ...start, x: start.x + (end.x - start.x) * i / 12, y: start.y + (end.y - start.y) * i / 12 }],
+      });
+      await page.waitForTimeout(20);
+    }
+    await page.locator(`[data-id="${touchIds.target}"].drop`).waitFor({ state: 'visible', timeout: 5000 });
+    await shot(page, '16-arrasto-toque-tablet.png');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForFunction(({ source, target }) => map.find(source).parent.id === target, touchIds);
+    assert.equal(await inspectWithin(page, (id) => map.find(id).parent.title, touchIds.source), 'B');
+    const tapBox = await page.locator(`[data-id="${touchIds.source}"]`).boundingBox();
+    assert.ok(tapBox, 'tópico movido disponível para testar toque simples e duplo');
+    const tapPoint = at(tapBox);
+    for (let i = 0; i < 2; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [tapPoint] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      if (i === 0) {
+        await page.waitForFunction((id) => selectedId === id, touchIds.source);
+        await page.waitForTimeout(100);
+      }
+    }
+    await page.waitForFunction(() => !document.getElementById('editor').hidden);
+    await shot(page, '17-edicao-por-toque-duplo.png');
+    await page.keyboard.press('Escape');
+    const blank = await page.evaluate(() => {
+      const r = svg.getBoundingClientRect();
+      for (const [x, y] of [[r.left + 20, r.top + 20], [r.right - 20, r.top + 20], [r.left + 20, r.bottom - 20]]) {
+        if (!nodeAt(document.elementFromPoint(x, y))) return { x, y };
+      }
+      return null;
+    });
+    assert.ok(blank, 'área vazia do canvas disponível para testar pan por toque');
+    const panBefore = await page.evaluate(() => pan.x);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...blank, id: 1, radiusX: 2, radiusY: 2, force: 1 }] });
+    for (let i = 1; i <= 6; i++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ ...blank, x: blank.x + i * 8, y: blank.y + i * 4, id: 1, radiusX: 2, radiusY: 2, force: 1 }],
+      });
+      await page.waitForTimeout(20);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForFunction((startX) => pan.x !== startX, panBefore);
+    await shot(page, '18-pan-com-um-dedo-no-fundo.png');
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    await cdp.detach();
+
     assert.deepEqual(errors, [], `A interface gerou erros: ${errors.join(' | ')}`);
-    console.log(`Playwright OK: ${fullCount} tópicos, 4 níveis, notas, filtros, estrutura, temas, arraste e reparenting, relação, rede e lousa.`);
+    console.log(`Playwright OK: ${fullCount} tópicos, 4 níveis, notas, filtros, estrutura, temas, arraste e edição por toque, pan, reparenting, relação, rede e lousa.`);
   } finally {
     const process = app.process();
     const exited = new Promise((resolve) => {
