@@ -48,6 +48,7 @@ function setStatus(msg) { $('#status').textContent = msg; }
 /** Quantos tópicos existem abaixo de `node` (todos os níveis). */
 function descendantCount(node) { let n = 0; for (const c of node.children) n += 1 + descendantCount(c); return n; }
 function render() {
+  if (!map) return;   // sem mapa aberto (fechado): não há o que desenhar
   if (map && isFlow(map) && typeof flowRender === 'function') { flowMode(true); flowRender(); flowTail(selectedId && map.find(selectedId)); return; }   // fluxograma: visão própria (flow-ui.js)
   if (typeof flowMode === 'function') flowMode(false);
   // canvas escuro do Pixel ou claro do tema claro: o mapa adapta suas cores para manter contraste
@@ -295,10 +296,10 @@ async function save(as) {
 }
 
 // ---------- ações de edição ----------
-const sel = () => selectedId && map.find(selectedId);
+const sel = () => (map && selectedId) ? map.find(selectedId) : null;
 const act = {
-  child() { const s = sel(); if (!s) return; const n = change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
-  sibling() { const s = sel(); if (!s) return; const n = s.parent ? change(() => map.addSibling(s.node.id)) : change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
+  child() { if (!map) return; const s = sel(); if (!s) return; const n = change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
+  sibling() { if (!map) return; const s = sel(); if (!s) return; const n = s.parent ? change(() => map.addSibling(s.node.id)) : change(() => map.addChild(s.node.id)); if (!n) return; selectedId = n.id; render(); reveal(n.id); startEdit(); },
   addFloating() {
     const n = change(() => map.addFloating());
     if (!n) return;
@@ -316,6 +317,7 @@ const act = {
     setStatus('Relação: clique no tópico de destino (Esc cancela).');
   },
   delete() {
+    if (!map) return;
     if (selectedRel) { const id = selectedRel; selectedRel = null; return change(() => map.removeRelation(id)); }
     const s = sel(); if (!s) return;
     const ids = targets();
@@ -356,6 +358,7 @@ const act = {
 };
 /** Reordena/muda o nível do tópico selecionado (um por vez; uma ação desfazível). */
 function reshape(method, arg, failMsg) {
+  if (!map) return;
   const s = sel(); if (!s) return;
   if (selIds.size > 1) return setStatus('Selecione um único tópico para reordenar ou mudar de nível.');
   const id = s.node.id;

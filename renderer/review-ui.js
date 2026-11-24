@@ -8,6 +8,7 @@ const REVIEW_CHECK_MS = 30 * 60 * 1000;
 
 /** Marca um tópico como revisado hoje: entra no histórico de desfazer como qualquer edição. */
 function markTopicReviewed(id) {
+  if (!map) { setStatus('Nenhum mapa aberto.'); return false; }
   const r = id && map.find(id);
   if (!r) { setStatus('Selecione um tópico para marcar como revisado.'); return false; }
   map.update(id, { review: markReviewed(r.node.review, dayKey()) });
@@ -31,6 +32,7 @@ function reviewElement(tag, cls, text) {
 
 /** Monta a janela de revisões do dia. Tudo que vem do mapa entra com textContent (nunca HTML cru). */
 function renderReviewsModal(modal) {
+  if (!map) { setStatus('Nenhum mapa aberto.'); return; }
   const c = collectReviews(map.root, dayKey());
   modal.textContent = '';
   const box = reviewElement('div', 'modal-box review-box');
