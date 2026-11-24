@@ -13,6 +13,7 @@ const NB_BUTTONS = [
   { id: 'nbNote', icon: 'note', label: 'Escrever nota', run: () => { const s = sel(); if (s) openNotesFor(s.node.id); } },
   { id: 'nbAi', icon: 'spark', label: 'Assistente de IA', run: () => { showPanel('ai'); } },
   { id: 'nbDelete', icon: 'bin', label: 'Excluir tópico (Del)', danger: true, run: () => act.delete() },
+  { id: 'nbPomo', icon: 'timer', label: 'Pomodoro', run: () => { if (window.togglePomodoro) window.togglePomodoro(); } },
 ];
 
 /** Expande ou contrai os filhos do tópico selecionado (uma ação desfazível). */
