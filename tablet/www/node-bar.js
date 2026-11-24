@@ -6,14 +6,15 @@
 const nodeBarEl = document.getElementById('nodebar');
 const NB_BUTTONS = [
   { id: 'nbChild', icon: 'child', label: 'Novo subtópico (Tab)', run: () => act.child() },
-  { id: 'nbUp', icon: 'up', label: 'Subir tópico (Alt+↑)', run: () => act.moveUp() },
-  { id: 'nbDown', icon: 'down', label: 'Descer tópico (Alt+↓)', run: () => act.moveDown() },
+  { id: 'nbSibling', icon: 'sibling', label: 'Novo irmão (Enter)', run: () => act.sibling() },
+  { id: 'nbUp', icon: 'up', label: 'Subir (Alt+↑)', run: () => act.moveUp() },
+  { id: 'nbDown', icon: 'down', label: 'Descer (Alt+↓)', run: () => act.moveDown() },
   { id: 'nbExpand', icon: 'expand', label: 'Expandir filhos', run: () => setSelectedCollapsed(false) },
   { id: 'nbCollapse', icon: 'collapse', label: 'Recolher filhos', run: () => setSelectedCollapsed(true) },
   { id: 'nbNote', icon: 'note', label: 'Escrever nota', run: () => { const s = sel(); if (s) openNotesFor(s.node.id); } },
   { id: 'nbAi', icon: 'spark', label: 'Assistente de IA', run: () => { showPanel('ai'); } },
+  { id: 'nbReview', icon: 'check', label: 'Marcar como revisado', run: () => { if (selectedId) markTopicReviewed(selectedId); } },
   { id: 'nbDelete', icon: 'bin', label: 'Excluir tópico (Del)', danger: true, run: () => act.delete() },
-  { id: 'nbPomo', icon: 'timer', label: 'Pomodoro', run: () => { if (window.togglePomodoro) window.togglePomodoro(); } },
 ];
 
 /** Expande ou contrai os filhos do tópico selecionado (uma ação desfazível). */

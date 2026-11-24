@@ -6,14 +6,8 @@
 const nodeBarEl = document.getElementById('nodebar');
 const NB_BUTTONS = [
   { id: 'nbChild', icon: 'child', label: 'Novo subtópico (Tab)', run: () => act.child() },
-  { id: 'nbSibling', icon: 'sibling', label: 'Novo irmão (Enter)', run: () => act.sibling() },
-  { id: 'nbUp', icon: 'up', label: 'Subir (Alt+↑)', run: () => act.moveUp() },
-  { id: 'nbDown', icon: 'down', label: 'Descer (Alt+↓)', run: () => act.moveDown() },
-  { id: 'nbExpand', icon: 'expand', label: 'Expandir filhos', run: () => setSelectedCollapsed(false) },
-  { id: 'nbCollapse', icon: 'collapse', label: 'Recolher filhos', run: () => setSelectedCollapsed(true) },
   { id: 'nbNote', icon: 'note', label: 'Escrever nota', run: () => { const s = sel(); if (s) openNotesFor(s.node.id); } },
   { id: 'nbAi', icon: 'spark', label: 'Assistente de IA', run: () => { showPanel('ai'); } },
-  { id: 'nbReview', icon: 'check', label: 'Marcar como revisado', run: () => { if (selectedId) markTopicReviewed(selectedId); } },
   { id: 'nbDelete', icon: 'bin', label: 'Excluir tópico (Del)', danger: true, run: () => act.delete() },
 ];
 
@@ -59,9 +53,6 @@ function syncNodeBar() {
       nodeBarEl.append(btn);
     }
   }
-  const hasKids = s.node.children.length > 0;
-  document.getElementById('nbExpand').disabled = !hasKids || !s.node.collapsed;
-  document.getElementById('nbCollapse').disabled = !hasKids || !!s.node.collapsed;
   const floating = (map.meta._momFloating || []).some((f) => f.node.id === s.node.id);
   document.getElementById('nbDelete').disabled = !s.parent && !floating;   // a raiz do mapa não pode ser excluída; tópico solto pode
 }
