@@ -17,6 +17,7 @@ function ctxStyle(id) { const b = L && L.boxes.get(id); return b ? b.style : {};
 
 /** Grava um estilo em todos os tópicos selecionados, como uma única ação desfazível. */
 function ctxApply(style) {
+  if (!map) return;
   const ids = targets();
   if (!ids.length) return;
   change(() => map.updateMany(ids, { style }));
@@ -30,6 +31,7 @@ function ctxHide() {
 
 /** Duplica o tópico (com a subárvore) logo depois dele, como um novo irmão. Uma ação desfazível. */
 function ctxDuplicate(id) {
+  if (!map) return;
   const r = map.find(id);
   if (!r || !r.parent) return setStatus('A raiz não pode ser duplicada.');
   const copy = MindMap.cloneSubtree(r.node);
@@ -39,6 +41,7 @@ function ctxDuplicate(id) {
 
 /** Árvore do menu do tópico `id`: cada grupo tem `children`; cada ação tem `run`. */
 function ctxTree(id) {
+  if (!map) return [];
   const st = ctxStyle(id);
   const own = (map.find(id) || {}).node || {};
   const ids = () => targets();
