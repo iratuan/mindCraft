@@ -25,7 +25,7 @@
     const btn = document.createElement('button');
     btn.setAttribute('data-fmt', 'flashcard');
     btn.title = 'Criar flashcard do trecho selecionado (frente = seleção, verso = você digita)';
-    btn.textContent = '🃏';
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M16 8h.01M8 16h.01M16 16h.01M12 12h.01"/></svg>';
     btn.addEventListener('click', (e) => { e.preventDefault(); createCard(); });
     bar.appendChild(btn);
   }
@@ -57,7 +57,7 @@
     panel.innerHTML = '';
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
-    header.innerHTML = `<span style="font-weight:700;color:var(--text-strong);">🃏 ${idx + 1}/${cards.length}</span><button class="btn small" style="height:24px;padding:0 8px;font-size:11px;" title="Gerar de todas as notas do mapa">Gerar do mapa</button><button class="btn small" style="width:24px;height:24px;padding:0;" title="Fechar">✕</button>`;
+    header.innerHTML = `<span style="font-weight:700;color:var(--text-strong);display:flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h.01M16 8h.01M8 16h.01M16 16h.01M12 12h.01"/></svg> ${idx + 1}/${cards.length}</span><button class="btn small" style="height:24px;padding:0 8px;font-size:11px;" title="Gerar de todas as notas do mapa">Gerar do mapa</button><button class="btn small" style="width:24px;height:24px;padding:0;" title="Fechar">✕</button>`;
     const genBtn = header.querySelectorAll('button')[0];
     genBtn.addEventListener('click', (e) => { e.stopPropagation(); generateFromMap(); });
     const closeBtn = header.querySelectorAll('button')[1];
@@ -94,6 +94,7 @@
     if (panel.style.display === 'none') { panel.style.display = 'flex'; renderPanel(); }
     else panel.style.display = 'none';
   }
+  window.toggleFlashcardPanel = togglePanel;
 
   // Gera flashcards a partir de todas as notas do mapa aberto
   function generateFromMap() {

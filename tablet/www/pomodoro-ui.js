@@ -61,7 +61,7 @@
   function buildWidget() {
     const w = document.createElement('div');
     w.id = 'pomodoroWidget';
-    w.style.cssText = 'position:fixed;bottom:36px;right:12px;z-index:10;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-panel);border:1px solid var(--line-soft);border-radius:10px;box-shadow:var(--shadow);font-size:12px;color:var(--text);user-select:none;';
+    w.style.cssText = 'position:fixed;bottom:12px;left:12px;z-index:10;display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg-panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--text);user-select:none;';
     w.innerHTML = '<span class="pomo-phase" style="font-weight:600;">Foco</span><span class="pomo-time" style="font-variant-numeric:tabular-nums;font-weight:700;min-width:42px;text-align:center;">25:00</span><button class="pomo-btn btn small" style="width:28px;height:28px;padding:0;">▶</button><span class="pomo-cycles" style="color:var(--text-dim);font-size:10px;">Ciclo 1/4</span>';
     w.querySelector('.pomo-btn').addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
     w.addEventListener('dblclick', (e) => { e.stopPropagation(); if (confirm('Resetar Pomodoro?')) reset(); });

@@ -22,6 +22,7 @@ export function Home() {
           <ActionButton id="hmOpen" title="Abrir arquivo .mom" hint="Um mapa do Mindomo ou salvo aqui" onClick={() => A.openFile()} />
           <ActionButton id="hmPdf" title="Ler um PDF" hint="Selecione um trecho para virar tópico" onClick={() => A.openPdf()} />
           <ActionButton id="hmDash" title="Painel de mapas" hint="Resumo dos seus mapas" onClick={() => H().openDash()} />
+          <ActionButton id="hmFlash" title="Flashcards" hint="Revise seus cartões de estudo" onClick={() => { if (window.toggleFlashcardPanel) window.toggleFlashcardPanel(); }} />
         </div>
       </div>
 

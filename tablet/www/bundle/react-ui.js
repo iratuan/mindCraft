@@ -22184,7 +22184,10 @@
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmNew", primary: true, title: "Novo mapa", hint: "Come\xE7a com a ideia central e tr\xEAs t\xF3picos", onClick: () => A2.newBlank() }),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmOpen", title: "Abrir arquivo .mom", hint: "Um mapa do Mindomo ou salvo aqui", onClick: () => A2.openFile() }),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmPdf", title: "Ler um PDF", hint: "Selecione um trecho para virar t\xF3pico", onClick: () => A2.openPdf() }),
-          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmDash", title: "Painel de mapas", hint: "Resumo dos seus mapas", onClick: () => H().openDash() })
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmDash", title: "Painel de mapas", hint: "Resumo dos seus mapas", onClick: () => H().openDash() }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(ActionButton, { id: "hmFlash", title: "Flashcards", hint: "Revise seus cart\xF5es de estudo", onClick: () => {
+            if (window.toggleFlashcardPanel) window.toggleFlashcardPanel();
+          } })
         ] })
       ] }),
       /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "hm-main", children: [
